@@ -1,8 +1,9 @@
-SRCS = coord.c
+SRCS =	coord.c
 TESTCASE_OBJS = ${SRCS:C/(.*)\.c/testcase-\1.o/g}
-CFLAGS=-I/usr/local/include
+CFLAGS =	-I/usr/local/include
+BINS =	testcase
 
-all: testcase
+all: $(BINS)
 
 testcase: testcase.o $(TESTCASE_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(.ALLSRC) -L/usr/local/lib -lcunit
@@ -16,7 +17,7 @@ testcase.o:	testcase.c
 	$(CC) $(CFLAGS) -c $(.ALLSRC)
 
 clean:
-	for i in *.o *~$(BINS); do \
+	for i in *.o *~ *.core $(BINS); do \
 		echo "delete $$i"; \
 		rm -f $$i; \
 	done
