@@ -11,7 +11,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     shape_t *path;
     coord_t coord;
 
-    path = sh_path_new("m80 80 c 20 5 -30 20 10 30 l -30 0 z");
+    path = sh_path_new("m80 80 c 20 5 -30 20 10 30 t -30 0 z");
     memset(coord.aggr_matrix, 0, sizeof(co_aix) * 6);
     coord.aggr_matrix[0] = 1;
     coord.aggr_matrix[1] = 0.5;

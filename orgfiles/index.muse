@@ -57,3 +57,9 @@ A transform function of a element to canvas is production of all
 transform functions of containers, it is called aggregated transform
 function.  The aggregated transform function of elements are
 computed with [[http://en.wikipedia.org/wiki/Dynamic_programming][dynamic programming]].
+
+** Use Absolute
+Since we need to tranform positions, positions are transform to
+absolute coordinations if they are specified relative.  It is
+fine when a relative position are rotated or resized.  But, it
+would be wrong when shifting.

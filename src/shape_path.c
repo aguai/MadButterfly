@@ -317,6 +317,8 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     return OK;
 }
 
+/*! \brief Create a path from value of 'data' of SVG path.
+ */
 shape_t *sh_path_new(char *data) {
     sh_path_t *path;
     int cmd_cnt, arg_cnt;
@@ -362,6 +364,11 @@ shape_t *sh_path_new(char *data) {
     return (shape_t *)path;
 }
 
+/*! \brief Transform a path from user space to device space.
+ *
+ * TODO: associate coord_t with shape objects and transform them
+ *       automatically.
+ */
 void sh_path_transform(shape_t *shape, coord_t *coord) {
     sh_path_t *path;
     co_aix *user_args, *dev_args;
@@ -514,16 +521,16 @@ void test_sh_path_new(void) {
 
     path = (sh_path_t *)sh_path_new("M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
-    CU_ASSERT(path->cmd_len == 8);
+    CU_ASSERT(path->cmd_len == ((5 + sizeof(co_aix) * 2 + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
-    CU_ASSERT(strcmp(path->user_data, "MlCLz") == 0);
-    CU_ASSERT(strcmp(path->dev_data, "MlCLz") == 0);
+    CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
+    CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);
 
     args = (co_aix *)(path->user_data + path->cmd_len);
     CU_ASSERT(args[0] == 33);
     CU_ASSERT(args[1] == 25);
-    CU_ASSERT(args[2] == 33);
-    CU_ASSERT(args[3] == 55);
+    CU_ASSERT(args[2] == 66);
+    CU_ASSERT(args[3] == 80);
     CU_ASSERT(args[4] == 33);
     CU_ASSERT(args[5] == 87);
     CU_ASSERT(args[6] == 44);
@@ -542,10 +549,10 @@ void test_path_transform(void) {
 
     path = (sh_path_t *)sh_path_new("M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
-    CU_ASSERT(path->cmd_len == 8);
+    CU_ASSERT(path->cmd_len == ((5 + sizeof(co_aix) * 2 + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
-    CU_ASSERT(strcmp(path->user_data, "MlCLz") == 0);
-    CU_ASSERT(strcmp(path->dev_data, "MlCLz") == 0);
+    CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
+    CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);
 
     coord.aggr_matrix[0] = 1;
     coord.aggr_matrix[1] = 0;
@@ -558,8 +565,8 @@ void test_path_transform(void) {
     args = (co_aix *)(path->dev_data + path->cmd_len);
     CU_ASSERT(args[0] == 34);
     CU_ASSERT(args[1] == 50);
-    CU_ASSERT(args[2] == 34);
-    CU_ASSERT(args[3] == 110);
+    CU_ASSERT(args[2] == 67);
+    CU_ASSERT(args[3] == 160);
     CU_ASSERT(args[4] == 34);
     CU_ASSERT(args[5] == 174);
     CU_ASSERT(args[6] == 45);
