@@ -186,6 +186,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     while(*p) {
 	SKIP_SPACE(p);
 
+	/* TODO: transform all relative to absolute, */
 	*cmds++ = *p;
 	switch(*p++) {
 	case 'c':
@@ -486,6 +487,8 @@ void sh_path_draw(shape_t *shape, cairo_t *cr) {
 	    break;
 	}
     }
+
+    cairo_fill(cr);
 }
 
 #ifdef UNITTEST

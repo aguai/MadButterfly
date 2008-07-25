@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <cairo.h>
 
 #include <string.h>
@@ -15,7 +16,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     coord.aggr_matrix[0] = 1;
     coord.aggr_matrix[1] = 0.5;
     coord.aggr_matrix[4] = 1;
-    coord.aggr_matrix[5] = 0.5;
+    coord.aggr_matrix[5] = 0;
     sh_path_transform(path, &coord);
     sh_path_draw(path, cr);
 }
@@ -24,12 +25,13 @@ void drawing(cairo_surface_t *surface, int w, int h) {
     cairo_t *cr;
 
     cr = cairo_create(surface);
-    cairo_set_source_rgb(cr, 0xff, 0xff, 0x80);
+    cairo_set_source_rgb(cr, 0.9, 0.1, 0.1);
     draw_path(cr, w, h);
+    cairo_set_source_rgb(cr, 0.5, 0.9, 0.8);
     cairo_move_to(cr, 10, h / 2);
     cairo_set_font_size(cr, 48.0);
     cairo_text_path(cr, "hello \xe4\xb8\xad\xe6\x96\x87");
-    cairo_set_line_width(cr, 1);
+    cairo_set_line_width(cr, 2);
     cairo_stroke(cr);
 }
 
