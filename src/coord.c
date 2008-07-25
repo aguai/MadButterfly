@@ -4,23 +4,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-
-typedef float co_aix;
-/*! \brief A coordination system.
- *
- * It have a transform function defined by matrix to transform
- * coordination from source space to target space.
- * Source space is where the contained is drawed, and target space
- * is where the coordination of parent container of the element
- * represented by this coord object.
- */
-typedef struct coord {
-    int seq;
-    co_aix matrix[6];
-    co_aix aggr_matrix[6];
-    struct coord *parent;
-    struct coord *children, *sibling;
-} coord_t;
+#include "mb_types.h"
 
 /* To keep possibility of changing type of aix */
 #define MUL(a, b) ((a) * (b))

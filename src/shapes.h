@@ -1,0 +1,11 @@
+#ifndef __SHAPES_H_
+#define __SHAPES_H_
+
+#include "mb_types.h"
+
+extern void sh_path_free(shape_t *path);
+extern shape_t *sh_path_new(char *data);
+extern void sh_path_transform(shape_t *shape, coord_t *coord);
+extern void sh_path_draw(shape_t *shape, cairo_t *cr);
+
+#endif /* __SHAPES_H_ */
