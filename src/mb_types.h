@@ -2,6 +2,7 @@
 #define __MB_TYPES_H_
 
 typedef float co_aix;
+typedef struct _shape shape_t;
 
 /*! \brief A coordination system.
  *
@@ -17,14 +18,16 @@ typedef struct _coord {
     co_aix aggr_matrix[6];
     struct _coord *parent;
     struct _coord *children, *sibling;
+    shape_t *members;
 } coord_t;
 
 
 typedef struct _geo geo_t;
-typedef struct _shape {
+struct _shape {
     int sh_type;
     geo_t *geo;
-} shape_t;
+    struct _shape *sibling;
+};
 
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT };
 

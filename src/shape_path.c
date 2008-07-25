@@ -21,12 +21,13 @@ typedef struct _sh_path {
 #define RESERVED_AIXS sizeof(co_aix[2])
 
 #define ASSERT(x)
-#define SKIP_SPACE(x) while(*(x) && isspace(*(x))) { (x)++; }
+#define SKIP_SPACE(x) while(*(x) && (isspace(*(x)) || *(x) == ',')) { (x)++; }
 #define SKIP_NUM(x)					\
     while(*(x) &&					\
 	  (isdigit(*(x)) ||				\
 	   *(x) == '-' ||				\
-	   *(x) == '+'))  {				\
+	   *(x) == '+' ||				\
+	   *(x) == '.'))  {					\
 	(x)++;						\
     }
 #define OK 0
@@ -47,9 +48,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 
     cmd_cnt = arg_cnt = 0;
     p = data;
+    SKIP_SPACE(p);
     while(*p) {
-	SKIP_SPACE(p);
-
 	switch(*p++) {
 	case 'c':
 	case 'C':
@@ -175,6 +175,7 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 	    return ERR;
 	}
 	cmd_cnt++;
+	SKIP_SPACE(p);
     }
 
     *cmd_cntp = cmd_cnt;
@@ -193,9 +194,8 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     cmds = path->user_data;
     args = (co_aix *)(cmds + path->cmd_len);
     p = data;
+    SKIP_SPACE(p);
     while(*p) {
-	SKIP_SPACE(p);
-
 	/* Transform all relative to absolute, */
 	*cmds++ = toupper(*p);
 	switch((cmd = *p++)) {
@@ -327,6 +327,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 	default:
 	    return ERR;
 	}
+	SKIP_SPACE(p);
     }
 
     return OK;
@@ -590,6 +591,15 @@ void test_path_transform(void) {
     CU_ASSERT(args[9] == 198);
     CU_ASSERT(args[10] == 34);
     CU_ASSERT(args[11] == 154);
+    sh_path_free((shape_t *)path);
+}
+
+void test_spaces_head_tail(void) {
+    sh_path_t *path;
+
+    path = (sh_path_t *)
+	sh_path_new(" M 33 25l33 55C 33 87 44 22 55 99L33 77z ");
+    CU_ASSERT(path != NULL);
     sh_path_free((shape_t *)path);
 }
 

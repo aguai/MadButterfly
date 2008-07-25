@@ -12,13 +12,13 @@ void draw_path(cairo_t *cr, int w, int h) {
     shape_t *path;
     coord_t coord;
 
-    path = sh_path_new("m80 80 c 20 5 -30 20 10 30 t -30 0 z");
+    path = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
     memset(coord.aggr_matrix, 0, sizeof(co_aix) * 6);
-    coord.aggr_matrix[0] = 1;
-    coord.aggr_matrix[1] = 0.5;
-    coord.aggr_matrix[2] = -30;
-    coord.aggr_matrix[4] = 1;
-    coord.aggr_matrix[5] = -20;
+    coord.aggr_matrix[0] = 0.8;
+    coord.aggr_matrix[1] = 0;
+    coord.aggr_matrix[2] = 20;
+    coord.aggr_matrix[4] = 0.8;
+    coord.aggr_matrix[5] = 20;
     sh_path_transform(path, &coord);
     sh_path_draw(path, cr);
 }
