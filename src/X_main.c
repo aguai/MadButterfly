@@ -3,6 +3,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <cairo.h>
+#include <cairo-xlib.h>
 
 #include <string.h>
 #include "shapes.h"
@@ -81,4 +82,5 @@ main(int argc, char * const argv[]) {
     sleep(10);
 
     XCloseDisplay(display);
+    return 0;
 }

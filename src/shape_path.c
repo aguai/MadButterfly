@@ -18,6 +18,7 @@ typedef struct _sh_path {
     char *user_data;
     char *dev_data;		/* device space data */
 } sh_path_t;
+#define RESERVED_AIXS sizeof(co_aix[2])
 
 #define ASSERT(x)
 #define SKIP_SPACE(x) while(*(x) && isspace(*(x))) { (x)++; }
@@ -181,6 +182,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
     return OK;
 }
 
+#define TO_ABS islower(cmd)? *(args - 2) + atof(old): atof(old)
+
 static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     char *p, *old;
     char *cmds;
@@ -205,41 +208,47 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 	    }
 	    break;
 	case 's':
@@ -253,28 +262,32 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 	    }
 	    break;
 	case 'm':
@@ -290,14 +303,16 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
+		*args = TO_ABS;
+		args++;
 	    }
 	    break;
 	case 'h':
@@ -332,7 +347,7 @@ shape_t *sh_path_new(char *data) {
      * to make logic of transformation from relative to absolute
      * simple.
      */
-    cmd_cnt += sizeof(co_aix) * 2;
+    cmd_cnt += RESERVED_AIXS;
     cmd_cnt = (cmd_cnt + 3) & ~0x3;
 
     path = (sh_path_t *)malloc(sizeof(sh_path_t));
@@ -521,7 +536,7 @@ void test_sh_path_new(void) {
 
     path = (sh_path_t *)sh_path_new("M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
-    CU_ASSERT(path->cmd_len == ((5 + sizeof(co_aix) * 2 + 3) & ~0x3));
+    CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
     CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
     CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);
@@ -549,7 +564,7 @@ void test_path_transform(void) {
 
     path = (sh_path_t *)sh_path_new("M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
-    CU_ASSERT(path->cmd_len == ((5 + sizeof(co_aix) * 2 + 3) & ~0x3));
+    CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
     CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
     CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);

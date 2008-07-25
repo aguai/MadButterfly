@@ -16,20 +16,6 @@ struct _geo {
     struct _geo *subs;
 };
 
-static int is_pos_in(co_aix x, co_aix y,
-		     co_aix rectx, co_aix recty,
-		     co_aix rectw, co_aix recth) {
-    co_aix rel_x, rel_y;
-
-    rel_x = x - rectx;
-    if(rel_x < 0 || rel_x >= rectw)
-	return 0;
-    rel_y = y - recty;
-    if(rel_y < 0 || rel_y >= recth)
-	return 0;
-    return 1;
-}
-
 static int is_scale_overlay(co_aix x1, co_aix w1, co_aix x2, co_aix w2) {
     if(x1 > x2) {
 	if((x1 - x2) >= w2)
@@ -42,8 +28,6 @@ static int is_scale_overlay(co_aix x1, co_aix w1, co_aix x2, co_aix w2) {
 }
 
 static int is_overlay(geo_t *r1, geo_t *r2) {
-    co_aix rel_x, rel_y;
-
     if(!is_scale_overlay(r1->x, r1->w, r2->x, r2->w))
 	return 0;
     if(!is_scale_overlay(r1->y, r1->h, r2->y, r2->h))

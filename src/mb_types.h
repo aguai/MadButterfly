@@ -30,5 +30,6 @@ enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT };
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
+extern void update_aggr_matrix(coord_t *start);
 
 #endif /* __MB_TYPES_H_ */
