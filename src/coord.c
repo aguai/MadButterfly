@@ -22,6 +22,7 @@ typedef struct coord {
     struct coord *children, *sibling;
 } coord_t;
 
+/* To keep possibility of changing type of aix */
 #define MUL(a, b) ((a) * (b))
 #define ADD(a, b) ((a) + (b))
 #define DIV(a, b) ((a) / (b))
