@@ -5,6 +5,12 @@
 #include <cairo.h>
 #include "mb_types.h"
 
+/*! \brief Implement respective objects for SVG path tag.
+ *
+ * In user_data or dev_data, 0x00 bytes are padding after commands.
+ * No commands other than 0x00 can resident after 0x00 itself.
+ * It means command processing code can skip commands after a 0x00.
+ */
 typedef struct _sh_path {
     shape_t shape;
     int cmd_len;
@@ -320,6 +326,11 @@ shape_t *sh_path_new(char *data) {
     if(r == ERR)
 	return NULL;
 
+    /* Align at 4's boundary and keep 2 unused co_aix space
+     * to make logic of transformation from relative to absolute
+     * simple.
+     */
+    cmd_cnt += sizeof(co_aix) * 2;
     cmd_cnt = (cmd_cnt + 3) & ~0x3;
 
     path = (sh_path_t *)malloc(sizeof(sh_path_t));
@@ -485,6 +496,7 @@ void sh_path_draw(shape_t *shape, cairo_t *cr) {
 	    cairo_close_path(cr);
 	    break;
 	case '\x0':
+	    i = cmd_len;	/* padding! Skip remain ones. */
 	    break;
 	}
     }
