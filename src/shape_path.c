@@ -178,6 +178,7 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     char *p, *old;
     char *cmds;
+    char cmd;
     co_aix *args;
 
     cmds = path->user_data;
@@ -186,9 +187,9 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     while(*p) {
 	SKIP_SPACE(p);
 
-	/* TODO: transform all relative to absolute, */
-	*cmds++ = *p;
-	switch(*p++) {
+	/* Transform all relative to absolute, */
+	*cmds++ = toupper(*p);
+	switch((cmd = *p++)) {
 	case 'c':
 	case 'C':
 	    while(*p) {
@@ -198,41 +199,41 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 	    }
 	    break;
 	case 's':
@@ -246,28 +247,28 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 	    }
 	    break;
 	case 'm':
@@ -283,14 +284,14 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args++ = atof(old);
+		*args++ = islower(cmd)? *(args - 2) + atof(old): atof(old);
 	    }
 	    break;
 	case 'h':

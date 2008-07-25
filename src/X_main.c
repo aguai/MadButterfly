@@ -15,8 +15,9 @@ void draw_path(cairo_t *cr, int w, int h) {
     memset(coord.aggr_matrix, 0, sizeof(co_aix) * 6);
     coord.aggr_matrix[0] = 1;
     coord.aggr_matrix[1] = 0.5;
+    coord.aggr_matrix[2] = -30;
     coord.aggr_matrix[4] = 1;
-    coord.aggr_matrix[5] = 0;
+    coord.aggr_matrix[5] = -20;
     sh_path_transform(path, &coord);
     sh_path_draw(path, cr);
 }
@@ -25,6 +26,8 @@ void drawing(cairo_surface_t *surface, int w, int h) {
     cairo_t *cr;
 
     cr = cairo_create(surface);
+    cairo_set_source_rgb(cr, 0, 0, 0);
+    cairo_paint(cr);
     cairo_set_source_rgb(cr, 0.9, 0.1, 0.1);
     draw_path(cr, w, h);
     cairo_set_source_rgb(cr, 0.5, 0.9, 0.8);
