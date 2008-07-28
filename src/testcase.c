@@ -1,8 +1,10 @@
 #include <CUnit/Basic.h>
 
+extern CU_pSuite get_tools_suite(void);
 extern CU_pSuite get_coord_suite(void);
 extern CU_pSuite get_geo_suite(void);
 extern CU_pSuite get_shape_path_suite(void);
+extern CU_pSuite get_redraw_man_suite(void);
 
 int
 main(int argc, char * const argv[]) {
@@ -11,9 +13,21 @@ main(int argc, char * const argv[]) {
     if(CU_initialize_registry() != CUE_SUCCESS)
 	return CU_get_error();
 
-    get_coord_suite();
-    get_geo_suite();
-    get_shape_path_suite();
+    suite = get_tools_suite();
+    if(suite == NULL)
+	return CU_get_error();
+    suite = get_coord_suite();
+    if(suite == NULL)
+	return CU_get_error();
+    suite = get_geo_suite();
+    if(suite == NULL)
+	return CU_get_error();
+    suite = get_shape_path_suite();
+    if(suite == NULL)
+	return CU_get_error();
+    suite = get_redraw_man_suite();
+    if(suite == NULL)
+	return CU_get_error();
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();

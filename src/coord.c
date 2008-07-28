@@ -6,6 +6,9 @@
 #include <string.h>
 #include "mb_types.h"
 
+
+#define ASSERT(x)
+
 /* To keep possibility of changing type of aix */
 #define MUL(a, b) ((a) * (b))
 #define ADD(a, b) ((a) + (b))
@@ -46,22 +49,22 @@ void update_aggr_matrix(coord_t *start) {
 
     visit = start;
     while(visit) {
-	child = visit->children;
+	child = STAILQ_HEAD(visit->children);
 	while(child) {
 	    compute_transform_function(child);
-	    child = child->sibling;
+	    child = STAILQ_NEXT(coord_t, sibling, child);
 	}
 
-	if(visit->children)
-	    visit = visit->children;
-	else if(visit->sibling)
-	    visit = visit->sibling;
+	if(STAILQ_HEAD(visit->children))
+	    visit = STAILQ_HEAD(visit->children);
+	else if(STAILQ_NEXT(coord_t, sibling, visit))
+	    visit = STAILQ_NEXT(coord_t, sibling, visit);
 	else {
 	    next = NULL;
 	    while(visit->parent && visit->parent != start) {
 		visit = visit->parent;
-		if(visit->sibling) {
-		    next = visit->sibling;
+		if(STAILQ_NEXT(coord_t, sibling, visit)) {
+		    next = STAILQ_NEXT(coord_t, sibling, visit);
 		    break;
 		}
 	    }
@@ -70,12 +73,17 @@ void update_aggr_matrix(coord_t *start) {
     }
 }
 
+/*! \brief Initialize a coord object.
+ *
+ * The object is cleared and matrix was initialized to ID.
+ * The object is be a children of specified parent.
+ */
 void coord_init(coord_t *co, coord_t *parent) {
     memset(co, 0, sizeof(coord_t));
     if(parent) {
+	/* insert at tail of children list. */
 	co->parent = parent;
-	co->sibling = parent->children;
-	parent->children = co;
+	STAILQ_INS_TAIL(parent->children, coord_t, sibling, co);
     }
     co->matrix[0] = 1;
     co->matrix[4] = 1;
@@ -92,6 +100,34 @@ void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y) {
 	     co->aggr_matrix[5]);
     *x = nx;
     *y = ny;
+}
+
+coord_t *preorder_coord_tree(coord_t *last) {
+    coord_t *next;
+
+    ASSERT(last == NULL);
+    
+    if(STAILQ_HEAD(last->children))
+	next = STAILQ_HEAD(last->children);
+    else {
+	next = last;
+	while(next != NULL && STAILQ_NEXT(coord_t, sibling, next) == NULL)
+	    next = next->parent;
+	if(next)
+	    next = STAILQ_NEXT(coord_t, sibling, next);
+    }
+
+    return next;
+}
+
+void sh_attach_coord(shape_t *sh, coord_t *coord) {
+    STAILQ_INS_TAIL(coord->members, shape_t, coord_mem_next, sh);
+    sh->coord = coord;
+}
+
+void sh_detach_coord(shape_t *sh) {
+    STAILQ_REMOVE(sh->coord->members, shape_t, coord_mem_next, sh);
+    sh->coord = NULL;
 }
 
 #ifdef UNITTEST
@@ -157,11 +193,38 @@ void test_update_aggr_matrix(void) {
     CU_ASSERT(y == 99);
 }
 
+void test_preorder_coord_tree(void) {
+    coord_t elms[6];
+    coord_t *last;
+
+    coord_init(elms, NULL);
+    coord_init(elms + 1, elms);
+    coord_init(elms + 2, elms);
+    coord_init(elms + 3, elms + 1);
+    coord_init(elms + 4, elms + 1);
+    coord_init(elms + 5, elms + 2);
+
+    last = elms;
+    last = preorder_coord_tree(last);
+    CU_ASSERT(last == elms + 1);
+    last = preorder_coord_tree(last);
+    CU_ASSERT(last == elms + 3);
+    last = preorder_coord_tree(last);
+    CU_ASSERT(last == elms + 4);
+    last = preorder_coord_tree(last);
+    CU_ASSERT(last == elms + 2);
+    last = preorder_coord_tree(last);
+    CU_ASSERT(last == elms + 5);
+    last = preorder_coord_tree(last);
+    CU_ASSERT(last == NULL);
+}
+
 CU_pSuite get_coord_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_coord", NULL, NULL);
     CU_ADD_TEST(suite, test_update_aggr_matrix);
+    CU_ADD_TEST(suite, test_preorder_coord_tree);
 
     return suite;
 }

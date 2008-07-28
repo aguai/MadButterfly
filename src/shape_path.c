@@ -10,6 +10,10 @@
  * In user_data or dev_data, 0x00 bytes are padding after commands.
  * No commands other than 0x00 can resident after 0x00 itself.
  * It means command processing code can skip commands after a 0x00.
+ *
+ * Shapes should check if shape_t::geo is assigned.  Once transformation
+ * matrics are changed, shape objects should update shape_t::geo if
+ * it is assigned.
  */
 typedef struct _sh_path {
     shape_t shape;
@@ -352,6 +356,7 @@ shape_t *sh_path_new(char *data) {
     cmd_cnt = (cmd_cnt + 3) & ~0x3;
 
     path = (sh_path_t *)malloc(sizeof(sh_path_t));
+    memset(&path->shape, 0, sizeof(shape_t));
     path->shape.sh_type = SHT_PATH;
     path->cmd_len = cmd_cnt;
     path->arg_len = arg_cnt;
@@ -385,9 +390,11 @@ shape_t *sh_path_new(char *data) {
  * TODO: associate coord_t with shape objects and transform them
  *       automatically.
  */
-void sh_path_transform(shape_t *shape, coord_t *coord) {
+void sh_path_transform(shape_t *shape) {
     sh_path_t *path;
     co_aix *user_args, *dev_args;
+    co_aix (*poses)[2];
+    int arg_len;
     int i;
 
     ASSERT(shape->type == SHT_PATH);
@@ -396,11 +403,17 @@ void sh_path_transform(shape_t *shape, coord_t *coord) {
     path = (sh_path_t *)shape;
     user_args = (co_aix *)(path->user_data + path->cmd_len);
     dev_args = (co_aix *)(path->dev_data + path->cmd_len);
-    for(i = 0; i < path->arg_len; i += 2) {
+    arg_len = path->arg_len;
+    for(i = 0; i < arg_len; i += 2) {
 	dev_args[0] = *user_args++;
 	dev_args[1] = *user_args++;
-	coord_trans_pos(coord, dev_args, dev_args + 1);
+	coord_trans_pos(shape->coord, dev_args, dev_args + 1);
 	dev_args += 2;
+    }
+
+    if(path->shape.geo) {
+	poses = (co_aix (*)[2])(path->dev_data + path->cmd_len);
+	geo_init(path->shape.geo, arg_len / 2, poses);
     }
 }
 
@@ -562,6 +575,7 @@ void test_path_transform(void) {
     sh_path_t *path;
     co_aix *args;
     coord_t coord;
+    geo_t geo;
 
     path = (sh_path_t *)sh_path_new("M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
@@ -570,13 +584,17 @@ void test_path_transform(void) {
     CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
     CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);
 
+    path->shape.geo = &geo;
+    geo.shape = (shape_t *)path;
+
     coord.aggr_matrix[0] = 1;
     coord.aggr_matrix[1] = 0;
     coord.aggr_matrix[2] = 1;
     coord.aggr_matrix[3] = 0;
     coord.aggr_matrix[4] = 2;
     coord.aggr_matrix[5] = 0;
-    sh_path_transform((shape_t *)path, &coord);
+    path->shape.coord = &coord;
+    sh_path_transform((shape_t *)path);
 
     args = (co_aix *)(path->dev_data + path->cmd_len);
     CU_ASSERT(args[0] == 34);
@@ -591,6 +609,7 @@ void test_path_transform(void) {
     CU_ASSERT(args[9] == 198);
     CU_ASSERT(args[10] == 34);
     CU_ASSERT(args[11] == 154);
+
     sh_path_free((shape_t *)path);
 }
 

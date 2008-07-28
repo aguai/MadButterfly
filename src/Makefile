@@ -1,4 +1,4 @@
-SRCS =	coord.c geo.c shape_path.c
+SRCS =	coord.c geo.c shape_path.c redraw_man.c tools.c
 OBJS = ${SRCS:C/(.*)\.c/\1.o/g}
 TESTCASE_OBJS = ${SRCS:C/(.*)\.c/testcase-\1.o/g}
 CFLAGS =	-Wall -I/usr/local/include `pkg-config --cflags cairo`

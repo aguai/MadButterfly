@@ -7,15 +7,6 @@
 #include <stdio.h>
 #include "mb_types.h"
 
-struct _geo {
-    co_aix x, y;
-    co_aix w, h;
-    co_aix rel_x, rel_y;
-    co_aix orig_x, orig_y;
-    int n_subs;
-    struct _geo *subs;
-};
-
 static int is_scale_overlay(co_aix x1, co_aix w1, co_aix x2, co_aix w2) {
     if(x1 > x2) {
 	if((x1 - x2) >= w2)
@@ -27,13 +18,17 @@ static int is_scale_overlay(co_aix x1, co_aix w1, co_aix x2, co_aix w2) {
     return 1;
 }
 
-static int is_overlay(geo_t *r1, geo_t *r2) {
+static int _is_overlay(geo_t *r1, geo_t *r2) {
     if(!is_scale_overlay(r1->x, r1->w, r2->x, r2->w))
 	return 0;
     if(!is_scale_overlay(r1->y, r1->h, r2->y, r2->h))
 	return 0;
 
     return 1;
+}
+
+int is_overlay(geo_t *r1, geo_t *r2) {
+    return _is_overlay(r1, r2);
 }
 
 void geo_init(geo_t *g, int n_pos, co_aix pos[][2]) {
@@ -68,7 +63,7 @@ void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 
     ov_idx = 0;
     for(i = 0; i < n_others; i++) {
-	if(is_overlay(g, others[i]))
+	if(_is_overlay(g, others[i]))
 	    overlays[ov_idx++] = others[i];
     }
     *n_overlays = ov_idx;

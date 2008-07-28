@@ -7,19 +7,24 @@
 
 #include <string.h>
 #include "shapes.h"
+#include "redraw_man.h"
 
 void draw_path(cairo_t *cr, int w, int h) {
+    redraw_man_t rdman;
     shape_t *path;
-    coord_t coord;
+    coord_t *coord;
+
+    redraw_man_init(&rdman);
+    coord = rdman.root_coord;
 
     path = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
-    memset(coord.aggr_matrix, 0, sizeof(co_aix) * 6);
-    coord.aggr_matrix[0] = 0.8;
-    coord.aggr_matrix[1] = 0;
-    coord.aggr_matrix[2] = 20;
-    coord.aggr_matrix[4] = 0.8;
-    coord.aggr_matrix[5] = 20;
-    sh_path_transform(path, &coord);
+    coord->aggr_matrix[0] = 0.8;
+    coord->aggr_matrix[1] = 0;
+    coord->aggr_matrix[2] = 20;
+    coord->aggr_matrix[4] = 0.8;
+    coord->aggr_matrix[5] = 20;
+    rdman_add_shape(&rdman, (shape_t *)path, coord);
+    sh_path_transform(path);
     sh_path_draw(path, cr);
 }
 
@@ -33,8 +38,8 @@ void drawing(cairo_surface_t *surface, int w, int h) {
     draw_path(cr, w, h);
     cairo_set_source_rgb(cr, 0.5, 0.9, 0.8);
     cairo_move_to(cr, 10, h / 2);
-    cairo_set_font_size(cr, 48.0);
-    cairo_text_path(cr, "hello \xe4\xb8\xad\xe6\x96\x87");
+    cairo_set_font_size(cr, 36.0);
+    cairo_text_path(cr, "hello \xe6\xbc\xa2\xe5\xad\x97");
     cairo_set_line_width(cr, 2);
     cairo_stroke(cr);
 }
