@@ -31,12 +31,12 @@ int is_overlay(area_t *r1, area_t *r2) {
     return _is_overlay(r1, r2);
 }
 
-void geo_init(geo_t *g, int n_pos, co_aix pos[][2]) {
+void area_init(area_t *area, int n_pos, co_aix pos[][2]) {
     co_aix min_x, max_x;
     co_aix min_y, max_y;
     co_aix x, y;
     int i;
-
+    
     min_x = max_x = pos[0][0];
     min_y = max_y = pos[0][1];
     for(i = 1; i < n_pos; i++) {
@@ -52,13 +52,16 @@ void geo_init(geo_t *g, int n_pos, co_aix pos[][2]) {
 	    max_y = y;
     }
 
+    area->x = min_x;
+    area->w = max_x - min_x;
+    area->y = min_y;
+    area->h = max_y - min_y;
+}
+
+void geo_init(geo_t *g, int n_pos, co_aix pos[][2]) {
     g->cur_area = g->areas;
     g->last_area = g->areas + 1;
-
-    g->cur_area->x = min_x;
-    g->cur_area->w = max_x - min_x;
-    g->cur_area->y = min_y;
-    g->cur_area->h = max_y - min_y;
+    area_init(g->cur_area, n_pos, pos);
 }
 
 void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,

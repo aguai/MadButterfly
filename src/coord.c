@@ -87,6 +87,8 @@ void coord_init(coord_t *co, coord_t *parent) {
     }
     co->matrix[0] = 1;
     co->matrix[4] = 1;
+    co->cur_area = &co->areas[0];
+    co->last_area = &co->areas[1];
 }
 
 void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y) {

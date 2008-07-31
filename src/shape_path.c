@@ -431,7 +431,7 @@ void sh_path_draw(shape_t *shape, cairo_t *cr) {
     cmd_len = path->cmd_len;
     cmds = path->dev_data;
     args = (co_aix *)(cmds + cmd_len);
-    x = y = 0;
+    x = y = x1 = y1 = x2 = y2 = 0;
     for(i = 0; i < cmd_len; i++) {
 	cmd = *cmds++;
 	switch(cmd) {

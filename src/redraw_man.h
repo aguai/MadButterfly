@@ -1,6 +1,7 @@
 #ifndef __REDRAW_MAN_H_
 #define __REDRAW_MAN_H_
 
+#include <cairo.h>
 #include "tools.h"
 #include "mb_types.h"
 
@@ -42,9 +43,11 @@ typedef struct _redraw_man {
     int max_dirty_areas;
     int n_dirty_areas;
     area_t **dirty_areas;
+
+    cairo_t *cr;
 } redraw_man_t;
 
-extern int redraw_man_init(redraw_man_t *rdman);
+extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr);
 extern void redraw_man_destroy(redraw_man_t *rdman);
 extern int rdman_find_overlaid_shapes(redraw_man_t *rdman,
 				      geo_t *geo,
@@ -54,6 +57,9 @@ extern int rdman_add_shape(redraw_man_t *rdman,
 extern int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape);
 extern coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent);
 extern int rdman_coord_free(redraw_man_t *rdman, coord_t *coord);
+extern int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord);
+extern int rdman_redraw_changed(redraw_man_t *rdman);
+extern int rdman_redraw_all(redraw_man_t *rdman);
 
 
 #endif /* __REDRAW_MAN_H_ */

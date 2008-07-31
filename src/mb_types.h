@@ -27,6 +27,7 @@ struct _geo {
 #define GEF_DIRTY 0x1
 
 extern int is_overlay(area_t *r1, area_t *r2);
+extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
 extern void geo_init(geo_t *g, int n_pos, co_aix pos[][2]);
 extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 			     int *n_overlays, geo_t **overlays);
@@ -55,6 +56,7 @@ typedef struct _coord {
     unsigned int order;
     unsigned int flags;
     area_t *cur_area, *last_area;
+    area_t areas[2];
 
     co_aix matrix[6];
     co_aix aggr_matrix[6];
