@@ -26,6 +26,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     rdman_add_shape(&rdman, (shape_t *)path, coord);
     sh_path_transform(path);
     sh_path_draw(path, cr);
+    sh_path_free(path);
 }
 
 void drawing(cairo_surface_t *surface, int w, int h) {

@@ -19,6 +19,7 @@ extern void elmpool_free(elmpool_t *pool);
     do {					\
 	(q).head = (q).tail = NULL;		\
     } while(0)
+#define STAILQ_CLEAN(q) STAILQ_INIT(q)
 #define STAILQ_HEAD(q) ((q).head)
 #define STAILQ_TAIL(q) ((q).tail)
 #define STAILQ_NEXT(type, field, elm) ((elm)->field)

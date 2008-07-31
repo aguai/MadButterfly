@@ -4,14 +4,44 @@
 #include "tools.h"
 #include "mb_types.h"
 
-/*! \brief Manage redrawing of shapes (graphic elements). */
+/*! \brief Manage redrawing of shapes (graphic elements).
+ *
+ * Every coord_t and geo_t object is assigned with a unique
+ * incremental order.  The order is a unsigned integer.
+ * Every time a new coord_t or geo_t object is added, it is
+ * assigned with a order number that 1 bigger than last one
+ * until reaching maximum of unsigned integer.
+ * When a maximum is meet, all coord_t or geo_t objects
+ * are reasigned with a new order number from 1.  It means
+ * order numbers that have been assigned and then removed
+ * later are recycled.
+ *
+ * Dirty flag is clear when the transformation matrix of a coord
+ * object been recomputed or when a geo_t objects been redrawed.
+ */
 typedef struct _redraw_man {
+    unsigned int next_geo_order;
     int n_geos;
     STAILQ(geo_t) all_geos;
+
+    unsigned int next_coord_order;
+    int n_coords;
     coord_t *root_coord;
+
     elmpool_t *geo_pool;
     elmpool_t *coord_pool;
-    unsigned int seq;
+
+    int max_dirty_coords;
+    int n_dirty_coords;
+    coord_t **dirty_coords;
+
+    int max_redrawing_geos;
+    int n_redrawing_geos;
+    geo_t **redrawing_geos;
+
+    int max_dirty_areas;
+    int n_dirty_areas;
+    area_t **dirty_areas;
 } redraw_man_t;
 
 extern int redraw_man_init(redraw_man_t *rdman);

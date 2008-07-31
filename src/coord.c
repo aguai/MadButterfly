@@ -102,7 +102,7 @@ void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y) {
     *y = ny;
 }
 
-coord_t *preorder_coord_tree(coord_t *last) {
+coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
     coord_t *next;
 
     ASSERT(last == NULL);
@@ -111,8 +111,10 @@ coord_t *preorder_coord_tree(coord_t *last) {
 	next = STAILQ_HEAD(last->children);
     else {
 	next = last;
-	while(next != NULL && STAILQ_NEXT(coord_t, sibling, next) == NULL)
+	while(next != root && STAILQ_NEXT(coord_t, sibling, next) == NULL)
 	    next = next->parent;
+	if(next == root)
+	    next = NULL;
 	if(next)
 	    next = STAILQ_NEXT(coord_t, sibling, next);
     }
@@ -193,7 +195,7 @@ void test_update_aggr_matrix(void) {
     CU_ASSERT(y == 99);
 }
 
-void test_preorder_coord_tree(void) {
+void test_preorder_coord_subtree(void) {
     coord_t elms[6];
     coord_t *last;
 
@@ -205,17 +207,17 @@ void test_preorder_coord_tree(void) {
     coord_init(elms + 5, elms + 2);
 
     last = elms;
-    last = preorder_coord_tree(last);
+    last = preorder_coord_subtree(elms, last);
     CU_ASSERT(last == elms + 1);
-    last = preorder_coord_tree(last);
+    last = preorder_coord_subtree(elms, last);
     CU_ASSERT(last == elms + 3);
-    last = preorder_coord_tree(last);
+    last = preorder_coord_subtree(elms, last);
     CU_ASSERT(last == elms + 4);
-    last = preorder_coord_tree(last);
+    last = preorder_coord_subtree(elms, last);
     CU_ASSERT(last == elms + 2);
-    last = preorder_coord_tree(last);
+    last = preorder_coord_subtree(elms, last);
     CU_ASSERT(last == elms + 5);
-    last = preorder_coord_tree(last);
+    last = preorder_coord_subtree(elms, last);
     CU_ASSERT(last == NULL);
 }
 
@@ -224,7 +226,7 @@ CU_pSuite get_coord_suite(void) {
 
     suite = CU_add_suite("Suite_coord", NULL, NULL);
     CU_ADD_TEST(suite, test_update_aggr_matrix);
-    CU_ADD_TEST(suite, test_preorder_coord_tree);
+    CU_ADD_TEST(suite, test_preorder_coord_subtree);
 
     return suite;
 }

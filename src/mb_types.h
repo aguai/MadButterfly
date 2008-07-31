@@ -6,6 +6,33 @@
 typedef float co_aix;
 typedef struct _shape shape_t;
 typedef struct _geo geo_t;
+typedef struct _area area_t;
+
+struct _area {
+    co_aix x, y;
+    co_aix w, h;
+};
+
+/*! \brief Geometry data of a shape or a group of shape.
+ */
+struct _geo {
+    unsigned int order;
+    unsigned int flags;
+    shape_t *shape;
+    geo_t *next;		/*!< \brief Link all geo objects. */
+
+    area_t *cur_area, *last_area;
+    area_t areas[2];
+};
+#define GEF_DIRTY 0x1
+
+extern int is_overlay(area_t *r1, area_t *r2);
+extern void geo_init(geo_t *g, int n_pos, co_aix pos[][2]);
+extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
+			     int *n_overlays, geo_t **overlays);
+#define geo_get_shape(g) ((g)->shape)
+#define geo_set_shape(g, sh) do {(g)->shape = sh;} while(0)
+
 
 /*! \brief A coordination system.
  *
@@ -25,19 +52,26 @@ typedef struct _geo geo_t;
  * \enddot
  */
 typedef struct _coord {
-    unsigned int seq;
+    unsigned int order;
+    unsigned int flags;
+    area_t *cur_area, *last_area;
+
     co_aix matrix[6];
     co_aix aggr_matrix[6];
+
     struct _coord *parent;
     STAILQ(struct _coord) children;
     struct _coord *sibling;
-    STAILQ(shape_t) members;	/*!< All shape objects in this coord. */
+
+    STAILQ(shape_t) members;	/*!< All shape_t objects in this coord. */
 } coord_t;
+#define COF_DIRTY 0x1
+#define COF_RECOMP 0x2
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
 extern void update_aggr_matrix(coord_t *start);
-extern coord_t *preorder_coord_tree(coord_t *last);
+extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
 
 
 /*! \brief A grahpic shape.
@@ -57,7 +91,6 @@ struct _shape {
     geo_t *geo;
     coord_t *coord;
     shape_t *coord_mem_next;
-    struct _shape *sibling;
 };
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT };
 
@@ -73,23 +106,5 @@ enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT };
     } while(0)
 extern void sh_attach_coord(shape_t *sh, coord_t *coord);
 extern void sh_detach_coord(shape_t *sh);
-
-
-/*! \brief Geometry data of a shape or a group of shape.
- */
-struct _geo {
-    shape_t *shape;
-    co_aix x, y;
-    co_aix w, h;
-    geo_t *next;		/*!< \brief Link geo_t objects. */
-    unsigned int seq;
-};
-
-extern int is_overlay(geo_t *r1, geo_t *r2);
-extern void geo_init(geo_t *g, int n_pos, co_aix pos[][2]);
-extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
-			     int *n_overlays, geo_t **overlays);
-#define geo_get_shape(g) ((g)->shape)
-#define geo_set_shape(g, sh) do {(g)->shape = sh;} while(0)
 
 #endif /* __MB_TYPES_H_ */

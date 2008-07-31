@@ -18,7 +18,7 @@ static int is_scale_overlay(co_aix x1, co_aix w1, co_aix x2, co_aix w2) {
     return 1;
 }
 
-static int _is_overlay(geo_t *r1, geo_t *r2) {
+static int _is_overlay(area_t *r1, area_t *r2) {
     if(!is_scale_overlay(r1->x, r1->w, r2->x, r2->w))
 	return 0;
     if(!is_scale_overlay(r1->y, r1->h, r2->y, r2->h))
@@ -27,7 +27,7 @@ static int _is_overlay(geo_t *r1, geo_t *r2) {
     return 1;
 }
 
-int is_overlay(geo_t *r1, geo_t *r2) {
+int is_overlay(area_t *r1, area_t *r2) {
     return _is_overlay(r1, r2);
 }
 
@@ -51,10 +51,14 @@ void geo_init(geo_t *g, int n_pos, co_aix pos[][2]) {
 	else if(y > max_y)
 	    max_y = y;
     }
-    g->x = min_x;
-    g->w = max_x - min_x;
-    g->y = min_y;
-    g->h = max_y - min_y;
+
+    g->cur_area = g->areas;
+    g->last_area = g->areas + 1;
+
+    g->cur_area->x = min_x;
+    g->cur_area->w = max_x - min_x;
+    g->cur_area->y = min_y;
+    g->cur_area->h = max_y - min_y;
 }
 
 void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
@@ -63,7 +67,7 @@ void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 
     ov_idx = 0;
     for(i = 0; i < n_others; i++) {
-	if(_is_overlay(g, others[i]))
+	if(_is_overlay(g->cur_area, others[i]->cur_area))
 	    overlays[ov_idx++] = others[i];
     }
     *n_overlays = ov_idx;
@@ -81,28 +85,31 @@ void test_geo_init(void) {
     geo_t g;
     
     geo_init(&g, 4, data);
-    CU_ASSERT(g.x == 14);
-    CU_ASSERT(g.w == 35);
-    CU_ASSERT(g.y == 12);
-    CU_ASSERT(g.h == 44);
+    CU_ASSERT(g.cur_area->x == 14);
+    CU_ASSERT(g.cur_area->w == 35);
+    CU_ASSERT(g.cur_area->y == 12);
+    CU_ASSERT(g.cur_area->h == 44);
 }
 
 void test_geo_mark_overlay(void) {
     geo_t _geos[3], *geos[3], *overlays[3];
     geo_t g;
+    co_aix pos[2][2];
     int i, n_ov;
 
     for(i = 0; i < 3; i++) {
-	_geos[i].x = i * 50;
-	_geos[i].y = i * 50;
-	_geos[i].w = 55;
-	_geos[i].h = 66;
+	pos[0][0] = i * 50;
+	pos[0][1] = i * 50;
+	pos[1][0] = i * 50 + 55;
+	pos[1][1] = i * 50 + 66;
+	geo_init(_geos + i, 2, pos);
 	geos[i] = _geos + i;
     }
-    g.x = 88;
-    g.y = 79;
-    g.w = 70;
-    g.h = 70;
+    pos[0][0] = 88;
+    pos[0][1] = 79;
+    pos[1][0] = 88 + 70;
+    pos[1][1] = 79 + 70;
+    geo_init(&g, 2, pos);
 
     /* overlay with geos[1] and geos[2] */
     geo_mark_overlay(&g, 3, geos, &n_ov, overlays);
@@ -111,10 +118,11 @@ void test_geo_mark_overlay(void) {
     CU_ASSERT(overlays[1] == geos[2]);
 
     /* right side of geos[1], and up side of geos[2] */
-    g.x = 105;
-    g.y = 50;
-    g.w = 50;
-    g.h = 51;
+    pos[0][0] = 105;
+    pos[0][1] = 50;
+    pos[1][0] = 105 + 50;
+    pos[1][1] = 50 + 51;
+    geo_init(&g, 2, pos);
     geo_mark_overlay(&g, 3, geos, &n_ov, overlays);
     CU_ASSERT(n_ov == 1);
     CU_ASSERT(overlays[0] == geos[2]);
