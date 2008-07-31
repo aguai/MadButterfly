@@ -41,8 +41,8 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->geo_pool);
     if(rdman->dirty_coords)
 	free(rdman->dirty_coords);
-    if(rdman->redrawing_geos)
-	free(rdman->redrawing_geos);
+    if(rdman->dirty_geos)
+	free(rdman->dirty_geos);
 }
 
 
@@ -215,20 +215,20 @@ static int extend_memblk(void **buf, int o_size, int n_size) {
 }
 
 static int add_dirty_geo(redraw_man_t *rdman, geo_t *geo) {
-    int max_redrawing_geos;
+    int max_dirty_geos;
     int r;
 
-    if(rdman->n_redrawing_geos >= rdman->max_redrawing_geos) {
-	max_redrawing_geos = rdman->n_geos + rdman->n_coords;
-	r = extend_memblk((void **)&rdman->redrawing_geos,
-			  sizeof(geo_t *) * rdman->n_redrawing_geos,
-			  sizeof(geo_t *) * max_redrawing_geos);
+    if(rdman->n_dirty_geos >= rdman->max_dirty_geos) {
+	max_dirty_geos = rdman->n_geos;
+	r = extend_memblk((void **)&rdman->dirty_geos,
+			  sizeof(geo_t *) * rdman->n_dirty_geos,
+			  sizeof(geo_t *) * max_dirty_geos);
 	if(r != OK)
 	    return ERR;
-	rdman->max_redrawing_geos = max_redrawing_geos;
+	rdman->max_dirty_geos = max_dirty_geos;
     }
 
-    rdman->redrawing_geos[rdman->n_redrawing_geos++] = geo;
+    rdman->dirty_geos[rdman->n_dirty_geos++] = geo;
     return OK;
 }
 
@@ -281,7 +281,7 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
 /*! \brief Mark a shape is changed.
  *
  * The geo_t object of a changed shape is mark as dirty and
- * put into redrawing_geos list.
+ * put into dirty_geos list.
  */
 int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
     geo_t *geo;
@@ -331,13 +331,17 @@ static void make_redrawing_members(redraw_man_t *rdman, coord_t *coord) {
     }
 }
 
-static void compute_coord_geo(coord_t *coord) {
+static void compute_coord_area(coord_t *coord) {
 }
 
-static void transform_shape(shape_t *shape) {
+static void update_shape_geo(shape_t *shape) {
 }
 
-static void draw_shape(shape_t *shape) {
+static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
+}
+
+static void clip_and_show(redraw_man_t *rdman, int n_dirty_areas,
+			  area_t **dirty_areas) {
 }
 
 /*! \brief Re-draw all changed shapes or shapes affected by changed coords.
@@ -356,26 +360,32 @@ static void draw_shape(shape_t *shape) {
  *
  * steps:
  * - update chagned coord objects
- * - recompute geo for changed coord objects
+ * - recompute area for changed coord objects
  *   - recompute geo for members shape objects
+ *   - clear dirty of geo for members to prevent from
+ *     recomputing for change of shape objects.
+ *   - add old and new area value to list of dirty areas.
  * - recompute geo for changed shape objects
- * - finding overlaid shape objects for recomputed geo objects.
- *   - overlaid shape objects is invoked by traveling tree of coord.
- *   - members of changed coord object are marked computed and dirty.
+ *   - only if a shape object is dirty.
+ *   - put new and old value of area of geo to list of dirty areas.
+ * - Scan all shapes and redraw shapes overlaid with dirty areas.
  *
- * assert(n_redrawing_geos <= (num_of(shape) + num_of(coord)))
+ * dirty flag of coord objects is cleared after update.
+ *
+ * assert(n_dirty_geos <= (num_of(shape) + num_of(coord)))
  * Because
  * - num_of(geo from coord) < num_of(coord)
  * - num_of(geo from shape) < num_of(shape)
  */
 int rdman_redraw_changed(redraw_man_t *rdman) {
-    int i, j;
+    int i;
     int n_dirty_coords;
     coord_t **dirty_coords;
     coord_t *visit_coord;
-    geo_t *visit_geo, **redrawing_geos;
-    int n_redrawing_geos;
+    geo_t *visit_geo, **dirty_geos;
+    int n_dirty_geos;
     int n_dirty_areas;
+    area_t **dirty_areas;
 
     if(rdman->n_dirty_coords > 0) {
 	_insert_sort((void **)rdman->dirty_coords,
@@ -395,10 +405,9 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 		/* Dirty member, here, and members of this coord
 		 * will not be visited anymore. */
 		visit_coord->flags &= ~COF_DIRTY;
-		visit_coord->flags |= COF_RECOMP;
 
 		SWAP(visit_coord->cur_area, visit_coord->last_area, area_t *);
-		compute_coord_geo(visit_coord);
+		compute_coord_area(visit_coord);
 		add_dirty_area(rdman, visit_coord->cur_area);
 		add_dirty_area(rdman, visit_coord->last_area);
 		make_redrawing_members(rdman, visit_coord);
@@ -407,29 +416,35 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	rdman->n_dirty_coords = 0;
     }
 
-    n_redrawing_geos = rdman->n_redrawing_geos;
-    if(n_redrawing_geos > 0) {
-	redrawing_geos = rdman->redrawing_geos;
-	for(i = 0; i < n_redrawing_geos; i++) {
-	    visit_geo = redrawing_geos[i];
+    n_dirty_geos = rdman->n_dirty_geos;
+    if(n_dirty_geos > 0) {
+	dirty_geos = rdman->dirty_geos;
+	for(i = 0; i < n_dirty_geos; i++) {
+	    visit_geo = dirty_geos[i];
 	    if(!(visit_geo->flags & GEF_DIRTY))
 		continue;
 
-	    SWAP(visit_geo->cur_area, visit_geo->last_area, area_t *);
-	    transform_shape(visit_geo->shape);
 	    visit_geo->flags &= ~GEF_DIRTY;
+	    SWAP(visit_geo->cur_area, visit_geo->last_area, area_t *);
+	    update_shape_geo(visit_geo->shape);
 	    add_dirty_area(rdman, visit_geo->cur_area);
 	    add_dirty_area(rdman, visit_geo->last_area);
 	}
 	
 	n_dirty_areas = rdman->n_dirty_areas;
+	dirty_areas = rdman->dirty_areas;
 	for(visit_geo = STAILQ_HEAD(rdman->all_geos);
 	    visit_geo != NULL;
 	    visit_geo = STAILQ_NEXT(geo_t, next, visit_geo)) {
-	    if(visit_geo->flags & GEF_DIRTY)
-		continue;
-	    
+	    for(i = 0; i < n_dirty_areas; i++) {
+		if(is_overlay(visit_geo->cur_area,
+			      dirty_areas[i])) {
+		    draw_shape(rdman, visit_geo->shape);
+		    break;
+		}
+	    }
 	}
+	clip_and_show(rdman, n_dirty_areas, dirty_areas);
     }
 
     return OK;

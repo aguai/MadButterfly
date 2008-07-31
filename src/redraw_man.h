@@ -35,9 +35,9 @@ typedef struct _redraw_man {
     int n_dirty_coords;
     coord_t **dirty_coords;
 
-    int max_redrawing_geos;
-    int n_redrawing_geos;
-    geo_t **redrawing_geos;
+    int max_dirty_geos;
+    int n_dirty_geos;
+    geo_t **dirty_geos;
 
     int max_dirty_areas;
     int n_dirty_areas;

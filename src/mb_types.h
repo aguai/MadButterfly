@@ -66,7 +66,6 @@ typedef struct _coord {
     STAILQ(shape_t) members;	/*!< All shape_t objects in this coord. */
 } coord_t;
 #define COF_DIRTY 0x1
-#define COF_RECOMP 0x2
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
