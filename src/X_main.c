@@ -9,24 +9,38 @@
 #include "shapes.h"
 #include "redraw_man.h"
 
+Display *display;
+
 void draw_path(cairo_t *cr, int w, int h) {
     redraw_man_t rdman;
     shape_t *path;
     coord_t *coord;
+    int i;
 
     redraw_man_init(&rdman, cr);
     coord = rdman.root_coord;
 
     path = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
-    coord->aggr_matrix[0] = 0.8;
-    coord->aggr_matrix[1] = 0;
-    coord->aggr_matrix[2] = 20;
-    coord->aggr_matrix[4] = 0.8;
-    coord->aggr_matrix[5] = 20;
+    coord->matrix[0] = 0.8;
+    coord->matrix[1] = 0;
+    coord->matrix[2] = 20;
+    coord->matrix[4] = 0.8;
+    coord->matrix[5] = 20;
     rdman_coord_changed(&rdman, coord);
     rdman_add_shape(&rdman, (shape_t *)path, coord);
 
     rdman_redraw_all(&rdman);
+
+    XFlush(display);
+
+    for(i = 0; i < 10; i++) {
+	usleep(50000);
+	coord->matrix[2] += 5;
+	coord->matrix[5] += 5;
+	rdman_coord_changed(&rdman, coord);
+	rdman_redraw_changed(&rdman);
+	XFlush(display);
+    }
 
     redraw_man_destroy(&rdman);
     sh_path_free(path);
@@ -50,7 +64,6 @@ void drawing(cairo_surface_t *surface, int w, int h) {
 
 int
 main(int argc, char * const argv[]) {
-    Display *display;
     Window root;
     Visual *visual;
     int screen;

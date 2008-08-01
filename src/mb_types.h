@@ -16,7 +16,9 @@ struct _area {
 /*! \brief Geometry data of a shape or a group of shape.
  */
 struct _geo {
+#ifdef GEO_ORDER
     unsigned int order;
+#endif
     unsigned int flags;
     shape_t *shape;
     geo_t *next;		/*!< \brief Link all geo objects. */
@@ -71,6 +73,7 @@ typedef struct _coord {
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
+extern void compute_aggr_of_coord(coord_t *coord);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
 

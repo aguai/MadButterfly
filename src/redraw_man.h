@@ -21,7 +21,9 @@
  * object been recomputed or when a geo_t objects been redrawed.
  */
 typedef struct _redraw_man {
+#ifdef GEO_ORDER
     unsigned int next_geo_order;
+#endif
     int n_geos;
     STAILQ(geo_t) all_geos;
 
@@ -58,6 +60,7 @@ extern int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape);
 extern coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent);
 extern int rdman_coord_free(redraw_man_t *rdman, coord_t *coord);
 extern int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord);
+extern int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape);
 extern int rdman_redraw_changed(redraw_man_t *rdman);
 extern int rdman_redraw_all(redraw_man_t *rdman);
 

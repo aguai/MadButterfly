@@ -37,6 +37,10 @@ static void compute_transform_function(coord_t *visit) {
 	memcpy(visit->aggr_matrix, visit->matrix, sizeof(visit->matrix));
 }
 
+void compute_aggr_of_coord(coord_t *coord) {
+    compute_transform_function(coord);
+}
+
 /*! \brief Update aggregate matrices of elements under a sub-tree.
  *
  * A subtree is specified by the root of it.  All elements in the subtree
