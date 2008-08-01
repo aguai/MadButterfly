@@ -53,14 +53,18 @@ void area_init(area_t *area, int n_pos, co_aix pos[][2]) {
     }
 
     area->x = min_x;
-    area->w = max_x - min_x;
+    area->w = max_x - min_x + 1;
     area->y = min_y;
-    area->h = max_y - min_y;
+    area->h = max_y - min_y + 1;
 }
 
-void geo_init(geo_t *g, int n_pos, co_aix pos[][2]) {
+void geo_init(geo_t *g) {
+    memset(g, 0, sizeof(geo_t));
     g->cur_area = g->areas;
     g->last_area = g->areas + 1;
+}
+
+void geo_from_positions(geo_t *g, int n_pos, co_aix pos[][2]) {
     area_init(g->cur_area, n_pos, pos);
 }
 
@@ -81,17 +85,18 @@ void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 
 #include <CUnit/Basic.h>
 
-void test_geo_init(void) {
+void test_geo_from_positions(void) {
     co_aix data[][2] = {
 	{33, 25}, {49, 12},
 	{14, 28}, {39, 56}};
     geo_t g;
     
-    geo_init(&g, 4, data);
+    geo_init(&g);
+    geo_from_positions(&g, 4, data);
     CU_ASSERT(g.cur_area->x == 14);
-    CU_ASSERT(g.cur_area->w == 35);
+    CU_ASSERT(g.cur_area->w == 36);
     CU_ASSERT(g.cur_area->y == 12);
-    CU_ASSERT(g.cur_area->h == 44);
+    CU_ASSERT(g.cur_area->h == 45);
 }
 
 void test_geo_mark_overlay(void) {
@@ -105,14 +110,16 @@ void test_geo_mark_overlay(void) {
 	pos[0][1] = i * 50;
 	pos[1][0] = i * 50 + 55;
 	pos[1][1] = i * 50 + 66;
-	geo_init(_geos + i, 2, pos);
+	geo_init(_geos + i);
+	geo_from_positions(_geos + i, 2, pos);
 	geos[i] = _geos + i;
     }
     pos[0][0] = 88;
     pos[0][1] = 79;
     pos[1][0] = 88 + 70;
     pos[1][1] = 79 + 70;
-    geo_init(&g, 2, pos);
+    geo_init(&g);
+    geo_from_positions(&g, 2, pos);
 
     /* overlay with geos[1] and geos[2] */
     geo_mark_overlay(&g, 3, geos, &n_ov, overlays);
@@ -121,11 +128,11 @@ void test_geo_mark_overlay(void) {
     CU_ASSERT(overlays[1] == geos[2]);
 
     /* right side of geos[1], and up side of geos[2] */
-    pos[0][0] = 105;
-    pos[0][1] = 50;
-    pos[1][0] = 105 + 50;
-    pos[1][1] = 50 + 51;
-    geo_init(&g, 2, pos);
+    pos[0][0] = 106;
+    pos[0][1] = 51;
+    pos[1][0] = 106 + 49;
+    pos[1][1] = 51 + 49;
+    geo_from_positions(&g, 2, pos);
     geo_mark_overlay(&g, 3, geos, &n_ov, overlays);
     CU_ASSERT(n_ov == 1);
     CU_ASSERT(overlays[0] == geos[2]);
@@ -135,7 +142,7 @@ CU_pSuite get_geo_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_geo", NULL, NULL);
-    CU_ADD_TEST(suite, test_geo_init);
+    CU_ADD_TEST(suite, test_geo_from_positions);
     CU_ADD_TEST(suite, test_geo_mark_overlay);
 
     return suite;

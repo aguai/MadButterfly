@@ -413,7 +413,7 @@ void sh_path_transform(shape_t *shape) {
 
     if(path->shape.geo) {
 	poses = (co_aix (*)[2])(path->dev_data + path->cmd_len);
-	geo_init(path->shape.geo, arg_len / 2, poses);
+	geo_from_positions(path->shape.geo, arg_len / 2, poses);
     }
 }
 

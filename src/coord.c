@@ -91,6 +91,8 @@ void coord_init(coord_t *co, coord_t *parent) {
     }
     co->matrix[0] = 1;
     co->matrix[4] = 1;
+    co->aggr_matrix[0] = 1;
+    co->aggr_matrix[4] = 1;
     co->cur_area = &co->areas[0];
     co->last_area = &co->areas[1];
 }

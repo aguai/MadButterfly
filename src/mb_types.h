@@ -30,7 +30,8 @@ struct _geo {
 
 extern int is_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
-extern void geo_init(geo_t *g, int n_pos, co_aix pos[][2]);
+extern void geo_init(geo_t *g);
+extern void geo_from_positions(geo_t *g, int n_pos, co_aix pos[][2]);
 extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 			     int *n_overlays, geo_t **overlays);
 #define geo_get_shape(g) ((g)->shape)
