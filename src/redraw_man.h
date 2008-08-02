@@ -79,7 +79,7 @@ extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 	}							\
 	shnode_free(rdman, __last);				\
     } while(0)
-#define rdman_paint_fill(rdman, paint, shape)		\
+#define _rdman_paint_child(rdman, paint, shape)		\
     do {						\
 	shnode_t *__node;				\
 	if((shape)->fill != (paint) &&			\
@@ -88,7 +88,16 @@ extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 	    STAILQ_INS_TAIL((paint)->members,		\
 			    shnode_t, next, __node);	\
 	}						\
+    } while(0)
+#define rdman_paint_fill(rdman, paint, shape)		\
+    do {						\
+	_rdman_paint_child(rdman, paint, shape);	\
 	shape->fill = paint;				\
+    } while(0)
+#define rdman_paint_stroke(rdman, paint, shape)		\
+    do {						\
+	_rdman_paint_child(rdman, paint, shape);	\
+	shape->stroke = paint;				\
     } while(0)
 extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
 

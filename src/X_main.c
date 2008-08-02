@@ -17,6 +17,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     shape_t *path1, *path2;
     coord_t *coord1, *coord2;
     paint_t *fill1, *fill2;
+    paint_t *stroke;
     int i;
 
     redraw_man_init(&rdman, cr);
@@ -25,8 +26,10 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     fill1 = paint_color_new(&rdman, 1, 1, 0, 0.5);
     fill2 = paint_color_new(&rdman, 0, 1, 1, 0.5);
+    stroke = paint_color_new(&rdman, 0.4, 0.4, 0.4, 1);
     path1 = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
     rdman_paint_fill(&rdman, fill1, path1);
+    rdman_paint_stroke(&rdman, stroke, path1);
     coord1->matrix[0] = 0.8;
     coord1->matrix[1] = 0;
     coord1->matrix[2] = 20;
@@ -34,6 +37,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     coord1->matrix[5] = 20;
     path2 = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
     rdman_paint_fill(&rdman, fill2, path2);
+    rdman_paint_stroke(&rdman, stroke, path2);
     coord2->matrix[0] = -0.8;
     coord2->matrix[1] = 0;
     coord2->matrix[2] = 180;

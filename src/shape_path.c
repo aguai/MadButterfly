@@ -417,7 +417,7 @@ void sh_path_transform(shape_t *shape) {
     }
 }
 
-void sh_path_fill(shape_t *shape, cairo_t *cr) {
+static void sh_path_path(shape_t *shape, cairo_t *cr) {
     sh_path_t *path;
     int cmd_len;
     char *cmds, cmd;
@@ -536,8 +536,16 @@ void sh_path_fill(shape_t *shape, cairo_t *cr) {
 	    break;
 	}
     }
+}
 
+void sh_path_fill(shape_t *shape, cairo_t *cr) {
+    sh_path_path(shape, cr);
     cairo_fill(cr);
+}
+
+void sh_path_stroke(shape_t *shape, cairo_t *cr) {
+    sh_path_path(shape, cr);
+    cairo_stroke(cr);
 }
 
 #ifdef UNITTEST
