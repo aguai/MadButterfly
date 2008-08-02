@@ -14,10 +14,11 @@ Display *display;
 
 void draw_path(cairo_t *cr, int w, int h) {
     redraw_man_t rdman;
-    shape_t *path1, *path2;
+    shape_t *path1, *path2, *path3;
     coord_t *coord1, *coord2;
-    paint_t *fill1, *fill2;
+    paint_t *fill1, *fill2, *fill3;
     paint_t *stroke;
+    grad_stop_t fill3_stops[3];
     int i;
 
     redraw_man_init(&rdman, cr);
@@ -47,6 +48,16 @@ void draw_path(cairo_t *cr, int w, int h) {
     rdman_coord_changed(&rdman, coord2);
     rdman_add_shape(&rdman, (shape_t *)path1, coord1);
     rdman_add_shape(&rdman, (shape_t *)path2, coord2);
+
+    
+    fill3 = paint_linear_new(&rdman, 50, 50, 150, 150);
+    grad_stop_init(fill3_stops, 0, 1, 0, 0, 0.5);
+    grad_stop_init(fill3_stops + 1, 0.5, 0, 1, 0, 0.5);
+    grad_stop_init(fill3_stops + 2, 1, 0, 0, 1, 0.5);
+    paint_linear_stops(fill3, 3, fill3_stops);
+    path3 = sh_path_new("M 50,50 L 50,150 L 150,150 L 150,50 z");
+    rdman_paint_fill(&rdman, fill3, path3);
+    rdman_add_shape(&rdman, (shape_t *)path3, rdman.root_coord);
 
     rdman_redraw_all(&rdman);
 

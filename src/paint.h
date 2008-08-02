@@ -21,4 +21,25 @@ extern void paint_color_set(paint_t *paint,
 	 STAILQ_INIT((_paint)->members);	\
      } while(0)					\
 
+
+typedef struct _grad_stop {
+    co_aix offset;
+    co_comp_t r, g, b, a;
+} grad_stop_t;
+
+extern paint_t *paint_linear_new(redraw_man_t *rdman,
+				 co_aix x1, co_aix y1, co_aix x2, co_aix y2);
+extern grad_stop_t *paint_linear_stops(paint_t *paint,
+				       int n_stops,
+				       grad_stop_t *stops);
+#define grad_stop_init(stop, _offset, _r, _g, _b, _a)	\
+    do {						\
+	(stop)->offset = _offset;			\
+	(stop)->r = _r;					\
+	(stop)->g = _g;					\
+	(stop)->b = _b;					\
+	(stop)->a = _a;					\
+    } while(0)
+
+
 #endif /* __PAINT_H_ */

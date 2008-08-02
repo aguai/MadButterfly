@@ -639,6 +639,7 @@ int rdman_redraw_all(redraw_man_t *rdman) {
 	    clean_shape(geo->shape);
 	draw_shape(rdman, geo->shape);
     }
+    rdman->n_dirty_geos = 0;
 
     return OK;
 }
