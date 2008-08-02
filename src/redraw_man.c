@@ -464,17 +464,18 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
     paint_t *fill;
 
     fill = shape->fill;
-    if(fill)
+    if(fill) {
 	fill->prepare(fill, rdman->cr);
-    switch(shape->sh_type) {
-    case SHT_PATH:
-	sh_path_draw(shape, rdman->cr);
-	break;
+	switch(shape->sh_type) {
+	case SHT_PATH:
+	    sh_path_draw(shape, rdman->cr);
+	    break;
 #ifdef UNITTEST
-    default:
-	sh_dummy_draw(shape, rdman->cr);
-	break;
+	default:
+	    sh_dummy_draw(shape, rdman->cr);
+	    break;
 #endif /* UNITTEST */
+	}
     }
 }
 
@@ -719,6 +720,7 @@ int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint) {
 #ifdef UNITTEST
 
 #include <CUnit/Basic.h>
+#include "paint.h"
 
 struct _sh_dummy {
     shape_t shape;
@@ -779,6 +781,26 @@ void sh_dummy_draw(shape_t *shape, cairo_t *cr) {
     dummy->draw_cnt++;
 }
 
+static void dummy_paint_prepare(paint_t *paint, cairo_t *cr) {
+}
+
+static void dummy_paint_free(paint_t *paint) {
+    if(paint)
+	free(paint);
+}
+
+paint_t *dummy_paint_new(redraw_man_t *rdman) {
+    paint_t *paint;
+
+    paint = (paint_t *)malloc(sizeof(paint_t));
+    if(paint == NULL)
+	return NULL;
+
+    paint_init(paint, dummy_paint_prepare, dummy_paint_free);
+
+    return paint;
+}
+
 void test_rdman_find_overlaid_shapes(void) {
     redraw_man_t rdman;
     geo_t geo;
@@ -834,6 +856,7 @@ void test_rdman_redraw_changed(void) {
     coord_t *coords[3];
     shape_t *shapes[3];
     sh_dummy_t **dummys;
+    paint_t *paint;
     redraw_man_t *rdman;
     redraw_man_t _rdman;
     int i;
@@ -842,8 +865,10 @@ void test_rdman_redraw_changed(void) {
 
     rdman = &_rdman;
     redraw_man_init(rdman, NULL);
+    paint = dummy_paint_new(rdman);
     for(i = 0; i < 3; i++) {
 	shapes[i] = sh_dummy_new(0, 0, 50, 50);
+	rdman_paint_fill(rdman, paint, shapes[i]);
 	coords[i] = rdman_coord_new(rdman, rdman->root_coord);
 	coords[i]->matrix[2] = 10 + i * 100;
 	coords[i]->matrix[5] = 10 + i * 100;
@@ -863,6 +888,9 @@ void test_rdman_redraw_changed(void) {
     CU_ASSERT(dummys[0]->draw_cnt == 1);
     CU_ASSERT(dummys[1]->draw_cnt == 2);
     CU_ASSERT(dummys[2]->draw_cnt == 2);
+
+    paint->free(paint);
+    redraw_man_destroy(rdman);
 }
 
 CU_pSuite get_redraw_man_suite(void) {

@@ -34,9 +34,7 @@ paint_t *paint_color_new(redraw_man_t *rdman,
     color->r = r;
     color->g = g;
     color->b = b;
-    color->paint.prepare = paint_color_prepare;
-    color->paint.free = paint_color_free;
-    STAILQ_INIT(color->paint.members);
+    paint_init(&color->paint, paint_color_prepare, paint_color_free);
     return (paint_t *)color;
 }
 
