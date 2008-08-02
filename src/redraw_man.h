@@ -48,9 +48,11 @@ typedef struct _redraw_man {
     area_t **dirty_areas;
 
     cairo_t *cr;
+    cairo_t *backend;
 } redraw_man_t;
 
-extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr);
+extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
+			   cairo_t *backend);
 extern void redraw_man_destroy(redraw_man_t *rdman);
 extern int rdman_find_overlaid_shapes(redraw_man_t *rdman,
 				      geo_t *geo,

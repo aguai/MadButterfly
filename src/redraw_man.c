@@ -181,7 +181,7 @@ static int clean_rdman_coords(redraw_man_t *rdman) {
     return OK;
 }
 
-int redraw_man_init(redraw_man_t *rdman, cairo_t *cr) {
+int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
 
     memset(rdman, 0, sizeof(redraw_man_t));
@@ -210,6 +210,7 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr) {
     coord_init(rdman->root_coord, NULL);
 
     rdman->cr = cr;
+    rdman->backend = backend;
 
     return OK;
 }
@@ -501,36 +502,48 @@ static void clean_clip(cairo_t *cr) {
     cairo_pattern_reference(pt);
     /* TODO: clean to background color. */
     cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_fill_preserve(cr);
+    cairo_paint(cr);
     cairo_set_source(cr, pt);
     cairo_pattern_destroy(pt);
 }
 
-static void make_clip(redraw_man_t *rdman, int n_dirty_areas,
+static void make_clip(cairo_t *cr, int n_dirty_areas,
 		      area_t **dirty_areas) {
     int i;
     area_t *area;
-    cairo_t *cr;
-
-    cr = rdman->cr;
 
     for(i = 0; i < n_dirty_areas; i++) {
 	area = dirty_areas[i];
 	cairo_rectangle(cr, area->x, area->y, area->w, area->h);
     }
-    clean_clip(cr);
     cairo_clip(cr);
 }
 
 static void reset_clip(redraw_man_t *rdman) {
     cairo_reset_clip(rdman->cr);
+    cairo_reset_clip(rdman->backend);
+}
+
+static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
+			      area_t **dirty_areas) {
+    if(n_dirty_areas)
+	make_clip(rdman->backend, n_dirty_areas, dirty_areas);
+    
+    cairo_paint(rdman->backend);
 }
 #else /* UNITTEST */
-static void make_clip(redraw_man_t *rdman, int n_dirty_areas,
+static void clean_clip(cairo_t *cr) {
+}
+
+static void make_clip(cairo_t *cr, int n_dirty_areas,
                       area_t **dirty_areas) {
 }
 
 static void reset_clip(redraw_man_t *rdman) {
+}
+
+static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
+			      area_t **dirty_areas) {
 }
 #endif /* UNITTEST */
 
@@ -553,6 +566,7 @@ static void draw_shapes_in_areas(redraw_man_t *rdman,
 	}
     }
 }
+
 
 /*! \brief Re-draw all changed shapes or shapes affected by changed coords.
  *
@@ -616,8 +630,10 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     n_dirty_areas = rdman->n_dirty_areas;
     dirty_areas = rdman->dirty_areas;
     if(n_dirty_areas > 0) {
-	make_clip(rdman, n_dirty_areas, dirty_areas);
+	make_clip(rdman->cr, n_dirty_areas, dirty_areas);
+	clean_clip(rdman->cr);
 	draw_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
+	copy_cr_2_backend(rdman, rdman->n_dirty_areas, rdman->dirty_areas);
 	rdman->n_dirty_areas = 0;
 	reset_clip(rdman);
     }
@@ -639,6 +655,7 @@ int rdman_redraw_all(redraw_man_t *rdman) {
 	    clean_shape(geo->shape);
 	draw_shape(rdman, geo->shape);
     }
+    copy_cr_2_backend(rdman, 0, NULL);
     rdman->n_dirty_geos = 0;
 
     return OK;
@@ -826,7 +843,7 @@ void test_rdman_find_overlaid_shapes(void) {
     int n;
     int i;
 
-    redraw_man_init(&rdman, NULL);
+    redraw_man_init(&rdman, NULL, NULL);
     coords[0] = rdman.root_coord;
     for(i = 1; i < 3; i++) {
 	coords[i] = rdman_coord_new(&rdman, rdman.root_coord);
@@ -879,7 +896,7 @@ void test_rdman_redraw_changed(void) {
     dummys = (sh_dummy_t **)shapes;
 
     rdman = &_rdman;
-    redraw_man_init(rdman, NULL);
+    redraw_man_init(rdman, NULL, NULL);
     paint = dummy_paint_new(rdman);
     for(i = 0; i < 3; i++) {
 	shapes[i] = sh_dummy_new(0, 0, 50, 50);

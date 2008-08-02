@@ -13,6 +13,8 @@
 Display *display;
 
 void draw_path(cairo_t *cr, int w, int h) {
+    cairo_t *tmpcr;
+    cairo_surface_t *tmpsuf;
     redraw_man_t rdman;
     shape_t *path1, *path2, *path3;
     coord_t *coord1, *coord2;
@@ -21,7 +23,10 @@ void draw_path(cairo_t *cr, int w, int h) {
     grad_stop_t fill3_stops[3];
     int i;
 
-    redraw_man_init(&rdman, cr);
+    tmpsuf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    tmpcr = cairo_create(tmpsuf);
+    cairo_set_source_surface(cr, tmpsuf, 0, 0);
+    redraw_man_init(&rdman, tmpcr, cr);
     coord1 = rdman_coord_new(&rdman, rdman.root_coord);
     coord2 = rdman_coord_new(&rdman, rdman.root_coord);
 
@@ -94,6 +99,8 @@ void draw_path(cairo_t *cr, int w, int h) {
     redraw_man_destroy(&rdman);
     sh_path_free(path1);
     sh_path_free(path2);
+    cairo_destroy(tmpcr);
+    cairo_surface_destroy(tmpsuf);
 }
 
 void drawing(cairo_surface_t *surface, int w, int h) {
