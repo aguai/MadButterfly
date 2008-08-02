@@ -23,8 +23,8 @@ void draw_path(cairo_t *cr, int w, int h) {
     coord1 = rdman_coord_new(&rdman, rdman.root_coord);
     coord2 = rdman_coord_new(&rdman, rdman.root_coord);
 
-    fill1 = paint_color_new(&rdman, 1, 1, 0);
-    fill2 = paint_color_new(&rdman, 0, 1, 1);
+    fill1 = paint_color_new(&rdman, 1, 1, 0, 0.5);
+    fill2 = paint_color_new(&rdman, 0, 1, 1, 0.5);
     path1 = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
     rdman_paint_fill(&rdman, fill1, path1);
     coord1->matrix[0] = 0.8;
@@ -54,8 +54,8 @@ void draw_path(cairo_t *cr, int w, int h) {
 	coord1->matrix[5] += 1;
 	coord2->matrix[2] -= 1;
 	coord2->matrix[5] += 1;
-	paint_color_set(fill1, 1, 1, (i/25) & 0x1);
-	paint_color_set(fill2, (i/25) & 0x1, 1, 1);
+	paint_color_set(fill1, 1, 1, (i/25) & 0x1, 0.5);
+	paint_color_set(fill2, (i/25) & 0x1, 1, 1, 0.5);
 	rdman_paint_changed(&rdman, fill1);
 	rdman_paint_changed(&rdman, fill2);
 	rdman_coord_changed(&rdman, coord1);
@@ -66,8 +66,8 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     for(i = 0; i < 5; i++) {
 	usleep(500000);
-	paint_color_set(fill1, 1, i % 2, 0);
-	paint_color_set(fill2, 0, i % 2, 1);
+	paint_color_set(fill1, 1, i % 2, 0, 0.5);
+	paint_color_set(fill2, 0, i % 2, 1, 0.5);
 	rdman_paint_changed(&rdman, fill1);
 	rdman_paint_changed(&rdman, fill2);
 	rdman_redraw_changed(&rdman);

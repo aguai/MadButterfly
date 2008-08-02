@@ -9,9 +9,11 @@
 typedef float co_comp_t;
 
 extern paint_t *paint_color_new(redraw_man_t *rdman,
-				co_comp_t r, co_comp_t g, co_comp_t b);
+				co_comp_t r, co_comp_t g,
+				co_comp_t b, co_comp_t a);
 extern void paint_color_set(paint_t *paint,
-			    co_comp_t r, co_comp_t g, co_comp_t b);
+			    co_comp_t r, co_comp_t g,
+			    co_comp_t b, co_comp_t a);
 #define paint_init(_paint, _prepare, _free)	\
      do {					\
 	 (_paint)->prepare = _prepare;		\
