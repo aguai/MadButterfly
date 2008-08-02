@@ -36,7 +36,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     rdman_paint_fill(&rdman, fill2, path2);
     coord2->matrix[0] = -0.8;
     coord2->matrix[1] = 0;
-    coord2->matrix[2] = 220;
+    coord2->matrix[2] = 180;
     coord2->matrix[4] = 0.8;
     coord2->matrix[5] = 20;
     rdman_coord_changed(&rdman, coord1);

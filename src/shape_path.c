@@ -417,7 +417,7 @@ void sh_path_transform(shape_t *shape) {
     }
 }
 
-void sh_path_draw(shape_t *shape, cairo_t *cr) {
+void sh_path_fill(shape_t *shape, cairo_t *cr) {
     sh_path_t *path;
     int cmd_len;
     char *cmds, cmd;

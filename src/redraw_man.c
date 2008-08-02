@@ -17,7 +17,7 @@
 typedef struct _sh_dummy sh_dummy_t;
 
 extern void sh_dummy_transform(shape_t *shape);
-extern void sh_dummy_draw(shape_t *, cairo_t *);
+extern void sh_dummy_fill(shape_t *, cairo_t *);
 #endif /* UNITTEST */
 
 /*! \brief Sort a list of element by a unsigned integer.
@@ -460,7 +460,7 @@ int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
  * ============================================================
  */
 
-static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
+static void fill_shape(redraw_man_t *rdman, shape_t *shape) {
     paint_t *fill;
 
     fill = shape->fill;
@@ -468,11 +468,11 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 	fill->prepare(fill, rdman->cr);
 	switch(shape->sh_type) {
 	case SHT_PATH:
-	    sh_path_draw(shape, rdman->cr);
+	    sh_path_fill(shape, rdman->cr);
 	    break;
 #ifdef UNITTEST
 	default:
-	    sh_dummy_draw(shape, rdman->cr);
+	    sh_dummy_fill(shape, rdman->cr);
 	    break;
 #endif /* UNITTEST */
 	}
@@ -520,7 +520,7 @@ static void reset_clip(redraw_man_t *rdman) {
 }
 #endif /* UNITTEST */
 
-static void draw_shapes_in_areas(redraw_man_t *rdman,
+static void fill_shapes_in_areas(redraw_man_t *rdman,
 				 int n_areas,
 				 area_t **areas) {
     geo_t *visit_geo;
@@ -533,7 +533,7 @@ static void draw_shapes_in_areas(redraw_man_t *rdman,
 	    clean_shape(visit_geo->shape);
 	for(i = 0; i < n_areas; i++) {
 	    if(is_overlay(visit_geo->cur_area, areas[i])) {
-		draw_shape(rdman, visit_geo->shape);
+		fill_shape(rdman, visit_geo->shape);
 		break;
 	    }
 	}
@@ -603,7 +603,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     dirty_areas = rdman->dirty_areas;
     if(n_dirty_areas > 0) {
 	make_clip(rdman, n_dirty_areas, dirty_areas);
-	draw_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
+	fill_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
 	rdman->n_dirty_areas = 0;
 	reset_clip(rdman);
     }
@@ -623,7 +623,7 @@ int rdman_redraw_all(redraw_man_t *rdman) {
 	geo = STAILQ_NEXT(geo_t, next, geo)) {
 	if(geo->flags & GEF_DIRTY)
 	    clean_shape(geo->shape);
-	draw_shape(rdman, geo->shape);
+	fill_shape(rdman, geo->shape);
     }
 
     return OK;
@@ -774,7 +774,7 @@ void sh_dummy_transform(shape_t *shape) {
     }
 }
 
-void sh_dummy_draw(shape_t *shape, cairo_t *cr) {
+void sh_dummy_fill(shape_t *shape, cairo_t *cr) {
     sh_dummy_t *dummy;
 
     dummy = (sh_dummy_t *)shape;
