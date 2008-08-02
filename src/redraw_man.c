@@ -495,7 +495,7 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 }
 
 #ifndef UNITTEST
-static void clean_clip(cairo_t *cr) {
+static void clean_canvas(cairo_t *cr) {
     cairo_pattern_t *pt;
 
     pt = cairo_get_source(cr);
@@ -532,7 +532,7 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
     cairo_paint(rdman->backend);
 }
 #else /* UNITTEST */
-static void clean_clip(cairo_t *cr) {
+static void clean_canvas(cairo_t *cr) {
 }
 
 static void make_clip(cairo_t *cr, int n_dirty_areas,
@@ -630,8 +630,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     n_dirty_areas = rdman->n_dirty_areas;
     dirty_areas = rdman->dirty_areas;
     if(n_dirty_areas > 0) {
-	make_clip(rdman->cr, n_dirty_areas, dirty_areas);
-	clean_clip(rdman->cr);
+	clean_canvas(rdman->cr);
 	draw_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
 	copy_cr_2_backend(rdman, rdman->n_dirty_areas, rdman->dirty_areas);
 	rdman->n_dirty_areas = 0;
