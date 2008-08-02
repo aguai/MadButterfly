@@ -196,6 +196,13 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr) {
 	return ERR;
     }
 
+    rdman->shnode_pool = elmpool_new(sizeof(shnode_t), 16);
+    if(rdman->shnode_pool == NULL) {
+	elmpool_free(rdman->geo_pool);
+	elmpool_free(rdman->coord_pool);
+	return ERR;
+    }
+
     rdman->root_coord = elmpool_elm_alloc(rdman->coord_pool);
     if(rdman->root_coord == NULL)
 	redraw_man_destroy(rdman);
@@ -210,6 +217,7 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr) {
 void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->coord_pool);
     elmpool_free(rdman->geo_pool);
+    elmpool_free(rdman->shnode_pool);
     if(rdman->dirty_coords)
 	free(rdman->dirty_coords);
     if(rdman->dirty_geos)
@@ -422,12 +430,7 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
     return OK;
 }
 
-/*! \brief Mark a shape is changed.
- *
- * The geo_t object of a changed shape is mark as dirty and
- * put into dirty_geos list.
- */
-int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
+static int _rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
     geo_t *geo;
     int r;
 
@@ -444,11 +447,25 @@ int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
     return OK;
 }
 
+/*! \brief Mark a shape is changed.
+ *
+ * The geo_t object of a changed shape is mark as dirty and
+ * put into dirty_geos list.
+ */
+int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
+    return _rdman_shape_changed(rdman, shape);
+}
+
 /* Drawing and Redrawing
  * ============================================================
  */
 
 static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
+    paint_t *fill;
+
+    fill = shape->fill;
+    if(fill)
+	fill->prepare(fill, rdman->cr);
     switch(shape->sh_type) {
     case SHT_PATH:
 	sh_path_draw(shape, rdman->cr);
@@ -608,6 +625,31 @@ int rdman_redraw_all(redraw_man_t *rdman) {
 	draw_shape(rdman, geo->shape);
     }
 
+    return OK;
+}
+
+shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape) {
+    shnode_t *node;
+
+    node = (shnode_t *)elmpool_elm_alloc(rdman->shnode_pool);
+    if(node) {
+	node->shape = shape;
+	node->next = NULL;
+    }
+    return node;
+}
+
+int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint) {
+    shnode_t *node;
+    int r;
+
+    for(node = STAILQ_HEAD(paint->members);
+	node != NULL;
+	node = STAILQ_NEXT(shnode_t, next, node)) {
+	r = _rdman_shape_changed(rdman, node->shape);
+	if(r != OK)
+	    return ERR;
+    }
     return OK;
 }
 

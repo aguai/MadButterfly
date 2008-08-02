@@ -8,6 +8,7 @@
 #include <string.h>
 #include "shapes.h"
 #include "redraw_man.h"
+#include "paint.h"
 
 Display *display;
 
@@ -15,12 +16,15 @@ void draw_path(cairo_t *cr, int w, int h) {
     redraw_man_t rdman;
     shape_t *path;
     coord_t *coord;
+    paint_t *fill;
     int i;
 
     redraw_man_init(&rdman, cr);
     coord = rdman.root_coord;
 
+    fill = paint_color_new(&rdman, 1, 1, 0);
     path = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
+    rdman_paint_fill(&rdman, fill, path);
     coord->matrix[0] = 0.8;
     coord->matrix[1] = 0;
     coord->matrix[2] = 20;
@@ -33,15 +37,25 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     XFlush(display);
 
-    for(i = 0; i < 10; i++) {
-	usleep(50000);
-	coord->matrix[2] += 5;
-	coord->matrix[5] += 5;
+    for(i = 0; i < 50; i++) {
+	usleep(20000);
+	coord->matrix[2] += 1;
+	coord->matrix[5] += 1;
+	paint_color_set(fill, 1, 1, (i/25) & 0x1);
 	rdman_coord_changed(&rdman, coord);
 	rdman_redraw_changed(&rdman);
 	XFlush(display);
     }
 
+    for(i = 0; i < 5; i++) {
+	usleep(500000);
+	paint_color_set(fill, 1, i % 2, 0);
+	rdman_paint_changed(&rdman, fill);
+	rdman_redraw_changed(&rdman);
+	XFlush(display);
+    }
+
+    fill->free(fill);
     redraw_man_destroy(&rdman);
     sh_path_free(path);
 }

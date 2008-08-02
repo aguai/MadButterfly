@@ -1,12 +1,26 @@
 #ifndef __MB_TYPES_H_
 #define __MB_TYPES_H_
 
+#include <cairo.h>
 #include "tools.h"
 
 typedef float co_aix;
 typedef struct _shape shape_t;
 typedef struct _geo geo_t;
 typedef struct _area area_t;
+typedef struct _shnode shnode_t;
+typedef struct _paint paint_t;
+
+struct _paint {
+    void (*prepare)(paint_t *paint, cairo_t *cr);
+    void (*free)(paint_t *paint);
+    STAILQ(shnode_t) members;
+};
+
+struct _shnode {
+    shape_t *shape;
+    shnode_t *next;
+};
 
 struct _area {
     co_aix x, y;
@@ -96,6 +110,7 @@ struct _shape {
     geo_t *geo;
     coord_t *coord;
     shape_t *coord_mem_next;
+    paint_t *fill, *stroke;
 };
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT };
 

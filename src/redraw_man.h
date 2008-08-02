@@ -33,6 +33,7 @@ typedef struct _redraw_man {
 
     elmpool_t *geo_pool;
     elmpool_t *coord_pool;
+    elmpool_t *shnode_pool;
 
     int max_dirty_coords;
     int n_dirty_coords;
@@ -63,6 +64,33 @@ extern int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord);
 extern int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape);
 extern int rdman_redraw_changed(redraw_man_t *rdman);
 extern int rdman_redraw_all(redraw_man_t *rdman);
+extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
+#define shnode_free(rdman, node) elmpool_elm_free((rdman)->shnode_pool, node)
+#define shnode_list_free(rdman, q)				\
+    do {							\
+	shnode_t *__node, *__last;				\
+	__last = STAILQ_HEAD(q);				\
+	if(__last == NULL) break;				\
+	for(__node = STAILQ_NEXT(shnode_t, next, __last);	\
+	    __node != NULL;					\
+	    __node = STAILQ_NEXT(shnode_t, next, __node)) {	\
+	    shnode_free(rdman, __last);				\
+	    __last = __node;					\
+	}							\
+	shnode_free(rdman, __last);				\
+    } while(0)
+#define rdman_paint_fill(rdman, paint, shape)		\
+    do {						\
+	shnode_t *__node;				\
+	if((shape)->fill != (paint) &&			\
+	   (shape)->stroke != (paint)) {		\
+	    __node = shnode_new(rdman, shape);		\
+	    STAILQ_INS_TAIL((paint)->members,		\
+			    shnode_t, next, __node);	\
+	}						\
+	shape->fill = paint;				\
+    } while(0)
+extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
 
 
 #endif /* __REDRAW_MAN_H_ */

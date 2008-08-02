@@ -5,6 +5,7 @@
  * figures out components that should be re-drawed.
  */
 #include <stdio.h>
+#include <string.h>
 #include "mb_types.h"
 
 static int is_scale_overlay(co_aix x1, co_aix w1, co_aix x2, co_aix w2) {
