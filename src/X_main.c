@@ -70,6 +70,8 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     for(i = 0; i < 50; i++) {
 	usleep(20000);
+	path1->stroke_width = i / 10;
+	path2->stroke_width = i / 10;
 	coord1->matrix[2] += 1;
 	coord1->matrix[5] += 1;
 	coord2->matrix[2] -= 1;
@@ -90,6 +92,25 @@ void draw_path(cairo_t *cr, int w, int h) {
 	paint_color_set(fill2, 0, i % 2, 1, 0.5);
 	rdman_paint_changed(&rdman, fill1);
 	rdman_paint_changed(&rdman, fill2);
+	rdman_redraw_changed(&rdman);
+	XFlush(display);
+    }
+
+    for(i = 0; i < 4; i++) {
+	usleep(500000);
+	path1->stroke_width -= 1;
+	path2->stroke_width -= 1;
+	rdman_shape_changed(&rdman, path1);
+	rdman_shape_changed(&rdman, path2);
+	rdman_redraw_changed(&rdman);
+	XFlush(display);
+    }
+    for(i = 0; i < 4; i++) {
+	usleep(500000);
+	path1->stroke_width += 1;
+	path2->stroke_width += 1;
+	rdman_shape_changed(&rdman, path1);
+	rdman_shape_changed(&rdman, path2);
 	rdman_redraw_changed(&rdman);
 	XFlush(display);
     }

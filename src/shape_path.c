@@ -394,6 +394,7 @@ void sh_path_transform(shape_t *shape) {
     sh_path_t *path;
     co_aix *user_args, *dev_args;
     co_aix (*poses)[2];
+    area_t *area;
     int arg_len;
     int i;
 
@@ -414,6 +415,11 @@ void sh_path_transform(shape_t *shape) {
     if(path->shape.geo) {
 	poses = (co_aix (*)[2])(path->dev_data + path->cmd_len);
 	geo_from_positions(path->shape.geo, arg_len / 2, poses);
+	area = shape->geo->cur_area;
+	area->x -= shape->stroke_width/2 + 1;
+	area->y -= shape->stroke_width/2 + 1;
+	area->w += shape->stroke_width + 2;
+	area->h += shape->stroke_width + 2;
     }
 }
 

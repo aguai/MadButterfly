@@ -111,6 +111,9 @@ struct _shape {
     coord_t *coord;
     shape_t *coord_mem_next;
     paint_t *fill, *stroke;
+    co_aix stroke_width;
+    int stroke_linecap;
+    int stroke_linejoin;
 };
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT };
 

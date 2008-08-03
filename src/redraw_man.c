@@ -7,6 +7,9 @@
 #include "tools.h"
 #include "redraw_man.h"
 
+/* NOTE: bounding box should also consider width of stroke.
+ */
+
 #define OK 0
 #define ERR -1
 
@@ -461,6 +464,15 @@ int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
  * ============================================================
  */
 
+#ifndef UNITTEST
+static void set_shape_stroke_param(shape_t *shape, cairo_t *cr) {
+    cairo_set_line_width(cr, shape->stroke_width);
+}
+#else
+static void set_shape_stroke_param(shape_t *shape, cairo_t *cr) {
+}
+#endif
+
 static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
     paint_t *fill, *stroke;
 
@@ -481,6 +493,7 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
     stroke = shape->stroke;
     if(stroke) {
 	stroke->prepare(stroke, rdman->cr);
+	set_shape_stroke_param(shape, rdman->cr);
 	switch(shape->sh_type) {
 	case SHT_PATH:
 	    sh_path_stroke(shape, rdman->cr);
@@ -496,15 +509,9 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 
 #ifndef UNITTEST
 static void clean_canvas(cairo_t *cr) {
-    cairo_pattern_t *pt;
-
-    pt = cairo_get_source(cr);
-    cairo_pattern_reference(pt);
     /* TODO: clean to background color. */
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_paint(cr);
-    cairo_set_source(cr, pt);
-    cairo_pattern_destroy(pt);
 }
 
 static void make_clip(cairo_t *cr, int n_dirty_areas,
