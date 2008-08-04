@@ -93,98 +93,11 @@ static int add_dirty_area(redraw_man_t *rdman, area_t *area) {
     return OK;
 }
 
-static void clean_shape(shape_t *shape) {
-    switch(shape->sh_type) {
-    case SHT_PATH:
-	sh_path_transform(shape);
-	break;
-    case SHT_TEXT:
-	sh_text_transform(shape);
-	break;
-#ifdef UNITTEST
-    default:
-	sh_dummy_transform(shape);
-	break;
-#endif /* UNITTEST */
-    }
-    shape->geo->flags &= ~GEF_DIRTY;
-}
-
 static void area_to_positions(area_t *area, co_aix (*poses)[2]) {
     poses[0][0] = area->x;
     poses[0][1] = area->y;
     poses[1][0] = area->x + area->w;
     poses[1][1] = area->y + area->h;;
-}
-
-static int clean_coord(coord_t *coord) {
-    shape_t *shape;
-    geo_t *geo;
-    co_aix (*poses)[2];
-    int cnt, pos_cnt;
-
-    compute_aggr_of_coord(coord);
-
-    /* Clean member shapes. */
-    cnt = 0;
-    for(shape = STAILQ_HEAD(coord->members);
-	shape != NULL;
-	shape = STAILQ_NEXT(shape_t, coord_mem_next, shape)) {
-	geo = shape->geo;
-	SWAP(geo->cur_area, geo->last_area, area_t *);
-	clean_shape(shape);
-	cnt++;
-    }
-
-    /* Compute area of the coord. */
-    poses = (co_aix (*)[2])malloc(sizeof(co_aix [2]) * 2 * cnt);
-    if(poses == NULL)
-	return ERR;
-
-    pos_cnt = 0;
-    for(shape = STAILQ_HEAD(coord->members);
-	shape != NULL;
-	shape = STAILQ_NEXT(shape_t, coord_mem_next, shape)) {
-	geo = shape->geo;
-	
-	area_to_positions(geo->cur_area, poses + pos_cnt);
-	pos_cnt += 2;
-    }
-
-    SWAP(coord->cur_area, coord->last_area, area_t *);
-    area_init(coord->cur_area, pos_cnt, poses);
-    free(poses);
-    
-    coord->flags &= ~COF_DIRTY;
-
-    return OK;
-}
-
-static int clean_rdman_coords(redraw_man_t *rdman) {
-    coord_t *coord;
-    coord_t **dirty_coords;
-    int n_dirty_coords;
-    int i, r;
-
-    n_dirty_coords = rdman->n_dirty_coords;
-    if(n_dirty_coords > 0) {
-	dirty_coords = rdman->dirty_coords;
-	_insert_sort((void **)dirty_coords, n_dirty_coords,
-		     OFFSET(coord_t, order));
-	for(i = 0; i < n_dirty_coords; i++) {
-	    coord = dirty_coords[i];
-	    if(!(coord->flags & COF_DIRTY))
-		continue;
-	    r = clean_coord(coord);
-	    if(r != OK)
-		return ERR;
-	    /* These two steps can be avoided for drawing all. */
-	    add_dirty_area(rdman, &coord->areas[0]);
-	    add_dirty_area(rdman, &coord->areas[1]);
-	}
-	rdman->n_dirty_coords = 0;
-    }
-    return OK;
 }
 
 int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
@@ -463,6 +376,120 @@ int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
     return _rdman_shape_changed(rdman, shape);
 }
 
+/* Clean dirties */
+
+static void clean_shape(shape_t *shape) {
+    switch(shape->sh_type) {
+    case SHT_PATH:
+	sh_path_transform(shape);
+	break;
+    case SHT_TEXT:
+	sh_text_transform(shape);
+	break;
+#ifdef UNITTEST
+    default:
+	sh_dummy_transform(shape);
+	break;
+#endif /* UNITTEST */
+    }
+    shape->geo->flags &= ~GEF_DIRTY;
+}
+
+static int clean_coord(coord_t *coord) {
+    shape_t *shape;
+    geo_t *geo;
+    co_aix (*poses)[2];
+    int cnt, pos_cnt;
+
+    compute_aggr_of_coord(coord);
+
+    /* Clean member shapes. */
+    cnt = 0;
+    for(shape = STAILQ_HEAD(coord->members);
+	shape != NULL;
+	shape = STAILQ_NEXT(shape_t, coord_mem_next, shape)) {
+	geo = shape->geo;
+	SWAP(geo->cur_area, geo->last_area, area_t *);
+	clean_shape(shape);
+	cnt++;
+    }
+
+    /* Compute area of the coord. */
+    poses = (co_aix (*)[2])malloc(sizeof(co_aix [2]) * 2 * cnt);
+    if(poses == NULL)
+	return ERR;
+
+    pos_cnt = 0;
+    for(shape = STAILQ_HEAD(coord->members);
+	shape != NULL;
+	shape = STAILQ_NEXT(shape_t, coord_mem_next, shape)) {
+	geo = shape->geo;
+	
+	area_to_positions(geo->cur_area, poses + pos_cnt);
+	pos_cnt += 2;
+    }
+
+    SWAP(coord->cur_area, coord->last_area, area_t *);
+    area_init(coord->cur_area, pos_cnt, poses);
+    free(poses);
+    
+    coord->flags &= ~COF_DIRTY;
+
+    return OK;
+}
+
+static int clean_rdman_coords(redraw_man_t *rdman) {
+    coord_t *coord;
+    coord_t **dirty_coords;
+    int n_dirty_coords;
+    int i, r;
+
+    n_dirty_coords = rdman->n_dirty_coords;
+    if(n_dirty_coords > 0) {
+	dirty_coords = rdman->dirty_coords;
+	_insert_sort((void **)dirty_coords, n_dirty_coords,
+		     OFFSET(coord_t, order));
+	for(i = 0; i < n_dirty_coords; i++) {
+	    coord = dirty_coords[i];
+	    if(!(coord->flags & COF_DIRTY))
+		continue;
+	    r = clean_coord(coord);
+	    if(r != OK)
+		return ERR;
+	    /* These two steps can be avoided for drawing all. */
+	    add_dirty_area(rdman, &coord->areas[0]);
+	    add_dirty_area(rdman, &coord->areas[1]);
+	}
+	rdman->n_dirty_coords = 0;
+    }
+    return OK;
+}
+
+static int clean_rdman_geos(redraw_man_t *rdman) {
+    int i;
+    int n_dirty_geos;
+    geo_t **dirty_geos;
+    geo_t *visit_geo;
+
+    n_dirty_geos = rdman->n_dirty_geos;
+    if(n_dirty_geos > 0) {
+	dirty_geos = rdman->dirty_geos;
+	for(i = 0; i < n_dirty_geos; i++) {
+	    visit_geo = dirty_geos[i];
+	    if(!(visit_geo->flags & GEF_DIRTY))
+		continue;
+
+	    SWAP(visit_geo->cur_area, visit_geo->last_area, area_t *);
+	    clean_shape(visit_geo->shape);
+	    add_dirty_area(rdman, visit_geo->cur_area);
+	    add_dirty_area(rdman, visit_geo->last_area);
+	}
+	rdman->n_dirty_geos = 0;
+    }    
+
+    return OK;
+}
+
 /* Drawing and Redrawing
  * ============================================================
  */
@@ -551,10 +578,6 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 static void clean_canvas(cairo_t *cr) {
 }
 
-static void make_clip(cairo_t *cr, int n_dirty_areas,
-                      area_t **dirty_areas) {
-}
-
 static void reset_clip(redraw_man_t *rdman) {
 }
 
@@ -617,9 +640,7 @@ static void draw_shapes_in_areas(redraw_man_t *rdman,
  *
  */
 int rdman_redraw_changed(redraw_man_t *rdman) {
-    int i, r;
-    geo_t *visit_geo, **dirty_geos;
-    int n_dirty_geos;
+    int r;
     int n_dirty_areas;
     area_t **dirty_areas;
 
@@ -627,22 +648,10 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
 
-    n_dirty_geos = rdman->n_dirty_geos;
-    if(n_dirty_geos > 0) {
-	dirty_geos = rdman->dirty_geos;
-	for(i = 0; i < n_dirty_geos; i++) {
-	    visit_geo = dirty_geos[i];
-	    if(!(visit_geo->flags & GEF_DIRTY))
-		continue;
-
-	    SWAP(visit_geo->cur_area, visit_geo->last_area, area_t *);
-	    clean_shape(visit_geo->shape);
-	    add_dirty_area(rdman, visit_geo->cur_area);
-	    add_dirty_area(rdman, visit_geo->last_area);
-	}
-	rdman->n_dirty_geos = 0;
-    }
-	
+    r = clean_rdman_geos(rdman);
+    if(r != OK)
+	return ERR;
+    
     n_dirty_areas = rdman->n_dirty_areas;
     dirty_areas = rdman->dirty_areas;
     if(n_dirty_areas > 0) {
