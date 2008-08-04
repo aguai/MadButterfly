@@ -98,6 +98,9 @@ static void clean_shape(shape_t *shape) {
     case SHT_PATH:
 	sh_path_transform(shape);
 	break;
+    case SHT_TEXT:
+	sh_text_transform(shape);
+	break;
 #ifdef UNITTEST
     default:
 	sh_dummy_transform(shape);
@@ -483,6 +486,9 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 	case SHT_PATH:
 	    sh_path_fill(shape, rdman->cr);
 	    break;
+	case SHT_TEXT:
+	    sh_text_fill(shape, rdman->cr);
+	    break;
 #ifdef UNITTEST
 	default:
 	    sh_dummy_fill(shape, rdman->cr);
@@ -497,6 +503,9 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 	switch(shape->sh_type) {
 	case SHT_PATH:
 	    sh_path_stroke(shape, rdman->cr);
+	    break;
+	case SHT_TEXT:
+	    sh_text_stroke(shape, rdman->cr);
 	    break;
 #ifdef UNITTEST
 	default:
