@@ -376,6 +376,20 @@ int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
     return _rdman_shape_changed(rdman, shape);
 }
 
+int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint) {
+    shnode_t *node;
+    int r;
+
+    for(node = STAILQ_HEAD(paint->members);
+	node != NULL;
+	node = STAILQ_NEXT(shnode_t, next, node)) {
+	r = _rdman_shape_changed(rdman, node->shape);
+	if(r != OK)
+	    return ERR;
+    }
+    return OK;
+}
+
 /* Clean dirties */
 
 static void clean_shape(shape_t *shape) {
@@ -489,6 +503,21 @@ static int clean_rdman_geos(redraw_man_t *rdman) {
 
     return OK;
 }
+
+static int clean_rdman_dirties(redraw_man_t *rdman) {
+    int r;
+
+    r = clean_rdman_coords(rdman);
+    if(r != OK)
+	return ERR;
+
+    r = clean_rdman_geos(rdman);
+    if(r != OK)
+	return ERR;
+
+    return OK;
+}
+
 
 /* Drawing and Redrawing
  * ============================================================
@@ -644,14 +673,10 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     int n_dirty_areas;
     area_t **dirty_areas;
 
-    r = clean_rdman_coords(rdman);
+    r = clean_rdman_dirties(rdman);
     if(r != OK)
 	return ERR;
 
-    r = clean_rdman_geos(rdman);
-    if(r != OK)
-	return ERR;
-    
     n_dirty_areas = rdman->n_dirty_areas;
     dirty_areas = rdman->dirty_areas;
     if(n_dirty_areas > 0) {
@@ -668,19 +693,19 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 
 int rdman_redraw_all(redraw_man_t *rdman) {
     geo_t *geo;
+    int r;
 
-    clean_rdman_coords(rdman);
-    rdman->n_dirty_areas = 0;
+    r = clean_rdman_dirties(rdman);
+    if(r != OK)
+	return ERR;
 
     for(geo = STAILQ_HEAD(rdman->all_geos);
 	geo != NULL;
 	geo = STAILQ_NEXT(geo_t, next, geo)) {
-	if(geo->flags & GEF_DIRTY)
-	    clean_shape(geo->shape);
 	draw_shape(rdman, geo->shape);
     }
     copy_cr_2_backend(rdman, 0, NULL);
-    rdman->n_dirty_geos = 0;
+    rdman->n_dirty_areas = 0;
 
     return OK;
 }
@@ -694,20 +719,6 @@ shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape) {
 	node->next = NULL;
     }
     return node;
-}
-
-int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint) {
-    shnode_t *node;
-    int r;
-
-    for(node = STAILQ_HEAD(paint->members);
-	node != NULL;
-	node = STAILQ_NEXT(shnode_t, next, node)) {
-	r = _rdman_shape_changed(rdman, node->shape);
-	if(r != OK)
-	    return ERR;
-    }
-    return OK;
 }
 
 /*
