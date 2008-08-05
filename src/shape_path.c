@@ -464,10 +464,10 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	case 'c':
 	    x1 = x + *args++;
 	    y1 = y + *args++;
-	    x2 = x1 + *args++;
-	    y2 = y1 + *args++;
-	    x = x2 + *args++;
-	    y = y2 + *args++;
+	    x2 = x + *args++;
+	    y2 = y + *args++;
+	    x = x + *args++;
+	    y = y + *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'C':
@@ -482,10 +482,10 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	case 's':
 	    x1 = x + x - x2;
 	    y1 = y + y - y2;
-	    x2 = x1 + *args++;
-	    y2 = y1 + *args++;
-	    x = x2 + *args++;
-	    y = y2 + *args++;
+	    x2 = x + *args++;
+	    y2 = y + *args++;
+	    x = x + *args++;
+	    y = y + *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'S':
@@ -502,8 +502,8 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y1 = y + *args++;
 	    x2 = x1;
 	    y2 = y1;
-	    x = x2 + *args++;
-	    y = y2 + *args++;
+	    x = x + *args++;
+	    y = y + *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'Q':
@@ -520,8 +520,8 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y1 = y + y - y2;
 	    x2 = x1;
 	    y2 = y1;
-	    x = x2 + *args++;
-	    y = y2 + *args++;
+	    x = x + *args++;
+	    y = y + *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'T':
