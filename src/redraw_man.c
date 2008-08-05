@@ -528,23 +528,42 @@ static int clean_rdman_dirties(redraw_man_t *rdman) {
 static void set_shape_stroke_param(shape_t *shape, cairo_t *cr) {
     cairo_set_line_width(cr, shape->stroke_width);
 }
+
+static void fill_path_preserve(redraw_man_t *rdman) {
+    cairo_fill_preserve(rdman->cr);
+}
+
+static void fill_path(redraw_man_t *rdman) {
+    cairo_fill(rdman->cr);
+}
+
+static void stroke_path(redraw_man_t *rdman) {
+    cairo_stroke(rdman->cr);
+}
 #else
 static void set_shape_stroke_param(shape_t *shape, cairo_t *cr) {
+}
+
+static void fill_path_preserve(redraw_man_t *rdman) {
+}
+
+static void fill_path(redraw_man_t *rdman) {
+}
+
+static void stroke_path(redraw_man_t *rdman) {
 }
 #endif
 
 static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
     paint_t *fill, *stroke;
 
-    fill = shape->fill;
-    if(fill) {
-	fill->prepare(fill, rdman->cr);
+    if(shape->fill || shape->stroke) {
 	switch(shape->sh_type) {
 	case SHT_PATH:
-	    sh_path_fill(shape, rdman->cr);
+	    sh_path_draw(shape, rdman->cr);
 	    break;
 	case SHT_TEXT:
-	    sh_text_fill(shape, rdman->cr);
+	    sh_text_draw(shape, rdman->cr);
 	    break;
 #ifdef UNITTEST
 	default:
@@ -552,23 +571,21 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 	    break;
 #endif /* UNITTEST */
 	}
-    }
-    stroke = shape->stroke;
-    if(stroke) {
-	stroke->prepare(stroke, rdman->cr);
-	set_shape_stroke_param(shape, rdman->cr);
-	switch(shape->sh_type) {
-	case SHT_PATH:
-	    sh_path_stroke(shape, rdman->cr);
-	    break;
-	case SHT_TEXT:
-	    sh_text_stroke(shape, rdman->cr);
-	    break;
-#ifdef UNITTEST
-	default:
-	    /* sh_dummy_fill(shape, rdman->cr); */
-	    break;
-#endif /* UNITTEST */
+
+	fill = shape->fill;
+	if(shape->fill) {
+	    fill->prepare(fill, rdman->cr);
+	    if(shape->stroke)
+		fill_path_preserve(rdman);
+	    else
+		fill_path(rdman);
+	}
+
+	stroke = shape->stroke;
+	if(stroke) {
+	    stroke->prepare(stroke, rdman->cr);
+	    set_shape_stroke_param(shape, rdman->cr);
+	    stroke_path(rdman);
 	}
     }
 }

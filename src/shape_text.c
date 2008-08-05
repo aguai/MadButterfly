@@ -137,17 +137,3 @@ void sh_text_draw(shape_t *shape, cairo_t *cr) {
     draw_text((sh_text_t *)shape, cr);
 }
 
-void sh_text_fill(shape_t *shape, cairo_t *cr) {
-    sh_text_t *text = (sh_text_t *)shape;
-
-    draw_text(text, cr);
-    cairo_fill(cr);
-}
-
-
-void sh_text_stroke(shape_t *shape, cairo_t *cr) {
-    sh_text_t *text = (sh_text_t *)shape;
-
-    draw_text(text, cr);
-    cairo_stroke(cr);
-}

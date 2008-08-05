@@ -548,16 +548,6 @@ void sh_path_draw(shape_t *shape, cairo_t *cr) {
     sh_path_path(shape, cr);
 }
 
-void sh_path_fill(shape_t *shape, cairo_t *cr) {
-    sh_path_path(shape, cr);
-    cairo_fill(cr);
-}
-
-void sh_path_stroke(shape_t *shape, cairo_t *cr) {
-    sh_path_path(shape, cr);
-    cairo_stroke(cr);
-}
-
 #ifdef UNITTEST
 
 #include <CUnit/Basic.h>

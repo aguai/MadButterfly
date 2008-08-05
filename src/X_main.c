@@ -16,7 +16,7 @@ Window win;
 void hint_shape(redraw_man_t *rdman, shape_t *shape) {
     static shape_t *last_shape = NULL;
     if(last_shape != shape) {
-	if(last_shape != NULL && last_shape != NULL) {
+	if(last_shape != NULL && last_shape->stroke != NULL) {
 	    last_shape->stroke_width -= 2;
 	    rdman_shape_changed(rdman, last_shape);
 	}
