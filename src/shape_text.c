@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <cairo.h>
 #include "mb_types.h"
 #include "shapes.h"
@@ -14,6 +15,7 @@ typedef struct _sh_text {
     co_aix x, y;
     co_aix d_x, d_y;		/* device x and y */
     co_aix font_size;
+    co_aix d_font_size;
     cairo_font_face_t *face;
     cairo_scaled_font_t *scaled_font;
     int flags;
@@ -66,8 +68,8 @@ static int get_extents(sh_text_t *text, cairo_text_extents_t *extents) {
 	if(fopt == NULL)
 	    return ERR;
 	memset(&fmatrix, 0, sizeof(cairo_matrix_t));
-	fmatrix.xx = text->font_size;
-	fmatrix.yy = text->font_size;
+	fmatrix.xx = text->d_font_size;
+	fmatrix.yy = text->d_font_size;
 	memset(&ctm, 0, sizeof(cairo_matrix_t));
 	ctm.xx = 1;
 	ctm.yy = 1;
@@ -99,6 +101,9 @@ void sh_text_transform(shape_t *shape) {
     int r;
 
     text = (sh_text_t *)shape;
+
+    text->d_font_size = coord_trans_size(shape->coord, text->font_size);
+
     x = text->x;
     y = text->y;
     coord_trans_pos(shape->coord, &x, &y);

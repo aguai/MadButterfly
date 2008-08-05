@@ -143,7 +143,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     }
 
     for(i = 0; i < 5; i++) {
-	usleep(500000);
+	usleep(100000);
 	paint_color_set(fill1, 1, i % 2, 0, 0.5);
 	paint_color_set(fill2, 0, i % 2, 1, 0.5);
 	rdman_paint_changed(&rdman, fill1);
@@ -153,7 +153,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     }
 
     for(i = 0; i < 4; i++) {
-	usleep(500000);
+	usleep(100000);
 	path1->stroke_width -= 1;
 	path2->stroke_width -= 1;
 	rdman_shape_changed(&rdman, path1);
@@ -162,7 +162,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 	XFlush(display);
     }
     for(i = 0; i < 4; i++) {
-	usleep(500000);
+	usleep(100000);
 	path1->stroke_width += 1;
 	path2->stroke_width += 1;
 	rdman_shape_changed(&rdman, path1);
@@ -172,7 +172,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     }
 
     for(i = 0; i < 4; i++) {
-	usleep(500000);
+	usleep(100000);
 	text->stroke_width += 1;
 	rdman_shape_changed(&rdman, text);
 	coord3->matrix[2] += 5;
@@ -181,7 +181,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 	XFlush(display);
     }
     for(i = 0; i < 4; i++) {
-	usleep(500000);
+	usleep(100000);
 	text->stroke_width -= 1;
 	rdman_shape_changed(&rdman, text);
 	coord3->matrix[2] -= 5;
@@ -191,7 +191,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     }
 
     for(i = 0; i < 4; i++) {
-	usleep(500000);
+	usleep(100000);
 	text->stroke_width += 1;
 	rdman_shape_changed(&rdman, text);
 	coord3->matrix[5] += 5;
@@ -200,7 +200,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 	XFlush(display);
     }
     for(i = 0; i < 4; i++) {
-	usleep(500000);
+	usleep(100000);
 	text->stroke_width -= 1;
 	rdman_shape_changed(&rdman, text);
 	coord3->matrix[5] -= 5;

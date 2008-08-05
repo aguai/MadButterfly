@@ -92,6 +92,7 @@ typedef struct _coord {
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
+extern co_aix coord_trans_size(coord_t *co, co_aix size);
 extern void compute_aggr_of_coord(coord_t *coord);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);

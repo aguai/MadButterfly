@@ -4,6 +4,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "mb_types.h"
 
 
@@ -108,6 +109,15 @@ void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y) {
 	     co->aggr_matrix[5]);
     *x = nx;
     *y = ny;
+}
+
+co_aix coord_trans_size(coord_t *co, co_aix sz) {
+    co_aix x, y;
+
+    x = MUL(co->aggr_matrix[0], sz);
+    y = MUL(co->aggr_matrix[3], sz);
+
+    return sqrt(x * x + y * y);
 }
 
 coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
