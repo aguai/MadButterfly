@@ -52,8 +52,8 @@ extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 #define geo_set_shape(g, sh) do {(g)->shape = sh;} while(0)
 #define _geo_is_in(a, s, w) ((a) >= (s) && (a) < ((s) + (w)))
 #define geo_pos_is_in(g, _x, _y)				\
-    (_geo_is_in(_x, (g)->cur_area.x, (g)->cur_area.w) &&	\
-     _geo_is_in(_y, (g)->cur_area.y, (g)->cur_area.h))
+    (_geo_is_in(_x, (g)->cur_area->x, (g)->cur_area->w) &&	\
+     _geo_is_in(_y, (g)->cur_area->y, (g)->cur_area->h))
 
 
 /*! \brief A coordination system.

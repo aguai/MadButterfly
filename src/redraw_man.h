@@ -47,6 +47,10 @@ typedef struct _redraw_man {
     int n_dirty_areas;
     area_t **dirty_areas;
 
+    int max_gen_geos;
+    int n_gen_geos;
+    geo_t **gen_geos;		/* general geo list */
+
     cairo_t *cr;
     cairo_t *backend;
 } redraw_man_t;
@@ -66,6 +70,7 @@ extern int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord);
 extern int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape);
 extern int rdman_redraw_changed(redraw_man_t *rdman);
 extern int rdman_redraw_all(redraw_man_t *rdman);
+extern int rdman_force_clean(redraw_man_t *rdman);
 extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 #define shnode_free(rdman, node) elmpool_elm_free((rdman)->shnode_pool, node)
 #define shnode_list_free(rdman, q)				\
@@ -102,6 +107,9 @@ extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 	shape->stroke = paint;				\
     } while(0)
 extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
+
+extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
+				  co_aix x, co_aix y, int *in_stroke);
 
 
 #endif /* __REDRAW_MAN_H_ */

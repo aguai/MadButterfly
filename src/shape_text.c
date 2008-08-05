@@ -128,6 +128,10 @@ static void draw_text(sh_text_t *text, cairo_t *cr) {
 }
 
 
+void sh_text_draw(shape_t *shape, cairo_t *cr) {
+    draw_text((sh_text_t *)shape, cr);
+}
+
 void sh_text_fill(shape_t *shape, cairo_t *cr) {
     sh_text_t *text = (sh_text_t *)shape;
 

@@ -50,8 +50,7 @@ static int extend_memblk(void **buf, int o_size, int n_size) {
     if(new_buf == NULL)
 	return ERR;
 
-    if(new_buf != *buf)
-	*buf = new_buf;
+    *buf = new_buf;
 
     return OK;
 }
@@ -142,6 +141,8 @@ void redraw_man_destroy(redraw_man_t *rdman) {
 	free(rdman->dirty_coords);
     if(rdman->dirty_geos)
 	free(rdman->dirty_geos);
+    if(rdman->gen_geos)
+	free(rdman->gen_geos);
 }
 
 
@@ -708,6 +709,14 @@ int rdman_redraw_all(redraw_man_t *rdman) {
     rdman->n_dirty_areas = 0;
 
     return OK;
+}
+
+int rdman_force_clean(redraw_man_t *rdman) {
+    int r;
+
+    r = clean_rdman_dirties(rdman);
+
+    return r;
 }
 
 shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape) {

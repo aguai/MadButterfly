@@ -11,6 +11,47 @@
 #include "paint.h"
 
 Display *display;
+Window win;
+
+void hint_shape(redraw_man_t *rdman, shape_t *shape) {
+    static shape_t *last_shape = NULL;
+    if(last_shape != shape) {
+	if(last_shape != NULL && last_shape != NULL) {
+	    last_shape->stroke_width -= 2;
+	    rdman_shape_changed(rdman, last_shape);
+	}
+	if(shape != NULL && shape->stroke != NULL) {
+	    shape->stroke_width += 2;
+	    rdman_shape_changed(rdman, shape);
+	    rdman_redraw_changed(rdman);
+	    XFlush(display);
+	}
+    }
+    last_shape = shape;
+}
+
+void event_interaction(Display *display,
+		       redraw_man_t *rdman, int w, int h) {
+    XEvent evt;
+    XMotionEvent *mevt;
+    int r;
+    co_aix x, y;
+    shape_t *shape = NULL;
+    int in_stroke;
+
+    XSelectInput(display, win, PointerMotionMask);
+    while((r = XNextEvent(display, &evt)) == 0) {
+	switch(evt.type) {
+	case MotionNotify:
+	    mevt = (XMotionEvent *)&evt;
+	    x = mevt->x;
+	    y = mevt->y;
+	    shape = find_shape_at_pos(rdman, x, y, &in_stroke);
+	    hint_shape(rdman, shape);
+	    break;
+	}
+    }
+}
 
 void draw_path(cairo_t *cr, int w, int h) {
     cairo_t *tmpcr;
@@ -168,6 +209,8 @@ void draw_path(cairo_t *cr, int w, int h) {
 	XFlush(display);
     }
 
+    event_interaction(display, &rdman, w, h);
+
     fill1->free(fill1);
     fill2->free(fill2);
     stroke->free(stroke);
@@ -196,7 +239,6 @@ main(int argc, char * const argv[]) {
     Visual *visual;
     int screen;
     XSetWindowAttributes wattr;
-    Window win;
     int depth;
     cairo_surface_t *surface;
     int w, h;

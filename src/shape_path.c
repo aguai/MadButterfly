@@ -544,6 +544,10 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
     }
 }
 
+void sh_path_draw(shape_t *shape, cairo_t *cr) {
+    sh_path_path(shape, cr);
+}
+
 void sh_path_fill(shape_t *shape, cairo_t *cr) {
     sh_path_path(shape, cr);
     cairo_fill(cr);
