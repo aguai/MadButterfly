@@ -98,17 +98,18 @@ static geo_t *find_pos_in_geo(redraw_man_t *rdman,
 	if(shape->fill) {
 	    if(cairo_in_fill(cr, x, y)) {
 		*in_stroke = 0;
-		cairo_new_path(cr);
+		cairo_new_path(rdman->cr);
 		return geo;
 	    }
 	}
 	if(shape->stroke) {
 	    if(cairo_in_stroke(cr, x, y)) {
 		*in_stroke = 1;
-		cairo_new_path(cr);
+		cairo_new_path(rdman->cr);
 		return geo;
 	    }
 	}
+	cairo_new_path(rdman->cr);
     }
 
     return NULL;

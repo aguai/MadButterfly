@@ -24,7 +24,6 @@ void hint_shape(redraw_man_t *rdman, shape_t *shape) {
 	    shape->stroke_width += 2;
 	    rdman_shape_changed(rdman, shape);
 	    rdman_redraw_changed(rdman);
-	    XFlush(display);
 	}
     }
     last_shape = shape;
