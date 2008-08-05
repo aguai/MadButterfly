@@ -401,6 +401,9 @@ static void clean_shape(shape_t *shape) {
     case SHT_TEXT:
 	sh_text_transform(shape);
 	break;
+    case SHT_RECT:
+	sh_rect_transform(shape);
+	break;
 #ifdef UNITTEST
     default:
 	sh_dummy_transform(shape);
@@ -564,6 +567,9 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 	    break;
 	case SHT_TEXT:
 	    sh_text_draw(shape, rdman->cr);
+	    break;
+	case SHT_RECT:
+	    sh_rect_draw(shape, rdman->cr);
 	    break;
 #ifdef UNITTEST
 	default:

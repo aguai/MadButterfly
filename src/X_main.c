@@ -56,7 +56,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     cairo_t *tmpcr;
     cairo_surface_t *tmpsuf;
     redraw_man_t rdman;
-    shape_t *path1, *path2, *path3;
+    shape_t *path1, *path2, *rect;
     coord_t *coord1, *coord2, *coord3;
     paint_t *fill1, *fill2, *fill3;
     paint_t *stroke, *text_stroke;
@@ -115,9 +115,9 @@ void draw_path(cairo_t *cr, int w, int h) {
     grad_stop_init(fill3_stops + 1, 0.5, 0, 1, 0, 0.5);
     grad_stop_init(fill3_stops + 2, 1, 0, 0, 1, 0.5);
     paint_linear_stops(fill3, 3, fill3_stops);
-    path3 = sh_path_new("M 50,50 L 50,150 L 150,150 L 150,50 z");
-    rdman_paint_fill(&rdman, fill3, path3);
-    rdman_add_shape(&rdman, (shape_t *)path3, rdman.root_coord);
+    rect = sh_rect_new(50, 50, 100, 100, 20, 20);
+    rdman_paint_fill(&rdman, fill3, rect);
+    rdman_add_shape(&rdman, (shape_t *)rect, rdman.root_coord);
 
     rdman_redraw_all(&rdman);
 
@@ -217,6 +217,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     redraw_man_destroy(&rdman);
     sh_path_free(path1);
     sh_path_free(path2);
+    sh_rect_free(rect);
     sh_text_free(text);
     cairo_destroy(tmpcr);
     cairo_surface_destroy(tmpsuf);

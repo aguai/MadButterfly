@@ -78,6 +78,9 @@ static void draw_shape_path(shape_t *shape, cairo_t *cr) {
     case SHT_TEXT:
 	sh_text_draw(shape, cr);
 	break;
+    case SHT_RECT:
+	sh_rect_draw(shape, cr);
+	break;
     }
 }
 

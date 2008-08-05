@@ -120,7 +120,7 @@ struct _shape {
     int stroke_linecap;
     int stroke_linejoin;
 };
-enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT };
+enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
 
 #define sh_attach_geo(sh, g)			\
     do {					\
