@@ -54,38 +54,54 @@ void sh_rect_transform(shape_t *shape) {
 
     poses = rect->poses;
 
-    poses[0][0] = x + w - rx;
-    poses[0][1] = y;
-    poses[1][0] = x + w;
-    poses[1][1] = y;
-    poses[2][0] = x + w;
-    poses[2][1] = y + ry;
+    if(rect->rx != 0 && rect->ry != 0) {
+	poses[0][0] = x + w - rx;
+	poses[0][1] = y;
+	poses[1][0] = x + w;
+	poses[1][1] = y;
+	poses[2][0] = x + w;
+	poses[2][1] = y + ry;
+	
+	poses[3][0] = x + w;
+	poses[3][1] = y + h - ry;
+	poses[4][0] = x + w;
+	poses[4][1] = y + h;
+	poses[5][0] = x + w - rx;
+	poses[5][1] = y + h;
+	
+	poses[6][0] = x + rx;
+	poses[6][1] = y + h;
+	poses[7][0] = x;
+	poses[7][1] = y + h;
+	poses[8][0] = x;
+	poses[8][1] = y + h - ry;
+	
+	poses[9][0] = x;
+	poses[9][1] = y + ry;
+	poses[10][0] = x;
+	poses[10][1] = y;
+	poses[11][0] = x + rx;
+	poses[11][1] = y;
 
-    poses[3][0] = x + w;
-    poses[3][1] = y + h - ry;
-    poses[4][0] = x + w;
-    poses[4][1] = y + h;
-    poses[5][0] = x + w - rx;
-    poses[5][1] = y + h;
+	for(i = 0; i < 12; i++)
+	    coord_trans_pos(shape->coord, &poses[i][0], &poses[i][1]);
 
-    poses[6][0] = x + rx;
-    poses[6][1] = y + h;
-    poses[7][0] = x;
-    poses[7][1] = y + h;
-    poses[8][0] = x;
-    poses[8][1] = y + h - ry;
+	geo_from_positions(shape->geo, 12, poses);
+    } else {
+	poses[0][0] = x;
+	poses[0][1] = y;
+	poses[1][0] = x + w;
+	poses[1][1] = y;
+	poses[2][0] = x + w;
+	poses[2][1] = y + h;
+	poses[3][0] = x;
+	poses[3][1] = y + h;
 
-    poses[9][0] = x;
-    poses[9][1] = y + ry;
-    poses[10][0] = x;
-    poses[10][1] = y;
-    poses[11][0] = x + rx;
-    poses[11][1] = y;
+	for(i = 0; i < 4; i++)
+	    coord_trans_pos(shape->coord, &poses[i][0], &poses[i][1]);
 
-    for(i = 0; i < 12; i++)
-	coord_trans_pos(shape->coord, &poses[i][0], &poses[i][1]);
-
-    geo_from_positions(shape->geo, 12, poses);
+	geo_from_positions(shape->geo, 4, poses);
+    }
 
     if(shape->stroke) {
 	area = shape->geo->cur_area;
@@ -103,13 +119,18 @@ void sh_rect_draw(shape_t *shape, cairo_t *cr) {
     co_aix (*poses)[2];
 
     poses = rect->poses;
-    cairo_move_to(cr, poses[11][0], poses[11][1]);
-    for(i = 0; i < 12; i += 3) {
-	cairo_line_to(cr, poses[i][0], poses[i][1]);
-	cairo_curve_to(cr,
-		       poses[i + 1][0], poses[i + 1][1],
-		       poses[i + 1][0], poses[i + 1][1],
-		       poses[i + 2][0], poses[i + 2][1]);
+    if(rect->rx != 0 && rect->ry != 0) {
+	cairo_move_to(cr, poses[11][0], poses[11][1]);
+	for(i = 0; i < 12; i += 3) {
+	    cairo_line_to(cr, poses[i][0], poses[i][1]);
+	    cairo_curve_to(cr,
+			   poses[i + 1][0], poses[i + 1][1],
+			   poses[i + 1][0], poses[i + 1][1],
+			   poses[i + 2][0], poses[i + 2][1]);
+	}
+    } else {
+	cairo_move_to(cr, poses[3][0], poses[3][1]);
+	for(i = 0; i < 4; i++)
+	    cairo_line_to(cr, poses[i][0], poses[i][1]);
     }
-    cairo_close_path(cr);
 }
