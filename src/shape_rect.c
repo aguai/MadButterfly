@@ -37,6 +37,18 @@ void sh_rect_free(shape_t *shape) {
     free(shape);
 }
 
+void sh_rect_set(shape_t *shape, co_aix x, co_aix y,
+		 co_aix w, co_aix h, co_aix rx, co_aix ry) {
+    sh_rect_t *rect = (sh_rect_t *)shape;
+
+    rect->x = x;
+    rect->y = y;
+    rect->w = w;
+    rect->h = h;
+    rect->rx = rx;
+    rect->ry = ry;
+}
+
 void sh_rect_transform(shape_t *shape) {
     sh_rect_t *rect = (sh_rect_t *)shape;
     co_aix x, y, w, h, rx, ry;

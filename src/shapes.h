@@ -37,5 +37,7 @@ extern shape_t *sh_rect_new(co_aix x, co_aix y, co_aix w, co_aix h,
 extern void sh_rect_free(shape_t *shape);
 extern void sh_rect_transform(shape_t *shape);
 extern void sh_rect_draw(shape_t *shape, cairo_t *cr);
+extern void sh_rect_set(shape_t *shape, co_aix x, co_aix y,
+			co_aix w, co_aix h, co_aix rx, co_aix ry);
 
 #endif /* __SHAPES_H_ */
