@@ -70,6 +70,8 @@ extern int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord);
 extern int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape);
 extern int rdman_redraw_changed(redraw_man_t *rdman);
 extern int rdman_redraw_all(redraw_man_t *rdman);
+extern int rdman_redraw_area(redraw_man_t *rdman, co_aix x, co_aix y,
+			     co_aix w, co_aix h);
 extern int rdman_force_clean(redraw_man_t *rdman);
 extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 #define shnode_free(rdman, node) elmpool_elm_free((rdman)->shnode_pool, node)

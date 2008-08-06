@@ -38,7 +38,7 @@ void event_interaction(Display *display,
     shape_t *shape = NULL;
     int in_stroke;
 
-    XSelectInput(display, win, PointerMotionMask);
+    XSelectInput(display, win, PointerMotionMask | ExposureMask);
     while((r = XNextEvent(display, &evt)) == 0) {
 	switch(evt.type) {
 	case MotionNotify:
@@ -47,6 +47,11 @@ void event_interaction(Display *display,
 	    y = mevt->y;
 	    shape = find_shape_at_pos(rdman, x, y, &in_stroke);
 	    hint_shape(rdman, shape);
+	    break;
+	case Expose:
+	    rdman_redraw_all(rdman);
+	    /* rdman_redraw_area(rdman, evt.xexpose.x, evt.xexpose.y,
+	       evt.xexpose.width, evt.xexpose.height); */
 	    break;
 	}
     }

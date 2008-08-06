@@ -78,8 +78,10 @@ static int add_dirty_area(redraw_man_t *rdman, area_t *area) {
     int r;
 
     if(rdman->n_dirty_areas >= rdman->max_dirty_areas) {
-	/* every geo object and coord object can contribute 2 areas. */
-	max_dirty_areas = (rdman->n_geos + rdman->n_coords) * 2;
+	/* every geo object and coord object can contribute 2 areas.
+	 * rdman_draw_area() may also contribute 1 area.
+	 */
+	max_dirty_areas = (rdman->n_geos + rdman->n_coords) * 2 + 1;
 	r = extend_memblk((void **)&rdman->dirty_areas,
 			  sizeof(area_t *) * rdman->n_dirty_areas,
 			  sizeof(area_t *) * max_dirty_areas);
@@ -616,7 +618,6 @@ static void make_clip(cairo_t *cr, int n_dirty_areas,
 }
 
 static void reset_clip(redraw_man_t *rdman) {
-    cairo_reset_clip(rdman->cr);
     cairo_reset_clip(rdman->backend);
 }
 
@@ -723,6 +724,8 @@ int rdman_redraw_all(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
 
+    clean_canvas(rdman->cr);
+
     for(geo = STAILQ_HEAD(rdman->all_geos);
 	geo != NULL;
 	geo = STAILQ_NEXT(geo_t, next, geo)) {
@@ -732,6 +735,22 @@ int rdman_redraw_all(redraw_man_t *rdman) {
     rdman->n_dirty_areas = 0;
 
     return OK;
+}
+
+int rdman_redraw_area(redraw_man_t *rdman, co_aix x, co_aix y,
+		      co_aix w, co_aix h) {
+    area_t area;
+    int r;
+
+    area.x = x;
+    area.y = y;
+    area.w = w;
+    area.h = h;
+    add_dirty_area(rdman, &area);
+
+    r = rdman_redraw_changed(rdman);
+
+    return r;
 }
 
 int rdman_force_clean(redraw_man_t *rdman) {
