@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <sys/select.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <cairo.h>
@@ -9,9 +11,28 @@
 #include "shapes.h"
 #include "redraw_man.h"
 #include "paint.h"
+#include "mb_timer.h"
+
+#define OK 0
+#define ERR -1
 
 Display *display;
 Window win;
+
+struct test_motion_data {
+    paint_t *text_stroke;
+    redraw_man_t *rdman;
+};
+
+void test_motion(mbsec_t sec, mbusec_t usec,
+		 mbsec_t now_sec, mbusec_t now_usec,
+		 void *arg) {
+    struct test_motion_data *data = (struct test_motion_data *)arg;
+
+    paint_color_set(data->text_stroke, 1, 0.5, 0.5, 0.5);
+    rdman_paint_changed(data->rdman, data->text_stroke);
+    rdman_redraw_changed(data->rdman);
+}
 
 void hint_shape(redraw_man_t *rdman, shape_t *shape) {
     static shape_t *last_shape = NULL;
@@ -38,8 +59,11 @@ void event_interaction(Display *display,
     shape_t *shape = NULL;
     int in_stroke;
 
-    XSelectInput(display, win, PointerMotionMask | ExposureMask);
-    while((r = XNextEvent(display, &evt)) == 0) {
+    while(XEventsQueued(display, QueuedAfterReading) > 0) {
+	r = XNextEvent(display, &evt);
+	if(r == -1)
+	    break;
+
 	switch(evt.type) {
 	case MotionNotify:
 	    mevt = (XMotionEvent *)&evt;
@@ -55,6 +79,56 @@ void event_interaction(Display *display,
 	    break;
 	}
     }
+    XFlush(display);
+}
+
+void handle_connection(Display *display, mb_tman_t *tman,
+		       redraw_man_t *rdman, int w, int h) {
+    int xcon;
+    fd_set rds;
+    int nfds;
+    struct timeval tmo;
+    int r;
+
+    XSelectInput(display, win, PointerMotionMask | ExposureMask);
+    XFlush(display);
+
+    xcon = XConnectionNumber(display);
+    nfds = xcon + 1;
+    while(1) {
+	FD_ZERO(&rds);
+	FD_SET(xcon, &rds);
+	r = gettimeofday(&tmo, NULL);
+	if(r == -1) {
+	    perror("gettimeofday");
+	    return;
+	}
+
+	r = mb_tman_next_timeout(tman,
+				 tmo.tv_sec, tmo.tv_usec,
+				 (mbsec_t *)&tmo.tv_sec,
+				 (mbusec_t *)&tmo.tv_usec);
+	if(r != OK)
+	    r = select(nfds, &rds, NULL, NULL, NULL);
+	else
+	    r = select(nfds, &rds, NULL, NULL, &tmo);
+
+	if(r == -1) {
+	    perror("select");
+	    return;
+	}
+	if(r == 0) {
+	    r = gettimeofday(&tmo, NULL);
+	    if(r == -1) {
+		perror("gettimeofday");
+		return;
+	    }
+	    mb_tman_handle_timeout(tman, tmo.tv_sec, tmo.tv_usec);
+	    XFlush(display);
+	} else if(FD_ISSET(xcon, &rds)) {
+	    event_interaction(display, rdman, w, h);
+	}
+    }
 }
 
 void draw_path(cairo_t *cr, int w, int h) {
@@ -68,6 +142,9 @@ void draw_path(cairo_t *cr, int w, int h) {
     shape_t *text;
     grad_stop_t fill3_stops[3];
     cairo_font_face_t *face;
+    struct test_motion_data mdata;
+    struct timeval tv;
+    mb_tman_t *tman;
     int i;
 
     tmpsuf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
@@ -213,7 +290,18 @@ void draw_path(cairo_t *cr, int w, int h) {
 	XFlush(display);
     }
 
-    event_interaction(display, &rdman, w, h);
+    tman = mb_tman_new();
+    if(tman) {
+	mdata.text_stroke = text_stroke;
+	mdata.rdman = &rdman;
+	gettimeofday(&tv, NULL);
+	tv.tv_sec += 3;
+	mb_tman_timeout(tman, tv.tv_sec, tv.tv_usec,
+			test_motion, &mdata);
+
+	handle_connection(display, tman, &rdman, w, h);
+	mb_tman_free(tman);
+    }
 
     fill1->free(fill1);
     fill2->free(fill2);

@@ -39,6 +39,11 @@ extern void elmpool_free(elmpool_t *pool);
 	if((q).head == NULL)			\
 	    (q).head = elm;			\
     } while(0)
+#define STAILQ_INS_AFTER(type, field, follow, elm)	\
+    do {						\
+	(follow)->field = (elm)->field;			\
+	(elm)->field = follow;				\
+    } while(0)
 #define STAILQ_REMOVE(q, type, field, elm)		\
     do {						\
 	if((elm) == (q).head) {				\
