@@ -716,6 +716,10 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     return OK;
 }
 
+/* NOTE: Before redrawing, the canvas/surface must be cleaned.
+ * NOTE: After redrawing, the content must be copied to the backend surface.
+ */
+
 int rdman_redraw_all(redraw_man_t *rdman) {
     geo_t *geo;
     int r;
