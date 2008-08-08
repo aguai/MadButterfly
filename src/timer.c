@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "mb_timer.h"
 #include "tools.h"
 
@@ -9,8 +10,7 @@
 #define ERR -1
 
 struct _mb_timer {
-    mbsec_t sec;
-    mbusec_t usec;
+    mb_timeval_t tmo;
     mb_tmo_hdlr hdlr;
     void *arg;
     mb_timer_t *next;
@@ -45,7 +45,7 @@ void mb_tman_free(mb_tman_t *tman) {
 }
 
 mb_timer_t *mb_tman_timeout(mb_tman_t *tman,
-			    mbsec_t sec, mbusec_t usec,
+			    const mb_timeval_t *tmo,
 			    mb_tmo_hdlr hdlr, void *arg) {
     mb_timer_t *timer, *visit, *last;
 
@@ -53,8 +53,7 @@ mb_timer_t *mb_tman_timeout(mb_tman_t *tman,
     if(timer == NULL)
 	return NULL;
 
-    timer->sec = sec;
-    timer->usec = usec;
+    memcpy(&timer->tmo, tmo, sizeof(mb_timeval_t));
     timer->hdlr = hdlr;
     timer->arg = arg;
 
@@ -62,9 +61,7 @@ mb_timer_t *mb_tman_timeout(mb_tman_t *tman,
     for(visit = STAILQ_HEAD(tman->timers);
 	visit != NULL;
 	visit = STAILQ_NEXT(mb_timer_t, next, visit)) {
-	if(sec < visit->sec)
-	    break;
-	if(sec == visit->sec && usec < visit->usec)
+	if(MB_TIMEVAL_LATER(&visit->tmo, tmo))
 	    break;
 	last = visit;
     }
@@ -87,42 +84,31 @@ int mb_tman_remove(mb_tman_t *tman, mb_timer_t *timer) {
 }
 
 int mb_tman_next_timeout(mb_tman_t *tman,
-			 mbsec_t now_sec, mbusec_t now_usec,
-			 mbsec_t *after_sec, mbusec_t *after_usec) {
+			 const mb_timeval_t *now, mb_timeval_t *tmo_after) {
     mb_timer_t *timer;
 
     timer = STAILQ_HEAD(tman->timers);
     if(timer == NULL)
 	return ERR;
 
-    if(now_sec > timer->sec ||
-       (now_sec == timer->usec && now_usec >= timer->usec)) {
-	*after_sec = 0;
-	*after_usec = 0;
+    if(!MB_TIMEVAL_LATER(&timer->tmo, now)) {
+	memset(tmo_after, 0, sizeof(mb_timeval_t));
 	return OK;
     }
 
-    *after_sec = timer->sec - now_sec;
-    if(now_usec > timer->usec) {
-	--*after_sec;
-	*after_usec = 1000000 + timer->usec - now_usec;
-    } else
-	*after_usec = timer->usec - now_usec;
+    memcpy(tmo_after, &timer->tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_DIFF(tmo_after, now);
 
     return OK;
 }
 
-int mb_tman_handle_timeout(mb_tman_t *tman,
-			   mbsec_t now_sec, mbusec_t now_usec) {
+int mb_tman_handle_timeout(mb_tman_t *tman, mb_timeval_t *now) {
     mb_timer_t *timer;
 
     while((timer = STAILQ_HEAD(tman->timers)) != NULL){
-	if(now_sec < timer->sec ||
-	   (now_sec == timer->sec && now_usec < timer->usec))
+	if(MB_TIMEVAL_LATER(&timer->tmo, now))
 	    break;
-	timer->hdlr(timer->sec, timer->usec,
-		    now_sec, now_usec,
-		    timer->arg);
+	timer->hdlr(&timer->tmo, now, timer->arg);
 	STAILQ_REMOVE(tman->timers, mb_timer_t, next, timer);
 	elmpool_elm_free(tman->timer_pool, timer);
     }

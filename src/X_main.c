@@ -24,8 +24,8 @@ struct test_motion_data {
     redraw_man_t *rdman;
 };
 
-void test_motion(mbsec_t sec, mbusec_t usec,
-		 mbsec_t now_sec, mbusec_t now_usec,
+void test_motion(const mb_timeval_t *tmo,
+		 const mb_timeval_t *now,
 		 void *arg) {
     struct test_motion_data *data = (struct test_motion_data *)arg;
 
@@ -88,6 +88,7 @@ void handle_connection(Display *display, mb_tman_t *tman,
     fd_set rds;
     int nfds;
     struct timeval tmo;
+    mb_timeval_t mb_tmo;
     int r;
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask);
@@ -104,14 +105,15 @@ void handle_connection(Display *display, mb_tman_t *tman,
 	    return;
 	}
 
-	r = mb_tman_next_timeout(tman,
-				 tmo.tv_sec, tmo.tv_usec,
-				 (mbsec_t *)&tmo.tv_sec,
-				 (mbusec_t *)&tmo.tv_usec);
+	MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
+	r = mb_tman_next_timeout(tman, &mb_tmo, &mb_tmo);
 	if(r != OK)
 	    r = select(nfds, &rds, NULL, NULL, NULL);
-	else
+	else {
+	    tmo.tv_sec = MB_TIMEVAL_SEC(&mb_tmo);
+	    tmo.tv_usec = MB_TIMEVAL_USEC(&mb_tmo);
 	    r = select(nfds, &rds, NULL, NULL, &tmo);
+	}
 
 	if(r == -1) {
 	    perror("select");
@@ -123,7 +125,8 @@ void handle_connection(Display *display, mb_tman_t *tman,
 		perror("gettimeofday");
 		return;
 	    }
-	    mb_tman_handle_timeout(tman, tmo.tv_sec, tmo.tv_usec);
+	    MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
+	    mb_tman_handle_timeout(tman, &mb_tmo);
 	    XFlush(display);
 	} else if(FD_ISSET(xcon, &rds)) {
 	    event_interaction(display, rdman, w, h);
@@ -145,6 +148,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     struct test_motion_data mdata;
     struct timeval tv;
     mb_tman_t *tman;
+    mb_timeval_t mbtv;
     int i;
 
     tmpsuf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
@@ -296,10 +300,11 @@ void draw_path(cairo_t *cr, int w, int h) {
 	mdata.rdman = &rdman;
 	gettimeofday(&tv, NULL);
 	tv.tv_sec += 3;
-	mb_tman_timeout(tman, tv.tv_sec, tv.tv_usec,
-			test_motion, &mdata);
+	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
+	mb_tman_timeout(tman, &mbtv, test_motion, &mdata);
 
 	handle_connection(display, tman, &rdman, w, h);
+
 	mb_tman_free(tman);
     }
 
