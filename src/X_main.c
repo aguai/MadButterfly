@@ -12,6 +12,7 @@
 #include "redraw_man.h"
 #include "paint.h"
 #include "mb_timer.h"
+#include "animate.h"
 
 #define OK 0
 #define ERR -1
@@ -127,6 +128,7 @@ void handle_connection(Display *display, mb_tman_t *tman,
 	    }
 	    MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
 	    mb_tman_handle_timeout(tman, &mb_tmo);
+	    rdman_redraw_changed(rdman);
 	    XFlush(display);
 	} else if(FD_ISSET(xcon, &rds)) {
 	    event_interaction(display, rdman, w, h);
@@ -148,7 +150,10 @@ void draw_path(cairo_t *cr, int w, int h) {
     struct test_motion_data mdata;
     struct timeval tv;
     mb_tman_t *tman;
-    mb_timeval_t mbtv;
+    mb_timeval_t mbtv, start, playing;
+    mb_progm_t *progm;
+    mb_word_t *word;
+    mb_action_t *act;
     int i;
 
     tmpsuf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
@@ -296,6 +301,24 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     tman = mb_tman_new();
     if(tman) {
+	progm = mb_progm_new(2, &rdman);
+	
+	MB_TIMEVAL_SET(&start, 1, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+	act = mb_shift_new(0, 20, coord1);
+	mb_word_add_action(word, act);
+	
+	MB_TIMEVAL_SET(&start, 3, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+	act = mb_shift_new(0, 20, coord2);
+	mb_word_add_action(word, act);
+	
+	gettimeofday(&tv, NULL);
+	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
+	mb_progm_start(progm, tman, &mbtv);
+
 	mdata.text_stroke = text_stroke;
 	mdata.rdman = &rdman;
 	gettimeofday(&tv, NULL);

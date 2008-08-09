@@ -15,7 +15,7 @@
 #include "animate.h"
 
 
-#define STEP_INTERVAL 500000
+#define STEP_INTERVAL 100000
 #define ASSERT(x)
 
 /*! \brief A word is a set of concurrent actions in a program.
@@ -48,8 +48,10 @@ struct _mb_action {
 		  const mb_timeval_t *now,
 		  const mb_timeval_t *playing_time,
 		  redraw_man_t *rdman);
-    void (*step)(mb_action_t *act, mb_timeval_t *now, redraw_man_t *rdman);
-    void (*stop)(mb_action_t *act, mb_timeval_t *now, redraw_man_t *rdman);
+    void (*step)(mb_action_t *act, const mb_timeval_t *now,
+		 redraw_man_t *rdman);
+    void (*stop)(mb_action_t *act, const mb_timeval_t *now,
+		 redraw_man_t *rdman);
     void (*free)(mb_action_t *act);
     mb_action_t *next;
 };
@@ -117,33 +119,55 @@ void mb_word_add_action(mb_word_t *word, mb_action_t *act) {
 
 static void mb_word_start(mb_word_t *word, const mb_timeval_t *tmo,
 			  const mb_timeval_t *now, redraw_man_t *rdman) {
+    mb_action_t *act;
+
+    for(act = STAILQ_HEAD(word->actions);
+	act != NULL;
+	act = STAILQ_NEXT(mb_action_t, next, act)) {
+	act->start(act, tmo, &word->playing_time, rdman);
+    }
 }
 
 static void mb_word_step(mb_word_t *word, const mb_timeval_t *tmo,
 			 const mb_timeval_t *now, redraw_man_t *rdman) {
+    mb_action_t *act;
+
+    for(act = STAILQ_HEAD(word->actions);
+	act != NULL;
+	act = STAILQ_NEXT(mb_action_t, next, act)) {
+	act->step(act, tmo, rdman);
+    }
 }
 
 static void mb_word_stop(mb_word_t *word, const mb_timeval_t *tmo,
 			 const mb_timeval_t *now, redraw_man_t *rdman) {
+    mb_action_t *act;
+
+    for(act = STAILQ_HEAD(word->actions);
+	act != NULL;
+	act = STAILQ_NEXT(mb_action_t, next, act)) {
+	act->stop(act, tmo, rdman);
+    }
 }
 
 static void mb_progm_step(const mb_timeval_t *tmo,
 			  const mb_timeval_t *now,
 			  void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
-    mb_timeval_t next_tmo, w_stp_tm;
+    mb_timeval_t next_tmo, w_stp_tm, diff;
     mb_word_t *word;
     mb_timer_t *timer;
     int i;
 
-    MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
-    MB_TIMEVAL_ADD(&next_tmo, tmo);
+    memcpy(&diff, tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_DIFF(&diff, &progm->start_time);
 
     i = progm->first_playing;
     for(word = progm->words + i;
-	i < progm->n_words && MB_TIMEVAL_LATER(tmo, &word->start_time);
+	i < progm->n_words && MB_TIMEVAL_LATER(&diff, &word->start_time);
 	word = progm->words + ++i) {
-	memcpy(&w_stp_tm, &word->start_time, sizeof(mb_timeval_t));
+	memcpy(&w_stp_tm, &progm->start_time, sizeof(mb_timeval_t));
+	MB_TIMEVAL_ADD(&w_stp_tm, &word->start_time);
 	MB_TIMEVAL_ADD(&w_stp_tm, &word->playing_time);
 	if(MB_TIMEVAL_LATER(&w_stp_tm, tmo))
 	    mb_word_step(word, tmo, now, progm->rdman);
@@ -155,17 +179,33 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	}
     }
 
+    MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
+    MB_TIMEVAL_ADD(&next_tmo, tmo);
+
+    memcpy(&diff, &next_tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_DIFF(&diff, &progm->start_time);
     for(word = progm->words + i;
-	i < progm->n_words && MB_TIMEVAL_LATER(&next_tmo, &word->start_time);
+	i < progm->n_words && MB_TIMEVAL_LATER(&diff, &word->start_time);
 	word = progm->words + ++i) {
 	mb_word_start(word, tmo, now, progm->rdman);
     }
 
+    /* Setup next timeout. */
     if(progm->first_playing < progm->n_words) {
-	timer = mb_tman_timeout(progm->tman, &next_tmo,
-				mb_progm_step, progm);
+	word = progm->words + progm->first_playing;
+	memcpy(&w_stp_tm, &word->start_time, sizeof(mb_timeval_t));
+	MB_TIMEVAL_ADD(&w_stp_tm, &progm->start_time);
+
+	if(MB_TIMEVAL_LATER(&w_stp_tm, &next_tmo))
+	    timer = mb_tman_timeout(progm->tman, &w_stp_tm,
+				    mb_progm_step, progm);
+	else
+	    timer = mb_tman_timeout(progm->tman, &next_tmo,
+				    mb_progm_step, progm);
 	ASSERT(timer != NULL);
     }
+
+    memcpy(&progm->last_time, tmo, sizeof(mb_timeval_t));
 }
 
 void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
@@ -190,6 +230,9 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
     
     timer = mb_tman_timeout(tman, &next_time, mb_progm_step, progm);
     ASSERT(timer != NULL);
+}
+
+void mb_progm_abort(mb_progm_t *progm, mb_tman_t *tman) {
 }
 
 typedef struct _mb_shift mb_shift_t;
@@ -220,13 +263,13 @@ static void mb_shift_start(mb_action_t *act,
     mb_shift_t *shift = (mb_shift_t *)act;
     coord_t *coord;
 
-    memcpy(&shift->start_time, now, sizeof(now));
+    memcpy(&shift->start_time, now, sizeof(mb_timeval_t));
     coord = shift->coord;
     memcpy(&shift->saved_matrix, coord->matrix, sizeof(co_aix[6]));
     shift->playing_time = playing_time;
 }
 
-static void mb_shift_step(mb_action_t *act, mb_timeval_t *now,
+static void mb_shift_step(mb_action_t *act, const mb_timeval_t *now,
 			  redraw_man_t *rdman) {
     mb_shift_t *shift = (mb_shift_t *)act;
     mb_timeval_t diff;
@@ -245,7 +288,7 @@ static void mb_shift_step(mb_action_t *act, mb_timeval_t *now,
     rdman_coord_changed(rdman, coord);
 }
 
-static void mb_shift_stop(mb_action_t *act, mb_timeval_t *now,
+static void mb_shift_stop(mb_action_t *act, const mb_timeval_t *now,
 			  redraw_man_t *rdman) {
     mb_shift_t *shift = (mb_shift_t *)act;
     coord_t *coord;
@@ -262,7 +305,7 @@ static void mb_shift_free(mb_action_t *act) {
     free(act);
 }
 
-mb_action_t *mb_shift_new(co_aix x, co_aix y) {
+mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord) {
     mb_shift_t *shift;
 
     shift = (mb_shift_t *)malloc(sizeof(mb_shift_t));
@@ -271,6 +314,8 @@ mb_action_t *mb_shift_new(co_aix x, co_aix y) {
 
     shift->x = x;
     shift->y = y;
+    shift->coord = coord;
+
     shift->action.start = mb_shift_start;
     shift->action.step = mb_shift_step;
     shift->action.stop = mb_shift_stop;
