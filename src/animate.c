@@ -30,6 +30,7 @@
 struct _mb_word {
     mb_timeval_t start_time;	/*!< time to start the word */
     mb_timeval_t playing_time;	/*!< time duration of playing */
+    mb_timeval_t abs_start, abs_stop;
     STAILQ(mb_action_t) actions;
 };
 
@@ -165,63 +166,53 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 			     const mb_timeval_t *now,
 			     void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
-    mb_timeval_t next_tmo, word_stop;
-    mb_timeval_t tmo_diff, next_diff;
+    mb_timeval_t next_tmo;
     mb_word_t *word;
     mb_timer_t *timer;
     int i;
 
-    MB_TIMEVAL_CP(&tmo_diff, tmo);
-    MB_TIMEVAL_DIFF(&tmo_diff, &progm->start_time);
+    MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
+    MB_TIMEVAL_ADD(&next_tmo, tmo);
 
-    MB_TIMEVAL_SET(&next_diff, 0, STEP_INTERVAL);
-    MB_TIMEVAL_ADD(&next_diff, &tmo_diff);
-
+    /* _step() or _stop() words that in playing. */
     i = progm->first_playing;
     for(word = progm->words + i;
-	i < progm->n_words &&
-	    MB_TIMEVAL_LATER(&tmo_diff, &word->start_time);
+	i < progm->n_words && MB_TIMEVAL_LATER(tmo, &word->abs_start);
 	word = progm->words + ++i) {
-	MB_TIMEVAL_CP(&word_stop, &word->start_time);
-	MB_TIMEVAL_ADD(&word_stop, &word->playing_time);
-	if(MB_TIMEVAL_LATER(&next_diff, &word_stop))
+	if(MB_TIMEVAL_LATER(tmo, &word->abs_stop))
+	    continue;
+	if(MB_TIMEVAL_LATER(&next_tmo, &word->abs_stop))
 	    mb_word_stop(word, tmo, now, progm->rdman);
 	else
 	    mb_word_step(word, tmo, now, progm->rdman);
     }
 
+    /* Start words that their abs_start is in duration
+     * from now to timeout for next update.
+     */
     for(word = progm->words + i;
-	i < progm->n_words &&
-	    MB_TIMEVAL_LATER(&next_diff, &word->start_time);
+	i < progm->n_words && MB_TIMEVAL_LATER(&next_tmo, &word->abs_start);
 	word = progm->words + ++i) {
 	mb_word_start(word, tmo, now, progm->rdman);
-	MB_TIMEVAL_CP(&word_stop, &word->start_time);
-	MB_TIMEVAL_ADD(&word_stop, &word->playing_time);
-	if(MB_TIMEVAL_LATER(&next_diff, &word_stop))
+	if(MB_TIMEVAL_LATER(&next_tmo, &word->abs_stop))
 	    mb_word_stop(word, tmo, now, progm->rdman);
     }
 
+    /* Find a new first_playing if any consequence words, following current
+     * first_playing word, are stoped.
+     */
     i = progm->first_playing;
     for(word = progm->words + i;
-	i < progm->n_words &&
-	    MB_TIMEVAL_LATER(&next_diff, &word->start_time);
+	i < progm->n_words && MB_TIMEVAL_LATER(&next_tmo, &word->abs_stop);
 	word = progm->words + ++i) {
-	MB_TIMEVAL_CP(&word_stop, &word->start_time);
-	MB_TIMEVAL_ADD(&word_stop, &word->playing_time);
-	if(!MB_TIMEVAL_LATER(&next_diff, &word_stop))
-	    break;
 	progm->first_playing++;
     }
 
+    /* Setup timeout for next update. */
     if(progm->first_playing < progm->n_words) {
 	word = progm->words + progm->first_playing;
-	if(MB_TIMEVAL_LATER(&word->start_time, &next_diff)) {
-	    MB_TIMEVAL_CP(&next_tmo, &word->start_time);
-	    MB_TIMEVAL_ADD(&next_tmo, &progm->start_time);
-	} else {
-	    MB_TIMEVAL_CP(&next_tmo, &next_diff);
-	    MB_TIMEVAL_ADD(&next_tmo, &progm->start_time);
-	}
+	if(MB_TIMEVAL_LATER(&word->abs_start, &next_tmo))
+	    MB_TIMEVAL_CP(&next_tmo, &word->abs_start);
 	timer = mb_tman_timeout(progm->tman, &next_tmo,
 				mb_progm_step, progm);	
     }
@@ -229,8 +220,9 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 
 void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 		    mb_timeval_t *now) {
-    mb_timeval_t next_time;
     mb_timer_t *timer;
+    mb_word_t *word;
+    int i;
 
     if(progm->n_words == 0)
 	return;
@@ -239,14 +231,21 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
     MB_TIMEVAL_CP(&progm->start_time, now);
     progm->first_playing = 0;
 
-    MB_TIMEVAL_CP(&next_time, &progm->words[0].start_time);
-    MB_TIMEVAL_ADD(&next_time, now);
-    if(!MB_TIMEVAL_LATER(&next_time, now)) {
-	mb_progm_step(&next_time, now, progm);
+    for(i = 0; i < progm->n_words; i++) {
+	word = progm->words + i;
+	MB_TIMEVAL_CP(&word->abs_start, &word->start_time);
+	MB_TIMEVAL_ADD(&word->abs_start, now);
+	MB_TIMEVAL_CP(&word->abs_stop, &word->abs_start);
+	MB_TIMEVAL_ADD(&word->abs_stop, &word->playing_time);
+    }
+
+    if(MB_TIMEVAL_EQ(&progm->words[0].abs_start, now)) {
+	mb_progm_step(now, now, progm);
 	return;
     }
     
-    timer = mb_tman_timeout(tman, &next_time, mb_progm_step, progm);
+    timer = mb_tman_timeout(tman, &progm->words[0].abs_start,
+			    mb_progm_step, progm);
     ASSERT(timer != NULL);
 }
 
