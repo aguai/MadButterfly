@@ -20,21 +20,6 @@
 Display *display;
 Window win;
 
-struct test_motion_data {
-    paint_t *text_stroke;
-    redraw_man_t *rdman;
-};
-
-void test_motion(const mb_timeval_t *tmo,
-		 const mb_timeval_t *now,
-		 void *arg) {
-    struct test_motion_data *data = (struct test_motion_data *)arg;
-
-    paint_color_set(data->text_stroke, 1, 0.5, 0.5, 0.5);
-    rdman_paint_changed(data->rdman, data->text_stroke);
-    rdman_redraw_changed(data->rdman);
-}
-
 void hint_shape(redraw_man_t *rdman, shape_t *shape) {
     static shape_t *last_shape = NULL;
     if(last_shape != shape) {
@@ -45,7 +30,6 @@ void hint_shape(redraw_man_t *rdman, shape_t *shape) {
 	if(shape != NULL && shape->stroke != NULL) {
 	    shape->stroke_width += 2;
 	    rdman_shape_changed(rdman, shape);
-	    rdman_redraw_changed(rdman);
 	}
     }
     last_shape = shape;
@@ -80,6 +64,7 @@ void event_interaction(Display *display,
 	    break;
 	}
     }
+    rdman_redraw_changed(rdman);
     XFlush(display);
 }
 
@@ -89,7 +74,7 @@ void handle_connection(Display *display, mb_tman_t *tman,
     fd_set rds;
     int nfds;
     struct timeval tmo;
-    mb_timeval_t mb_tmo;
+    mb_timeval_t mb_tmo, next_mb_tmo;
     int r, r1;
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask);
@@ -109,12 +94,12 @@ void handle_connection(Display *display, mb_tman_t *tman,
 	FD_ZERO(&rds);
 	FD_SET(xcon, &rds);
 
-	r = mb_tman_next_timeout(tman, &mb_tmo, &mb_tmo);
+	r = mb_tman_next_timeout(tman, &mb_tmo, &next_mb_tmo);
 	if(r != OK)
 	    r = select(nfds, &rds, NULL, NULL, NULL);
 	else {
-	    tmo.tv_sec = MB_TIMEVAL_SEC(&mb_tmo);
-	    tmo.tv_usec = MB_TIMEVAL_USEC(&mb_tmo);
+	    tmo.tv_sec = MB_TIMEVAL_SEC(&next_mb_tmo);
+	    tmo.tv_usec = MB_TIMEVAL_USEC(&next_mb_tmo);
 	    r = select(nfds, &rds, NULL, NULL, &tmo);
 	}
 
@@ -123,15 +108,9 @@ void handle_connection(Display *display, mb_tman_t *tman,
 	    return;
 	}
 
-	r1 = gettimeofday(&tmo, NULL);
-	if(r1 == -1) {
-	    perror("gettimeofday");
-	    return;
-	}
-	MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
+	MB_TIMEVAL_ADD(&mb_tmo, &next_mb_tmo);
 
 	if(r == 0) {
-	    MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
 	    mb_tman_handle_timeout(tman, &mb_tmo);
 	    rdman_redraw_changed(rdman);
 	    XFlush(display);
@@ -152,14 +131,12 @@ void draw_path(cairo_t *cr, int w, int h) {
     shape_t *text;
     grad_stop_t fill3_stops[3];
     cairo_font_face_t *face;
-    struct test_motion_data mdata;
     struct timeval tv;
     mb_tman_t *tman;
     mb_timeval_t mbtv, start, playing;
     mb_progm_t *progm;
     mb_word_t *word;
     mb_action_t *act;
-    int i;
 
     tmpsuf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     tmpcr = cairo_create(tmpsuf);
@@ -180,6 +157,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 		       36.0, face);
     rdman_paint_stroke(&rdman, text_stroke, text);
     text->stroke_width = 0.5;
+    rdman_paint_fill(&rdman, fill1, text);
     rdman_add_shape(&rdman, text, coord3);
 
     path1 = sh_path_new("M 22,89.36218 C -34,-0.63782 39,-9.637817 82,12.36218 C 125,34.36218 142,136.36218 142,136.36218 C 100.66667,125.36218 74.26756,123.42795 22,89.36218 z ");
@@ -219,122 +197,36 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     XFlush(display);
 
-    for(i = 0; i < 50; i++) {
-	usleep(20000);
-	path1->stroke_width = i / 10;
-	path2->stroke_width = i / 10;
-	coord1->matrix[2] += 1;
-	coord1->matrix[5] += 1;
-	coord2->matrix[2] -= 1;
-	coord2->matrix[5] += 1;
-	paint_color_set(fill1, 1, 1, (i/25) & 0x1, 0.5);
-	paint_color_set(fill2, (i/25) & 0x1, 1, 1, 0.5);
-	rdman_paint_changed(&rdman, fill1);
-	rdman_paint_changed(&rdman, fill2);
-	rdman_coord_changed(&rdman, coord1);
-	rdman_coord_changed(&rdman, coord2);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-
-    for(i = 0; i < 5; i++) {
-	usleep(100000);
-	paint_color_set(fill1, 1, i % 2, 0, 0.5);
-	paint_color_set(fill2, 0, i % 2, 1, 0.5);
-	rdman_paint_changed(&rdman, fill1);
-	rdman_paint_changed(&rdman, fill2);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-
-    for(i = 0; i < 4; i++) {
-	usleep(100000);
-	path1->stroke_width -= 1;
-	path2->stroke_width -= 1;
-	rdman_shape_changed(&rdman, path1);
-	rdman_shape_changed(&rdman, path2);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-    for(i = 0; i < 4; i++) {
-	usleep(100000);
-	path1->stroke_width += 1;
-	path2->stroke_width += 1;
-	rdman_shape_changed(&rdman, path1);
-	rdman_shape_changed(&rdman, path2);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-
-    for(i = 0; i < 4; i++) {
-	usleep(100000);
-	text->stroke_width += 1;
-	rdman_shape_changed(&rdman, text);
-	coord3->matrix[2] += 5;
-	rdman_coord_changed(&rdman, coord3);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-    for(i = 0; i < 4; i++) {
-	usleep(100000);
-	text->stroke_width -= 1;
-	rdman_shape_changed(&rdman, text);
-	coord3->matrix[2] -= 5;
-	rdman_coord_changed(&rdman, coord3);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-
-    for(i = 0; i < 4; i++) {
-	usleep(100000);
-	text->stroke_width += 1;
-	rdman_shape_changed(&rdman, text);
-	coord3->matrix[5] += 5;
-	rdman_coord_changed(&rdman, coord3);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-    for(i = 0; i < 4; i++) {
-	usleep(100000);
-	text->stroke_width -= 1;
-	rdman_shape_changed(&rdman, text);
-	coord3->matrix[5] -= 5;
-	rdman_coord_changed(&rdman, coord3);
-	rdman_redraw_changed(&rdman);
-	XFlush(display);
-    }
-
     tman = mb_tman_new();
     if(tman) {
-	progm = mb_progm_new(2, &rdman);
+	progm = mb_progm_new(10, &rdman);
 	
+	MB_TIMEVAL_SET(&start, 0, 0);
+	MB_TIMEVAL_SET(&playing, 1, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(50, 50, coord1, word);
+	act = mb_shift_new(-50, 50, coord2, word);
+
 	MB_TIMEVAL_SET(&start, 1, 0);
 	MB_TIMEVAL_SET(&playing, 2, 0);
 	word = mb_progm_next_word(progm, &start, &playing);
+
 	act = mb_shift_new(0, 20, coord1, word);
-	
 	act = mb_shift_new(0, -20, coord2, word);
 	
 	MB_TIMEVAL_SET(&start, 3, 0);
 	MB_TIMEVAL_SET(&playing, 2, 0);
 	word = mb_progm_next_word(progm, &start, &playing);
-	act = mb_shift_new(0, -20, coord1, word);
-	
-	act = mb_shift_new(0, 20, coord2, word);
 
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
 	act = mb_chgcolor_new(0, 0, 1, 0.5, fill1, word);
 	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
 	
 	gettimeofday(&tv, NULL);
 	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
 	mb_progm_start(progm, tman, &mbtv);
-
-	mdata.text_stroke = text_stroke;
-	mdata.rdman = &rdman;
-	gettimeofday(&tv, NULL);
-	tv.tv_sec += 3;
-	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
-	mb_tman_timeout(tman, &mbtv, test_motion, &mdata);
 
 	handle_connection(display, tman, &rdman, w, h);
 
