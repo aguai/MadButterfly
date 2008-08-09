@@ -90,23 +90,25 @@ void handle_connection(Display *display, mb_tman_t *tman,
     int nfds;
     struct timeval tmo;
     mb_timeval_t mb_tmo;
-    int r;
+    int r, r1;
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask);
     XFlush(display);
 
     xcon = XConnectionNumber(display);
     nfds = xcon + 1;
+
+    r = gettimeofday(&tmo, NULL);
+    if(r == -1) {
+	perror("gettimeofday");
+	return;
+    }
+    MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
+
     while(1) {
 	FD_ZERO(&rds);
 	FD_SET(xcon, &rds);
-	r = gettimeofday(&tmo, NULL);
-	if(r == -1) {
-	    perror("gettimeofday");
-	    return;
-	}
 
-	MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
 	r = mb_tman_next_timeout(tman, &mb_tmo, &mb_tmo);
 	if(r != OK)
 	    r = select(nfds, &rds, NULL, NULL, NULL);
@@ -120,12 +122,15 @@ void handle_connection(Display *display, mb_tman_t *tman,
 	    perror("select");
 	    return;
 	}
+
+	r1 = gettimeofday(&tmo, NULL);
+	if(r1 == -1) {
+	    perror("gettimeofday");
+	    return;
+	}
+	MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
+
 	if(r == 0) {
-	    r = gettimeofday(&tmo, NULL);
-	    if(r == -1) {
-		perror("gettimeofday");
-		return;
-	    }
 	    MB_TIMEVAL_SET(&mb_tmo, tmo.tv_sec, tmo.tv_usec);
 	    mb_tman_handle_timeout(tman, &mb_tmo);
 	    rdman_redraw_changed(rdman);
