@@ -120,7 +120,7 @@ mb_word_t *mb_progm_next_word(mb_progm_t *progm,
     return word;
 }
 
-void mb_word_add_action(mb_word_t *word, mb_action_t *act) {
+static void mb_word_add_action(mb_word_t *word, mb_action_t *act) {
     STAILQ_INS_TAIL(word->actions, mb_action_t, next, act);
 }
 
@@ -323,7 +323,8 @@ static void mb_shift_free(mb_action_t *act) {
     free(act);
 }
 
-mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord) {
+mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord,
+			  mb_word_t *word) {
     mb_shift_t *shift;
 
     shift = (mb_shift_t *)malloc(sizeof(mb_shift_t));
@@ -338,6 +339,8 @@ mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord) {
     shift->action.step = mb_shift_step;
     shift->action.stop = mb_shift_stop;
     shift->action.free = mb_shift_free;
+
+    mb_word_add_action(word, (mb_action_t *)shift);
 
     return (mb_action_t *)shift;
 }
