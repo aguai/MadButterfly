@@ -83,6 +83,10 @@ int mb_tman_remove(mb_tman_t *tman, mb_timer_t *timer) {
     return OK;
 }
 
+/*! \brief Get how long to next timeout from this monent.
+ *
+ * \return 0 for having next timeout, -1 for not more timeout.
+ */
 int mb_tman_next_timeout(mb_tman_t *tman,
 			 const mb_timeval_t *now, mb_timeval_t *tmo_after) {
     mb_timer_t *timer;

@@ -96,7 +96,6 @@ void mb_progm_free(mb_progm_t *progm) {
 	    STAILQ_REMOVE(word->actions, mb_action_t, next, cur_act);
 	    cur_act->free(cur_act);
 	}
-	free(word);
     }
     free(progm);
 }
@@ -343,3 +342,188 @@ mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord,
 
     return (mb_action_t *)shift;
 }
+
+#ifdef UNITTEST
+
+#include <CUnit/Basic.h>
+
+typedef struct _mb_dummy mb_dummy_t;
+
+struct _mb_dummy {
+    mb_action_t action;
+    int id;
+    int *logidx;
+    int *logs;
+};
+
+
+static void mb_dummy_start(mb_action_t *act,
+			   const mb_timeval_t *now,
+			   const mb_timeval_t *playing_time,
+			   redraw_man_t *rdman) {
+    mb_dummy_t *dummy = (mb_dummy_t *)act;
+
+    dummy->logs[(*dummy->logidx)++] = dummy->id;
+}
+
+static void mb_dummy_step(mb_action_t *act,
+			  const mb_timeval_t *now,
+			  redraw_man_t *rdman) {
+    mb_dummy_t *dummy = (mb_dummy_t *)act;
+
+    dummy->logs[(*dummy->logidx)++] = dummy->id;
+}
+
+static void mb_dummy_stop(mb_action_t *act,
+			  const mb_timeval_t *now,
+			  redraw_man_t *rdman) {
+    mb_dummy_t *dummy = (mb_dummy_t *)act;
+
+    dummy->logs[(*dummy->logidx)++] = dummy->id;
+}
+
+static void mb_dummy_free(mb_action_t *act) {
+    free(act);
+}
+
+mb_action_t *mb_dummy_new(int id, int *logidx, int *logs, mb_word_t *word) {
+    mb_dummy_t *dummy;
+
+    dummy = (mb_dummy_t *)malloc(sizeof(mb_dummy_t));
+    if(dummy == NULL)
+	return NULL;
+
+    dummy->id = id;
+    dummy->logidx = logidx;
+    dummy->logs = logs;
+
+    dummy->action.start = mb_dummy_start;
+    dummy->action.step = mb_dummy_step;
+    dummy->action.stop = mb_dummy_stop;
+    dummy->action.free = mb_dummy_free;
+
+    mb_word_add_action(word, (mb_action_t *)dummy);
+
+    return (mb_action_t *)dummy;
+}
+
+void test_animate_words(void) {
+    mb_progm_t *progm;
+    mb_word_t *word;
+    mb_action_t *acts[4];
+    mb_tman_t *tman;
+    mb_timeval_t tv1, tv2, now, tmo_after;
+    int logcnt = 0;
+    int logs[256];
+    int r;
+
+    tman = mb_tman_new();
+    CU_ASSERT(tman != NULL);
+
+    progm = mb_progm_new(3, NULL);
+    CU_ASSERT(progm != NULL);
+
+    MB_TIMEVAL_SET(&tv1, 1, 0);
+    MB_TIMEVAL_SET(&tv2, 0, STEP_INTERVAL * 3);
+    word = mb_progm_next_word(progm, &tv1, &tv2);
+    CU_ASSERT(word != NULL);
+    acts[0] = mb_dummy_new(0, &logcnt, logs, word);
+    CU_ASSERT(acts[0] != NULL);
+
+    MB_TIMEVAL_SET(&tv1, 1, STEP_INTERVAL * 4 / 3);
+    MB_TIMEVAL_SET(&tv2, 0, STEP_INTERVAL / 3);
+    word = mb_progm_next_word(progm, &tv1, &tv2);
+    CU_ASSERT(word != NULL);
+    acts[1] = mb_dummy_new(1, &logcnt, logs, word);
+    CU_ASSERT(acts[1] != NULL);
+
+    MB_TIMEVAL_SET(&tv1, 1, STEP_INTERVAL * 2);
+    MB_TIMEVAL_SET(&tv2, 0, STEP_INTERVAL * 3);
+    word = mb_progm_next_word(progm, &tv1, &tv2);
+    CU_ASSERT(word != NULL);
+    acts[2] = mb_dummy_new(2, &logcnt, logs, word);
+    CU_ASSERT(acts[2] != NULL);
+
+    MB_TIMEVAL_SET(&now, 0, 0);
+    mb_progm_start(progm, tman, &now);
+
+    r = mb_tman_next_timeout(tman, &now, &tmo_after);
+    CU_ASSERT(r == 0);
+    CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 1 &&
+	      MB_TIMEVAL_USEC(&tmo_after) == 0);
+
+    /* 1.0s */
+    MB_TIMEVAL_ADD(&now, &tmo_after);
+    mb_tman_handle_timeout(tman, &now);
+    CU_ASSERT(logcnt == 1);
+
+    r = mb_tman_next_timeout(tman, &now, &tmo_after);
+    CU_ASSERT(r == 0);
+    CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
+	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
+    
+    /* 1.1s */
+    MB_TIMEVAL_ADD(&now, &tmo_after);
+    mb_tman_handle_timeout(tman, &now);
+    CU_ASSERT(logcnt == 4);
+
+    r = mb_tman_next_timeout(tman, &now, &tmo_after);
+    CU_ASSERT(r == 0);
+    CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
+	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
+    
+    /* 1.2s */
+    MB_TIMEVAL_ADD(&now, &tmo_after);
+    mb_tman_handle_timeout(tman, &now);
+    CU_ASSERT(logcnt == 6);
+
+    r = mb_tman_next_timeout(tman, &now, &tmo_after);
+    CU_ASSERT(r == 0);
+    CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
+	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
+    
+    /* 1.3s */
+    MB_TIMEVAL_ADD(&now, &tmo_after);
+    mb_tman_handle_timeout(tman, &now);
+    CU_ASSERT(logcnt == 8);
+
+    r = mb_tman_next_timeout(tman, &now, &tmo_after);
+    CU_ASSERT(r == 0);
+    CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
+	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
+    
+    /* 1.4s */
+    MB_TIMEVAL_ADD(&now, &tmo_after);
+    mb_tman_handle_timeout(tman, &now);
+    CU_ASSERT(logcnt == 9);
+
+    r = mb_tman_next_timeout(tman, &now, &tmo_after);
+    CU_ASSERT(r == 0);
+    CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
+	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
+    
+    /* 1.5s */
+    MB_TIMEVAL_ADD(&now, &tmo_after);
+    mb_tman_handle_timeout(tman, &now);
+    CU_ASSERT(logcnt == 10);
+
+    r = mb_tman_next_timeout(tman, &now, &tmo_after);
+    CU_ASSERT(r == -1);
+
+    mb_progm_free(progm);
+    mb_tman_free(tman);
+}
+
+CU_pSuite get_animate_suite(void) {
+    CU_pSuite suite;
+
+    suite = CU_add_suite("Suite_animate", NULL, NULL);
+    if(suite == NULL)
+	return NULL;
+
+    CU_ADD_TEST(suite, test_animate_words);
+    
+    return suite;
+}
+
+#endif /* UNITTEST */
