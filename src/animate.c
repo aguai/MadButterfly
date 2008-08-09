@@ -35,6 +35,9 @@ struct _mb_word {
 };
 
 /*! \brief A program describe a series of actions to animate shapes.
+ *
+ * first_playing is an index to one of words.  It always points to
+ * the first of words that is playing or waiting for playing.
  */
 struct _mb_progm {
     redraw_man_t *rdman;
@@ -49,9 +52,20 @@ struct _mb_progm {
 };
 
 /*! \brief Basic class of nnimation actions.
+ *
+ * A action must implement following 4 functions.
+ * \li start,
+ * \li step,
+ * \li stop,
+ * \li free, and
+ * \li *_new().
+ *
+ * *_new() must invokes mb_word_add_action() to add new object
+ * as one of actions in the word specified as an argument of it.
+ * It also means *_new() must have an argument with type of
+ * (mb_word_t *).
  */
 struct _mb_action {
-    int act_type;
     void (*start)(mb_action_t *act,
 		  const mb_timeval_t *now,
 		  const mb_timeval_t *playing_time,
@@ -264,7 +278,8 @@ struct _mb_shift {
     const mb_timeval_t *playing_time;
 };
 
-static float comp_mb_timeval_ratio(mb_timeval_t *a, const mb_timeval_t *b) {
+static float comp_mb_timeval_ratio(const mb_timeval_t *a,
+				   const mb_timeval_t *b) {
     float ratio;
 
     ratio = (float)MB_TIMEVAL_SEC(a) * 1000000.0 + (float)MB_TIMEVAL_USEC(a);
