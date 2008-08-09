@@ -53,7 +53,7 @@ mb_timer_t *mb_tman_timeout(mb_tman_t *tman,
     if(timer == NULL)
 	return NULL;
 
-    memcpy(&timer->tmo, tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&timer->tmo, tmo);
     timer->hdlr = hdlr;
     timer->arg = arg;
 
@@ -96,7 +96,7 @@ int mb_tman_next_timeout(mb_tman_t *tman,
 	return OK;
     }
 
-    memcpy(tmo_after, &timer->tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(tmo_after, &timer->tmo);
     MB_TIMEVAL_DIFF(tmo_after, now);
 
     return OK;

@@ -30,6 +30,11 @@ extern int mb_tman_handle_timeout(mb_tman_t *tman, mb_timeval_t *now);
 	(_tv)->tv_sec = _sec;			\
 	(_tv)->tv_usec = _usec;			\
     } while(0)
+#define MB_TIMEVAL_CP(_tv1, _tv2)		\
+    do {					\
+	(_tv1)->tv_sec = (_tv2)->tv_sec;	\
+	(_tv1)->tv_usec = (_tv2)->tv_usec;	\
+    } while(0)
 #define MB_TIMEVAL_SEC(_tv) ((_tv)->tv_sec)
 #define MB_TIMEVAL_USEC(_tv) ((_tv)->tv_usec)
 #define MB_TIMEVAL_LATER(a, b)			\

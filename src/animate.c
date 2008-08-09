@@ -108,8 +108,8 @@ mb_word_t *mb_progm_next_word(mb_progm_t *progm,
        MB_TIMEVAL_LATER(&progm->words[progm->n_words - 1].start_time, start))
 	return NULL;
     word = progm->words + progm->n_words++;
-    memcpy(&word->start_time, start, sizeof(mb_timeval_t));
-    memcpy(&word->playing_time, playing, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&word->start_time, start);
+    MB_TIMEVAL_CP(&word->playing_time, playing);
     return word;
 }
 
@@ -159,14 +159,14 @@ static void mb_progm_step(const mb_timeval_t *tmo,
     mb_timer_t *timer;
     int i;
 
-    memcpy(&diff, tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&diff, tmo);
     MB_TIMEVAL_DIFF(&diff, &progm->start_time);
 
     i = progm->first_playing;
     for(word = progm->words + i;
 	i < progm->n_words && MB_TIMEVAL_LATER(&diff, &word->start_time);
 	word = progm->words + ++i) {
-	memcpy(&w_stp_tm, &progm->start_time, sizeof(mb_timeval_t));
+	MB_TIMEVAL_CP(&w_stp_tm, &progm->start_time);
 	MB_TIMEVAL_ADD(&w_stp_tm, &word->start_time);
 	MB_TIMEVAL_ADD(&w_stp_tm, &word->playing_time);
 	if(MB_TIMEVAL_LATER(&w_stp_tm, tmo))
@@ -182,7 +182,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
     MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
     MB_TIMEVAL_ADD(&next_tmo, tmo);
 
-    memcpy(&diff, &next_tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&diff, &next_tmo);
     MB_TIMEVAL_DIFF(&diff, &progm->start_time);
     for(word = progm->words + i;
 	i < progm->n_words && MB_TIMEVAL_LATER(&diff, &word->start_time);
@@ -193,7 +193,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
     /* Setup next timeout. */
     if(progm->first_playing < progm->n_words) {
 	word = progm->words + progm->first_playing;
-	memcpy(&w_stp_tm, &word->start_time, sizeof(mb_timeval_t));
+	MB_TIMEVAL_CP(&w_stp_tm, &word->start_time);
 	MB_TIMEVAL_ADD(&w_stp_tm, &progm->start_time);
 
 	if(MB_TIMEVAL_LATER(&w_stp_tm, &next_tmo))
@@ -205,7 +205,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	ASSERT(timer != NULL);
     }
 
-    memcpy(&progm->last_time, tmo, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&progm->last_time, tmo);
 }
 
 void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
@@ -217,11 +217,11 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 	return;
 
     progm->tman = tman;
-    memcpy(&progm->start_time, now, sizeof(mb_timeval_t));
-    memcpy(&progm->last_time, now, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&progm->start_time, now);
+    MB_TIMEVAL_CP(&progm->last_time, now);
     progm->first_playing = 0;
 
-    memcpy(&next_time, &progm->words[0].start_time, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&next_time, &progm->words[0].start_time);
     MB_TIMEVAL_ADD(&next_time, now);
     if(!MB_TIMEVAL_LATER(&next_time, now)) {
 	mb_progm_step(&next_time, now, progm);
@@ -263,7 +263,7 @@ static void mb_shift_start(mb_action_t *act,
     mb_shift_t *shift = (mb_shift_t *)act;
     coord_t *coord;
 
-    memcpy(&shift->start_time, now, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&shift->start_time, now);
     coord = shift->coord;
     memcpy(&shift->saved_matrix, coord->matrix, sizeof(co_aix[6]));
     shift->playing_time = playing_time;
@@ -277,7 +277,7 @@ static void mb_shift_step(mb_action_t *act, const mb_timeval_t *now,
     float ratio;
 
     
-    memcpy(&diff, now, sizeof(mb_timeval_t));
+    MB_TIMEVAL_CP(&diff, now);
     MB_TIMEVAL_DIFF(&diff, &shift->start_time);
     ratio = comp_mb_timeval_ratio(&diff, shift->playing_time);
 
