@@ -41,6 +41,13 @@ extern int mb_tman_handle_timeout(mb_tman_t *tman, mb_timeval_t *now);
     ((a)->tv_sec > (b)->tv_sec ||		\
      ((a)->tv_sec == (b)->tv_sec &&		\
       (a)->tv_usec > (b)->tv_usec))
+#define MB_TIMEVAL_LATER_INC(a, b)		\
+    ((a)->tv_sec > (b)->tv_sec ||		\
+     ((a)->tv_sec == (b)->tv_sec &&		\
+      (a)->tv_usec >= (b)->tv_usec))
+#define MB_TIMEVAL_EQ(a, b)			\
+    ((a)->tv_sec == (b)->tv_sec &&		\
+     (a)->tv_usec == (b)->tv_usec)
 #define MB_TIMEVAL_DIFF(a, b)			\
     do {					\
 	(a)->tv_sec -= (b)->tv_sec;		\

@@ -38,7 +38,7 @@ struct _mb_word {
 struct _mb_progm {
     redraw_man_t *rdman;
 
-    mb_timeval_t start_time, last_time;
+    mb_timeval_t start_time;
     int first_playing;		/*!< first playing word. */
     mb_tman_t *tman;
 
@@ -157,11 +157,15 @@ static void mb_word_stop(mb_word_t *word, const mb_timeval_t *tmo,
     }
 }
 
+/*
+ * Any two actions in concurrent words never change the same attribute.
+ * Start time of words in a program are specified in incremental order.
+ */
 static void mb_progm_step(const mb_timeval_t *tmo,
-			  const mb_timeval_t *now,
-			  void *arg) {
+			     const mb_timeval_t *now,
+			     void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
-    mb_timeval_t next_tmo, w_stp_tm;
+    mb_timeval_t next_tmo, word_stop;
     mb_timeval_t tmo_diff, next_diff;
     mb_word_t *word;
     mb_timer_t *timer;
@@ -170,50 +174,57 @@ static void mb_progm_step(const mb_timeval_t *tmo,
     MB_TIMEVAL_CP(&tmo_diff, tmo);
     MB_TIMEVAL_DIFF(&tmo_diff, &progm->start_time);
 
+    MB_TIMEVAL_SET(&next_diff, 0, STEP_INTERVAL);
+    MB_TIMEVAL_ADD(&next_diff, &tmo_diff);
+
     i = progm->first_playing;
     for(word = progm->words + i;
-	i < progm->n_words && MB_TIMEVAL_LATER(&tmo_diff, &word->start_time);
+	i < progm->n_words &&
+	    MB_TIMEVAL_LATER(&tmo_diff, &word->start_time);
 	word = progm->words + ++i) {
-	MB_TIMEVAL_CP(&w_stp_tm, &progm->start_time);
-	MB_TIMEVAL_ADD(&w_stp_tm, &word->start_time);
-	MB_TIMEVAL_ADD(&w_stp_tm, &word->playing_time);
-	if(MB_TIMEVAL_LATER(&w_stp_tm, tmo))
+	MB_TIMEVAL_CP(&word_stop, &word->start_time);
+	MB_TIMEVAL_ADD(&word_stop, &word->playing_time);
+	if(MB_TIMEVAL_LATER(&next_diff, &word_stop))
+	    mb_word_stop(word, tmo, now, progm->rdman);
+	else
 	    mb_word_step(word, tmo, now, progm->rdman);
-	else {
-	    if(MB_TIMEVAL_LATER(&w_stp_tm, &progm->last_time))
-		mb_word_stop(word, tmo, now, progm->rdman);
-	    if(i == progm->first_playing)
-		progm->first_playing++;
-	}
     }
 
-    MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
-    MB_TIMEVAL_ADD(&next_tmo, tmo);
-
-    MB_TIMEVAL_CP(&next_diff, &next_tmo);
-    MB_TIMEVAL_DIFF(&next_diff, &progm->start_time);
     for(word = progm->words + i;
-	i < progm->n_words && MB_TIMEVAL_LATER(&next_diff, &word->start_time);
+	i < progm->n_words &&
+	    MB_TIMEVAL_LATER(&next_diff, &word->start_time);
 	word = progm->words + ++i) {
 	mb_word_start(word, tmo, now, progm->rdman);
+	MB_TIMEVAL_CP(&word_stop, &word->start_time);
+	MB_TIMEVAL_ADD(&word_stop, &word->playing_time);
+	if(MB_TIMEVAL_LATER(&next_diff, &word_stop))
+	    mb_word_stop(word, tmo, now, progm->rdman);
     }
 
-    /* Setup next timeout. */
+    i = progm->first_playing;
+    for(word = progm->words + i;
+	i < progm->n_words &&
+	    MB_TIMEVAL_LATER(&next_diff, &word->start_time);
+	word = progm->words + ++i) {
+	MB_TIMEVAL_CP(&word_stop, &word->start_time);
+	MB_TIMEVAL_ADD(&word_stop, &word->playing_time);
+	if(!MB_TIMEVAL_LATER(&next_diff, &word_stop))
+	    break;
+	progm->first_playing++;
+    }
+
     if(progm->first_playing < progm->n_words) {
 	word = progm->words + progm->first_playing;
-	MB_TIMEVAL_CP(&w_stp_tm, &word->start_time);
-	MB_TIMEVAL_ADD(&w_stp_tm, &progm->start_time);
-
-	if(MB_TIMEVAL_LATER(&w_stp_tm, &next_tmo))
-	    timer = mb_tman_timeout(progm->tman, &w_stp_tm,
-				    mb_progm_step, progm);
-	else
-	    timer = mb_tman_timeout(progm->tman, &next_tmo,
-				    mb_progm_step, progm);
-	ASSERT(timer != NULL);
+	if(MB_TIMEVAL_LATER(&word->start_time, &next_diff)) {
+	    MB_TIMEVAL_CP(&next_tmo, &word->start_time);
+	    MB_TIMEVAL_ADD(&next_tmo, &progm->start_time);
+	} else {
+	    MB_TIMEVAL_CP(&next_tmo, &next_diff);
+	    MB_TIMEVAL_ADD(&next_tmo, &progm->start_time);
+	}
+	timer = mb_tman_timeout(progm->tman, &next_tmo,
+				mb_progm_step, progm);	
     }
-
-    MB_TIMEVAL_CP(&progm->last_time, tmo);
 }
 
 void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
@@ -226,7 +237,6 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 
     progm->tman = tman;
     MB_TIMEVAL_CP(&progm->start_time, now);
-    MB_TIMEVAL_CP(&progm->last_time, now);
     progm->first_playing = 0;
 
     MB_TIMEVAL_CP(&next_time, &progm->words[0].start_time);
