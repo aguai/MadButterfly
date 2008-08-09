@@ -53,6 +53,17 @@ void paint_color_set(paint_t *paint,
     color->a = a;
 }
 
+void paint_color_get(paint_t *paint,
+		     co_comp_t *r, co_comp_t *g,
+		     co_comp_t *b, co_comp_t *a) {
+    paint_color_t *color = (paint_color_t *)paint;
+
+    *r = color->r;
+    *g = color->g;
+    *b = color->b;
+    *a = color->a;
+}
+
 /*! \brief Linear gradient.
  */
 typedef struct _paint_linear {
