@@ -75,7 +75,7 @@ void handle_connection(Display *display, mb_tman_t *tman,
     int nfds;
     struct timeval tmo;
     mb_timeval_t mb_tmo, next_mb_tmo;
-    int r, r1;
+    int r;
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask);
     XFlush(display);
@@ -108,9 +108,9 @@ void handle_connection(Display *display, mb_tman_t *tman,
 	    return;
 	}
 
-	MB_TIMEVAL_ADD(&mb_tmo, &next_mb_tmo);
-
 	if(r == 0) {
+	    MB_TIMEVAL_ADD(&mb_tmo, &next_mb_tmo);
+
 	    mb_tman_handle_timeout(tman, &mb_tmo);
 	    rdman_redraw_changed(rdman);
 	    XFlush(display);
