@@ -311,8 +311,18 @@ void draw_path(cairo_t *cr, int w, int h) {
 	
 	MB_TIMEVAL_SET(&start, 3, 0);
 	MB_TIMEVAL_SET(&playing, 2, 0);
-	word = mb_progm_next_word(progm, &start, &playing);
 	act = mb_shift_new(0, 20, coord2);
+	mb_word_add_action(word, act);
+	
+	MB_TIMEVAL_SET(&start, 3, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+	act = mb_shift_new(0, -20, coord1);
+	mb_word_add_action(word, act);
+	
+	MB_TIMEVAL_SET(&start, 3, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	act = mb_shift_new(0, -20, coord2);
 	mb_word_add_action(word, act);
 	
 	gettimeofday(&tv, NULL);
