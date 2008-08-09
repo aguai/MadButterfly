@@ -5,6 +5,13 @@
  * the order and time of playing of words.  A word
  * defines how long to perform a set of actions.  Actions
  * in a word are performed concurrently.
+ *
+ * Animation shapes are updated periodically.  Every action
+ * are working with start, step, and stop 3 calls.  start is
+ * called when start time the word, contain it, due.  step is
+ * called periodically in duration of playing time start at
+ * 'start time'.  When the clock run out the playing time of
+ * a word, it call stop of actions in the word.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -154,17 +161,18 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 			  const mb_timeval_t *now,
 			  void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
-    mb_timeval_t next_tmo, w_stp_tm, diff;
+    mb_timeval_t next_tmo, w_stp_tm;
+    mb_timeval_t tmo_diff, next_diff;
     mb_word_t *word;
     mb_timer_t *timer;
     int i;
 
-    MB_TIMEVAL_CP(&diff, tmo);
-    MB_TIMEVAL_DIFF(&diff, &progm->start_time);
+    MB_TIMEVAL_CP(&tmo_diff, tmo);
+    MB_TIMEVAL_DIFF(&tmo_diff, &progm->start_time);
 
     i = progm->first_playing;
     for(word = progm->words + i;
-	i < progm->n_words && MB_TIMEVAL_LATER(&diff, &word->start_time);
+	i < progm->n_words && MB_TIMEVAL_LATER(&tmo_diff, &word->start_time);
 	word = progm->words + ++i) {
 	MB_TIMEVAL_CP(&w_stp_tm, &progm->start_time);
 	MB_TIMEVAL_ADD(&w_stp_tm, &word->start_time);
@@ -182,10 +190,10 @@ static void mb_progm_step(const mb_timeval_t *tmo,
     MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
     MB_TIMEVAL_ADD(&next_tmo, tmo);
 
-    MB_TIMEVAL_CP(&diff, &next_tmo);
-    MB_TIMEVAL_DIFF(&diff, &progm->start_time);
+    MB_TIMEVAL_CP(&next_diff, &next_tmo);
+    MB_TIMEVAL_DIFF(&next_diff, &progm->start_time);
     for(word = progm->words + i;
-	i < progm->n_words && MB_TIMEVAL_LATER(&diff, &word->start_time);
+	i < progm->n_words && MB_TIMEVAL_LATER(&next_diff, &word->start_time);
 	word = progm->words + ++i) {
 	mb_word_start(word, tmo, now, progm->rdman);
     }
