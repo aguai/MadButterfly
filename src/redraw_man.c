@@ -231,8 +231,8 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
     STAILQ_INS_TAIL(rdman->all_geos, geo_t, next, geo);
     rdman->n_geos++;
 
+    /*! \todo remove order number. */
 #ifdef GEO_ORDER
-    /* TODO: remove order number. */
     geo->order = ++rdman->next_geo_order;
     if(geo->order == 0) {
 	next_order = 0;
@@ -257,7 +257,7 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
 
 /*! \brief Remove a shape object from redraw manager.
  *
- * TODO: redraw shape objects that overlaid with removed one.
+ * \todo redraw shape objects that overlaid with removed one.
  */
 int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
     STAILQ_REMOVE(rdman->all_geos, geo_t, next, shape->geo);
@@ -614,7 +614,7 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 
 #ifndef UNITTEST
 static void clean_canvas(cairo_t *cr) {
-    /* TODO: clean to background color. */
+    /*! \todo clean to background color. */
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_paint(cr);
 }

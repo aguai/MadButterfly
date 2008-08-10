@@ -135,6 +135,12 @@ paint_t *paint_linear_new(redraw_man_t *rdman,
     return (paint_t *)linear;
 }
 
+/*! \brief Setup color stop for a linear radient paint.
+ *
+ * stops should be managed by users of the function.  It should be
+ * available before the paint being freed or changed to another
+ * array of stops.
+ */
 grad_stop_t *paint_linear_stops(paint_t *paint,
 				int n_stops,
 				grad_stop_t *stops) {
@@ -216,6 +222,12 @@ paint_t *paint_radial_new(redraw_man_t *rdman,
     return (paint_t *)radial;
 }
 
+/*! \brief Setup color stop for a radial radient paint.
+ *
+ * stops should be managed by users of the function.  It should be
+ * available before the paint being freed or changed to another
+ * array of stops.
+ */
 grad_stop_t *paint_radial_stops(paint_t *paint,
 				int n_stops,
 				grad_stop_t *stops) {

@@ -205,6 +205,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     tman = mb_tman_new();
     if(tman) {
+	/* Prepare an animation program. */
 	progm = mb_progm_new(10, &rdman);
 	
 	MB_TIMEVAL_SET(&start, 0, 0);
@@ -232,6 +233,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
 	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
 	
+	/* Start playing the program. */
 	gettimeofday(&tv, NULL);
 	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
 	mb_progm_start(progm, tman, &mbtv);

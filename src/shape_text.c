@@ -109,7 +109,7 @@ void sh_text_transform(shape_t *shape) {
     coord_trans_pos(shape->coord, &x, &y);
     r = get_extents(text, &extents);
     if(r != OK)
-	/* TODO: announce error. change return type? */
+	/*! \todo announce error. change return type? */
 	return;
 
     text->d_x = x;

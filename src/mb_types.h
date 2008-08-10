@@ -11,6 +11,14 @@ typedef struct _area area_t;
 typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
 
+/*! \brief Base of paint types.
+ *
+ * Paints should be freed by users by calling paint_t::free() of
+ * the paint.
+ *
+ * \todo move member functions to a seperate structure and setup a
+ * singleton fro each paint type.
+ */
 struct _paint {
     void (*prepare)(paint_t *paint, cairo_t *cr);
     void (*free)(paint_t *paint);

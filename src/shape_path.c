@@ -323,7 +323,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 	case 'H':
 	case 'v':
 	case 'V':
-	    /* TODO: implement h, H, v, V comamnds for path. */
+	    /*! \todo implement h, H, v, V comamnds for path. */
 	    return ERR;
 	case 'z':
 	case 'Z':
@@ -387,7 +387,7 @@ shape_t *sh_path_new(char *data) {
 
 /*! \brief Transform a path from user space to device space.
  *
- * TODO: associate coord_t with shape objects and transform them
+ * \todo associate coord_t with shape objects and transform them
  *       automatically.
  */
 void sh_path_transform(shape_t *shape) {
