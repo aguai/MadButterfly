@@ -41,6 +41,7 @@ struct _geo {
     area_t areas[2];
 };
 #define GEF_DIRTY 0x1
+#define GEF_HIDDEN 0x2
 
 extern int is_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
@@ -89,6 +90,7 @@ typedef struct _coord {
     STAILQ(shape_t) members;	/*!< All shape_t objects in this coord. */
 } coord_t;
 #define COF_DIRTY 0x1
+#define COF_HIDDEN 0x2
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
@@ -96,6 +98,8 @@ extern co_aix coord_trans_size(coord_t *co, co_aix size);
 extern void compute_aggr_of_coord(coord_t *coord);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
+#define coord_hide(co) do { co->flags |= COF_HIDDEN; } while(0)
+#define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
 
 
 /*! \brief A grahpic shape.

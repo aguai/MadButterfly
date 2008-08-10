@@ -395,6 +395,15 @@ int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint) {
 
 /* Clean dirties */
 
+static int is_coord_subtree_hidden(coord_t *coord) {
+    while(coord) {
+	if(coord->flags & COF_HIDDEN)
+	    return 1;
+	coord = coord->parent;
+    }
+    return 0;
+}
+
 static void clean_shape(shape_t *shape) {
     switch(shape->sh_type) {
     case SHT_PATH:
@@ -413,6 +422,11 @@ static void clean_shape(shape_t *shape) {
 #endif /* UNITTEST */
     }
     shape->geo->flags &= ~GEF_DIRTY;
+
+    if(is_coord_subtree_hidden(shape->coord))
+	shape->geo->flags |= GEF_HIDDEN;
+    else
+	shape->geo->flags &= ~GEF_HIDDEN;
 }
 
 static int clean_coord(coord_t *coord) {
@@ -651,6 +665,8 @@ static void draw_shapes_in_areas(redraw_man_t *rdman,
 	visit_geo = STAILQ_NEXT(geo_t, next, visit_geo)) {
 	if(visit_geo->flags & GEF_DIRTY)
 	    clean_shape(visit_geo->shape);
+	if(visit_geo->flags & GEF_HIDDEN)
+	    continue;
 	for(i = 0; i < n_areas; i++) {
 	    if(is_overlay(visit_geo->cur_area, areas[i])) {
 		draw_shape(rdman, visit_geo->shape);
@@ -733,6 +749,8 @@ int rdman_redraw_all(redraw_man_t *rdman) {
     for(geo = STAILQ_HEAD(rdman->all_geos);
 	geo != NULL;
 	geo = STAILQ_NEXT(geo_t, next, geo)) {
+	if(geo->flags & GEF_HIDDEN)
+	    continue;
 	draw_shape(rdman, geo->shape);
     }
     copy_cr_2_backend(rdman, 0, NULL);

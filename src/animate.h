@@ -24,5 +24,9 @@ extern mb_action_t *mb_chgcolor_new(co_comp_t r, co_comp_t g,
 				    co_comp_t b, co_comp_t a,
 				    paint_t *paint, mb_word_t *word);
 
+enum { VIS_VISIBLE, VIS_HIDDEN };
+extern mb_action_t *mb_visibility_new(int visib, coord_t *coord,
+				      mb_word_t *word);
+
 
 #endif /* __ANIMATE_H_ */

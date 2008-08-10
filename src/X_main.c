@@ -220,6 +220,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 
 	act = mb_shift_new(0, 20, coord1, word);
 	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
 	
 	MB_TIMEVAL_SET(&start, 3, 0);
 	MB_TIMEVAL_SET(&playing, 2, 0);
@@ -229,6 +230,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 	act = mb_shift_new(0, 20, coord2, word);
 	act = mb_chgcolor_new(0, 0, 1, 0.5, fill1, word);
 	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
 	
 	gettimeofday(&tv, NULL);
 	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
@@ -236,6 +238,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 
 	handle_connection(display, tman, &rdman, w, h);
 
+	mb_progm_free(progm);
 	mb_tman_free(tman);
     }
 
