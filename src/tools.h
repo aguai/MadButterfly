@@ -63,4 +63,7 @@ extern void elmpool_free(elmpool_t *pool);
 	}						\
     } while(0)
 
+
+#define O_ALLOC(type) ((type *)malloc(sizeof(type)))
+
 #endif /* __TOOLS_H_ */

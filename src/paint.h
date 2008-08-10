@@ -35,6 +35,13 @@ extern paint_t *paint_linear_new(redraw_man_t *rdman,
 extern grad_stop_t *paint_linear_stops(paint_t *paint,
 				       int n_stops,
 				       grad_stop_t *stops);
+extern paint_t *paint_radial_new(redraw_man_t *rdman,
+				 co_aix cx, co_aix cy, co_aix r,
+				 int n_stops, grad_stop_t *stops);
+extern grad_stop_t *paint_radial_stops(paint_t *paint,
+				       int n_stops,
+				       grad_stop_t *stops);
+
 #define grad_stop_init(stop, _offset, _r, _g, _b, _a)	\
     do {						\
 	(stop)->offset = _offset;			\

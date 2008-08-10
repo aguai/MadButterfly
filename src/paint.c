@@ -3,6 +3,8 @@
 #include <cairo.h>
 #include "paint.h"
 
+#define ASSERT(x)
+
 /*! \brief Solid color paint.
  */
 typedef struct _paint_color {
@@ -142,6 +144,90 @@ grad_stop_t *paint_linear_stops(paint_t *paint,
     old_stops = linear->stops;
     linear->n_stops = n_stops;
     linear->stops = stops;
+    linear->flags |= LIF_DIRTY;
+
+    return old_stops;
+}
+
+/*! \brief Radial gradient.
+ *
+ * NOTE: The only supported gradient unit is userSpaceOnUse.
+ */
+typedef struct _paint_radial {
+    paint_t paint;
+    co_aix cx, cy;
+    co_aix r;
+    int n_stops;
+    grad_stop_t *stops;
+    int flags;
+    cairo_pattern_t *ptn;
+} paint_radial_t;
+
+#define RDF_DIRTY 0x1
+
+static void paint_radial_prepare(paint_t *paint, cairo_t *cr) {
+    paint_radial_t *radial = (paint_radial_t *)paint;
+    cairo_pattern_t *ptn;
+    grad_stop_t *stop;
+    int i;
+
+    if(radial->flags & RDF_DIRTY) {
+	ptn = cairo_pattern_create_radial(radial->cx, radial->cy, 0,
+					  radial->cx, radial->cy,
+					  radial->r);
+	ASSERT(ptn != NULL);
+	stop = radial->stops;
+	for(i = 0; i < radial->n_stops; i++, stop++) {
+	    cairo_pattern_add_color_stop_rgba(ptn, stop->offset,
+					      stop->r, stop->g,
+					      stop->b, stop->a);
+	}
+	cairo_pattern_destroy(radial->ptn);
+	radial->ptn = ptn;
+    }
+    cairo_set_source(cr, radial->ptn);
+}
+
+static void paint_radial_free(paint_t *paint) {
+    paint_radial_t *radial = (paint_radial_t *)paint;
+
+    if(radial->ptn)
+	cairo_pattern_destroy(radial->ptn);
+    free(paint);
+}
+
+paint_t *paint_radial_new(redraw_man_t *rdman,
+			  co_aix cx, co_aix cy, co_aix r,
+			  int n_stops, grad_stop_t *stops) {
+    paint_radial_t *radial;
+
+    radial = O_ALLOC(paint_radial_t);
+    if(radial == NULL)
+	return NULL;
+
+    paint_init(&radial->paint, paint_radial_prepare, paint_radial_free);
+    radial->cx = cx;
+    radial->cy = cy;
+    radial->r = r;
+    radial->n_stops = n_stops;
+    radial->stops = stops;
+    radial->flags = RDF_DIRTY;
+    radial->ptn = NULL;
+
+    return (paint_t *)radial;
+}
+
+grad_stop_t *paint_radial_stops(paint_t *paint,
+				int n_stops,
+				grad_stop_t *stops) {
+    paint_radial_t *radial = (paint_radial_t *)paint;
+    grad_stop_t *old_stops;
+    
+    old_stops = radial->stops;
+    radial->n_stops = n_stops;
+    radial->stops = stops;
+    radial->flags |= RDF_DIRTY;
+
     return old_stops;
 }
 
