@@ -36,8 +36,7 @@ extern grad_stop_t *paint_linear_stops(paint_t *paint,
 				       int n_stops,
 				       grad_stop_t *stops);
 extern paint_t *paint_radial_new(redraw_man_t *rdman,
-				 co_aix cx, co_aix cy, co_aix r,
-				 int n_stops, grad_stop_t *stops);
+				 co_aix cx, co_aix cy, co_aix r);
 extern grad_stop_t *paint_radial_stops(paint_t *paint,
 				       int n_stops,
 				       grad_stop_t *stops);

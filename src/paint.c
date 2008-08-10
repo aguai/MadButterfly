@@ -197,8 +197,7 @@ static void paint_radial_free(paint_t *paint) {
 }
 
 paint_t *paint_radial_new(redraw_man_t *rdman,
-			  co_aix cx, co_aix cy, co_aix r,
-			  int n_stops, grad_stop_t *stops) {
+			  co_aix cx, co_aix cy, co_aix r) {
     paint_radial_t *radial;
 
     radial = O_ALLOC(paint_radial_t);
@@ -209,8 +208,8 @@ paint_t *paint_radial_new(redraw_man_t *rdman,
     radial->cx = cx;
     radial->cy = cy;
     radial->r = r;
-    radial->n_stops = n_stops;
-    radial->stops = stops;
+    radial->n_stops = 0;
+    radial->stops = NULL;
     radial->flags = RDF_DIRTY;
     radial->ptn = NULL;
 

@@ -157,9 +157,10 @@ void draw_path(cairo_t *cr, int w, int h) {
     face = cairo_get_font_face(tmpcr);
     text = sh_text_new("hello \xe6\xbc\xa2\xe5\xad\x97", 10, h / 4,
 		       36.0, face);
+    text_fill = paint_radial_new(&rdman, 100, h / 4, 70);
     grad_stop_init(text_stops, 0, 0.2, 0.9, 0.2, 1);
     grad_stop_init(text_stops + 1, 1, 0.9, 0.2, 0.2, 0.1);
-    text_fill = paint_radial_new(&rdman, 100, h / 4, 70, 2, text_stops);
+    paint_radial_stops(text_fill, 2, text_stops);
     rdman_paint_stroke(&rdman, text_stroke, text);
     text->stroke_width = 0.5;
     rdman_paint_fill(&rdman, text_fill, text);
