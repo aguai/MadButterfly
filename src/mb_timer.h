@@ -3,6 +3,10 @@
 
 #include <sys/time.h>
 
+#ifdef __linux__
+#include <linux/types.h>
+#endif
+
 typedef uint32_t mbsec_t;
 typedef uint32_t mbusec_t;
 typedef struct _mb_timer mb_timer_t;
