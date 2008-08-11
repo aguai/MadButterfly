@@ -2,6 +2,7 @@
 #define __MB_TIMER_H_
 
 #include <sys/time.h>
+#include <stdint.h>
 
 typedef uint32_t mbsec_t;
 typedef uint32_t mbusec_t;
