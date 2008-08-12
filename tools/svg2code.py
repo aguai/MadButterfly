@@ -26,7 +26,7 @@ def translate_stops(parent, codefo, parent_id):
 
             opacity = style_map['stop-opacity']
             offset = node.getAttribute('offset')
-            print >> codefo, 'ADD_STOP([%s], [%f, %f, %f, %f], [%f])dnl' % (
+            print >> codefo, '[COLOR_STOP([%s], %f, %f, %f, %f, %f)],' % (
                 parent_id, r, g, b, float(opacity), float(offset))
             pass
         pass
@@ -42,9 +42,10 @@ def translate_linearGradient(linear, codefo, doc):
     else:
         x1 = y1 = x2 = y2 = 0
         pass
-    print >> codefo, 'ADD_LINEAR_PAINT([%s], [%f, %f, %f, %f])dnl' % (
+    print >> codefo, 'ADD_LINEAR_PAINT([%s], %f, %f, %f, %f, [' % (
         linear_id, x1, y1, x2, y2)
     translate_stops(linear, codefo, linear_id)
+    print >> codefo, '])dnl'
 
     href = linear.getAttributeNS(xlinkns, 'href').strip()
     if href and href[0] == '#':
@@ -65,9 +66,10 @@ def translate_radialGradient(radial, codefo, doc):
     except:
         r = 0.5
         pass
-    print >> codefo, 'ADD_RADIAL_PAINT([%s], [%f, %f], %f)dnl' % (
+    print >> codefo, 'ADD_RADIAL_PAINT([%s], %f, %f, %f, [' % (
         radial_id, cx, cy, r)
     translate_stops(radial, codefo, radial_id)
+    print >>codefo, '])dnl'
 
     href = radial.getAttributeNS(xlinkns, 'href').strip()
     if href[0] == '#':
