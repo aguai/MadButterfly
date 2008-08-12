@@ -6,6 +6,7 @@ svgns='http://www.w3.org/2000/svg'
 xlinkns='http://www.w3.org/1999/xlink'
 
 def translate_stops(parent, codefo, parent_id):
+    stops = []
     for node in parent.childNodes:
         if node.localName == 'stop' and node.namespaceURI == svgns:
             style = node.getAttribute('style')
@@ -26,10 +27,11 @@ def translate_stops(parent, codefo, parent_id):
 
             opacity = style_map['stop-opacity']
             offset = node.getAttribute('offset')
-            print >> codefo, '[COLOR_STOP([%s], %f, %f, %f, %f, %f)],' % (
-                parent_id, r, g, b, float(opacity), float(offset))
+            stops.append('[COLOR_STOP([%s], %f, %f, %f, %f, %f)]' % (
+                parent_id, r, g, b, float(opacity), float(offset)))
             pass
         pass
+    print >> codefo, '%sdnl' % (', '.join(stops))
     pass
 
 def translate_linearGradient(linear, codefo, doc):
