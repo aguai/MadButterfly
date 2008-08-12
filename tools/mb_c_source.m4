@@ -78,8 +78,7 @@ define([S_ADD_PATH],[[
 ]])
 
 define([S_ADD_COORD],[[
-    obj->$1 = (coord_t *)malloc(sizeof(coord_t));
-    coord_init(obj->$1, obj->$2);
+    obj->$1 = rdman_coord_new(rdman, obj->$2);
 ]])
 
 define([S_FILL_SHAPE_WITH_PAINT],[dnl
