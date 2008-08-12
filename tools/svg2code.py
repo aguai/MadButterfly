@@ -215,7 +215,7 @@ if __name__ == '__main__':
         print >> sys.stderr, '%s <SVG file> [<output>]' % (sys.argv[0])
         pass
     
-    struct_name = path.basename(svgfn).split('.')[0]
+    struct_name = path.basename(codefn).split('.')[0]
 
     dom = parse(svgfn)
     codefo = file(codefn, 'w+')
