@@ -179,7 +179,7 @@ $2
 }
 
 void $1_free($1_t *obj) {
-    grad_stop_t *stops;
+    grad_stop_t *stops = NULL;
 ]CLEAR_VARS[]$2[
     free(obj);
 }
