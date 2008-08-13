@@ -114,6 +114,49 @@ SIMPORT([FILL_SHAPE_WITH_PAINT])
 SIMPORT([STROKE_SHAPE_WITH_PAINT])
 divert[]])
 
+define([F_ADD_LINEAR_PAINT],[[
+    stops = paint_linear_stops(obj->$1, 0, NULL);
+    free(stops);
+    obj->$1->free(obj->$1);
+]])
+
+define([F_ADD_RADIAL_PAINT],[[
+    stops = paint_radial_stops(obj->$1, 0, NULL);
+    free(stops);
+    obj->$1->free(obj->$1);
+]])
+
+define([F_ADD_PATH],[[
+    sh_path_free(obj->$1);
+]]);
+
+define([F_ADD_RECT],[[
+    sh_rect_free(obj->$1);
+]]);
+
+define([F_FILL_SHAPE],[[
+    obj->$1->free(obj->$1);
+]])
+
+define([F_STROKE_SHAPE],[[
+    obj->$1->free(obj->$1);
+]])
+
+define([CLEAR_VARS],[divert([-1])
+define([FIMPORT],[IMPORT(]QUOTE($[]1)[,[F_])])
+FIMPORT([ADD_LINEAR_PAINT])
+FIMPORT([ADD_RADIAL_PAINT])
+define([COLOR_STOP])
+define([REF_STOPS])
+FIMPORT([ADD_PATH],)
+FIMPORT([ADD_RECT])
+define([ADD_COORD])
+FIMPORT([FILL_SHAPE])
+FIMPORT([STROKE_SHAPE])
+define([FILL_SHAPE_WITH_PAINT])
+define([STROKE_SHAPE_WITH_PAINT])
+divert[]])
+
 define([MADBUTTERFLY],[dnl
 [#include <stdio.h>
 #include "mb_types.h"
@@ -133,6 +176,13 @@ $2[]dnl
     obj->root_coord = rdman->root_coord;
 $2
 [    return obj;
-}]
+}
+
+void $1_free($1_t *obj) {
+    grad_stop_t *stops;
+]CLEAR_VARS[]$2[
+    free(obj);
+}
+]dnl
 ])
 divert[]dnl

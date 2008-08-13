@@ -31,15 +31,18 @@ define([STROKE_SHAPE_WITH_PAINT],)
 
 define([MADBUTTERFLY],[dnl
 [#ifndef __$1_H_
-#define __$1_H_]
+#define __$1_H_
 
-[typedef struct $1 $1_t;]
+typedef struct $1 $1_t;
 
-struct [$1] {
-    coord_t *root_coord;
+struct $1 {
+    coord_t *root_coord;]
 $2[]dnl
-};
+[};
 
-[#endif /* __$1_H_ */]
+extern $1_t *$1_new(redraw_mant_t *rdman);
+extern void $1_free($1_t *obj);
+
+#endif /* __$1_H_ */]
 ])
 divert[]dnl
