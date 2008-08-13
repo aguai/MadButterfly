@@ -84,7 +84,7 @@ static void draw_shape_path(shape_t *shape, cairo_t *cr) {
     }
 }
 
-static geo_t *find_pos_in_geo(redraw_man_t *rdman,
+static geo_t *find_geo_in_pos(redraw_man_t *rdman,
 			      co_aix x, co_aix y, int *in_stroke) {
     geo_t *geo;
     geo_t **geos;
@@ -96,6 +96,8 @@ static geo_t *find_pos_in_geo(redraw_man_t *rdman,
     cr = rdman->cr;
     for(i = rdman->n_gen_geos - 1; i >= 0; i--) {
 	geo = geos[i];
+	if(geo->flags & GEF_DIRTY)
+	    continue;
 	shape = geo->shape;
 	draw_shape_path(shape, cr);
 	if(shape->fill) {
@@ -127,7 +129,7 @@ shape_t *find_shape_at_pos(redraw_man_t *rdman,
     if(r != OK)
 	return NULL;
 
-    geo = find_pos_in_geo(rdman, x, y, in_stroke);
+    geo = find_geo_in_pos(rdman, x, y, in_stroke);
     if(geo == NULL)
 	return NULL;
 
