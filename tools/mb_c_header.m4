@@ -40,7 +40,7 @@ struct $1 {
 $2[]dnl
 [};
 
-extern $1_t *$1_new(redraw_mant_t *rdman);
+extern $1_t *$1_new(redraw_man_t *rdman);
 extern void $1_free($1_t *obj);
 
 #endif /* __$1_H_ */]
