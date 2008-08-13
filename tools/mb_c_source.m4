@@ -43,7 +43,7 @@ define([STROKE_SHAPE_WITH_PAINT])
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
-    obj->$1 = mb_linear_new(rdman, $2, $3, $4, $5);
+    obj->$1 = paint_linear_new(rdman, $2, $3, $4, $5);
 ifelse(COUNT($6),0,,[dnl
     stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * n_$1_stops);
     memcpy(stops, $1_stops, sizeof(grad_stop_t) * n_$1_stops);
@@ -52,7 +52,7 @@ ifelse(COUNT($6),0,,[dnl
 ])
 
 define([S_ADD_RADIAL_PAINT],[
-    obj->$1 = mb_radial_new(rdman, $2, $3, $4);
+    obj->$1 = paint_radial_new(rdman, $2, $3, $4);
 ifelse(COUNT($5),0,,[
     stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * n_$1_stops);
     memcpy(stops, $1_stops, sizeof(grad_stop_t) * n_$1_stops);
@@ -135,11 +135,11 @@ define([F_ADD_RECT],[[
 ]]);
 
 define([F_FILL_SHAPE],[[
-    obj->$1->free(obj->$1);
+    obj->$1_fill->free(obj->$1_fill);
 ]])
 
 define([F_STROKE_SHAPE],[[
-    obj->$1->free(obj->$1);
+    obj->$1_stroke->free(obj->$1_stroke);
 ]])
 
 define([CLEAR_VARS],[divert([-1])
@@ -159,13 +159,15 @@ divert[]])
 
 define([MADBUTTERFLY],[dnl
 [#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "mb_types.h"
 #include "redraw_man.h"
 #include "shapes.h"
 #include "paint.h"
 #include "$1.h"
 
-$1_t *$1_new(redraw_mant_t *rdman) {
+$1_t *$1_new(redraw_man_t *rdman) {
     $1_t *obj;
     grad_stop_t *stops = NULL;]DECLARE_VARS
 $2[]dnl
