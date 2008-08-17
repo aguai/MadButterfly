@@ -3,6 +3,7 @@
 
 #include <cairo.h>
 #include "tools.h"
+#include "observer.h"
 
 typedef float co_aix;
 typedef struct _shape shape_t;
@@ -47,6 +48,8 @@ struct _geo {
 
     area_t *cur_area, *last_area;
     area_t areas[2];
+
+    subject_t *mouse_event;
 };
 #define GEF_DIRTY 0x1
 #define GEF_HIDDEN 0x2
@@ -96,6 +99,7 @@ typedef struct _coord {
     struct _coord *sibling;
 
     STAILQ(shape_t) members;	/*!< All shape_t objects in this coord. */
+    subject_t *mouse_event;
 } coord_t;
 #define COF_DIRTY 0x1
 #define COF_HIDDEN 0x2
@@ -129,8 +133,9 @@ struct _shape {
     shape_t *coord_mem_next;
     paint_t *fill, *stroke;
     co_aix stroke_width;
-    int stroke_linecap;
-    int stroke_linejoin;
+    int stroke_linecap:2;
+    int stroke_linejoin:2;
+    void (*free)(shape_t *shape);
 };
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
 

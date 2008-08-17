@@ -250,10 +250,10 @@ void draw_path(cairo_t *cr, int w, int h) {
     text_stroke->free(text_stroke);
     text_fill->free(text_fill);
     redraw_man_destroy(&rdman);
-    sh_path_free(path1);
-    sh_path_free(path2);
-    sh_rect_free(rect);
-    sh_text_free(text);
+    path1->free(path1);
+    path2->free(path2);
+    rect->free(rect);
+    text->free(text);
     cairo_destroy(tmpcr);
     cairo_surface_destroy(tmpsuf);
 }

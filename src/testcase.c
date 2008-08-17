@@ -6,6 +6,7 @@ extern CU_pSuite get_geo_suite(void);
 extern CU_pSuite get_shape_path_suite(void);
 extern CU_pSuite get_redraw_man_suite(void);
 extern CU_pSuite get_animate_suite(void);
+extern CU_pSuite get_observer_suite(void);
 
 int
 main(int argc, char * const argv[]) {
@@ -30,6 +31,9 @@ main(int argc, char * const argv[]) {
     if(suite == NULL)
 	return CU_get_error();
     suite = get_animate_suite();
+    if(suite == NULL)
+	return CU_get_error();
+    suite = get_observer_suite();
     if(suite == NULL)
 	return CU_get_error();
 

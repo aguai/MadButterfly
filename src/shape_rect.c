@@ -12,6 +12,10 @@ typedef struct _sh_rect {
     co_aix poses[12][2];
 } sh_rect_t;
 
+static void sh_rect_free(shape_t *shape) {
+    free(shape);
+}
+
 shape_t *sh_rect_new(co_aix x, co_aix y, co_aix w, co_aix h,
 		    co_aix rx, co_aix ry) {
     sh_rect_t *rect;
@@ -29,12 +33,9 @@ shape_t *sh_rect_new(co_aix x, co_aix y, co_aix w, co_aix h,
     rect->h = h;
     rect->rx = rx;
     rect->ry = ry;
+    rect->shape.free = sh_rect_free;
 
     return (shape_t *)rect;
-}
-
-void sh_rect_free(shape_t *shape) {
-    free(shape);
 }
 
 void sh_rect_set(shape_t *shape, co_aix x, co_aix y,

@@ -23,6 +23,14 @@ typedef struct _sh_text {
 
 #define TXF_SCALE_DIRTY 0x1
 
+static void sh_text_free(shape_t *shape) {
+    sh_text_t *text = (sh_text_t *)shape;
+
+    if(text->scaled_font)
+	cairo_scaled_font_destroy(text->scaled_font);
+    cairo_font_face_destroy(text->face);
+}
+
 shape_t *sh_text_new(const char *txt, co_aix x, co_aix y,
 		     co_aix font_size, cairo_font_face_t *face) {
     sh_text_t *text;
@@ -45,15 +53,9 @@ shape_t *sh_text_new(const char *txt, co_aix x, co_aix y,
     text->face = face;
     text->flags |= TXF_SCALE_DIRTY;
 
+    text->shape.free = sh_text_free;
+
     return (shape_t *)text;
-}
-
-void sh_text_free(shape_t *shape) {
-    sh_text_t *text = (sh_text_t *)shape;
-
-    if(text->scaled_font)
-	cairo_scaled_font_destroy(text->scaled_font);
-    cairo_font_face_destroy(text->face);
 }
 
 static int get_extents(sh_text_t *text, cairo_text_extents_t *extents) {

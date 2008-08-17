@@ -37,7 +37,7 @@ typedef struct _sh_path {
 #define OK 0
 #define ERR -1
 
-void sh_path_free(shape_t *shape) {
+static void sh_path_free(shape_t *shape) {
     sh_path_t *path = (sh_path_t *)shape;
     if(path->user_data)
 	free(path->user_data);
@@ -382,6 +382,8 @@ shape_t *sh_path_new(char *data) {
     }
     memcpy(path->dev_data, path->user_data, cmd_cnt);
 
+    path->shape.free = sh_path_free;
+
     return (shape_t *)path;
 }
 
@@ -592,6 +594,7 @@ void test_path_transform(void) {
     CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
     CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);
 
+    geo_init(&geo);
     path->shape.geo = &geo;
     geo.shape = (shape_t *)path;
 

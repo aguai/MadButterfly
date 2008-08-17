@@ -1,7 +1,12 @@
 SVG=svg2code_ex.svg
 TOOLSDIR=../../tools
+INCS=-I../../src
+CFLAGS=-g `pkg-config --cflags cairo` $(INCS) -Wall
 
-all: $(SVG:C/.svg/.mb/) $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/)
+all:	$(SVG:C/.svg/.o/)
+
+$(SVG:C/.svg/.o/): $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/)
+	$(CC) -c $(CFLAGS) -o $@ $(SVG:C/.svg/.c/)
 
 $(SVG:C/.svg/.mb/): $(SVG)
 	$(TOOLSDIR)/svg2code.py $(.ALLSRC) $@
@@ -13,7 +18,7 @@ $(SVG:C/.svg/.h/): $(SVG:C/.svg/.mb/)
 	m4 -I $(TOOLSDIR) mb_c_header.m4 $(.ALLSRC) > $@
 
 clean:
-	for i in *.mb *.o *~; do \
+	for i in *.mb *.o *~ $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/); do \
 		if [ -e "$$i" ]; then \
 			echo "delete $$i"; \
 			rm -f "$$i"; \
