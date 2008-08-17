@@ -66,4 +66,7 @@ extern void elmpool_free(elmpool_t *pool);
 
 #define O_ALLOC(type) ((type *)malloc(sizeof(type)))
 
+#define OFFSET(type, mem) (((void *)&((type *)NULL)->mem) - NULL)
+#define MEM2OBJ(var, type, mem) ((type *)((void *)var - OFFSET(type, mem)))
+
 #endif /* __TOOLS_H_ */

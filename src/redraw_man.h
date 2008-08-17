@@ -4,6 +4,7 @@
 #include <cairo.h>
 #include "tools.h"
 #include "mb_types.h"
+#include "observer.h"
 
 /*! \brief Manage redrawing of shapes (graphic elements).
  *
@@ -34,6 +35,8 @@ typedef struct _redraw_man {
     elmpool_t *geo_pool;
     elmpool_t *coord_pool;
     elmpool_t *shnode_pool;
+    elmpool_t *observer_pool;
+    elmpool_t *subject_pool;
 
     int max_dirty_coords;
     int n_dirty_coords;
@@ -53,6 +56,8 @@ typedef struct _redraw_man {
 
     cairo_t *cr;
     cairo_t *backend;
+
+    ob_factory_t ob_factory;
 } redraw_man_t;
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
@@ -112,6 +117,7 @@ extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
 
 extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
 				  co_aix x, co_aix y, int *in_stroke);
+#define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
 
 
 #endif /* __REDRAW_MAN_H_ */

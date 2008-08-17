@@ -32,8 +32,8 @@ define([DIMPORT],[IMPORT(]QUOTE($[]1)[,[D_])])
 DIMPORT([ADD_LINEAR_PAINT])
 DIMPORT([ADD_RADIAL_PAINT])
 DIMPORT([COLOR_STOP])
-define([REF_STOPS],)
-define([ADD_PATH],)
+define([REF_STOPS])
+define([ADD_PATH])
 define([ADD_RECT])
 define([ADD_COORD])
 define([FILL_SHAPE])
@@ -127,11 +127,11 @@ define([F_ADD_RADIAL_PAINT],[[
 ]])
 
 define([F_ADD_PATH],[[
-    sh_path_free(obj->$1);
+    obj->$1->free(obj->$1);
 ]]);
 
 define([F_ADD_RECT],[[
-    sh_rect_free(obj->$1);
+    obj->$1->free(obj->$1);
 ]]);
 
 define([F_FILL_SHAPE],[[

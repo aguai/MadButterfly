@@ -20,13 +20,11 @@
  */
 
 
-extern void sh_path_free(shape_t *path);
 extern shape_t *sh_path_new(char *data);
 extern void sh_path_transform(shape_t *shape);
 extern void sh_path_draw(shape_t *shape, cairo_t *cr);
 
 
-extern void sh_text_free(shape_t *text);
 extern shape_t *sh_text_new(const char *txt, co_aix x, co_aix y,
 			    co_aix font_size, cairo_font_face_t *face);
 extern void sh_text_transform(shape_t *shape);
@@ -34,7 +32,6 @@ extern void sh_text_draw(shape_t *shape, cairo_t *cr);
 
 extern shape_t *sh_rect_new(co_aix x, co_aix y, co_aix w, co_aix h,
 			    co_aix rx, co_aix ry);
-extern void sh_rect_free(shape_t *shape);
 extern void sh_rect_transform(shape_t *shape);
 extern void sh_rect_draw(shape_t *shape, cairo_t *cr);
 extern void sh_rect_set(shape_t *shape, co_aix x, co_aix y,

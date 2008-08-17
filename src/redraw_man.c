@@ -6,6 +6,8 @@
 #include "shapes.h"
 #include "tools.h"
 #include "redraw_man.h"
+#include "observer.h"
+
 
 /* NOTE: bounding box should also consider width of stroke.
  */
@@ -13,7 +15,6 @@
 #define OK 0
 #define ERR -1
 
-#define OFFSET(type, field) ((void *)&((type *)NULL)->field - (void *)NULL)
 #define SWAP(a, b, t) do { t c;  c = a; a = b; b = c; } while(0)
 
 #ifdef UNITTEST
@@ -22,6 +23,14 @@ typedef struct _sh_dummy sh_dummy_t;
 extern void sh_dummy_transform(shape_t *shape);
 extern void sh_dummy_fill(shape_t *, cairo_t *);
 #endif /* UNITTEST */
+
+static subject_t *ob_subject_alloc(ob_factory_t *factory);
+static void ob_subject_free(ob_factory_t *factory, subject_t *subject);
+static observer_t *ob_observer_alloc(ob_factory_t *factory);
+static void ob_observer_free(ob_factory_t *factory, observer_t *observer);
+static subject_t *ob_get_parent_subject(ob_factory_t *factory,
+					subject_t *cur_subject);
+
 
 /*! \brief Sort a list of element by a unsigned integer.
  *
@@ -123,11 +132,37 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 	return ERR;
     }
 
+    rdman->observer_pool = elmpool_new(sizeof(observer_t), 16);
+    if(rdman->observer_pool == NULL) {
+	elmpool_free(rdman->geo_pool);
+	elmpool_free(rdman->coord_pool);
+	elmpool_free(rdman->shnode_pool);
+	return ERR;
+    }
+
+    rdman->subject_pool = elmpool_new(sizeof(subject_t), 16);
+    if(rdman->subject_pool == NULL) {
+	elmpool_free(rdman->geo_pool);
+	elmpool_free(rdman->coord_pool);
+	elmpool_free(rdman->shnode_pool);
+	elmpool_free(rdman->observer_pool);
+	return ERR;
+    }
+
+    rdman->ob_factory.subject_alloc = ob_subject_alloc;
+    rdman->ob_factory.subject_free = ob_subject_free;
+    rdman->ob_factory.observer_alloc = ob_observer_alloc;
+    rdman->ob_factory.observer_free = ob_observer_free;
+    rdman->ob_factory.get_parent_subject = ob_get_parent_subject;
+
     rdman->root_coord = elmpool_elm_alloc(rdman->coord_pool);
     if(rdman->root_coord == NULL)
 	redraw_man_destroy(rdman);
     rdman->n_coords = 1;
     coord_init(rdman->root_coord, NULL);
+    rdman->root_coord->mouse_event = subject_new(&rdman->ob_factory,
+						 rdman->root_coord,
+						 OBJT_COORD);
 
     rdman->cr = cr;
     rdman->backend = backend;
@@ -139,6 +174,8 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->coord_pool);
     elmpool_free(rdman->geo_pool);
     elmpool_free(rdman->shnode_pool);
+    elmpool_free(rdman->observer_pool);
+    elmpool_free(rdman->subject_pool);
     if(rdman->dirty_coords)
 	free(rdman->dirty_coords);
     if(rdman->dirty_geos)
@@ -226,6 +263,7 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
 	return ERR;
     
     geo_init(geo);
+    geo->mouse_event = subject_new(&rdman->ob_factory, geo, OBJT_GEO);
 
     sh_attach_geo(shape, geo);
     STAILQ_INS_TAIL(rdman->all_geos, geo_t, next, geo);
@@ -261,6 +299,7 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
  */
 int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
     STAILQ_REMOVE(rdman->all_geos, geo_t, next, shape->geo);
+    subject_free(&rdman->ob_factory, shape->geo->mouse_event);
     elmpool_elm_free(rdman->geo_pool, shape->geo);
     sh_detach_geo(shape);
     rdman->n_geos--;
@@ -277,6 +316,9 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
 	return NULL;
 
     coord_init(coord, parent);
+    coord->mouse_event = subject_new(&rdman->ob_factory,
+				     coord,
+				     OBJT_COORD);
     rdman->n_coords++;
 
     coord->order = ++rdman->next_coord_order;
@@ -313,6 +355,7 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
 	return ERR;
 
     STAILQ_REMOVE(parent->children, coord_t, sibling, coord);
+    subject_free(&rdman->ob_factory, coord->mouse_event);
     elmpool_elm_free(rdman->coord_pool, coord);
     rdman->n_coords--;
 
@@ -857,7 +900,71 @@ shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape) {
  * - redraw changed
  */
 
+/* Implment factory and strategy functions for observers and subjects.
+ */
+static subject_t *ob_subject_alloc(ob_factory_t *factory) {
+    redraw_man_t *rdman;
+    subject_t *subject;
+
+    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    subject = elmpool_elm_alloc(rdman->subject_pool);
+
+    return subject;
+}
+
+static void ob_subject_free(ob_factory_t *factory, subject_t *subject) {
+    redraw_man_t *rdman;
+
+    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    elmpool_elm_free(rdman->subject_pool, subject);
+}
+
+static observer_t *ob_observer_alloc(ob_factory_t *factory) {
+    redraw_man_t *rdman;
+    observer_t *observer;
+
+    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    observer = elmpool_elm_alloc(rdman->observer_pool);
+
+    return observer;
+}
+
+static void ob_observer_free(ob_factory_t *factory, observer_t *observer) {
+    redraw_man_t *rdman;
+
+    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    elmpool_elm_free(rdman->observer_pool, observer);
+}
+
+static subject_t *ob_get_parent_subject(ob_factory_t *factory,
+					subject_t *cur_subject) {
+    redraw_man_t *rdman;
+    coord_t *coord;
+    geo_t *geo;
+    subject_t *parent;
+
+    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    switch(cur_subject->obj_type) {
+    case OBJT_GEO:
+	geo = (geo_t *)cur_subject->obj;
+	coord = geo->shape->coord;
+	parent = coord->mouse_event;
+	break;
+    case OBJT_COORD:
+	coord = (coord_t *)cur_subject->obj;
+	coord = coord->parent;
+	parent = coord->mouse_event;
+	break;
+    default:
+	parent = NULL;
+	break;
+    }
+
+    return parent;
+}
+
 #ifdef UNITTEST
+/* Test cases */
 
 #include <CUnit/Basic.h>
 #include "paint.h"
