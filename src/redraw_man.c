@@ -132,7 +132,7 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 	return ERR;
     }
 
-    rdman->observer_pool = elmpool_new(sizeof(observer_t), 16);
+    rdman->observer_pool = elmpool_new(sizeof(observer_t), 32);
     if(rdman->observer_pool == NULL) {
 	elmpool_free(rdman->geo_pool);
 	elmpool_free(rdman->coord_pool);
@@ -140,7 +140,7 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 	return ERR;
     }
 
-    rdman->subject_pool = elmpool_new(sizeof(subject_t), 16);
+    rdman->subject_pool = elmpool_new(sizeof(subject_t), 32);
     if(rdman->subject_pool == NULL) {
 	elmpool_free(rdman->geo_pool);
 	elmpool_free(rdman->coord_pool);

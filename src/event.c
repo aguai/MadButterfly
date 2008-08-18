@@ -96,7 +96,7 @@ static geo_t *find_geo_in_pos(redraw_man_t *rdman,
     cr = rdman->cr;
     for(i = rdman->n_gen_geos - 1; i >= 0; i--) {
 	geo = geos[i];
-	if(geo->flags & GEF_DIRTY)
+	if(geo->flags & GEF_HIDDEN)
 	    continue;
 	shape = geo->shape;
 	draw_shape_path(shape, cr);
