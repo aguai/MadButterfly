@@ -112,28 +112,31 @@ static ob_factory_t test_factory = {
 static void handler(event_t *evt, void *arg) {
     int *cnt = (int *)arg;
 
-    CU_ASSERT(evt->type == EVT_MOUSE_OVER);
+    CU_ASSERT(evt->type == EVT_MOUSE_OUT);
     (*cnt)++;
 }
 
 void test_observer(void) {
     subject_t *subject;
-    observer_t *observer;
+    observer_t *observer[2];
     event_t evt;
     int cnt = 0;
 
     subject = subject_new(&test_factory, NULL, 0);
     subject->flags |= SUBF_STOP_PROPAGATE;
-    observer = subject_add_observer(&test_factory, subject,
-				    handler, &cnt);
+    observer[0] = subject_add_observer(&test_factory, subject,
+				       handler, &cnt);
+    observer[1] = subject_add_observer(&test_factory, subject,
+				       handler, &cnt);
 
-    evt.type = EVT_MOUSE_OVER;
+    evt.type = EVT_MOUSE_OUT;
     evt.tgt = NULL;
     evt.cur_tgt = NULL;
     subject_notify(&test_factory, subject, &evt);
-    CU_ASSERT(cnt == 1);
+    CU_ASSERT(cnt == 2);
 
-    subject_remove_observer(&test_factory, subject, observer);
+    subject_remove_observer(&test_factory, subject, observer[0]);
+    subject_remove_observer(&test_factory, subject, observer[1]);
     subject_free(&test_factory, subject);
 }
 
