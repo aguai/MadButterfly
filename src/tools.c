@@ -108,7 +108,6 @@ void elmpool_free(elmpool_t *pool) {
     }
 }
 
-
 #ifdef UNITTEST
 
 #include <CUnit/Basic.h>

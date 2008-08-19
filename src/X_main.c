@@ -58,9 +58,8 @@ void event_interaction(Display *display,
 	    hint_shape(rdman, shape);
 	    break;
 	case Expose:
-	    rdman_redraw_all(rdman);
-	    /* rdman_redraw_area(rdman, evt.xexpose.x, evt.xexpose.y,
-	       evt.xexpose.width, evt.xexpose.height); */
+	    rdman_redraw_area(rdman, evt.xexpose.x, evt.xexpose.y,
+			      evt.xexpose.width, evt.xexpose.height);
 	    break;
 	}
     }

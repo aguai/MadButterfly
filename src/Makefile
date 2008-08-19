@@ -1,6 +1,6 @@
 SRCS =	coord.c geo.c shape_path.c shape_text.c shape_rect.c \
 	redraw_man.c timer.c animate.c paint.c event.c observer.c \
-	X_supp.c tools.c
+	X_supp.c timertool.c tools.c
 OBJS = ${SRCS:C/(.*)\.c/\1.o/g}
 TESTCASE_OBJS = ${SRCS:C/(.*)\.c/testcase-\1.o/g}
 CFLAGS+=	-Wall -I/usr/local/include `pkg-config --cflags cairo`

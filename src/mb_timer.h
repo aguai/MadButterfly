@@ -69,4 +69,7 @@ extern int mb_tman_handle_timeout(mb_tman_t *tman, mb_timeval_t *now);
     } while(0)
 
 
+extern void get_now(mb_timeval_t *tmo);
+
+
 #endif /* __MB_TIMER_H_ */
