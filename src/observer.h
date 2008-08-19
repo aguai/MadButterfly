@@ -37,6 +37,10 @@ struct _mouse_event {
     int button;
 };
 
+#define MOUSE_BUT1 0x1
+#define MOUSE_BUT2 0x2
+#define MOUSE_BUT3 0x4
+
 /*! \brief Observer factory.
  *
  * It provides functions for allocation of subject and observer objects,
