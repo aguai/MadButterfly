@@ -32,7 +32,9 @@ void subject_free(ob_factory_t *factory, subject_t *subject) {
 void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
     observer_t *observer;
 
+    evt->tgt = subject;
     while(subject) {
+	evt->cur_tgt = subject->obj;
 	for(observer = STAILQ_HEAD(subject->observers);
 	    observer != NULL;
 	    observer = STAILQ_NEXT(observer_t, next, observer)) {

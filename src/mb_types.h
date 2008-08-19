@@ -149,6 +149,8 @@ enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
 	(sh)->geo->shape = NULL;		\
 	(sh)->geo = NULL;			\
     } while(0)
+#define sh_get_geo(sh) ((sh)->geo)
+#define sh_get_mouse_event_subject(sh) ((sh)->geo->mouse_event)
 extern void sh_attach_coord(shape_t *sh, coord_t *coord);
 extern void sh_detach_coord(shape_t *sh);
 
