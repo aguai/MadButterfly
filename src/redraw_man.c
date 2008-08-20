@@ -658,7 +658,7 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 #ifndef UNITTEST
 static void clean_canvas(cairo_t *cr) {
     /*! \todo clean to background color. */
-    cairo_set_source_rgb(cr, 0, 0, 0);
+    cairo_set_source_rgb(cr, 1, 1, 1);
     cairo_paint(cr);
 }
 
@@ -939,7 +939,7 @@ static void ob_observer_free(ob_factory_t *factory, observer_t *observer) {
 static subject_t *ob_get_parent_subject(ob_factory_t *factory,
 					subject_t *cur_subject) {
     redraw_man_t *rdman;
-    coord_t *coord;
+    coord_t *coord, *parent_coord;
     geo_t *geo;
     subject_t *parent;
 
@@ -947,13 +947,17 @@ static subject_t *ob_get_parent_subject(ob_factory_t *factory,
     switch(cur_subject->obj_type) {
     case OBJT_GEO:
 	geo = (geo_t *)cur_subject->obj;
-	coord = geo->shape->coord;
-	parent = coord->mouse_event;
+	parent_coord = geo->shape->coord;
+	parent = parent_coord->mouse_event;
 	break;
     case OBJT_COORD:
 	coord = (coord_t *)cur_subject->obj;
-	coord = coord->parent;
-	parent = coord->mouse_event;
+	parent_coord = coord->parent;
+	if(parent_coord == NULL) {
+	    parent = NULL;
+	    break;
+	}
+	parent = parent_coord->mouse_event;
 	break;
     default:
 	parent = NULL;
