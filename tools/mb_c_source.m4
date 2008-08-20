@@ -41,6 +41,7 @@ define([FILL_SHAPE])
 define([STROKE_SHAPE])
 define([FILL_SHAPE_WITH_PAINT])
 define([STROKE_SHAPE_WITH_PAINT])
+define([STROKE_WIDTH])
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
@@ -76,8 +77,8 @@ define([S_REF_STOPS_LINEAR],[dnl
 ]])
 
 define([S_ADD_RECT],[[
-    obj->$1 = sh_rect_new($2, $3, $4, $5, 0, 0);
-    rdman_add_shape(rdman, obj->$1, obj->$6);
+    obj->$1 = sh_rect_new($2, $3, $4, $5, $6, $7);
+    rdman_add_shape(rdman, obj->$1, obj->$8);
 ]])
 
 define([S_ADD_PATH],[[
@@ -107,6 +108,10 @@ define([S_STROKE_SHAPE],[dnl
     rdman_paint_stroke(rdman, obj->$1_stroke, obj->$1);
 ]])
 
+define([S_STROKE_WIDTH],[dnl
+[    obj->$1->stroke_width = $2;
+]])
+
 define([SETUP_VARS],[divert([-1])
 define([SIMPORT],[IMPORT(]QUOTE($[]1)[,[S_])])
 SIMPORT([ADD_LINEAR_PAINT])
@@ -121,6 +126,7 @@ SIMPORT([FILL_SHAPE])
 SIMPORT([STROKE_SHAPE])
 SIMPORT([FILL_SHAPE_WITH_PAINT])
 SIMPORT([STROKE_SHAPE_WITH_PAINT])
+SIMPORT([STROKE_WIDTH],)
 divert[]])
 
 define([F_ADD_LINEAR_PAINT],[[
@@ -165,6 +171,7 @@ FIMPORT([FILL_SHAPE])
 FIMPORT([STROKE_SHAPE])
 define([FILL_SHAPE_WITH_PAINT])
 define([STROKE_SHAPE_WITH_PAINT])
+define([STROKE_WIDTH])
 divert[]])
 
 define([MADBUTTERFLY],[dnl
