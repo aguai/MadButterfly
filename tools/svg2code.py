@@ -51,7 +51,8 @@ def translate_linearGradient(linear, codefo, doc):
 
     href = linear.getAttributeNS(xlinkns, 'href').strip()
     if href and href[0] == '#':
-        print >> codefo, 'REF_STOPS([%s], [%s])dnl' % (linear_id, href[1:])
+        print >> codefo, 'REF_STOPS_LINEAR([%s], [%s])dnl' % (
+            linear_id, href[1:])
         pass
     pass
 
@@ -75,7 +76,8 @@ def translate_radialGradient(radial, codefo, doc):
 
     href = radial.getAttributeNS(xlinkns, 'href').strip()
     if href[0] == '#':
-        print >> codefo, 'REF_STOPS([%s], [%s])dnl' % (radial_id, href[1:])
+        print >> codefo, 'REF_STOPS_RADIAL([%s], [%s])dnl' % (
+            radial_id, href[1:])
         pass
     pass
 

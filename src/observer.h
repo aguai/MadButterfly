@@ -15,18 +15,29 @@ struct _event {
     subject_t *tgt, *cur_tgt;
 };
 
+/*! \brief Observer of observer pattern.
+ *
+ * A target for receiving events.
+ */
 struct _observer {
     evt_handler hdr;
     void *arg;
     observer_t *next;
 };
 
+/*! \brief Subject of observer pattern.
+ *
+ * Observer is a pattern to decouple caller and callee,
+ * especial for multiple callee.
+ * \see http://en.wikipedia.org/wiki/Observer_pattern
+ */
 struct _subject {
-    int obj_type;
-    void *obj;
+    int obj_type;		/*!< type of object (a.k.a. OBJT_*). */
+    void *obj;			/*!< the object this subject for. */
     int flags;
     STAILQ(observer_t) observers;
 };
+/*! \brief Flag that make a subject to propagate events to parents. */
 #define SUBF_STOP_PROPAGATE 0x1
 
 enum {OBJT_GEO, OBJT_COORD};
@@ -34,7 +45,8 @@ enum {OBJT_GEO, OBJT_COORD};
 struct _mouse_event {
     event_t event;
     int x, y;
-    int button;
+    unsigned int but_state;
+    unsigned int button;
 };
 
 #define MOUSE_BUT1 0x1

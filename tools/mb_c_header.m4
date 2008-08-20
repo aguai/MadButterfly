@@ -19,7 +19,8 @@ define([ADD_COORD],[
 ]])
 define([COLOR_STOP],[ ])
 
-define([REF_STOPS],)
+define([REF_STOPS_RADIAL],)
+define([REF_STOPS_LINEAR],)
 define([FILL_SHAPE],[[
     paint_t *$1_fill;
 ]])
