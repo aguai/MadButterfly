@@ -13,16 +13,20 @@ void get_now(mb_timeval_t *tmo) {
     static uint64_t cpufreq;
     static mb_timeval_t tm = {0, 0};
     static uint64_t last_ts;
-
     mb_timeval_t diff_tm;
     uint64_t ts, diff, udiff, sdiff;
     size_t sysctl_sz;
+    int r;
 
     if(MB_TIMEVAL_SEC(&tm) == 0) {
 	sysctl_sz = sizeof(uint64_t);
-	cpufreq = sysctlbyname("kern.timecounter.tc.TSC.frequency",
-			       &cpufreq, &sysctl_sz,
-			       NULL, 0);
+	r = sysctlbyname("kern.timecounter.tc.TSC.frequency",
+			 &cpufreq, &sysctl_sz,
+			 NULL, 0);
+	if(r == -1) {
+	    perror("sysctl");
+	    return;
+	}
 
 	gettimeofday(&tv, NULL);
 	last_ts = rdtsc();

@@ -32,7 +32,8 @@ define([DIMPORT],[IMPORT(]QUOTE($[]1)[,[D_])])
 DIMPORT([ADD_LINEAR_PAINT])
 DIMPORT([ADD_RADIAL_PAINT])
 DIMPORT([COLOR_STOP])
-define([REF_STOPS])
+define([REF_STOPS_RADIAL])
+define([REF_STOPS_LINEAR])
 define([ADD_PATH])
 define([ADD_RECT])
 define([ADD_COORD])
@@ -61,10 +62,17 @@ ifelse(COUNT($5),0,,[
 ])
 
 define([S_COLOR_STOP],[])
-define([S_REF_STOPS],[dnl
+
+define([S_REF_STOPS_RADIAL],[dnl
 [    stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * n_$2_stops);
     memcpy(stops, $2_stops, sizeof(grad_stop_t) * n_$2_stops);
     paint_radial_stops(obj->$1, n_$2_stops, stops);
+]])
+
+define([S_REF_STOPS_LINEAR],[dnl
+[    stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * n_$2_stops);
+    memcpy(stops, $2_stops, sizeof(grad_stop_t) * n_$2_stops);
+    paint_linear_stops(obj->$1, n_$2_stops, stops);
 ]])
 
 define([S_ADD_RECT],[[
@@ -104,7 +112,8 @@ define([SIMPORT],[IMPORT(]QUOTE($[]1)[,[S_])])
 SIMPORT([ADD_LINEAR_PAINT])
 SIMPORT([ADD_RADIAL_PAINT])
 SIMPORT([COLOR_STOP])
-SIMPORT([REF_STOPS])
+SIMPORT([REF_STOPS_RADIAL])
+SIMPORT([REF_STOPS_LINEAR])
 SIMPORT([ADD_PATH],)
 SIMPORT([ADD_RECT])
 SIMPORT([ADD_COORD])
@@ -147,7 +156,8 @@ define([FIMPORT],[IMPORT(]QUOTE($[]1)[,[F_])])
 FIMPORT([ADD_LINEAR_PAINT])
 FIMPORT([ADD_RADIAL_PAINT])
 define([COLOR_STOP])
-define([REF_STOPS])
+define([REF_STOPS_RADIAL])
+define([REF_STOPS_LINEAR])
 FIMPORT([ADD_PATH],)
 FIMPORT([ADD_RECT])
 define([ADD_COORD])

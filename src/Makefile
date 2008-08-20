@@ -5,12 +5,16 @@ OBJS = ${SRCS:C/(.*)\.c/\1.o/g}
 TESTCASE_OBJS = ${SRCS:C/(.*)\.c/testcase-\1.o/g}
 CFLAGS+=	-Wall -I/usr/local/include `pkg-config --cflags cairo`
 LDFLAGS =	`pkg-config --libs cairo`
-BINS =	testcase X_main
+BINS =	testcase libmbfly.a X_main
 
 all: $(BINS)
 
 testcase: testcase.o $(TESTCASE_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(.ALLSRC) -L/usr/local/lib -lcunit
+
+libmbfly.a: $(OBJS)
+	$(AR) -cr $@ $(.ALLSRC)
+
 
 .for i in $(TESTCASE_OBJS)
 ${i}: ${i:C/testcase-(.*).o/\1.c/}
@@ -20,7 +24,7 @@ ${i}: ${i:C/testcase-(.*).o/\1.c/}
 testcase.o:	testcase.c
 	$(CC) $(CFLAGS) -c $(.ALLSRC)
 
-X_main: X_main.o $(OBJS)
+X_main: X_main.o libmbfly.a
 	$(CC) $(CFALGS) `pkg-config --libs cairo` -o $@ $(.ALLSRC)
 
 X_main.o: X_main.c
