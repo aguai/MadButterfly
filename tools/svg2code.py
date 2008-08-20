@@ -147,6 +147,12 @@ def translate_style(node, coord_id, codefo, doc):
             raise ValueError, '\'%s\' is an invalid value for stroke.' \
                 % (stroke)
         pass
+
+    if prop_map.has_key('stroke-width'):
+        stroke_width = float(prop_map['stroke-width'])
+        print >> codefo, 'STROKE_WIDTH([%s], %f)dnl' % (
+            node_id, stroke_width)
+        pass
     pass
 
 def translate_path(path, coord_id, codefo, doc):
@@ -161,11 +167,19 @@ def translate_rect(rect, coord_id, codefo, doc):
     rect_id = rect.getAttribute('id')
     x = float(rect.getAttribute('x'))
     y = float(rect.getAttribute('y'))
+    rx = 0.0
+    if rect.hasAttribute('rx'):
+        rx = float(rect.getAttribute('rx'))
+        pass
+    ry = 0.0
+    if rect.hasAttribute('ry'):
+        ry = float(rect.getAttribute('ry'))
+        pass
     width = float(rect.getAttribute('width'))
     height = float(rect.getAttribute('height'))
     print >> codefo, 'dnl'
-    print >> codefo, 'ADD_RECT([%s], %f, %f, %f, %f, [%s])dnl' % (
-        rect_id, x, y, width, height, coord_id)
+    print >> codefo, 'ADD_RECT([%s], %f, %f, %f, %f, %f, %f, [%s])dnl' % (
+        rect_id, x, y, width, height, rx, ry, coord_id)
     translate_style(rect, coord_id, codefo, doc)
     pass
 

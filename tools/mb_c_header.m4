@@ -29,6 +29,7 @@ define([STROKE_SHAPE],[[
 ]])
 define([FILL_SHAPE_WITH_PAINT],)
 define([STROKE_SHAPE_WITH_PAINT],)
+define([STROKE_WIDTH],)
 
 define([MADBUTTERFLY],[dnl
 [#ifndef __$1_H_
