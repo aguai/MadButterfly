@@ -30,6 +30,9 @@ define([STROKE_SHAPE],[[
 define([FILL_SHAPE_WITH_PAINT],)
 define([STROKE_SHAPE_WITH_PAINT],)
 define([STROKE_WIDTH],)
+define([GROUP_HIDE],)
+define([PATH_HIDE],)
+define([RECT_HIDE],)
 
 define([MADBUTTERFLY],[dnl
 [#ifndef __$1_H_

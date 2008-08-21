@@ -99,7 +99,7 @@ def trans_color(code):
         int(code[3:5], 16) / 255.0, \
         int(code[5:7], 16) / 255.0
 
-def translate_style(node, coord_id, codefo, doc):
+def translate_style(node, coord_id, codefo, doc, prefix):
     node_id = node.getAttribute('id')
     style_str = node.getAttribute('style')
     prop_strs = [s.strip() for s in style_str.split(';')]
@@ -153,6 +153,13 @@ def translate_style(node, coord_id, codefo, doc):
         print >> codefo, 'STROKE_WIDTH([%s], %f)dnl' % (
             node_id, stroke_width)
         pass
+
+    if prop_map.has_key('display'):
+        display = prop_map['display'].strip().lower()
+        if display == 'none':
+            print >> codefo, '%sHIDE([%s])dnl' % (prefix, node_id)
+            pass
+        pass
     pass
 
 def translate_path(path, coord_id, codefo, doc):
@@ -160,7 +167,7 @@ def translate_path(path, coord_id, codefo, doc):
     d = path.getAttribute('d')
     print >> codefo, 'dnl'
     print >> codefo, 'ADD_PATH([%s], [%s], [%s])dnl' % (path_id, d, coord_id)
-    translate_style(path, coord_id, codefo, doc)
+    translate_style(path, coord_id, codefo, doc, 'PATH_')
     pass
 
 def translate_rect(rect, coord_id, codefo, doc):
@@ -180,13 +187,14 @@ def translate_rect(rect, coord_id, codefo, doc):
     print >> codefo, 'dnl'
     print >> codefo, 'ADD_RECT([%s], %f, %f, %f, %f, %f, %f, [%s])dnl' % (
         rect_id, x, y, width, height, rx, ry, coord_id)
-    translate_style(rect, coord_id, codefo, doc)
+    translate_style(rect, coord_id, codefo, doc, 'RECT_')
     pass
 
 def translate_group(group, parent_id, codefo, doc):
     group_id = group.getAttribute('id')
     print >> codefo, 'dnl'
     print >> codefo, 'ADD_COORD([%s], [%s])dnl' % (group_id, parent_id)
+    translate_style(group, group_id, codefo, doc, 'GROUP_')
     for node in group.childNodes:
         if node.namespaceURI != svgns:
             continue
