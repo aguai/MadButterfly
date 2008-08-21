@@ -37,6 +37,7 @@ define([REF_STOPS_LINEAR])
 define([ADD_PATH])
 define([ADD_RECT])
 define([ADD_COORD])
+define([ADD_TEXT],)
 define([FILL_SHAPE])
 define([STROKE_SHAPE])
 define([FILL_SHAPE_WITH_PAINT])
@@ -93,6 +94,11 @@ define([S_ADD_COORD],[[
     obj->$1 = rdman_coord_new(rdman, obj->$2);
 ]])
 
+define([S_ADD_TEXT],[[
+    obj->$1 = sh_text_new("$2", $3, $4, $5, cairo_get_font_face(rdman->cr));
+    rdman_add_shape(rdman, obj->$1, obj->$6);
+]])
+
 define([S_FILL_SHAPE_WITH_PAINT],[dnl
 [    rdman_paint_fill(rdman, obj->$2, obj->$1);
 ]])
@@ -137,6 +143,7 @@ SIMPORT([REF_STOPS_LINEAR])
 SIMPORT([ADD_PATH],)
 SIMPORT([ADD_RECT])
 SIMPORT([ADD_COORD])
+SIMPORT([ADD_TEXT])
 SIMPORT([FILL_SHAPE])
 SIMPORT([STROKE_SHAPE])
 SIMPORT([FILL_SHAPE_WITH_PAINT])
@@ -161,11 +168,15 @@ define([F_ADD_RADIAL_PAINT],[[
 
 define([F_ADD_PATH],[[
     obj->$1->free(obj->$1);
-]]);
+]])
 
 define([F_ADD_RECT],[[
     obj->$1->free(obj->$1);
-]]);
+]])
+
+define([F_ADD_TEXT],[[
+    obj->$1->free(obj->$1);
+]])
 
 define([F_FILL_SHAPE],[[
     obj->$1_fill->free(obj->$1_fill);
@@ -185,6 +196,7 @@ define([REF_STOPS_LINEAR])
 FIMPORT([ADD_PATH],)
 FIMPORT([ADD_RECT])
 define([ADD_COORD])
+FIMPORT([ADD_TEXT])
 FIMPORT([FILL_SHAPE])
 FIMPORT([STROKE_SHAPE])
 define([FILL_SHAPE_WITH_PAINT])
