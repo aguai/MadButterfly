@@ -80,7 +80,7 @@ static void handle_x_event(Display *display,
     co_aix x, y, w, h;
 
     int eflag = 0;
-    int ex1, ey1, ex2, ey2;
+    int ex1=0, ey1=0, ex2=0, ey2=0;
 
     unsigned int state, button;
     int r;
