@@ -42,6 +42,9 @@ define([STROKE_SHAPE])
 define([FILL_SHAPE_WITH_PAINT])
 define([STROKE_SHAPE_WITH_PAINT])
 define([STROKE_WIDTH])
+define([GROUP_HIDE],)
+define([RECT_HIDE],)
+define([PATH_HIDE],)
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
@@ -112,6 +115,18 @@ define([S_STROKE_WIDTH],[dnl
 [    obj->$1->stroke_width = $2;
 ]])
 
+define([S_GROUP_HIDE],[dnl
+[    coord_hide(obj->$1);
+]])
+
+define([S_RECT_HIDE],[dnl
+[    sh_hide(obj->$1);
+]])
+
+define([S_PATH_HIDE],[dnl
+[    sh_hide(obj->$1);
+]])
+
 define([SETUP_VARS],[divert([-1])
 define([SIMPORT],[IMPORT(]QUOTE($[]1)[,[S_])])
 SIMPORT([ADD_LINEAR_PAINT])
@@ -126,7 +141,10 @@ SIMPORT([FILL_SHAPE])
 SIMPORT([STROKE_SHAPE])
 SIMPORT([FILL_SHAPE_WITH_PAINT])
 SIMPORT([STROKE_SHAPE_WITH_PAINT])
-SIMPORT([STROKE_WIDTH],)
+SIMPORT([STROKE_WIDTH])
+SIMPORT([GROUP_HIDE])
+SIMPORT([RECT_HIDE])
+SIMPORT([PATH_HIDE])
 divert[]])
 
 define([F_ADD_LINEAR_PAINT],[[
@@ -172,6 +190,9 @@ FIMPORT([STROKE_SHAPE])
 define([FILL_SHAPE_WITH_PAINT])
 define([STROKE_SHAPE_WITH_PAINT])
 define([STROKE_WIDTH])
+define([GROUP_HIDE],)
+define([RECT_HIDE],)
+define([PATH_HIDE],)
 divert[]])
 
 define([MADBUTTERFLY],[dnl

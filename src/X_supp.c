@@ -76,7 +76,12 @@ static void handle_x_event(Display *display,
     XEvent evt;
     XMotionEvent *mevt;
     XButtonEvent *bevt;
-    co_aix x, y;
+    XExposeEvent *eevt;
+    co_aix x, y, w, h;
+
+    int eflag = 0;
+    int ex1, ey1, ex2, ey2;
+
     unsigned int state, button;
     int r;
 
@@ -118,12 +123,35 @@ static void handle_x_event(Display *display,
 	    break;
 
 	case Expose:
-	    rdman_redraw_area(rdman, evt.xexpose.x, evt.xexpose.y,
-			      evt.xexpose.width, evt.xexpose.height);
+	    eevt = &evt.xexpose;
+	    x = eevt->x;
+	    y = eevt->y;
+	    w = eevt->width;
+	    h = eevt->height;
+
+	    if(eflag) {
+		if(x < ex1)
+		    ex1 = x;
+		if(y < ey1)
+		    ey1 = y;
+		if((x + w) > ex2)
+		    ex2 = x + w;
+		if((y + h) > ey2)
+		    ey2 = y + h;
+	    } else {
+		ex1 = x;
+		ey1 = y;
+		ex2 = x + w;
+		ey2 = y + h;
+		eflag = 1;
+	    }
 	    break;
 	}
     }
-    rdman_redraw_changed(rdman);
+    if(eflag) {
+	rdman_redraw_area(rdman, ex1, ey1, (ex2 - ex1), (ey2 - ey1));
+	eflag = 0;
+    }
     XFlush(display);
 }
 
