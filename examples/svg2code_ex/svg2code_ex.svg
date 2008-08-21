@@ -15,8 +15,8 @@
    sodipodi:version="0.32"
    inkscape:version="0.45.1"
    version="1.0"
-   sodipodi:docbase="/usr/home/thinker"
-   sodipodi:docname="drawing.svg"
+   sodipodi:docbase="/usr/home/thinker/progm/MadButterfly/examples/svg2code_ex"
+   sodipodi:docname="svg2code_ex.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <defs
      id="defs4">
@@ -229,7 +229,7 @@
        rx="4.0216751"
        ry="5.0559778" />
     <g
-       id="g3167"
+       id="file_menu"
        transform="translate(20,40)"
        style="display:none">
       <rect
@@ -282,7 +282,7 @@
        d="M 20.580475,489.18206 L 471.76781,490.76517"
        id="path5146" />
     <g
-       id="g8091"
+       id="file_button"
        transform="translate(6.3324538,1.5831135)">
       <rect
          ry="3.0364513"

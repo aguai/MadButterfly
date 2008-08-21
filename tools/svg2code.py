@@ -99,13 +99,17 @@ def trans_color(code):
         int(code[3:5], 16) / 255.0, \
         int(code[5:7], 16) / 255.0
 
-def translate_style(node, coord_id, codefo, doc, prefix):
-    node_id = node.getAttribute('id')
-    style_str = node.getAttribute('style')
+def get_style_map(style_str):
     prop_strs = [s.strip() for s in style_str.split(';')]
     prop_kvs = [s.split(':') for s in prop_strs if s]
     prop_kvs = [(k.strip(), v.strip()) for k, v in prop_kvs]
     prop_map = dict(prop_kvs)
+    return prop_map
+
+def translate_style(node, coord_id, codefo, doc, prefix):
+    node_id = node.getAttribute('id')
+    style_str = node.getAttribute('style')
+    prop_map = get_style_map(style_str)
 
     try:
         opacity = float(node.getAttribute('opacity'))
@@ -143,13 +147,19 @@ def translate_style(node, coord_id, codefo, doc, prefix):
             paint_id = stroke[5:-1]
             print >> codefo, 'STROKE_SHAPE_WITH_PAINT([%s], [%s])dnl' % (
                 node_id, paint_id)
+        elif stroke.lower() == 'none':
+            pass
         else:
             raise ValueError, '\'%s\' is an invalid value for stroke.' \
                 % (stroke)
         pass
 
     if prop_map.has_key('stroke-width'):
-        stroke_width = float(prop_map['stroke-width'])
+        if prop_map['stroke-width'].endswith('px'):
+            stroke_width = float(prop_map['stroke-width'][:-2])
+        else:
+            stroke_width = float(prop_map['stroke-width'])
+            pass
         print >> codefo, 'STROKE_WIDTH([%s], %f)dnl' % (
             node_id, stroke_width)
         pass
@@ -190,6 +200,55 @@ def translate_rect(rect, coord_id, codefo, doc):
     translate_style(rect, coord_id, codefo, doc, 'RECT_')
     pass
 
+def translate_font_style(text, codefo):
+    text_id = text.getAttribute('id')
+    style_str = text.getAttribute('style')
+    style_map = get_style_map(style_str)
+
+    font_sz = 10.0
+    if style_map.has_key('font-size'):
+        if style_map['font-size'].endswith('px'):
+            font_sz = float(style_map['font-size'][:-2])
+            print >> codefo, 'define([MB_FONT_SZ], %f)dnl' % (font_sz)
+            pass
+        pass
+
+    font_style = 'normal'
+    if style_map.has_key('font-style'):
+        font_style = style_map['font-style'].lower()
+        pass
+
+    font_family = 'Roman'
+    if style_map.has_key('font-family'):
+        font_family = style_map['font-family'].lower()
+        pass
+    pass
+
+def translate_text(text, coord_id, codefo, doc):
+    translate_font_style(text, codefo)
+
+    txt_strs = []
+    for node in text.childNodes:
+        if node.localName == None:
+            txt_strs.append(node.data)
+        elif node.localName == 'tspan':
+            node.setAttribute('style', text.getAttribute('style'))
+            translate_text(node, coord_id, codefo, doc)
+            pass
+        pass
+    if txt_strs:
+        text_id = text.getAttribute('id')
+        x = float(text.getAttribute('x'))
+        y = float(text.getAttribute('y'))
+        print >> codefo, 'dnl'
+        print >> codefo, \
+            'ADD_TEXT([%s], [%s], %f, %f, MB_FONT_SZ, [%s])dnl' % (
+            text_id.encode('utf8'), u''.join(txt_strs).encode('utf8'),
+            x, y, coord_id.encode('utf8'))
+        translate_style(text, coord_id, codefo, doc, 'TEXT_')
+        pass
+    pass
+
 def translate_group(group, parent_id, codefo, doc):
     group_id = group.getAttribute('id')
     print >> codefo, 'dnl'
@@ -204,6 +263,8 @@ def translate_group(group, parent_id, codefo, doc):
             translate_path(node, group_id, codefo, doc)
         elif node.localName == 'rect':
             translate_rect(node, group_id, codefo, doc)
+        elif node.localName == 'text':
+            translate_text(node, group_id, codefo, doc)
             pass
         pass
     pass

@@ -70,9 +70,9 @@ static void notify_shapes(redraw_man_t *rdman,
 
 /*! \brief Dispatch all X events in the queue.
  */
-static void handle_x_event(Display *display,
-			   redraw_man_t *rdman,
-			   mb_tman_t *tman) {
+static void handle_x_event(X_MB_runtime_t *rt) {
+    Display *display = rt->display;
+    redraw_man_t *rdman = rt->rdman;
     XEvent evt;
     XMotionEvent *mevt;
     XButtonEvent *bevt;
@@ -164,9 +164,10 @@ static void handle_x_event(Display *display,
  * The display is managed by specified rdman and tman.  rdman draws
  * on the display, and tman trigger actions according timers.
  */
-void X_MB_handle_connection(Display *display,
-			    redraw_man_t *rdman,
-			    mb_tman_t *tman) {
+void X_MB_handle_connection(X_MB_runtime_t *rt) {
+    Display *display = rt->display;
+    redraw_man_t *rdman = rt->rdman;
+    mb_tman_t *tman = rt->tman;
     int fd;
     mb_timeval_t now, tmo;
     struct timeval tv;
@@ -204,7 +205,7 @@ void X_MB_handle_connection(Display *display,
 	    rdman_redraw_changed(rdman);
 	    XFlush(display);
 	} else if(FD_ISSET(fd, &rfds)){
-	    handle_x_event(display, rdman, tman);
+	    handle_x_event(rt);
 	}
     }
 }
@@ -290,6 +291,8 @@ int X_MB_init(const char *display_name,
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
 
     xmb_rt->tman = mb_tman_new();
+
+    xmb_rt->last = NULL;
 
     return OK;
 }

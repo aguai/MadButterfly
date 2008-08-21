@@ -17,6 +17,9 @@ define([ADD_RECT],[
 define([ADD_COORD],[
 [    coord_t *$1;
 ]])
+define([ADD_TEXT],[
+[    shape_t *$1;
+]])
 define([COLOR_STOP],[ ])
 
 define([REF_STOPS_RADIAL],)

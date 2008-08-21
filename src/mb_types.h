@@ -112,6 +112,7 @@ extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
 #define coord_hide(co) do { co->flags |= COF_HIDDEN; } while(0)
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
+#define coord_get_mouse_event(coord) ((coord)->mouse_event)
 
 
 /*! \brief A grahpic shape.

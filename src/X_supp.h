@@ -2,6 +2,7 @@
 #define __X_SUPP_H_
 
 #include <X11/Xlib.h>
+#include "mb_types.h"
 #include "mb_timer.h"
 #include "redraw_man.h"
 
@@ -15,11 +16,12 @@ struct _X_MB_runtime {
     redraw_man_t *rdman;
     mb_tman_t *tman;
     int w, h;
+
+    /* States */
+    shape_t *last;
 };
 
-extern void X_MB_handle_connection(Display *display,
-				   redraw_man_t *rdman,
-				   mb_tman_t *tman);
+extern void X_MB_handle_connection(X_MB_runtime_t *rt);
 extern int X_MB_init(const char *display_name,
 		     int w, int h, X_MB_runtime_t *xmb_rt);
 extern void X_MB_destroy(X_MB_runtime_t *xmb_rt);
