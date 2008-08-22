@@ -36,6 +36,7 @@ define([STROKE_WIDTH],)
 define([GROUP_HIDE],)
 define([PATH_HIDE],)
 define([RECT_HIDE],)
+define([COORD_TRANSLATE],)
 
 define([MADBUTTERFLY],[dnl
 [#ifndef __$1_H_

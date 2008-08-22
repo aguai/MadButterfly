@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 from xml.dom.minidom import parse
 import sys
+import re
 
 svgns='http://www.w3.org/2000/svg'
 xlinkns='http://www.w3.org/1999/xlink'
@@ -249,10 +250,28 @@ def translate_text(text, coord_id, codefo, doc):
         pass
     pass
 
+reo_translate = re.compile('translate\\(([0-9]+),([0-9]+)\\)')
+def translate_transform(coord_id, transform, codefo):
+    transform = transform.strip()
+    mo = reo_translate.match(transform)
+    if mo:
+        x = float(mo.group(1))
+        y = float(mo.group(2))
+        print >> codefo, 'COORD_TRANSLATE([%s], %f, %f)dnl' % (
+            coord_id, x, y)
+        pass
+    pass
+
 def translate_group(group, parent_id, codefo, doc):
     group_id = group.getAttribute('id')
     print >> codefo, 'dnl'
     print >> codefo, 'ADD_COORD([%s], [%s])dnl' % (group_id, parent_id)
+
+    if group.hasAttribute('transform'):
+        transform = group.getAttribute('transform')
+        translate_transform(group_id, transform, codefo)
+        pass
+
     translate_style(group, group_id, codefo, doc, 'GROUP_')
     for node in group.childNodes:
         if node.namespaceURI != svgns:

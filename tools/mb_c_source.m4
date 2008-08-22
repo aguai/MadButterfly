@@ -46,6 +46,7 @@ define([STROKE_WIDTH])
 define([GROUP_HIDE],)
 define([RECT_HIDE],)
 define([PATH_HIDE],)
+define([COORD_TRANSLATE],)
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
@@ -133,6 +134,15 @@ define([S_PATH_HIDE],[dnl
 [    sh_hide(obj->$1);
 ]])
 
+define([S_COORD_TRANSLATE],[dnl
+[    memset(obj->$1->matrix, 0, sizeof(obj->$1->matrix));
+    obj->$1->matrix[0] = 1;
+    obj->$1->matrix[2] = $2;
+    obj->$1->matrix[4] = 1;
+    obj->$1->matrix[5] = $3;
+    rdman_coord_changed(rdman, obj->$1);
+]])
+
 define([SETUP_VARS],[divert([-1])
 define([SIMPORT],[IMPORT(]QUOTE($[]1)[,[S_])])
 SIMPORT([ADD_LINEAR_PAINT])
@@ -152,6 +162,7 @@ SIMPORT([STROKE_WIDTH])
 SIMPORT([GROUP_HIDE])
 SIMPORT([RECT_HIDE])
 SIMPORT([PATH_HIDE])
+SIMPORT([COORD_TRANSLATE])
 divert[]])
 
 define([F_ADD_LINEAR_PAINT],[[
@@ -205,6 +216,7 @@ define([STROKE_WIDTH])
 define([GROUP_HIDE],)
 define([RECT_HIDE],)
 define([PATH_HIDE],)
+define([COORD_TRANSLATE],)
 divert[]])
 
 define([MADBUTTERFLY],[dnl

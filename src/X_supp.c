@@ -43,14 +43,13 @@ static unsigned int get_button(unsigned int button) {
  * for a shape is returned by sh_get_mouse_event_subject().
  */
 static void notify_shapes(redraw_man_t *rdman,
+			  shape_t *shape,
 			  co_aix x, co_aix y, int etype,
 			  unsigned int state,
 			  unsigned int button) {
     mouse_event_t mouse_event;
-    shape_t *shape;
     subject_t *subject;
     ob_factory_t *factory;
-    int in_stroke;
 
     mouse_event.event.type = etype;
     mouse_event.x = x;
@@ -58,10 +57,6 @@ static void notify_shapes(redraw_man_t *rdman,
     mouse_event.but_state = state;
     mouse_event.button = button;
     
-    shape = find_shape_at_pos(rdman, x, y,
-			      &in_stroke);
-    if(shape == NULL)
-	return;
     subject = sh_get_mouse_event_subject(shape);
     factory = rdman_get_ob_factory(rdman);
     
@@ -82,7 +77,10 @@ static void handle_x_event(X_MB_runtime_t *rt) {
     int eflag = 0;
     int ex1=0, ey1=0, ex2=0, ey2=0;
 
+    shape_t *shape;
+
     unsigned int state, button;
+    int in_stroke;
     int r;
 
     while(XEventsQueued(display, QueuedAfterReading) > 0) {
@@ -98,8 +96,11 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	    state = get_button_state(bevt->state);
 	    button = get_button(bevt->button);
 
-	    notify_shapes(rdman, x, y, EVT_MOUSE_BUT_PRESS,
-			  state, button);
+	    shape = find_shape_at_pos(rdman, x, y,
+				      &in_stroke);
+	    if(shape)
+		notify_shapes(rdman, shape, x, y, EVT_MOUSE_BUT_PRESS,
+			      state, button);
 	    break;
 
 	case ButtonRelease:
@@ -109,8 +110,11 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	    state = get_button_state(bevt->state);
 	    button = get_button(bevt->button);
 
-	    notify_shapes(rdman, x, y, EVT_MOUSE_BUT_RELEASE,
-			  state, button);
+	    shape = find_shape_at_pos(rdman, x, y,
+				      &in_stroke);
+	    if(shape)
+		notify_shapes(rdman, shape, x, y, EVT_MOUSE_BUT_RELEASE,
+			      state, button);
 	    break;
 
 	case MotionNotify:
@@ -119,7 +123,26 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	    y = mevt->y;
 	    state = get_button_state(mevt->state);
 
-	    notify_shapes(rdman, x, y, EVT_MOUSE_MOVE, state, 0);
+	    shape = find_shape_at_pos(rdman, x, y,
+				      &in_stroke);
+	    if(shape != NULL) {
+		if(rt->last != shape) {
+		    if(rt->last)
+			notify_shapes(rdman, rt->last, x, y,
+				      EVT_MOUSE_OUT, state, 0);
+		    notify_shapes(rdman, shape, x, y,
+				  EVT_MOUSE_OVER, state, 0);
+		    rt->last = shape;
+		} else
+		    notify_shapes(rdman, shape, x, y,
+				  EVT_MOUSE_MOVE, state, 0);
+	    } else {
+		if(rt->last) {
+		    notify_shapes(rdman, rt->last, x, y,
+				  EVT_MOUSE_OUT, state, 0);
+		    rt->last = NULL;
+		}
+	    }
 	    break;
 
 	case Expose:
@@ -249,7 +272,8 @@ static int X_init_connection(const char *display_name,
 	return ERR;
     }
 
-    XSelectInput(display, win, PointerMotionMask | ExposureMask);
+    XSelectInput(display, win, PointerMotionMask | ExposureMask |
+		 ButtonPressMask | ButtonReleaseMask);
     XFlush(display);
 
     *displayp = display;
