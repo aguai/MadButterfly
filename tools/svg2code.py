@@ -6,6 +6,7 @@ import re
 svgns='http://www.w3.org/2000/svg'
 xlinkns='http://www.w3.org/1999/xlink'
 
+re_rgb = re.compile('rgb\\( *([0-9]+(\\.[0-9]+)?) *, *([0-9]+(\\.[0-9]+)?) *, *([0-9]+(\\.[0-9]+)?) *\\)')
 def translate_stops(parent, codefo, parent_id):
     stops = []
     for node in parent.childNodes:
@@ -24,7 +25,14 @@ def translate_stops(parent, codefo, parent_id):
                 g = float(int(color[3:5], 16)) / 255.0
                 b = float(int(color[5:7], 16)) / 255.0
             else:
-                raise ValueError, '\'%s\' is invalid color value.' % (color)
+                mo = re_rgb.match(color)
+                if mo:
+                    r = float(mo.group(1))
+                    g = float(mo.group(3))
+                    b = float(mo.group(5))
+                else:
+                    raise ValueError, '\'%s\' is invalid color value.' % (color)
+                pass
 
             opacity = style_map['stop-opacity']
             offset = node.getAttribute('offset')
@@ -173,15 +181,34 @@ def translate_style(node, coord_id, codefo, doc, prefix):
         pass
     pass
 
+def translate_shape_transform(shape, coord_id, codefo):
+    shape_id = shape.getAttribute('id')
+
+    if shape.hasAttribute('transform'):
+        shape_coord_id = shape_id + '_coord'
+        print >> codefo, 'dnl'
+        print >> codefo, 'ADD_COORD([%s], [%s])dnl' % (
+            shape_coord_id, coord_id)
+        transform = shape.getAttribute('transform')
+        translate_transform(shape_coord_id, transform, codefo, 'SHAPE_')
+        coord_id = shape_coord_id
+        pass
+    return coord_id
+
 def translate_path(path, coord_id, codefo, doc):
+    coord_id = translate_shape_transform(path, coord_id, codefo)
+
     path_id = path.getAttribute('id')
     d = path.getAttribute('d')
     print >> codefo, 'dnl'
     print >> codefo, 'ADD_PATH([%s], [%s], [%s])dnl' % (path_id, d, coord_id)
+
     translate_style(path, coord_id, codefo, doc, 'PATH_')
     pass
 
 def translate_rect(rect, coord_id, codefo, doc):
+    coord_id = translate_shape_transform(rect, coord_id, codefo)
+
     rect_id = rect.getAttribute('id')
     x = float(rect.getAttribute('x'))
     y = float(rect.getAttribute('y'))
@@ -250,15 +277,35 @@ def translate_text(text, coord_id, codefo, doc):
         pass
     pass
 
-reo_translate = re.compile('translate\\(([0-9]+),([0-9]+)\\)')
-def translate_transform(coord_id, transform, codefo):
+reo_func = re.compile('([a-zA-Z]+)\\([^\\)]*\\)')
+reo_translate = re.compile('translate\\(([-+]?[0-9]+(\\.[0-9]+)?),([-+]?[0-9]+(\\.[0-9]+)?)\\)')
+reo_matrix = re.compile('matrix\\(([-+]?[0-9]+(\\.[0-9]+)?),([-+]?[0-9]+(\\.[0-9]+)?),([-+]?[0-9]+(\\.[0-9]+)?),([-+]?[0-9]+(\\.[0-9]+)?),([-+]?[0-9]+(\\.[0-9]+)?),([-+]?[0-9]+(\\.[0-9]+)?)\\)')
+def translate_transform(coord_id, transform, codefo, prefix):
     transform = transform.strip()
-    mo = reo_translate.match(transform)
-    if mo:
-        x = float(mo.group(1))
-        y = float(mo.group(2))
-        print >> codefo, 'COORD_TRANSLATE([%s], %f, %f)dnl' % (
-            coord_id, x, y)
+    mo = reo_func.match(transform)
+    if not mo:
+        return
+    name = mo.group(1)
+    print name
+    if name == 'translate':
+        mo = reo_translate.match(transform)
+        if mo:
+            x = float(mo.group(1))
+            y = float(mo.group(3))
+            print >> codefo, '%sTRANSLATE([%s], %f, %f)dnl' % (
+                prefix, coord_id, x, y)
+            pass
+    elif name == 'matrix':
+        mo = reo_matrix.match(transform)
+        if mo:
+            r10, r11, r12 = \
+                float(mo.group(1)), float(mo.group(3)), float(mo.group(5))
+            r20, r21, r22 = \
+                float(mo.group(7)), float(mo.group(9)), float(mo.group(11))
+            print >> codefo, \
+                '%sMATRIX([%s], %f, %f, %f, %f, %f, %f)dnl' % (
+                prefix, coord_id, r10, r11, r12, r20, r21, r22)
+            pass
         pass
     pass
 
@@ -269,7 +316,7 @@ def translate_group(group, parent_id, codefo, doc):
 
     if group.hasAttribute('transform'):
         transform = group.getAttribute('transform')
-        translate_transform(group_id, transform, codefo)
+        translate_transform(group_id, transform, codefo, 'COORD_')
         pass
 
     translate_style(group, group_id, codefo, doc, 'GROUP_')

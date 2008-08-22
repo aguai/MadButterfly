@@ -37,6 +37,8 @@ define([GROUP_HIDE],)
 define([PATH_HIDE],)
 define([RECT_HIDE],)
 define([COORD_TRANSLATE],)
+define([COORD_MATRIX],)
+define([SHAPE_MATRIX],)
 
 define([MADBUTTERFLY],[dnl
 [#ifndef __$1_H_

@@ -47,6 +47,8 @@ define([GROUP_HIDE],)
 define([RECT_HIDE],)
 define([PATH_HIDE],)
 define([COORD_TRANSLATE],)
+define([COORD_MATRIX],)
+define([SHAPE_MATRIX],)
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
@@ -143,6 +145,26 @@ define([S_COORD_TRANSLATE],[dnl
     rdman_coord_changed(rdman, obj->$1);
 ]])
 
+define([S_COORD_MATRIX],[dnl
+[    obj->$1->matrix[0] = $2;
+    obj->$1->matrix[3] = $3;
+    obj->$1->matrix[1] = $4;
+    obj->$1->matrix[4] = $5;
+    obj->$1->matrix[2] = $6;
+    obj->$1->matrix[5] = $7;
+    rdman_coord_changed(rdman, obj->$1);
+]])
+
+define([S_SHAPE_MATRIX],[dnl
+[    obj->$1->matrix[0] = $2;
+    obj->$1->matrix[3] = $3;
+    obj->$1->matrix[1] = $4;
+    obj->$1->matrix[4] = $5;
+    obj->$1->matrix[2] = $6;
+    obj->$1->matrix[5] = $7;
+    rdman_coord_changed(rdman, obj->$1);
+]])
+
 define([SETUP_VARS],[divert([-1])
 define([SIMPORT],[IMPORT(]QUOTE($[]1)[,[S_])])
 SIMPORT([ADD_LINEAR_PAINT])
@@ -163,6 +185,8 @@ SIMPORT([GROUP_HIDE])
 SIMPORT([RECT_HIDE])
 SIMPORT([PATH_HIDE])
 SIMPORT([COORD_TRANSLATE])
+SIMPORT([COORD_MATRIX])
+SIMPORT([SHAPE_MATRIX])
 divert[]])
 
 define([F_ADD_LINEAR_PAINT],[[
@@ -217,6 +241,8 @@ define([GROUP_HIDE],)
 define([RECT_HIDE],)
 define([PATH_HIDE],)
 define([COORD_TRANSLATE],)
+define([COORD_MATRIX],)
+define([SHAPE_MATRIX],)
 divert[]])
 
 define([MADBUTTERFLY],[dnl
