@@ -12,9 +12,25 @@ struct _ex_rt {
 static void file_button_handler(event_t *evt, void *arg) {
     ex_rt_t *ex_rt = (ex_rt_t *)arg;
 
-    coord_show(ex_rt->code->file_menu);
-    rdman_coord_changed(ex_rt->rt->rdman, ex_rt->code->file_menu);
-    rdman_redraw_changed(ex_rt->rt->rdman);
+    switch(evt->type) {
+    case EVT_MOUSE_BUT_PRESS:
+	coord_show(ex_rt->code->file_menu);
+	rdman_coord_changed(ex_rt->rt->rdman, ex_rt->code->file_menu);
+	rdman_redraw_changed(ex_rt->rt->rdman);
+	break;
+    }
+}
+
+static void file_menu_handler(event_t *evt, void *arg) {
+    ex_rt_t *ex_rt = (ex_rt_t *)arg;
+
+    switch(evt->type) {
+    case EVT_MOUSE_BUT_PRESS:
+	coord_hide(ex_rt->code->file_menu);
+	rdman_coord_changed(ex_rt->rt->rdman, ex_rt->code->file_menu);
+	rdman_redraw_changed(ex_rt->rt->rdman);
+	break;
+    }
 }
 
 int main(int argc, char * const argv[]) {
@@ -34,6 +50,8 @@ int main(int argc, char * const argv[]) {
     ex_rt.rt = &rt;
     ex_rt.code = svg2code;
     subject_add_observer(factory, subject, file_button_handler, &ex_rt);
+    subject = coord_get_mouse_event(svg2code->file_menu);
+    subject_add_observer(factory, subject, file_menu_handler, &ex_rt);
 
     X_MB_handle_connection(&rt);
 
