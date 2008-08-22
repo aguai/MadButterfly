@@ -22,29 +22,6 @@
      id="defs4">
     <linearGradient
        inkscape:collect="always"
-       id="linearGradient7566">
-      <stop
-         style="stop-color:#800000;stop-opacity:1;"
-         offset="0"
-         id="stop7568" />
-      <stop
-         style="stop-color:#000080;stop-opacity:0"
-         offset="1"
-         id="stop7570" />
-    </linearGradient>
-    <linearGradient
-       id="linearGradient5612">
-      <stop
-         style="stop-color:#ff0000;stop-opacity:1;"
-         offset="0"
-         id="stop5614" />
-      <stop
-         style="stop-color:#ff0000;stop-opacity:0;"
-         offset="1"
-         id="stop5616" />
-    </linearGradient>
-    <linearGradient
-       inkscape:collect="always"
        id="linearGradient8083">
       <stop
          style="stop-color:#cccccc;stop-opacity:1;"
@@ -149,17 +126,6 @@
     <radialGradient
        inkscape:collect="always"
        xlink:href="#linearGradient8083"
-       id="radialGradient8089"
-       cx="45.995758"
-       cy="11.422832"
-       fx="45.995758"
-       fy="11.422832"
-       r="40.869397"
-       gradientTransform="matrix(0.236919,0.5928997,-1,0.3995932,59.892325,-14.421107)"
-       gradientUnits="userSpaceOnUse" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient8083"
        id="radialGradient8096"
        gradientUnits="userSpaceOnUse"
        gradientTransform="matrix(0.236919,0.5928997,-1,0.3995932,59.892325,-14.421107)"
@@ -232,28 +198,6 @@
        y1="110.41852"
        x2="267.54617"
        y2="218.46967" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3159"
-       id="radialGradient5597"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.7385522,1.1185618,-1.3167274,0.9528579,184.76711,-179.07844)"
-       cx="175.7256"
-       cy="143.89952"
-       fx="175.7256"
-       fy="143.89952"
-       r="125.56596" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient7566"
-       id="radialGradient7572"
-       cx="194.72296"
-       cy="213.19411"
-       fx="194.72296"
-       fy="213.19411"
-       r="62.173178"
-       gradientTransform="matrix(1.1198301,1.4259264,-1.2712809,0.9983807,247.69593,-268.87362)"
-       gradientUnits="userSpaceOnUse" />
     <linearGradient
        gradientUnits="userSpaceOnUse"
        y2="12.676396"
@@ -337,17 +281,6 @@
        y1="2.136826"
        x2="55.889248"
        y2="12.676396" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient7566"
-       id="radialGradient7677"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1.1198301,1.4259264,-1.2712809,0.9983807,247.69593,-268.87362)"
-       cx="194.72296"
-       cy="213.19411"
-       fx="194.72296"
-       fy="213.19411"
-       r="62.173178" />
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient3144"
@@ -505,43 +438,6 @@
            y="106.36016"
            x="52.16227"
            sodipodi:role="line">test</tspan></text>
-      <path
-         id="path4139"
-         d="M 140.64636,199.5 C 140.64636,299.5 160.64636,299.5 220.64636,299.5 C 280.64636,299.5 260.64636,279.5 260.64636,199.5 C 260.64636,119.5 200.64636,99.5 200.64636,99.5 C 200.64636,99.5 137.05797,136.12269 140.64636,199.5 z "
-         style="fill:url(#radialGradient7677);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
-      <g
-         transform="translate(58.112327,186.45184)"
-         inkscape:label="Layer 1"
-         id="g7668">
-        <path
-           style="fill:url(#linearGradient3140);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-           d="M 38.258575,15.831134 L 60.949868,33.509235 C 60.949868,33.509235 53.298153,49.604222 53.298153,67.810026 C 53.298154,81.831483 -11.488249,26.217552 4.7493408,27.704485 C 20.960861,29.189031 38.258575,16.094987 38.258575,15.831134 z "
-           id="path2160"
-           sodipodi:nodetypes="ccszc" />
-        <rect
-           style="opacity:1;fill:url(#linearGradient3158);fill-opacity:1;stroke:none;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-           id="rect3150"
-           width="5.804749"
-           height="89.973625"
-           x="0.83866364"
-           y="28.559948"
-           rx="2.1065917"
-           ry="5.4216619"
-           transform="matrix(0.636556,-0.771231,0.771231,0.636556,0,0)" />
-        <text
-           xml:space="preserve"
-           style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;text-anchor:start;fill:url(#linearGradient7674);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans Mono"
-           x="37.7066"
-           y="9.4256001"
-           id="text3162"
-           transform="matrix(0.7609,0.648869,-0.648869,0.7609,0,0)"
-           sodipodi:linespacing="125%"><tspan
-             sodipodi:role="line"
-             id="tspan3164"
-             x="37.7066"
-             y="9.4256001"
-             style="fill:url(#linearGradient7674);fill-opacity:1">星期四</tspan></text>
-      </g>
     </g>
   </g>
 </svg>
