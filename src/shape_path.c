@@ -46,6 +46,10 @@ static void sh_path_free(shape_t *shape) {
     free(path);
 }
 
+/*! \brief Count number of arguments.
+ *
+ * \todo Notify programmers that syntax or value error of path data.
+ */
 static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
     char *p, *old;
     int cmd_cnt, arg_cnt;

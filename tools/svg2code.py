@@ -24,6 +24,10 @@ def translate_stops(parent, codefo, parent_id):
                 r = float(int(color[1:3], 16)) / 255.0
                 g = float(int(color[3:5], 16)) / 255.0
                 b = float(int(color[5:7], 16)) / 255.0
+            elif color.lower() == 'white':
+                r, g, b = 1, 1, 1
+            elif color.lower() == 'black':
+                r, g, b = 0, 0, 0
             else:
                 mo = re_rgb.match(color)
                 if mo:
@@ -34,7 +38,11 @@ def translate_stops(parent, codefo, parent_id):
                     raise ValueError, '\'%s\' is invalid color value.' % (color)
                 pass
 
-            opacity = style_map['stop-opacity']
+            try:
+                opacity = style_map['stop-opacity']
+            except:
+                opacity = 1
+                pass
             offset = node.getAttribute('offset')
             stops.append('[COLOR_STOP([%s], %f, %f, %f, %f, %f)]' % (
                 parent_id, r, g, b, float(opacity), float(offset)))
@@ -136,6 +144,8 @@ def translate_style(node, coord_id, codefo, doc, prefix):
             paint_id = fill[5:-1]
             print >> codefo, 'FILL_SHAPE_WITH_PAINT([%s], [%s])dnl' % (
                 node_id, paint_id)
+        elif fill.lower() == 'none':
+            pass
         else:
             raise ValueError, '\'%s\' is an invalid value for fill.' % (fill)
         pass
@@ -286,7 +296,6 @@ def translate_transform(coord_id, transform, codefo, prefix):
     if not mo:
         return
     name = mo.group(1)
-    print name
     if name == 'translate':
         mo = reo_translate.match(transform)
         if mo:
