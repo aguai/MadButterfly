@@ -362,6 +362,21 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     return OK;
 }
 
+static void make_sure_dirty_coords(redraw_man_t *rdman) {
+    int max_dirty_coords;
+    int r;
+    
+    if(rdman->n_dirty_coords >= rdman->max_dirty_coords) {
+	/* Max of dirty_coords is not big enough. */
+	max_dirty_coords = rdman->max_dirty_coords + 16;
+	
+	r = extend_memblk((void **)&rdman->dirty_coords,
+			  sizeof(coord_t *) * rdman->n_dirty_coords,
+			  sizeof(coord_t *) * max_dirty_coords);
+	rdman->max_dirty_coords = max_dirty_coords;
+    }
+}
+
 /*! \brief Mark a coord is changed.
  *
  * A changed coord_t object is marked as dirty and put
@@ -369,28 +384,18 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
  */
 int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
     coord_t *child;
-    int max_dirty_coords;
-    int r;
 
     if(coord->flags & COF_DIRTY)
 	return OK;
     
-    if(rdman->n_dirty_coords >= rdman->max_dirty_coords) {
-	/* Max of dirty_coords is not big enough. */
-	max_dirty_coords = rdman->max_dirty_coords + 16;
-
-	r = extend_memblk((void **)&rdman->dirty_coords,
-			  sizeof(coord_t *) * rdman->n_dirty_coords,
-			  sizeof(coord_t *) * max_dirty_coords);
-	rdman->max_dirty_coords = max_dirty_coords;
-    }
-
     /* Make the coord and child coords dirty. */
     for(child = coord;
 	child != NULL;
 	child = preorder_coord_subtree(coord, child)) {
-	rdman->dirty_coords[rdman->n_dirty_coords++] = coord;
-	coord->flags |= COF_DIRTY;
+	make_sure_dirty_coords(rdman);
+ 
+	rdman->dirty_coords[rdman->n_dirty_coords++] = child;
+	child->flags |= COF_DIRTY;
     }
 
     return OK;
