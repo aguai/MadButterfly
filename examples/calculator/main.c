@@ -57,10 +57,10 @@ static int real_compute(int op, int v1, int v2) {
     return r;
 }
 
-static void show_text(ex_rt_t *ex_rt, int num) {
+static void show_text(ex_rt_t *ex_rt, int num, const char *prefix) {
     char buf[20];
 
-    sprintf(buf, "%d", num);
+    sprintf(buf, "%s%d", prefix, num);
     sh_text_set_text(ex_rt->code->screen_text, buf);
     rdman_shape_changed(ex_rt->rt->rdman, ex_rt->code->screen_text);
 }
@@ -69,8 +69,8 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
     int i;
     coord_t **coord_p;
     static int num = 0;
-    static int saved = 0;
-    static int op = 0;
+    static int saved = 0, saved2 = 0;
+    static int op = 0, op1 = 0;
 
     for(i = 0; i < 16; i++) {
 	coord_p = (coord_t **)((void *)ex_rt->code + tgt_list[i].off);
@@ -81,45 +81,28 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
 
     if(i < 10) {
 	num = num * 10 + i;
-	show_text(ex_rt, num);
+	show_text(ex_rt, num, "");
     } else {
 	switch(tgt_list[i].c) {
 	case 'c':
 	    saved = num = 0;
-	    show_text(ex_rt, 0);
+	    show_text(ex_rt, 0, "");
 	    break;
 
 	case '+':
-	    saved = real_compute(op, saved, num);
-	    show_text(ex_rt, saved);
-	    op = '+';
-	    num = 0;
-	    break;
-
 	case '-':
-	    saved = real_compute(op, saved, num);
-	    show_text(ex_rt, saved);
-	    op = '-';
-	    num = 0;
-	    break;
-
 	case '*':
-	    saved = real_compute(op, saved, num);
-	    show_text(ex_rt, saved);
-	    op = '*';
-	    num = 0;
-	    break;
-
 	case '/':
 	    saved = real_compute(op, saved, num);
-	    show_text(ex_rt, saved);
-	    op = '/';
+	    show_text(ex_rt, saved, "=");
+	    op = tgt_list[i].c;
+	    saved2 = num;
 	    num = 0;
 	    break;
 
 	case '=':
-	    saved = real_compute(op, saved, num);
-	    show_text(ex_rt, saved);
+	    saved = real_compute(op, saved, saved2);
+	    show_text(ex_rt, saved, "=");
 	    num = 0;
 	    break;
 	}
@@ -141,42 +124,19 @@ static void setup_observers(ex_rt_t *ex_rt) {
     calculator_scr_t *calculator_scr;
     ob_factory_t *factory;
     subject_t *subject;
+    coord_t *coord;
+    int off;
+    int i;
 
     calculator_scr = ex_rt->code;
     factory = rdman_get_ob_factory(ex_rt->rt->rdman);
 
-    subject = coord_get_mouse_event(calculator_scr->but_0);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_1);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_2);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_3);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_4);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_5);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_6);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_7);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_8);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_9);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_add);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_minus);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_mul);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_div);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_eq);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
-    subject = coord_get_mouse_event(calculator_scr->but_clr);
-    subject_add_observer(factory, subject, buttons_handler, ex_rt);
+    for(i = 0; i < 16; i++) {
+	off = tgt_list[i].off;
+	coord = *(coord_t **)((void *)calculator_scr + off);
+	subject = coord_get_mouse_event(coord);
+	subject_add_observer(factory, subject, buttons_handler, ex_rt);
+    }
 }
 
 int main(int argc, char * const argv[]) {

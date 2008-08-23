@@ -27,7 +27,7 @@ $(SVG:C/.svg/.h/): $(SVG:C/.svg/.mb/)
 	m4 -I $(TOOLSDIR) mb_c_header.m4 $(.ALLSRC) > $@
 
 clean:
-	for i in *.mb *.o *~ $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/) $(BINS); do \
+	for i in *.mb *.o *.core *~ $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/) $(BINS); do \
 		if [ -e "$$i" ]; then \
 			echo "delete $$i"; \
 			rm -f "$$i"; \
