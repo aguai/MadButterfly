@@ -47,10 +47,9 @@ static int real_compute(int op, int v1, int v2) {
 	r = v1 * v2;
 	break;
     case '/':
+	r = v1;
 	if(v2)
-	    r = v1 / v2;
-	else
-	    r = v1;
+	    r /= v2;
 	break;
     case 'n':
 	r = v2;
@@ -161,7 +160,7 @@ static void setup_observers(ex_rt_t *ex_rt) {
 
     for(i = 0; i < 16; i++) {
 	off = tgt_list[i].off;
-	coord = *(coord_t **)((void *)calculator_scr + off);
+	coord = OFF2TYPE(calculator_scr, off, coord_t *);
 	subject = coord_get_mouse_event(coord);
 	subject_add_observer(factory, subject, buttons_handler, ex_rt);
     }
