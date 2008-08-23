@@ -47,7 +47,10 @@ static int real_compute(int op, int v1, int v2) {
 	r = v1 * v2;
 	break;
     case '/':
-	r = v1 / v2;
+	if(v2)
+	    r = v1 / v2;
+	else
+	    r = v1;
 	break;
     }
 
