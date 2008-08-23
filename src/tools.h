@@ -45,7 +45,7 @@ extern void elmpool_free(elmpool_t *pool);
 	(elm)->field = follow;				\
     } while(0)
 #define STAILQ_REMOVE(q, type, field, elm)		\
-    do {						\
+~    do {						\
 	if((elm) == (q).head) {				\
 	    (q).head = (elm)->field;			\
 	    if((q).head == NULL)			\
@@ -68,5 +68,6 @@ extern void elmpool_free(elmpool_t *pool);
 
 #define OFFSET(type, mem) (((void *)&((type *)NULL)->mem) - NULL)
 #define MEM2OBJ(var, type, mem) ((type *)((void *)var - OFFSET(type, mem)))
+#define OFF2TYPE(obj, off, type) (*(type *)((void *)(obj) + (off)))
 
 #endif /* __TOOLS_H_ */
