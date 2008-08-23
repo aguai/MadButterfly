@@ -34,7 +34,7 @@ static struct {
 };
 
 static int real_compute(int op, int v1, int v2) {
-    int r = v2;
+    int r = v1;
 
     switch(op) {
     case '+':
@@ -52,25 +52,41 @@ static int real_compute(int op, int v1, int v2) {
 	else
 	    r = v1;
 	break;
+    case 'n':
+	r = v2;
+	break;
+    case 'N':
+	break;
     }
 
     return r;
 }
 
-static void show_text(ex_rt_t *ex_rt, int num, const char *prefix) {
+static void show_text(ex_rt_t *ex_rt, int num, int saved, int op,
+		      const char *suffix) {
     char buf[20];
 
-    sprintf(buf, "%s%d", prefix, num);
+    sprintf(buf, "%d%s", num, suffix);
     sh_text_set_text(ex_rt->code->screen_text, buf);
     rdman_shape_changed(ex_rt->rt->rdman, ex_rt->code->screen_text);
+
+    if(op == 'n')
+	sprintf(buf, "None");
+    else
+	sprintf(buf, "%d%c", saved, op);
+    sh_text_set_text(ex_rt->code->saved_text, buf);
+    rdman_shape_changed(ex_rt->rt->rdman, ex_rt->code->saved_text);
 }
 
 static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
     int i;
     coord_t **coord_p;
+    static int valid_num = 0;
+    static int factor = 1;
     static int num = 0;
-    static int saved = 0, saved2 = 0;
-    static int op = 0, op1 = 0;
+    static int op = 'n';
+    static int saved = 0;
+    char buf[2] = " ";
 
     for(i = 0; i < 16; i++) {
 	coord_p = (coord_t **)((void *)ex_rt->code + tgt_list[i].off);
@@ -81,29 +97,41 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
 
     if(i < 10) {
 	num = num * 10 + i;
-	show_text(ex_rt, num, "");
+	show_text(ex_rt, num * factor, saved, op, "");
+	valid_num = 1;
     } else {
 	switch(tgt_list[i].c) {
 	case 'c':
 	    saved = num = 0;
-	    show_text(ex_rt, 0, "");
+	    factor = 1;
+	    valid_num = 0;
+	    op = 'n';
+	    show_text(ex_rt, 0, saved, op, "");
 	    break;
 
-	case '+':
 	case '-':
+	    if(!valid_num) {
+		factor *= -1;
+		valid_num = 1;
+		break;
+	    }
+	case '+':
 	case '*':
 	case '/':
-	    saved = real_compute(op, saved, num);
-	    show_text(ex_rt, saved, "=");
+	    saved = real_compute(op, saved, num * factor);
+	    buf[0] = tgt_list[i].c;
+	    show_text(ex_rt, saved, saved, 'n', buf);
 	    op = tgt_list[i].c;
-	    saved2 = num;
 	    num = 0;
+	    factor = 1;
+	    valid_num = 0;
 	    break;
 
 	case '=':
-	    saved = real_compute(op, saved, saved2);
-	    show_text(ex_rt, saved, "=");
+	    saved = real_compute(op, saved, num * factor);
+	    show_text(ex_rt, saved, 0, 'n', "");
 	    num = 0;
+	    op = 'N';
 	    break;
 	}
     }

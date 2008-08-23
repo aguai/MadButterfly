@@ -100,7 +100,7 @@
      width="300px"
      height="400px"
      inkscape:window-width="822"
-     inkscape:window-height="600"
+     inkscape:window-height="609"
      inkscape:window-x="192"
      inkscape:window-y="23" />
   <metadata
@@ -502,11 +502,21 @@
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
        x="36.939316"
-       y="67.546173"
+       y="61.546173"
        id="screen_text_u"><tspan
          sodipodi:role="line"
          id="screen_text"
          x="36.939316"
-         y="67.546173">0</tspan></text>
+         y="61.546173">0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans Mono"
+       x="71.767807"
+       y="78.100266"
+       id="text2238"><tspan
+         sodipodi:role="line"
+         id="saved_text"
+         x="71.767807"
+         y="78.100266">None</tspan></text>
   </g>
 </svg>

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <sys/time.h>
 #ifdef __FreeBSD__
 #include <machine/cpufunc.h>
