@@ -27,6 +27,7 @@ extern void sh_path_draw(shape_t *shape, cairo_t *cr);
 
 extern shape_t *sh_text_new(const char *txt, co_aix x, co_aix y,
 			    co_aix font_size, cairo_font_face_t *face);
+extern void sh_text_set_text(shape_t *shape, const char *txt);
 extern void sh_text_transform(shape_t *shape);
 extern void sh_text_draw(shape_t *shape, cairo_t *cr);
 

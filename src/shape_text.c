@@ -58,6 +58,15 @@ shape_t *sh_text_new(const char *txt, co_aix x, co_aix y,
     return (shape_t *)text;
 }
 
+extern void sh_text_set_text(shape_t *shape, const char *txt) {
+    sh_text_t *text = (sh_text_t *)shape;
+    char *buf;
+
+    buf = strdup(txt);
+    if(text->data) free(text->data);
+    text->data = buf;
+}
+
 static int get_extents(sh_text_t *text, cairo_text_extents_t *extents) {
     cairo_matrix_t fmatrix;
     cairo_matrix_t ctm;
