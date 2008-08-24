@@ -5,8 +5,8 @@
 #include <tools.h>
 #include "calculator_scr.h"
 
-typedef struct _ex_rt ex_rt_t;
-struct _ex_rt {
+typedef struct _calc_data calc_data_t;
+struct _calc_data {
     X_MB_runtime_t *rt;
     calculator_scr_t *code;
 };
@@ -61,23 +61,23 @@ static int real_compute(int op, int v1, int v2) {
     return r;
 }
 
-static void show_text(ex_rt_t *ex_rt, int num, int saved, int op,
+static void show_text(calc_data_t *calc_data, int num, int saved, int op,
 		      const char *suffix) {
     char buf[20];
 
     sprintf(buf, "%d%s", num, suffix);
-    sh_text_set_text(ex_rt->code->screen_text, buf);
-    rdman_shape_changed(ex_rt->rt->rdman, ex_rt->code->screen_text);
+    sh_text_set_text(calc_data->code->screen_text, buf);
+    rdman_shape_changed(calc_data->rt->rdman, calc_data->code->screen_text);
 
     if(op == 'n')
 	sprintf(buf, "None");
     else
 	sprintf(buf, "%d%c", saved, op);
-    sh_text_set_text(ex_rt->code->saved_text, buf);
-    rdman_shape_changed(ex_rt->rt->rdman, ex_rt->code->saved_text);
+    sh_text_set_text(calc_data->code->saved_text, buf);
+    rdman_shape_changed(calc_data->rt->rdman, calc_data->code->saved_text);
 }
 
-static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
+static void compute(calc_data_t *calc_data, coord_t *tgt) {
     int i;
     coord_t **coord_p;
     static int valid_num = 0;
@@ -88,7 +88,7 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
     char buf[2] = " ";
 
     for(i = 0; i < 16; i++) {
-	coord_p = (coord_t **)((void *)ex_rt->code + tgt_list[i].off);
+	coord_p = (coord_t **)((void *)calc_data->code + tgt_list[i].off);
 	if(*coord_p == (void *)tgt)
 	    break;
     }
@@ -96,7 +96,7 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
 
     if(i < 10) {
 	num = num * 10 + i;
-	show_text(ex_rt, num * factor, saved, op, "");
+	show_text(calc_data, num * factor, saved, op, "");
 	valid_num = 1;
     } else {
 	switch(tgt_list[i].c) {
@@ -105,7 +105,7 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
 	    factor = 1;
 	    valid_num = 0;
 	    op = 'n';
-	    show_text(ex_rt, 0, saved, op, "");
+	    show_text(calc_data, 0, saved, op, "");
 	    break;
 
 	case '-':
@@ -119,7 +119,7 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
 	case '/':
 	    saved = real_compute(op, saved, num * factor);
 	    buf[0] = tgt_list[i].c;
-	    show_text(ex_rt, saved, saved, 'n', buf);
+	    show_text(calc_data, saved, saved, 'n', buf);
 	    op = tgt_list[i].c;
 	    num = 0;
 	    factor = 1;
@@ -128,26 +128,26 @@ static void compute(ex_rt_t *ex_rt, coord_t *tgt) {
 
 	case '=':
 	    saved = real_compute(op, saved, num * factor);
-	    show_text(ex_rt, saved, 0, 'n', "");
+	    show_text(calc_data, saved, 0, 'n', "");
 	    num = 0;
 	    op = 'N';
 	    break;
 	}
     }
-    rdman_redraw_changed(ex_rt->rt->rdman);
+    rdman_redraw_changed(calc_data->rt->rdman);
 }
 
 static void buttons_handler(event_t *evt, void *arg) {
-    ex_rt_t *ex_rt = (ex_rt_t *)arg;
+    calc_data_t *calc_data = (calc_data_t *)arg;
 
     switch(evt->type) {
     case EVT_MOUSE_BUT_PRESS:
-	compute(ex_rt, (coord_t *)evt->cur_tgt);
+	compute(calc_data, (coord_t *)evt->cur_tgt);
 	break;
     }
 }
 
-static void setup_observers(ex_rt_t *ex_rt) {
+static void setup_observers(calc_data_t *calc_data) {
     calculator_scr_t *calculator_scr;
     ob_factory_t *factory;
     subject_t *subject;
@@ -155,30 +155,30 @@ static void setup_observers(ex_rt_t *ex_rt) {
     int off;
     int i;
 
-    calculator_scr = ex_rt->code;
-    factory = rdman_get_ob_factory(ex_rt->rt->rdman);
+    calculator_scr = calc_data->code;
+    factory = rdman_get_ob_factory(calc_data->rt->rdman);
 
     for(i = 0; i < 16; i++) {
 	off = tgt_list[i].off;
 	coord = OFF2TYPE(calculator_scr, off, coord_t *);
 	subject = coord_get_mouse_event(coord);
-	subject_add_observer(factory, subject, buttons_handler, ex_rt);
+	subject_add_observer(factory, subject, buttons_handler, calc_data);
     }
 }
 
 int main(int argc, char * const argv[]) {
     X_MB_runtime_t rt;
     calculator_scr_t *calculator_scr;
-    ex_rt_t ex_rt;
+    calc_data_t calc_data;
     int r;
 
     r = X_MB_init(":0.0", 300, 400, &rt);
 
     calculator_scr = calculator_scr_new(rt.rdman);
 
-    ex_rt.rt = &rt;
-    ex_rt.code = calculator_scr;
-    setup_observers(&ex_rt);
+    calc_data.rt = &rt;
+    calc_data.code = calculator_scr;
+    setup_observers(&calc_data);
 
     X_MB_handle_connection(&rt);
 
