@@ -17,6 +17,10 @@
  * - event.c:draw_shape_path
  * - redraw_man.c:clean_shape
  * - redraw_man.c:draw_shape
+ *
+ * \todo Add arc for path shape.
+ * \todo Add ellipse shape.
+ * \todo Add circle shape.
  */
 
 
