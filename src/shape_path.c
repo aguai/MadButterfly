@@ -53,6 +53,7 @@ static void sh_path_free(shape_t *shape) {
 static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
     char *p, *old;
     int cmd_cnt, arg_cnt;
+    int i;
 
     cmd_cnt = arg_cnt = 0;
     p = data;
@@ -176,18 +177,135 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 		arg_cnt += 2;
 	    }
 	    break;
+	case 'A':
+	case 'a':
+	    while(*p) {
+		SKIP_SPACE(p);
+		old = p;
+		SKIP_NUM(p);
+		if(p == old)
+		    break;
+		
+		for(i = 0; i < 6; i++) {
+		    SKIP_SPACE(p);
+		    old = p;
+		    SKIP_NUM(p);
+		    if(p == old)
+			return ERR;
+		}
+
+		arg_cnt += 6;
+	    }
+	    break;
 	case 'z':
 	case 'Z':
 	    break;
 	default:
 	    return ERR;
 	}
+	/*! \todo cmd_cnt should be increased for each implicit repeating. */
 	cmd_cnt++;
 	SKIP_SPACE(p);
     }
 
     *cmd_cntp = cmd_cnt;
     *arg_cntp = arg_cnt;
+    return OK;
+}
+
+static int calc_center_and_x_aix(co_aix x0, co_aix y0,
+				 co_aix x, co_aix y,
+				 co_aix x_rotate,
+				 int large, int sweep,
+				 co_aix *cx, co_aix *cy,
+				 co_aix *xx, co_aix *xy) {
+    
+}
+
+
+static int sh_path_arc_cmd_arg_fill(char cmd, const char *data,
+				    co_aix **args_p, const char **old_p) {
+    co_aix rx, ry;
+    co_aix x_rotate;
+    int large, sweep;
+    co_aix x, y, x0, y0, cx, cy, xx, xy;
+    co_aix *args = *args_p;
+    const char *old = *old_p;
+    const char *p;
+
+    p = data;
+    while(*p) {
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    break;
+	rx = atof(old);
+
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    return ERR;
+	ry = atof(old);
+
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    return ERR;
+	x_rotate = atof(old);
+
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    return ERR;
+	large = atoi(old);
+	
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    return ERR;
+	sweep = atoi(old);
+
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    return ERR;
+	x = atof(old);
+
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    return ERR;
+	y = atof(old);
+
+	x0 = *(args - 2);
+	y0 = *(args - 1);
+
+	if(islower(cmd)) {
+	    x += x0;
+	    y += y0;
+	}
+
+	calc_center_and_x_aix(x0, y0, x, y,
+			      x_rotate, large, sweep,
+			      &cx, &cy, &xx, &xy);
+
+	*(args++) = cx;
+	*(args++) = cy;
+	*(args++) = xx;
+	*(args++) = xy;
+	*(args++) = x;
+	*(args++) = y;
+    }
+
+    *old_p = old;
+
     return OK;
 }
 
@@ -329,6 +447,12 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 	case 'V':
 	    /*! \todo implement h, H, v, V comamnds for path. */
 	    return ERR;
+
+	case 'A':
+	case 'a':
+
+	    break;
+
 	case 'z':
 	case 'Z':
 	    break;
