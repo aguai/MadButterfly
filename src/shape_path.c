@@ -104,6 +104,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 		if(p == old)
 		    return ERR;
 		arg_cnt++;
+
+		cmd_cnt++;
 	    }
 	    break;
 	case 's':
@@ -139,6 +141,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 		if(p == old)
 		    return ERR;
 		arg_cnt++;
+
+		cmd_cnt++;
 	    }
 	    break;
 	case 'm':
@@ -162,6 +166,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 		if(p == old)
 		    return ERR;
 		arg_cnt++;
+
+		cmd_cnt++;
 	    }
 	    break;
 	case 'h':
@@ -175,6 +181,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 		if(p == old)
 		    break;
 		arg_cnt += 2;
+
+		cmd_cnt++;
 	    }
 	    break;
 	case 'A':
@@ -195,16 +203,18 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 		}
 
 		arg_cnt += 6;
+
+		cmd_cnt++;
 	    }
 	    break;
 	case 'z':
 	case 'Z':
+	    cmd_cnt++;
 	    break;
 	default:
 	    return ERR;
 	}
 	/*! \todo cmd_cnt should be increased for each implicit repeating. */
-	cmd_cnt++;
 	SKIP_SPACE(p);
     }
 
@@ -213,27 +223,86 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
     return OK;
 }
 
+#include <math.h>
+/*! \brief Calculate center of the ellipse of an arc.
+ *
+ * - ux0 = x0 / rx
+ * - uy0 = y0 / ry
+ * - ux = x / rx
+ * - uy = y / rx
+ * ux0, uy0, ux, yu are got by transforming (x0, y0) and (x, y) into points
+ * on the unit circle. The center of unit circle are (ucx, ucy):
+ * - umx = (ux0 + ux) / 2
+ * - umy = (uy0 + uy) / 2
+ * - udcx = ucx - umx
+ * - udcy = ucy - umy
+ * - udx = ux - umx
+ * - udy = uy - umy
+ * - udcx * udx + udcy * udy = 0
+ * - udcy = - udcx * udx / udy
+ * - udcx ** 2 + udcy ** 2 + udx ** 2 + udy ** 2 = 1
+ * - udcx ** 2 + (udcx * udx / udy) ** 2 = 1 - udx ** 2 - udy ** 2
+ * - udcx ** 2 = (1 - udx ** 2 - udy ** 2) / (1 + (udx/udy) ** 2)
+ *
+ * - cx = rx * ucx
+ * - cx = rx * (udcx + umx)
+ * - cy = ry * ucy
+ * - cy = ry * (udcy + umy)
+ */
 static int calc_center_and_x_aix(co_aix x0, co_aix y0,
 				 co_aix x, co_aix y,
+				 co_aix rx, co_aix ry,
 				 co_aix x_rotate,
 				 int large, int sweep,
 				 co_aix *cx, co_aix *cy,
 				 co_aix *xx, co_aix *xy) {
+    co_aix nrx, nry, nrx0, nry0;
+    co_aix udx, udy, udx2, udy2;
+    co_aix umx, umy;
+    co_aix udcx, udcy;
+    co_aix nrcx, nrcy;
+    float _sin = sinf(x_rotate);
+    float _cos = cosf(x_rotate);
     
+    nrx = x * _cos + y * _sin;
+    nry = x * -_sin + y * _cos;
+    nrx0 = x0 * _cos + y0 * _sin;
+    nry0 = x0 * -_sin + y0 * _cos;
+
+    udx = (nrx - nrx0) / 2 / rx;
+    udy = (nry - nry0) / 2 / ry;
+    umx = (nrx + nrx0) / 2 / rx;
+    umy = (nry + nry0) / 2 / ry;
+    udx2 = udx * udx;
+    udy2 = udy * udy;
+    udcx = sqrtf((1 - udx2 - udy2) / (1 + udx2 / udy2));
+    udcy = - udcx * udx / udy;
+    nrcx = rx * (udcx + umx);
+    nrcy = ry * (udcy + umy);
+
+    *cx = nrcx * _cos - nrcy * _sin;
+    *cy = nrcx * _sin + nrcy * _cos;
+
+    *xx = rx * _cos + *cx;
+    *xy = rx * _sin + *cy;
+
+    return OK;
 }
 
 
-static int sh_path_arc_cmd_arg_fill(char cmd, const char *data,
-				    co_aix **args_p, const char **old_p) {
+static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
+				    const char **data_p, co_aix **args_p) {
     co_aix rx, ry;
     co_aix x_rotate;
     int large, sweep;
     co_aix x, y, x0, y0, cx, cy, xx, xy;
     co_aix *args = *args_p;
-    const char *old = *old_p;
+    const char *old;
     const char *p;
+    char *cmds;
 
-    p = data;
+    p = *data_p;
+    cmds = *cmds_p;
     while(*p) {
 	SKIP_SPACE(p);
 	old = p;
@@ -293,6 +362,7 @@ static int sh_path_arc_cmd_arg_fill(char cmd, const char *data,
 	}
 
 	calc_center_and_x_aix(x0, y0, x, y,
+			      rx, ry,
 			      x_rotate, large, sweep,
 			      &cx, &cy, &xx, &xy);
 
@@ -302,20 +372,31 @@ static int sh_path_arc_cmd_arg_fill(char cmd, const char *data,
 	*(args++) = xy;
 	*(args++) = x;
 	*(args++) = y;
+
+	*cmds++ = toupper(cmd);
     }
 
-    *old_p = old;
+    *data_p = p;
+    *args_p = args;
+    *cmds_p = cmds;
 
     return OK;
 }
 
-#define TO_ABS islower(cmd)? *(args - 2) + atof(old): atof(old)
+void sh_path_arc_path(cairo_t *cr, const co_aix **args) {
+    
+}
+
+#define TO_ABSX islower(cmd)? x + atof(old): atof(old)
+#define TO_ABSY islower(cmd)? y + atof(old): atof(old)
 
 static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     char *p, *old;
     char *cmds;
     char cmd;
     co_aix *args;
+    co_aix x, y;
+    int r;
 
     cmds = path->user_data;
     args = (co_aix *)(cmds + path->cmd_len);
@@ -323,7 +404,9 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     SKIP_SPACE(p);
     while(*p) {
 	/* Transform all relative to absolute, */
-	*cmds++ = toupper(*p);
+	x = *(args - 2);
+	y = *(args - 1);
+
 	switch((cmd = *p++)) {
 	case 'c':
 	case 'C':
@@ -334,7 +417,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args = TO_ABS;
+		*args = TO_ABSX;
 		args++;
 
 		SKIP_SPACE(p);
@@ -342,7 +425,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSY;
 		args++;
 
 		SKIP_SPACE(p);
@@ -350,7 +433,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSX;
 		args++;
 
 		SKIP_SPACE(p);
@@ -358,14 +441,14 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSY;
 		args++;
 		SKIP_SPACE(p);
 		old = p;
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSX;
 		args++;
 
 		SKIP_SPACE(p);
@@ -373,8 +456,10 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSY;
 		args++;
+
+		*cmds++ = toupper(cmd);
 	    }
 	    break;
 	case 's':
@@ -388,7 +473,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args = TO_ABS;
+		*args = TO_ABSX;
 		args++;
 
 		SKIP_SPACE(p);
@@ -396,7 +481,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSY;
 		args++;
 
 		SKIP_SPACE(p);
@@ -404,7 +489,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSX;
 		args++;
 
 		SKIP_SPACE(p);
@@ -412,8 +497,10 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSY;
 		args++;
+
+		*cmds++ = toupper(cmd);
 	    }
 	    break;
 	case 'm':
@@ -429,7 +516,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		*args = TO_ABS;
+		*args = TO_ABSX;
 		args++;
 
 		SKIP_SPACE(p);
@@ -437,8 +524,10 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 		SKIP_NUM(p);
 		if(p == old)
 		    return ERR;
-		*args = TO_ABS;
+		*args = TO_ABSY;
 		args++;
+
+		*cmds++ = toupper(cmd);
 	    }
 	    break;
 	case 'h':
@@ -450,11 +539,14 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 
 	case 'A':
 	case 'a':
-
+	    r = sh_path_arc_cmd_arg_fill(cmd, &cmds, (const char **)&p, &args);
+	    if(r != OK)
+		return ERR;
 	    break;
 
 	case 'z':
 	case 'Z':
+	    *cmds++ = toupper(cmd);
 	    break;
 	default:
 	    return ERR;
@@ -557,7 +649,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
     sh_path_t *path;
     int cmd_len;
     char *cmds, cmd;
-    co_aix *args;
+    const co_aix *args;
     co_aix x, y, x1, y1, x2, y2;
     int i;
 
@@ -569,36 +661,20 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
     args = (co_aix *)(cmds + cmd_len);
     x = y = x1 = y1 = x2 = y2 = 0;
     for(i = 0; i < cmd_len; i++) {
+	/* All path commands and arguments are transformed
+	 * to absoluted form.
+	 */
 	cmd = *cmds++;
 	switch(cmd) {
-	case 'm':
-	    x = x + *args++;
-	    y = y + *args++;
-	    cairo_move_to(cr, x, y);
-	    break;
 	case 'M':
 	    x = *args++;
 	    y = *args++;
 	    cairo_move_to(cr, x, y);
 	    break;
-	case 'l':
-	    x = x + *args++;
-	    y = y + *args++;
-	    cairo_line_to(cr, x, y);
-	    break;
 	case 'L':
 	    x = *args++;
 	    y = *args++;
 	    cairo_line_to(cr, x, y);
-	    break;
-	case 'c':
-	    x1 = x + *args++;
-	    y1 = y + *args++;
-	    x2 = x + *args++;
-	    y2 = y + *args++;
-	    x = x + *args++;
-	    y = y + *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'C':
 	    x1 = *args++;
@@ -607,15 +683,6 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y2 = *args++;
 	    x = *args++;
 	    y = *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
-	    break;
-	case 's':
-	    x1 = x + x - x2;
-	    y1 = y + y - y2;
-	    x2 = x + *args++;
-	    y2 = y + *args++;
-	    x = x + *args++;
-	    y = y + *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'S':
@@ -627,15 +694,6 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y = *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
-	case 'q':
-	    x1 = x + *args++;
-	    y1 = y + *args++;
-	    x2 = x1;
-	    y2 = y1;
-	    x = x + *args++;
-	    y = y + *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
-	    break;
 	case 'Q':
 	    x1 = *args++;
 	    y1 = *args++;
@@ -643,15 +701,6 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y2 = y1;
 	    x = *args++;
 	    y = *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
-	    break;
-	case 't':
-	    x1 = x + x - x2;
-	    y1 = y + y - y2;
-	    x2 = x1;
-	    y2 = y1;
-	    x = x + *args++;
-	    y = y + *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'T':
@@ -663,8 +712,10 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y = *args++;
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
+	case 'A':
+	    sh_path_arc_path(cr, &args);
+	    break;
 	case 'Z':
-	case 'z':
 	    cairo_close_path(cr);
 	    break;
 	case '\x0':
@@ -686,7 +737,7 @@ void test_sh_path_new(void) {
     sh_path_t *path;
     co_aix *args;
 
-    path = (sh_path_t *)sh_path_new("M 33 25l33 55C 33 87 44 22 55 99L33 77z");
+    path = (sh_path_t *)sh_path_new("M 33 25l33 55c 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
@@ -698,12 +749,12 @@ void test_sh_path_new(void) {
     CU_ASSERT(args[1] == 25);
     CU_ASSERT(args[2] == 66);
     CU_ASSERT(args[3] == 80);
-    CU_ASSERT(args[4] == 33);
-    CU_ASSERT(args[5] == 87);
-    CU_ASSERT(args[6] == 44);
-    CU_ASSERT(args[7] == 22);
-    CU_ASSERT(args[8] == 55);
-    CU_ASSERT(args[9] == 99);
+    CU_ASSERT(args[4] == 99);
+    CU_ASSERT(args[5] == 167);
+    CU_ASSERT(args[6] == 110);
+    CU_ASSERT(args[7] == 102);
+    CU_ASSERT(args[8] == 121);
+    CU_ASSERT(args[9] == 179);
     CU_ASSERT(args[10] == 33);
     CU_ASSERT(args[11] == 77);
     sh_path_free((shape_t *)path);
