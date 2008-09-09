@@ -2,7 +2,7 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
@@ -13,13 +13,20 @@
    height="600"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.45.1"
+   inkscape:version="0.46"
    version="1.0"
    sodipodi:docbase="/usr/home/thinker/progm/MadButterfly/examples/svg2code_ex"
    sodipodi:docname="svg2code_ex.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <defs
      id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 300 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="800 : 300 : 1"
+       inkscape:persp3d-origin="400 : 200 : 1"
+       id="perspective78" />
     <linearGradient
        inkscape:collect="always"
        id="linearGradient8083">
@@ -315,14 +322,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.63166667"
      inkscape:cx="400"
-     inkscape:cy="302.75296"
+     inkscape:cy="176.10388"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      width="800px"
      height="600px"
      showgrid="true"
      inkscape:window-width="822"
-     inkscape:window-height="609"
+     inkscape:window-height="695"
      inkscape:window-x="130"
      inkscape:window-y="120" />
   <metadata
@@ -439,5 +446,17 @@
            x="52.16227"
            sodipodi:role="line">test</tspan></text>
     </g>
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2.39700006999999982;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path2451"
+       sodipodi:cx="648.28497"
+       sodipodi:cy="541.4248"
+       sodipodi:rx="98.944588"
+       sodipodi:ry="47.493404"
+       d="M 747.22956,541.4248 A 98.944588,47.493404 0 0 1 549.36227,542.42361"
+       sodipodi:start="0"
+       sodipodi:end="3.1205606"
+       sodipodi:open="true" />
   </g>
 </svg>
