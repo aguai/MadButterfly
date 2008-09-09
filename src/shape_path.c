@@ -19,6 +19,7 @@ typedef struct _sh_path {
     shape_t shape;
     int cmd_len;
     int arg_len;
+    int fix_arg_len;
     char *user_data;
     char *dev_data;		/* device space data */
 } sh_path_t;
@@ -36,6 +37,260 @@ typedef struct _sh_path {
     }
 #define OK 0
 #define ERR -1
+#define PI 3.1415926
+
+/* ============================================================
+ * Implement arc in path.
+ */
+#include <math.h>
+/*! \brief Calculate center of the ellipse of an arc.
+ *
+ * - ux0 = x0 / rx
+ * - uy0 = y0 / ry
+ * - ux = x / rx
+ * - uy = y / rx
+ * ux0, uy0, ux, yu are got by transforming (x0, y0) and (x, y) into points
+ * on the unit circle. The center of unit circle are (ucx, ucy):
+ * - umx = (ux0 + ux) / 2
+ * - umy = (uy0 + uy) / 2
+ * - udcx = ucx - umx
+ * - udcy = ucy - umy
+ * - udx = ux - umx
+ * - udy = uy - umy
+ *
+ * - udcx * udx + udcy * udy = 0
+ *
+ * - udl2 = udx ** 2 + udy ** 2;
+ * - udcx * udy - udcy * udx = sqrt((1 - udl2) * udl2)
+ *
+ * - udcy = -udcx * udx / udy
+ * - udcx * udy + udcx * (udx ** 2) / udy = sqrt((1 - udl2) * udl2)
+ * - udcx * (udy + (udx ** 2) / udy) = sqrt((1 - udl2) * udl2)
+ * - udcx = sqrt((1 - udl2) * udl2) / (udy + (udx ** 2) / udy)
+ * or
+ * - udcx = -udcy * udy / udx
+ * - -udcy * (udy ** 2) / udx - udcy * udx = sqrt((1 - udl2) * udl2)
+ * - -udcy * ((udy ** 2) / udx + udx) = sqrt((1 - udl2) * udl2)
+ * - udcy = -sqrt((1 - udl2) * udl2) / ((udy ** 2) / udx + udx)
+ *
+ * - cx = rx * ucx
+ * - cx = rx * (udcx + umx)
+ * - cy = ry * ucy
+ * - cy = ry * (udcy + umy)
+ */
+static int calc_center_and_x_aix(co_aix x0, co_aix y0,
+				 co_aix x, co_aix y,
+				 co_aix rx, co_aix ry,
+				 co_aix x_rotate,
+				 int large, int sweep,
+				 co_aix *cx, co_aix *cy,
+				 co_aix *xx, co_aix *xy) {
+    co_aix nrx, nry, nrx0, nry0;
+    co_aix udx, udy, udx2, udy2;
+    co_aix umx, umy;
+    co_aix udcx, udcy;
+    co_aix nrcx, nrcy;
+    co_aix udl2;
+    float _sin = sinf(x_rotate);
+    float _cos = cosf(x_rotate);
+    int reflect;
+    
+    nrx = x * _cos + y * _sin;
+    nry = x * -_sin + y * _cos;
+    nrx0 = x0 * _cos + y0 * _sin;
+    nry0 = x0 * -_sin + y0 * _cos;
+    
+    udx = (nrx - nrx0) / 2 / rx; /* ux - umx */
+    udy = (nry - nry0) / 2 / ry; /* uy - umy */
+    umx = (nrx + nrx0) / 2 / rx;
+    umy = (nry + nry0) / 2 / ry;
+
+    udx2 = udx * udx;
+    udy2 = udy * udy;
+    udl2 = udx2 + udy2;
+
+    if(udy != 0) {
+	udcx = sqrtf((1 - udl2) * udl2) / (udy + udx2 / udy);
+	udcy = - udcx * udx / udy;
+    } else {
+	udcx = 0;
+	udcy = -sqrtf((1 - udl2) * udl2) / udx;
+    }
+
+    reflect = 0;
+    if(large)
+	reflect ^= 1;
+    if(sweep != 1)
+	reflect ^= 1;
+    if(reflect) {
+	udcx = -udcx;
+	udcy = -udcy;
+    }
+
+    nrcx = rx * (udcx + umx);
+    nrcy = ry * (udcy + umy);
+
+    *cx = nrcx * _cos - nrcy * _sin;
+    *cy = nrcx * _sin + nrcy * _cos;
+
+    *xx = rx * _cos + *cx;
+    *xy = rx * _sin + *cy;
+
+    return OK;
+}
+
+
+#define TAKE_NUM(r) do {			\
+	SKIP_SPACE(p);				\
+	old = p;				\
+	SKIP_NUM(p);				\
+	if(p == old)				\
+	    return ERR;				\
+	r = atof(old);				\
+    } while(0);
+
+static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
+				    const char **data_p,
+				    co_aix **args_p,
+				    int **fix_args_p) {
+    co_aix rx, ry;
+    co_aix x_rotate;
+    int large, sweep;
+    co_aix x, y, x0, y0, cx, cy, xx, xy;
+    co_aix *args = *args_p;
+    const char *old;
+    const char *p;
+    char *cmds;
+    int *fix_args;
+
+    p = *data_p;
+    cmds = *cmds_p;
+    fix_args = *fix_args_p;
+    while(*p) {
+	SKIP_SPACE(p);
+	old = p;
+	SKIP_NUM(p);
+	if(p == old)
+	    break;
+	TAKE_NUM(rx);
+
+	TAKE_NUM(ry);
+	TAKE_NUM(x_rotate);
+	TAKE_NUM(large);
+	TAKE_NUM(sweep);
+	TAKE_NUM(x);
+	TAKE_NUM(y)
+
+	x0 = *(args - 2);
+	y0 = *(args - 1);
+
+	if(islower(cmd)) {
+	    x += x0;
+	    y += y0;
+	}
+
+	calc_center_and_x_aix(x0, y0, x, y,
+			      rx, ry,
+			      x_rotate, large, sweep,
+			      &cx, &cy, &xx, &xy);
+
+	*(args++) = cx;
+	*(args++) = cy;
+	*(args++) = xx;
+	*(args++) = xy;
+	*(args++) = x;
+	*(args++) = y;
+
+	*cmds++ = toupper(cmd);
+	*fix_args++ = sweep;
+    }
+
+    *data_p = p;
+    *args_p = args;
+    *cmds_p = cmds;
+    *fix_args_p = fix_args;
+
+    return OK;
+}
+
+#define INNER(x1, y1, x2, y2) ((x1) * (x2) + (y1) * (y2))
+#define CROSS(x1, y1, x2, y2) ((x1) * (y2) - (y1) * (x2))
+
+void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
+		      const int **fix_args_p) {
+    co_aix cx, cy, x0, y0, x, y, xx, xy;
+    co_aix dx, dy, dx0, dy0, dxx, dxy;
+    co_aix xyratio;
+    co_aix rx;
+    co_aix rx2;
+    co_aix inner0, cross0;
+    co_aix circle_h0;
+    co_aix inner, cross;
+    co_aix angle, angle0;
+    co_aix rotate;
+    const co_aix *args = *args_p;
+    const int *fix_args = *fix_args_p;
+    int sweep;
+
+    x0 = *(args - 2);
+    y0 = *(args - 1);
+    cx = *args++;
+    cy = *args++;
+    xx = *args++;
+    xy = *args++;
+    x = *args++;
+    y = *args++;
+    sweep = *fix_args++;
+
+    dx = x - cx;
+    dy = y = cy;
+    dx0 = x0 - cx;
+    dy0 = y0 - cy;
+    dxx = xx - cx;
+    dxy = xy = cy;
+
+    rx2 = dxx * dxx + dxy * dxy;
+    rx = sqrtf(rx2);
+
+    /*! \note  Why we calculate these numbers there?
+     * If we compute it when filling arguments, sh_path_arc_cmd_arg_fill(),
+     * we can avoid to recompute it for every drawing.  But, transforming of
+     * coordinate can effect value of the numbers.
+     */
+    inner0 = INNER(dx0, dy0, dxx, dxy);
+    cross0 = CROSS(dx0, dy0, dxx, dxy);
+    circle_h0 = sqrtf(rx2 - inner0 * inner0 / rx2);
+    xyratio = cross0 / rx / circle_h0;
+    if(xyratio < 0)
+	xyratio = -xyratio;
+
+    angle0 = acos(inner / rx2);
+    if(cross0 < 0)
+	angle0 += PI;		/* 3rd, 4th Quadrant */
+
+    inner = INNER(dx, dy, dxx, dxy);
+    cross = CROSS(dx, dy, dxx, dxy);
+    angle = acos(inner / rx2);
+    if(cross < 0)
+	angle += PI;		/* 3rd, 4th Quadrant */
+
+    /* Make a path for arc */
+    rotate = acos(dxx / rx);
+    cairo_save(cr);
+    cairo_translate(cr, cx, cy);
+    cairo_rotate(cr, rotate);
+    cairo_scale(cr, 1.0, xyratio);
+    if(sweep)
+	cairo_arc(cr, 0, 0, rx, angle0, angle);
+    else
+	cairo_arc_negative(cr, 0, 0, rx, angle0, angle);
+    cairo_restore(cr);
+
+    *args_p = args;
+    *fix_args_p = fix_args;
+}
+
+/* ============================================================ */
 
 static void sh_path_free(shape_t *shape) {
     sh_path_t *path = (sh_path_t *)shape;
@@ -50,12 +305,13 @@ static void sh_path_free(shape_t *shape) {
  *
  * \todo Notify programmers that syntax or value error of path data.
  */
-static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
+static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp,
+			       int *fix_arg_cntp) {
     char *p, *old;
-    int cmd_cnt, arg_cnt;
+    int cmd_cnt, arg_cnt, fix_arg_cnt;
     int i;
 
-    cmd_cnt = arg_cnt = 0;
+    cmd_cnt = arg_cnt = fix_arg_cnt = 0;
     p = data;
     SKIP_SPACE(p);
     while(*p) {
@@ -203,6 +459,7 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 		}
 
 		arg_cnt += 6;
+		fix_arg_cnt++;
 
 		cmd_cnt++;
 	    }
@@ -220,171 +477,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *arg_cntp) {
 
     *cmd_cntp = cmd_cnt;
     *arg_cntp = arg_cnt;
+    *fix_arg_cntp = fix_arg_cnt;
     return OK;
-}
-
-#include <math.h>
-/*! \brief Calculate center of the ellipse of an arc.
- *
- * - ux0 = x0 / rx
- * - uy0 = y0 / ry
- * - ux = x / rx
- * - uy = y / rx
- * ux0, uy0, ux, yu are got by transforming (x0, y0) and (x, y) into points
- * on the unit circle. The center of unit circle are (ucx, ucy):
- * - umx = (ux0 + ux) / 2
- * - umy = (uy0 + uy) / 2
- * - udcx = ucx - umx
- * - udcy = ucy - umy
- * - udx = ux - umx
- * - udy = uy - umy
- * - udcx * udx + udcy * udy = 0
- * - udcy = - udcx * udx / udy
- * - udcx ** 2 + udcy ** 2 + udx ** 2 + udy ** 2 = 1
- * - udcx ** 2 + (udcx * udx / udy) ** 2 = 1 - udx ** 2 - udy ** 2
- * - udcx ** 2 = (1 - udx ** 2 - udy ** 2) / (1 + (udx/udy) ** 2)
- *
- * - cx = rx * ucx
- * - cx = rx * (udcx + umx)
- * - cy = ry * ucy
- * - cy = ry * (udcy + umy)
- */
-static int calc_center_and_x_aix(co_aix x0, co_aix y0,
-				 co_aix x, co_aix y,
-				 co_aix rx, co_aix ry,
-				 co_aix x_rotate,
-				 int large, int sweep,
-				 co_aix *cx, co_aix *cy,
-				 co_aix *xx, co_aix *xy) {
-    co_aix nrx, nry, nrx0, nry0;
-    co_aix udx, udy, udx2, udy2;
-    co_aix umx, umy;
-    co_aix udcx, udcy;
-    co_aix nrcx, nrcy;
-    float _sin = sinf(x_rotate);
-    float _cos = cosf(x_rotate);
-    
-    nrx = x * _cos + y * _sin;
-    nry = x * -_sin + y * _cos;
-    nrx0 = x0 * _cos + y0 * _sin;
-    nry0 = x0 * -_sin + y0 * _cos;
-
-    udx = (nrx - nrx0) / 2 / rx;
-    udy = (nry - nry0) / 2 / ry;
-    umx = (nrx + nrx0) / 2 / rx;
-    umy = (nry + nry0) / 2 / ry;
-    udx2 = udx * udx;
-    udy2 = udy * udy;
-    udcx = sqrtf((1 - udx2 - udy2) / (1 + udx2 / udy2));
-    udcy = - udcx * udx / udy;
-    nrcx = rx * (udcx + umx);
-    nrcy = ry * (udcy + umy);
-
-    *cx = nrcx * _cos - nrcy * _sin;
-    *cy = nrcx * _sin + nrcy * _cos;
-
-    *xx = rx * _cos + *cx;
-    *xy = rx * _sin + *cy;
-
-    return OK;
-}
-
-
-static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
-				    const char **data_p, co_aix **args_p) {
-    co_aix rx, ry;
-    co_aix x_rotate;
-    int large, sweep;
-    co_aix x, y, x0, y0, cx, cy, xx, xy;
-    co_aix *args = *args_p;
-    const char *old;
-    const char *p;
-    char *cmds;
-
-    p = *data_p;
-    cmds = *cmds_p;
-    while(*p) {
-	SKIP_SPACE(p);
-	old = p;
-	SKIP_NUM(p);
-	if(p == old)
-	    break;
-	rx = atof(old);
-
-	SKIP_SPACE(p);
-	old = p;
-	SKIP_NUM(p);
-	if(p == old)
-	    return ERR;
-	ry = atof(old);
-
-	SKIP_SPACE(p);
-	old = p;
-	SKIP_NUM(p);
-	if(p == old)
-	    return ERR;
-	x_rotate = atof(old);
-
-	SKIP_SPACE(p);
-	old = p;
-	SKIP_NUM(p);
-	if(p == old)
-	    return ERR;
-	large = atoi(old);
-	
-	SKIP_SPACE(p);
-	old = p;
-	SKIP_NUM(p);
-	if(p == old)
-	    return ERR;
-	sweep = atoi(old);
-
-	SKIP_SPACE(p);
-	old = p;
-	SKIP_NUM(p);
-	if(p == old)
-	    return ERR;
-	x = atof(old);
-
-	SKIP_SPACE(p);
-	old = p;
-	SKIP_NUM(p);
-	if(p == old)
-	    return ERR;
-	y = atof(old);
-
-	x0 = *(args - 2);
-	y0 = *(args - 1);
-
-	if(islower(cmd)) {
-	    x += x0;
-	    y += y0;
-	}
-
-	calc_center_and_x_aix(x0, y0, x, y,
-			      rx, ry,
-			      x_rotate, large, sweep,
-			      &cx, &cy, &xx, &xy);
-
-	*(args++) = cx;
-	*(args++) = cy;
-	*(args++) = xx;
-	*(args++) = xy;
-	*(args++) = x;
-	*(args++) = y;
-
-	*cmds++ = toupper(cmd);
-    }
-
-    *data_p = p;
-    *args_p = args;
-    *cmds_p = cmds;
-
-    return OK;
-}
-
-void sh_path_arc_path(cairo_t *cr, const co_aix **args) {
-    
 }
 
 #define TO_ABSX islower(cmd)? x + atof(old): atof(old)
@@ -395,11 +489,14 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
     char *cmds;
     char cmd;
     co_aix *args;
+    int *fix_args;
     co_aix x, y;
     int r;
 
     cmds = path->user_data;
     args = (co_aix *)(cmds + path->cmd_len);
+    fix_args = (int *)(cmds + path->cmd_len +
+		       path->arg_len * sizeof(co_aix));
     p = data;
     SKIP_SPACE(p);
     while(*p) {
@@ -539,7 +636,9 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 
 	case 'A':
 	case 'a':
-	    r = sh_path_arc_cmd_arg_fill(cmd, &cmds, (const char **)&p, &args);
+	    r = sh_path_arc_cmd_arg_fill(cmd, &cmds,
+					 (const char **)&p, &args,
+					 &fix_args);
 	    if(r != OK)
 		return ERR;
 	    break;
@@ -561,10 +660,11 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
  */
 shape_t *sh_path_new(char *data) {
     sh_path_t *path;
-    int cmd_cnt, arg_cnt;
+    int cmd_cnt, arg_cnt, fix_arg_cnt;
+    int msz;
     int r;
 
-    r = sh_path_cmd_arg_cnt(data, &cmd_cnt, &arg_cnt);
+    r = sh_path_cmd_arg_cnt(data, &cmd_cnt, &arg_cnt, &fix_arg_cnt);
     if(r == ERR)
 	return NULL;
 
@@ -580,12 +680,14 @@ shape_t *sh_path_new(char *data) {
     path->shape.sh_type = SHT_PATH;
     path->cmd_len = cmd_cnt;
     path->arg_len = arg_cnt;
-    path->user_data = (char *)malloc(cmd_cnt + sizeof(co_aix) * arg_cnt);
+    path->fix_arg_len = fix_arg_cnt;
+    msz = cmd_cnt + sizeof(co_aix) * arg_cnt + sizeof(int) * fix_arg_cnt;
+    path->user_data = (char *)malloc(msz);
     if(path->user_data == NULL) {
 	free(path);
 	return NULL;
     }
-    path->dev_data = (char *)malloc(cmd_cnt + sizeof(co_aix) * arg_cnt);
+    path->dev_data = (char *)malloc(msz);
     if(path->dev_data == NULL) {
 	free(path->dev_data);
 	free(path);
@@ -650,6 +752,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
     int cmd_len;
     char *cmds, cmd;
     const co_aix *args;
+    const int *fix_args;
     co_aix x, y, x1, y1, x2, y2;
     int i;
 
@@ -659,6 +762,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
     cmd_len = path->cmd_len;
     cmds = path->dev_data;
     args = (co_aix *)(cmds + cmd_len);
+    fix_args = (int *)(cmds + cmd_len + path->arg_len * sizeof(co_aix));
     x = y = x1 = y1 = x2 = y2 = 0;
     for(i = 0; i < cmd_len; i++) {
 	/* All path commands and arguments are transformed
@@ -713,7 +817,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'A':
-	    sh_path_arc_path(cr, &args);
+	    sh_path_arc_path(cr, &args, &fix_args);
 	    break;
 	case 'Z':
 	    cairo_close_path(cr);
