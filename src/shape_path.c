@@ -172,7 +172,7 @@ static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 	SKIP_NUM(p);
 	if(p == old)
 	    break;
-	TAKE_NUM(rx);
+	rx = atof(old);
 
 	TAKE_NUM(ry);
 	TAKE_NUM(x_rotate);
@@ -243,11 +243,11 @@ void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
     sweep = *fix_args++;
 
     dx = x - cx;
-    dy = y = cy;
+    dy = y - cy;
     dx0 = x0 - cx;
     dy0 = y0 - cy;
     dxx = xx - cx;
-    dxy = xy = cy;
+    dxy = xy - cy;
 
     rx2 = dxx * dxx + dxy * dxy;
     rx = sqrtf(rx2);
@@ -264,15 +264,15 @@ void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
     if(xyratio < 0)
 	xyratio = -xyratio;
 
-    angle0 = acos(inner / rx2);
+    angle0 = acos(inner0 / rx2);
     if(cross0 < 0)
-	angle0 += PI;		/* 3rd, 4th Quadrant */
+	angle0 = PI * 2 - angle0; /* 3rd, 4th Quadrant */
 
     inner = INNER(dx, dy, dxx, dxy);
     cross = CROSS(dx, dy, dxx, dxy);
     angle = acos(inner / rx2);
     if(cross < 0)
-	angle += PI;		/* 3rd, 4th Quadrant */
+	angle = PI * 2 - angle; /* 3rd, 4th Quadrant */
 
     /* Make a path for arc */
     rotate = acos(dxx / rx);
