@@ -196,6 +196,11 @@ def translate_shape_transform(shape, coord_id, codefo):
 
     if shape.hasAttribute('transform'):
         shape_coord_id = shape_id + '_coord'
+        ## \page shape_coord Coordinate Transformation for Shapes.
+        #
+        # svg2code.py add a coord_t for a shape if transform attribute
+        # of it's tag is setted.  The name of coord_t object is
+        # <shape_id> + "_coord".
         print >> codefo, 'dnl'
         print >> codefo, 'ADD_COORD([%s], [%s])dnl' % (
             shape_coord_id, coord_id)

@@ -713,8 +713,6 @@ shape_t *sh_path_new(char *data) {
 
 /*! \brief Transform a path from user space to device space.
  *
- * \todo associate coord_t with shape objects and transform them
- *       automatically.
  */
 void sh_path_transform(shape_t *shape) {
     sh_path_t *path;
