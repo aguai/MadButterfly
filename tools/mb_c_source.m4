@@ -48,6 +48,7 @@ define([RECT_HIDE],)
 define([PATH_HIDE],)
 define([COORD_TRANSLATE],)
 define([COORD_MATRIX],)
+define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
 divert[]])
 
@@ -155,6 +156,15 @@ define([S_COORD_MATRIX],[dnl
     rdman_coord_changed(rdman, obj->$1);
 ]])
 
+define([S_SHAPE_TRANSLATE],[dnl
+[    memset(obj->$1->matrix, 0, sizeof(obj->$1->matrix));
+    obj->$1->matrix[0] = 1;
+    obj->$1->matrix[2] = $2;
+    obj->$1->matrix[4] = 1;
+    obj->$1->matrix[5] = $3;
+    rdman_coord_changed(rdman, obj->$1);
+]])
+
 define([S_SHAPE_MATRIX],[dnl
 [    obj->$1->matrix[0] = $2;
     obj->$1->matrix[3] = $3;
@@ -186,6 +196,7 @@ SIMPORT([RECT_HIDE])
 SIMPORT([PATH_HIDE])
 SIMPORT([COORD_TRANSLATE])
 SIMPORT([COORD_MATRIX])
+SIMPORT([SHAPE_TRANSLATE])
 SIMPORT([SHAPE_MATRIX])
 divert[]])
 
@@ -242,6 +253,7 @@ define([RECT_HIDE],)
 define([PATH_HIDE],)
 define([COORD_TRANSLATE],)
 define([COORD_MATRIX],)
+define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
 divert[]])
 
