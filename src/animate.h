@@ -5,6 +5,10 @@
 #include "mb_timer.h"
 #include "paint.h"
 
+/*! \defgroup anim Animation
+ * \brief Animation is a set of functions to make graph moving.
+ * @{
+ */
 typedef struct _mb_progm mb_progm_t;
 typedef struct _mb_word mb_word_t;
 typedef struct _mb_action mb_action_t;
@@ -28,5 +32,6 @@ enum { VIS_VISIBLE, VIS_HIDDEN };
 extern mb_action_t *mb_visibility_new(int visib, coord_t *coord,
 				      mb_word_t *word);
 
+/* @} */
 
 #endif /* __ANIMATE_H_ */
