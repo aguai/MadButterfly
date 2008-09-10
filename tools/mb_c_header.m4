@@ -38,6 +38,7 @@ define([PATH_HIDE],)
 define([RECT_HIDE],)
 define([COORD_TRANSLATE],)
 define([COORD_MATRIX],)
+define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
 
 define([MADBUTTERFLY],[dnl

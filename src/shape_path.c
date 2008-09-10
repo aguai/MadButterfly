@@ -58,20 +58,20 @@ typedef struct _sh_path {
  * - udx = ux - umx
  * - udy = uy - umy
  *
- * - udcx * udx + udcy * udy = 0
+ * - udx * udcx + udy * udcy = 0
  *
  * - udl2 = udx ** 2 + udy ** 2;
- * - udcx * udy - udcy * udx = sqrt((1 - udl2) * udl2)
+ * - udx * udcy - udy * udcx = sqrt((1 - udl2) * udl2)
  *
  * - udcy = -udcx * udx / udy
- * - udcx * udy + udcx * (udx ** 2) / udy = sqrt((1 - udl2) * udl2)
- * - udcx * (udy + (udx ** 2) / udy) = sqrt((1 - udl2) * udl2)
- * - udcx = sqrt((1 - udl2) * udl2) / (udy + (udx ** 2) / udy)
+ * - -udcx * (udx ** 2) / udy - udy * udcx = sqrt((1 - udl2) * udl2)
+ * - -udcx * ((udx ** 2) / udy + udy) = sqrt((1 - udl2) * udl2)
+ * - udcx = -sqrt((1 - udl2) * udl2) / ((udx ** 2) / udy + udy)
  * or
  * - udcx = -udcy * udy / udx
- * - -udcy * (udy ** 2) / udx - udcy * udx = sqrt((1 - udl2) * udl2)
- * - -udcy * ((udy ** 2) / udx + udx) = sqrt((1 - udl2) * udl2)
- * - udcy = -sqrt((1 - udl2) * udl2) / ((udy ** 2) / udx + udx)
+ * - udx * udcy + udcy * (udy ** 2) / udx = sqrt((1 - udl2) * udl2)
+ * - udcy * (udx + (udy ** 2) / udx) = sqrt((1 - udl2) * udl2)
+ * - udcy = sqrt((1 - udl2) * udl2) / (udx + (udy ** 2) / udx)
  *
  * - cx = rx * ucx
  * - cx = rx * (udcx + umx)
@@ -110,11 +110,11 @@ static int calc_center_and_x_aix(co_aix x0, co_aix y0,
     udl2 = udx2 + udy2;
 
     if(udy != 0) {
-	udcx = sqrtf((1 - udl2) * udl2) / (udy + udx2 / udy);
-	udcy = - udcx * udx / udy;
+	udcx = -sqrtf((1 - udl2) * udl2) / (udy + udx2 / udy);
+	udcy = -udcx * udx / udy;
     } else {
 	udcx = 0;
-	udcy = -sqrtf((1 - udl2) * udl2) / udx;
+	udcy = sqrtf((1 - udl2) * udl2) / udx;
     }
 
     reflect = 0;
@@ -216,6 +216,8 @@ static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 #define INNER(x1, y1, x2, y2) ((x1) * (x2) + (y1) * (y2))
 #define CROSS(x1, y1, x2, y2) ((x1) * (y2) - (y1) * (x2))
 
+/*! \brief Make path for arcs in a path.
+ */
 void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
 		      const int **fix_args_p) {
     co_aix cx, cy, x0, y0, x, y, xx, xy;
@@ -257,8 +259,8 @@ void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
      * we can avoid to recompute it for every drawing.  But, transforming of
      * coordinate can effect value of the numbers.
      */
-    inner0 = INNER(dx0, dy0, dxx, dxy);
-    cross0 = CROSS(dx0, dy0, dxx, dxy);
+    inner0 = INNER(dxx, dxy, dx0, dy0);
+    cross0 = CROSS(dxx, dxy, dx0, dy0);
     circle_h0 = sqrtf(rx2 - inner0 * inner0 / rx2);
     xyratio = cross0 / rx / circle_h0;
     if(xyratio < 0)
@@ -268,8 +270,8 @@ void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
     if(cross0 < 0)
 	angle0 = PI * 2 - angle0; /* 3rd, 4th Quadrant */
 
-    inner = INNER(dx, dy, dxx, dxy);
-    cross = CROSS(dx, dy, dxx, dxy);
+    inner = INNER(dxx, dxy, dx, dy);
+    cross = CROSS(dxx, dxy, dx, dy);
     angle = acos(inner / rx2);
     if(cross < 0)
 	angle = PI * 2 - angle; /* 3rd, 4th Quadrant */
@@ -702,7 +704,7 @@ shape_t *sh_path_new(char *data) {
 	free(path);
 	return NULL;
     }
-    memcpy(path->dev_data, path->user_data, cmd_cnt);
+    memcpy(path->dev_data, path->user_data, msz);
 
     path->shape.free = sh_path_free;
 

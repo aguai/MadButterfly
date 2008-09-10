@@ -448,15 +448,16 @@
     </g>
     <path
        sodipodi:type="arc"
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2.39700006999999982;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2.39700007;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="path2451"
        sodipodi:cx="648.28497"
        sodipodi:cy="541.4248"
        sodipodi:rx="98.944588"
-       sodipodi:ry="47.493404"
-       d="M 747.22956,541.4248 A 98.944588,47.493404 0 0 1 549.36227,542.42361"
-       sodipodi:start="0"
-       sodipodi:end="3.1205606"
-       sodipodi:open="true" />
+       sodipodi:ry="37.994728"
+       d="M 723.62808,516.79651 A 98.944588,37.994728 0 1 1 549.36227,542.22385"
+       sodipodi:start="5.5779634"
+       sodipodi:end="9.4037459"
+       sodipodi:open="true"
+       transform="translate(0,-17.414248)" />
   </g>
 </svg>
