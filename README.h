@@ -2,7 +2,7 @@
  *
  * \image html madbutterfly.png
  *
- * MadButterfly ( http://www.assembla.com/spaces/MadButtefly) is a toolkit
+ * MadButterfly ( http://www.assembla.com/spaces/MadButterfly) is a toolkit
  * for GUI environment.  It is designed for embedded
  * system.  It make GUI designers and programmers work seperately.  Designer
  * export their artifacts to files with SVG format.  MadButterfly provides
