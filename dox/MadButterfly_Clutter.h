@@ -1,4 +1,4 @@
-/*! \page mb_clutter What is MadButterfly different from Clutter.
+/*! \page mb_clutter What is MadButterfly different from Clutter?
  *
  * Maybe some people would ask, "why don't you just use Clutter?"
  * The anwser is the author of MadButterfly know name of Clutter,
@@ -18,4 +18,7 @@
  * SVG to C translator.  MadButterfly is focus on implementing mechanism
  * to adapt SVG to C and other languages.  Clutter is about more and more
  * heavy.
+ *
+ * MadButterfly is supposed to be a light-weight GUI toolkit for embedded
+ * or small devices.
  */
