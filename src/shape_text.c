@@ -6,6 +6,7 @@
 #include "mb_types.h"
 #include "shapes.h"
 
+#define ASSERT(x)
 #define OK 0
 #define ERR -1
 
@@ -119,9 +120,7 @@ void sh_text_transform(shape_t *shape) {
     y = text->y;
     coord_trans_pos(shape->coord, &x, &y);
     r = get_extents(text, &extents);
-    if(r != OK)
-	/*! \todo announce error. change return type? */
-	return;
+    ASSERT(r == OK);
 
     text->d_x = x;
     text->d_y = y;
@@ -134,6 +133,7 @@ void sh_text_transform(shape_t *shape) {
     poses[1][0] = poses[0][0] + extents.width + 10 + shape->stroke_width;
     poses[1][1] = poses[0][1] + extents.height + 10 + shape->stroke_width;
     geo_from_positions(shape->geo, 2, poses);
+    /*! \todo Support ratation for shape_text. */
 }
 
 

@@ -22,6 +22,9 @@ extern mb_word_t *mb_progm_next_word(mb_progm_t *progm,
 extern void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 			   mb_timeval_t *now);
 extern void mb_progm_abort(mb_progm_t *progm, mb_tman_t *tman);
+/*! \defgroup ani_actions Animation Actions
+ * @{
+ */
 extern mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord,
 				 mb_word_t *word);
 extern mb_action_t *mb_chgcolor_new(co_comp_t r, co_comp_t g,
@@ -31,6 +34,7 @@ extern mb_action_t *mb_chgcolor_new(co_comp_t r, co_comp_t g,
 enum { VIS_VISIBLE, VIS_HIDDEN };
 extern mb_action_t *mb_visibility_new(int visib, coord_t *coord,
 				      mb_word_t *word);
+/* @} */
 
 /* @} */
 

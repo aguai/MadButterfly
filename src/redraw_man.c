@@ -300,8 +300,8 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
 int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
     STAILQ_REMOVE(rdman->all_geos, geo_t, next, shape->geo);
     subject_free(&rdman->ob_factory, shape->geo->mouse_event);
-    elmpool_elm_free(rdman->geo_pool, shape->geo);
     sh_detach_geo(shape);
+    elmpool_elm_free(rdman->geo_pool, shape->geo);
     rdman->n_geos--;
     sh_detach_coord(shape);
     return OK;
