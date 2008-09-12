@@ -5,9 +5,27 @@ OBJS = ${SRCS:C/(.*)\.c/\1.o/g}
 TESTCASE_OBJS = ${SRCS:C/(.*)\.c/testcase-\1.o/g}
 CFLAGS+=	-Wall -I/usr/local/include `pkg-config --cflags cairo`
 LDFLAGS =	`pkg-config --libs cairo`
-BINS =	testcase libmbfly.a X_main
+BINS =	libmbfly.a X_main
+PREFIX?=/usr/local/
+HEADERS=	X_supp.h animate.h mb.h mb_timer.h mb_types.h \
+		observer.h paint.h redraw_man.h shapes.h tools.h
+MKDIR?=	mkdir -p
 
 all: $(BINS)
+
+install: $(BINS)
+	$(INSTALL) -d ${PREFIX}include/mb
+.for i in $(HEADERS)
+	$(INSTALL) -o root -m 0644 ${i} ${PREFIX}include/mb/
+.endfor
+	$(INSTALL) -o root libmbfly.a ${PREFIX}lib/
+
+uninstall:
+.for i in $(HEADERS)
+	rm -f ${PREFIX}include/mb/${i}
+.endfor
+	rm -f ${PREFIX}lib/libmbfly.a
+	rmdir ${PREFIX}include/mb/
 
 testcase: testcase.o $(TESTCASE_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(.ALLSRC) -L/usr/local/lib -lcunit

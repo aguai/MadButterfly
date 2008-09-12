@@ -17,7 +17,7 @@
  *   - clear memory for shape_t member.
  * - *_transform()
  * - *_draw()
- * - struct of shape must include an shape_t as type of first member.
+ * - first member variable of a shape type must be a shape_t.
  * 
  * Must modify
  * - event.c::draw_shape_path()

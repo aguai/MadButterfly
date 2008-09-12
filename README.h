@@ -24,4 +24,14 @@
  * Inkscape is an open source project to provide a vector graphics editor.
  * Inkscape saves graphics in SVG format.  You can use it to design your
  * graphics that can be used with MadBufferfly.
+ *
+ * \section more More
+ * - \ref install
+ * - \ref first_program
+ * - \ref mb_clutter
+ * - More information in "Related Pages" tab.
+ *
+ * \section repos Repository
+ * - http://hg.assembla.com/MadButterfly
+ *
  */
