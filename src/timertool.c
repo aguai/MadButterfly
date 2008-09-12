@@ -37,7 +37,7 @@ void get_now(mb_timeval_t *tmo) {
 	diff = 0;
     } else {
 	ts = rdtsc();
-	diff += ts - last_ts;
+	diff = ts - last_ts;
 	sdiff = diff / cpufreq;
 	udiff = (diff % cpufreq) * 1000000 / cpufreq;
 
