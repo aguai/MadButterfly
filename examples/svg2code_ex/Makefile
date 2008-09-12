@@ -1,5 +1,5 @@
 SVG=svg2code_ex.svg
-TOOLSDIR=../../tools
+TOOLSDIR=/usr/local/share/mb
 INCS=-I/usr/local/include
 CFLAGS+=`pkg-config --cflags cairo` $(INCS) -Wall
 LDFLAGS=-L/usr/local/lib `pkg-config --libs cairo`
@@ -18,7 +18,7 @@ $(SVG:C/.svg/.o/): $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/)
 	$(CC) -c $(CFLAGS) -o $@ $(SVG:C/.svg/.c/)
 
 $(SVG:C/.svg/.mb/): $(SVG)
-	$(TOOLSDIR)/svg2code.py $(.ALLSRC) $@
+	/usr/local/bin/svg2code.py $(.ALLSRC) $@
 
 $(SVG:C/.svg/.c/): $(SVG:C/.svg/.mb/)
 	m4 -I $(TOOLSDIR) mb_c_source.m4 $(.ALLSRC) > $@
