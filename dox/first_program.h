@@ -26,4 +26,6 @@
  * don't assign one, a random one is picked.  foo_new() is invoked to create
  * and initialize a 'foo' instance.  An instance is released by calling
  * foo_free().
+ *
+ * examples/svg2code_ex/ is a simple example.
  */
