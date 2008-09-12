@@ -29,9 +29,11 @@
  * - \ref install
  * - \ref first_program
  * - \ref mb_clutter
+ * - \ref archi
+ * - \ref ani
  * - More information in "Related Pages" tab.
  *
  * \section repos Repository
- * - http://hg.assembla.com/MadButterfly
+ * - hg clone http://hg.assembla.com/MadButterfly MadButterfly
  *
  */
