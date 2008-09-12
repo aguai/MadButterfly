@@ -1,8 +1,8 @@
 SVG=svg2code_ex.svg
 TOOLSDIR=../../tools
-INCS=-I../../src
+INCS=-I/usr/local/include
 CFLAGS+=`pkg-config --cflags cairo` $(INCS) -Wall
-LDFLAGS=-L../../src/ `pkg-config --libs cairo`
+LDFLAGS=-L/usr/local/lib `pkg-config --libs cairo`
 LIBS=-lmbfly
 BINS=	ex1
 

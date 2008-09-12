@@ -1,8 +1,5 @@
 #include <stdio.h>
-#include <mb_types.h>
-#include <X_supp.h>
-#include <shapes.h>
-#include <tools.h>
+#include <mb/mb.h>
 #include "calculator_scr.h"
 
 typedef struct _calc_data calc_data_t;

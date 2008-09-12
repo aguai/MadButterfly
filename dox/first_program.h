@@ -1,4 +1,4 @@
-/*! /page first_program Your First MadButterfly Program.
+/*! \page first_program Your First MadButterfly Program.
  *
  * MadButterfly use SVG as a media to adapt gap between GUI designers
  * and application programmmers.  Designers export their works with SVG
@@ -24,6 +24,6 @@
  * foo_new() and foo_free(). An instance of 'foo' holds all objects for
  * foo.svg.  One object, with specified ID as name, for each tag.  If you
  * don't assign one, a random one is picked.  foo_new() is invoked to create
- * and initialize a 'foo' instance.  A instance is released by calling
+ * and initialize a 'foo' instance.  An instance is released by calling
  * foo_free().
  */
