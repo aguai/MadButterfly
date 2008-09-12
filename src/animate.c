@@ -1,4 +1,9 @@
-/*! \brief Animation tools.
+/*! \file
+ * \brief Animation tools.
+ *
+ * \sa ani
+ */
+/*! \page ani What is Animation?
  *
  * XXX: Program is a sequence of actions duration a perior.
  * Actions are grouped into words.  A program defines
@@ -12,6 +17,12 @@
  * called periodically in duration of playing time start at
  * 'start time'.  When the clock run out the playing time of
  * a word, it call stop of actions in the word.
+ *
+ * A program is driven by a timer.  Once a program is started, it registers
+ * with timer for periodic running.  \ref mb_tman_t is timer of
+ * MadButterfly.  The update frequence is 10fps by default, now.
+ *
+ * \sa animate.c
  */
 #include <stdio.h>
 #include <stdlib.h>
