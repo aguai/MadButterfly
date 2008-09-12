@@ -4,8 +4,11 @@
  * - install pmake (pmake is make of FreeBSD)
  * - install Cairo
  *
+ * Get source
+ * - hg clone http://hg.assembla.com/MadButterfly MadButterfly
+ *
  * Build and Install
- * - cd src
+ * - cd MadButtfly
  * - make
  * - make install
  *

@@ -1,3 +1,9 @@
+/*! \page svg2code_ex
+ *
+ * svg2code_ex is an example that show programmers how to create a
+ * menu with MadButterfly.
+ *
+ */
 #include <stdio.h>
 #include <mb/mb.h>
 #include "svg2code_ex.h"
