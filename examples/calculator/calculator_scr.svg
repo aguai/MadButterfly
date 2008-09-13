@@ -2,7 +2,7 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
@@ -13,18 +13,24 @@
    height="400"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.45.1"
+   inkscape:version="0.46"
    version="1.0"
    sodipodi:docbase="/usr/home/thinker/progm/MadButterfly/examples/calculator"
    sodipodi:docname="calculator_scr.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <defs
      id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 200 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="300 : 200 : 1"
+       inkscape:persp3d-origin="150 : 133.33333 : 1"
+       id="perspective90" />
     <linearGradient
-       inkscape:collect="always"
        id="linearGradient3216">
       <stop
-         style="stop-color:#ff0000;stop-opacity:1;"
+         style="stop-color:#ffd4d4;stop-opacity:1;"
          offset="0"
          id="stop3218" />
       <stop
@@ -33,10 +39,9 @@
          id="stop3220" />
     </linearGradient>
     <linearGradient
-       inkscape:collect="always"
        id="linearGradient2239">
       <stop
-         style="stop-color:#008080;stop-opacity:1;"
+         style="stop-color:#b2ffff;stop-opacity:1;"
          offset="0"
          id="stop2241" />
       <stop
@@ -68,7 +73,7 @@
        fx="80.211082"
        fy="60.171638"
        r="127.14908"
-       gradientTransform="matrix(1.4193963,-4.1503073e-3,5.8161044e-4,0.1989948,-33.675229,46.406554)"
+       gradientTransform="matrix(1.4194002,-2.4909992e-3,5.8161044e-4,0.3318039,-33.67554,38.282124)"
        gradientUnits="userSpaceOnUse" />
     <radialGradient
        inkscape:collect="always"
@@ -79,7 +84,7 @@
        fx="78.100266"
        fy="147.99309"
        r="141.9525"
-       gradientTransform="matrix(1.1625395,1.9037967,-1.2274429,0.7495301,168.95869,-112.91046)"
+       gradientTransform="matrix(0.5979392,1.6356879,-0.9218721,0.3369983,167.83177,-30.919239)"
        gradientUnits="userSpaceOnUse" />
   </defs>
   <sodipodi:namedview
@@ -93,16 +98,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.9475"
-     inkscape:cx="150"
+     inkscape:cx="-225.72559"
      inkscape:cy="201.83531"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      width="300px"
      height="400px"
-     inkscape:window-width="822"
-     inkscape:window-height="609"
-     inkscape:window-x="192"
-     inkscape:window-y="23" />
+     inkscape:window-width="1440"
+     inkscape:window-height="860"
+     inkscape:window-x="0"
+     inkscape:window-y="21"
+     showgrid="false" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -119,7 +125,7 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="opacity:0.5;fill:url(#radialGradient3222);fill-opacity:1.0;stroke:none;stroke-opacity:1"
+       style="opacity:1;fill:url(#radialGradient3222);fill-opacity:1;stroke:none;stroke-opacity:1"
        id="rect2227"
        width="283.905"
        height="288.12665"
@@ -490,7 +496,7 @@
            sodipodi:role="line">clr</tspan></text>
     </g>
     <rect
-       style="opacity:0.5;fill:url(#radialGradient2245);stroke:#000000;stroke-opacity:1;fill-opacity:1.0"
+       style="opacity:1;fill:url(#radialGradient2245);stroke:#000000;stroke-opacity:1;fill-opacity:1"
        id="rect2264"
        width="253.29816"
        height="49.604221"
