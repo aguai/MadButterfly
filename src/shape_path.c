@@ -30,6 +30,8 @@ typedef struct _sh_path {
 #define SKIP_NUM(x)					\
     while(*(x) &&					\
 	  (isdigit(*(x)) ||				\
+	   *(x) == 'e' ||				\
+	   *(x) == 'E' ||				\
 	   *(x) == '-' ||				\
 	   *(x) == '+' ||				\
 	   *(x) == '.'))  {					\
