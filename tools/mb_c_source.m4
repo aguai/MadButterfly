@@ -275,7 +275,7 @@ $2[]dnl
     obj = ($1_t *)malloc(sizeof($1_t));
     if(obj == NULL) return NULL;
 ]SETUP_VARS
-    obj->root_coord = rdman->root_coord;
+    obj->root_coord = rdman_coord_new(rdman, rdman->root_coord);
 $2
 [    return obj;
 }
