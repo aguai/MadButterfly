@@ -392,6 +392,8 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
     for(child = coord;
 	child != NULL;
 	child = preorder_coord_subtree(coord, child)) {
+	if(child->flags & COF_DIRTY)
+	    continue;
 	make_sure_dirty_coords(rdman);
  
 	rdman->dirty_coords[rdman->n_dirty_coords++] = child;
