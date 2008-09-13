@@ -43,7 +43,7 @@ static void _insert_sort(void **elms, int num, int off) {
 
     for(i = 1; i < num; i++) {
 	val = *(unsigned int *)(elms[i] + off);
-	for(j = i; j > 0; j--) {
+	for(j = i - 1; j > 0; j--) {
 	    if(*(unsigned int *)(elms[j - 1] + off) <= val)
 		break;
 	    elms[j] = elms[j - 1];
