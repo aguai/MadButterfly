@@ -12,10 +12,11 @@
 void get_now(mb_timeval_t *tmo) {
     struct timeval tv;
     static uint64_t cpufreq;
+    static uint64_t diff;
     static mb_timeval_t tm = {0, 0};
     static uint64_t last_ts;
     mb_timeval_t diff_tm;
-    uint64_t ts, diff, udiff, sdiff;
+    uint64_t ts, udiff, sdiff;
     size_t sysctl_sz;
     int r;
 
@@ -37,7 +38,7 @@ void get_now(mb_timeval_t *tmo) {
 	diff = 0;
     } else {
 	ts = rdtsc();
-	diff = ts - last_ts;
+	diff += ts - last_ts;
 	sdiff = diff / cpufreq;
 	udiff = (diff % cpufreq) * 1000000 / cpufreq;
 
@@ -48,7 +49,8 @@ void get_now(mb_timeval_t *tmo) {
 	MB_TIMEVAL_SET(&diff_tm, sdiff, 0);
 	MB_TIMEVAL_ADD(&tm, &diff_tm);
 
-	last_ts += sdiff;
+	diff %= cpufreq;
+	last_ts = ts;
     }
 }
 #else /* __FreeBSD__ */

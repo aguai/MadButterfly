@@ -196,7 +196,7 @@ void X_MB_handle_connection(X_MB_runtime_t *rt) {
     struct timeval tv;
     fd_set rfds;
     int nfds;
-    int r;
+    int r, r1;
 
     rdman_redraw_all(rdman);
     XFlush(display);
@@ -213,16 +213,16 @@ void X_MB_handle_connection(X_MB_runtime_t *rt) {
 	if(r == 0) {
 	    tv.tv_sec = MB_TIMEVAL_SEC(&tmo);
 	    tv.tv_usec = MB_TIMEVAL_USEC(&tmo);
-	    r = select(nfds, &rfds, NULL, NULL, &tv);
+	    r1 = select(nfds, &rfds, NULL, NULL, &tv);
 	} else
-	    r = select(nfds, &rfds, NULL, NULL, NULL);
+	    r1 = select(nfds, &rfds, NULL, NULL, NULL);
 
-	if(r == -1) {
+	if(r1 == -1) {
 	    perror("select");
 	    break;
 	}
 
-	if(r == 0) {
+	if(r1 == 0) {
 	    get_now(&now);
 	    mb_tman_handle_timeout(tman, &now);
 	    rdman_redraw_changed(rdman);

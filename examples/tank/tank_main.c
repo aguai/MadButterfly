@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include <mb/mb.h>
 #include "svgs.h"
 
@@ -39,6 +40,7 @@ struct _tank_rt {
     tank_en_t *tank_enemies[10];
     void *map[12][16];
     X_MB_runtime_t *mb_rt;
+    mb_progm_t *tank1_progm;
 };
 
 #define CHANGE_POS(g, x, y) do {			\
@@ -56,6 +58,9 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     brick_t *brick;
     rock_t *rock;
     bush_t *bush;
+    mb_word_t *word;
+    mb_timeval_t start, playing;
+    mb_timeval_t mbtv;
     int i, j;
 
     rdman = mb_rt->rdman;
@@ -97,6 +102,25 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
 	CHANGE_POS(tank_rt->tank_enemies[i], (2 + i * 3) * 50, 0);
     }
     tank_rt->n_enemy = i;
+
+    tank_rt->tank1_progm = mb_progm_new(4, rdman);
+
+    MB_TIMEVAL_SET(&start, 1, 0);
+    MB_TIMEVAL_SET(&playing, 3, 0);
+    word = mb_progm_next_word(tank_rt->tank1_progm, &start, &playing);
+
+    mb_shift_new(0, -150, tank_rt->tank1->root_coord, word);
+    mb_shift_new(0, -150, tank_rt->tank2->root_coord, word);
+
+    MB_TIMEVAL_SET(&start, 5, 0);
+    MB_TIMEVAL_SET(&playing, 3, 0);
+    word = mb_progm_next_word(tank_rt->tank1_progm, &start, &playing);
+
+    mb_shift_new(0, 150, tank_rt->tank1->root_coord, word);
+    mb_shift_new(0, 150, tank_rt->tank2->root_coord, word);
+
+    get_now(&mbtv);
+    mb_progm_start(tank_rt->tank1_progm, mb_rt->tman, &mbtv);
 }
 
 int
