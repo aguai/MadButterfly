@@ -16,8 +16,12 @@
  * - cd examples/calculator
  * - make
  * - ./calc
- * or
+ *
  * - cd examples/svg2code_ex
  * - make
  * - ./ex1
+ *
+ * - cd examples/tank
+ * - make
+ * - ./tank
  */
