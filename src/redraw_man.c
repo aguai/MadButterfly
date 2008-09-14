@@ -43,7 +43,7 @@ static void _insert_sort(void **elms, int num, int off) {
 
     for(i = 1; i < num; i++) {
 	val = *(unsigned int *)(elms[i] + off);
-	for(j = i - 1; j > 0; j--) {
+	for(j = i; j > 0; j--) {
 	    if(*(unsigned int *)(elms[j - 1] + off) <= val)
 		break;
 	    elms[j] = elms[j - 1];
@@ -984,6 +984,7 @@ struct _sh_dummy {
     shape_t shape;
     co_aix x, y;
     co_aix w, h;
+    int trans_cnt;
     int draw_cnt;
 };
 
@@ -1000,6 +1001,7 @@ shape_t *sh_dummy_new(co_aix x, co_aix y, co_aix w, co_aix h) {
     dummy->y = y;
     dummy->w = w;
     dummy->h = h;
+    dummy->trans_cnt = 0;
     dummy->draw_cnt = 0;
 
     return (shape_t *)dummy;
@@ -1030,6 +1032,7 @@ void sh_dummy_transform(shape_t *shape) {
 	if(shape->geo)
 	    geo_from_positions(shape->geo, 2, poses);
     }
+    dummy->trans_cnt++;
 }
 
 void sh_dummy_fill(shape_t *shape, cairo_t *cr) {
@@ -1134,16 +1137,20 @@ void test_rdman_redraw_changed(void) {
 	rdman_add_shape(rdman, shapes[i], coords[i]);
     }
     rdman_redraw_all(rdman);
+    CU_ASSERT(dummys[0]->trans_cnt == 1);
+    CU_ASSERT(dummys[1]->trans_cnt == 1);
+    CU_ASSERT(dummys[2]->trans_cnt == 1);
     CU_ASSERT(dummys[0]->draw_cnt == 1);
     CU_ASSERT(dummys[1]->draw_cnt == 1);
     CU_ASSERT(dummys[2]->draw_cnt == 1);
     
     coords[2]->matrix[2] = 100;
     coords[2]->matrix[5] = 100;
+    rdman_coord_changed(rdman, coords[0]);
     rdman_coord_changed(rdman, coords[2]);
     rdman_redraw_changed(rdman);
 
-    CU_ASSERT(dummys[0]->draw_cnt == 1);
+    CU_ASSERT(dummys[0]->draw_cnt == 2);
     CU_ASSERT(dummys[1]->draw_cnt == 2);
     CU_ASSERT(dummys[2]->draw_cnt == 2);
 
