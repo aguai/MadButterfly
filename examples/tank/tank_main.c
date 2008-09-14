@@ -35,7 +35,8 @@ typedef struct _tank_rt tank_rt_t;
 struct _tank_rt {
     tank1_t *tank1;
     tank2_t *tank2;
-    tank_en_t *tank_en;
+    int n_enemy;
+    tank_en_t *tank_enemies[10];
     void *map[12][16];
     X_MB_runtime_t *mb_rt;
 };
@@ -88,10 +89,14 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     }
 
     tank_rt->tank1 = tank1_new(rdman);
+    CHANGE_POS(tank_rt->tank1, 5 * 50, 11 * 50);
     tank_rt->tank2 = tank2_new(rdman);
-    CHANGE_POS(tank_rt->tank2, 50, 0);
-    tank_rt->tank_en = tank_en_new(rdman);
-    CHANGE_POS(tank_rt->tank_en, 100, 0);
+    CHANGE_POS(tank_rt->tank2, 10 * 50, 11 * 50);
+    for(i = 0; i < 3; i++) {
+	tank_rt->tank_enemies[i] = tank_en_new(rdman);
+	CHANGE_POS(tank_rt->tank_enemies[i], (2 + i * 3) * 50, 0);
+    }
+    tank_rt->n_enemy = i;
 }
 
 int
