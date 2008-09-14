@@ -13,7 +13,7 @@ static float comp_mb_timeval_ratio(const mb_timeval_t *a,
 }
 
 typedef struct _mb_shift mb_shift_t;
-/*! \brief Animation action for shift a coordination. */
+/*! \brief Animation action for relative shift a coordination. */
 struct _mb_shift {
     mb_action_t action;
 
@@ -95,5 +95,3 @@ mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord,
 
     return (mb_action_t *)shift;
 }
-
-

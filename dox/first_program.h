@@ -27,5 +27,7 @@
  * and initialize a 'foo' instance.  An instance is released by calling
  * foo_free().
  *
- * - \subpage svg2code_ex
+ * \dontinclude examples/svg2code_ex/main.c
+ * \skip main
+ * \until }
  */

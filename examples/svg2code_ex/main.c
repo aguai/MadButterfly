@@ -1,4 +1,4 @@
-/*! \page svg2code_ex
+/*! \file
  *
  * svg2code_ex is an example that show programmers how to create a
  * menu with MadButterfly.

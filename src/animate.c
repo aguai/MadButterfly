@@ -1,9 +1,14 @@
 /*! \file
  * \brief Animation tools.
  *
- * \sa ani
+ * \sa \ref ani
  */
 /*! \page ani What is Animation?
+ *
+ * Animation is a program to move, resize, rotate, ..., changing
+ * graphics on the output screen.
+ *
+ * \image html program.png
  *
  * XXX: Program is a sequence of actions duration a perior.
  * Actions are grouped into words.  A program defines
@@ -22,7 +27,43 @@
  * with timer for periodic running.  \ref mb_tman_t is timer of
  * MadButterfly.  The update frequence is 10fps by default, now.
  *
- * \sa animate.c
+ * \section use_progm How to Use Animation Program?
+ * Following code block creates a program with 2 words.  First word is
+ * started immediately after the program been started.  It is consisted
+ * for 1 second.  Second word is started 1 second after the program been
+ * started.  It is consisted for 2 seconds.  There are 2 action in
+ * first word, they shift graphics managed by coord1 & coord2 by (50,50) and
+ * (-50,50) pixels, respectly.  The shifting is performed incrementally
+ * in 1 second.  Second word shifts coord1 and coord2, too. And, graphics
+ * managed by coord3 are hidden at end of the word.  At end of code in the
+ * block, mb_progm_start() starts the program.  3rd argument of
+ * mb_progm_start() must be current wall time.
+ *
+ * \code
+ *	progm = mb_progm_new(10, &rdman);
+ *	
+ *	MB_TIMEVAL_SET(&start, 0, 0);
+ *	MB_TIMEVAL_SET(&playing, 1, 0);
+ *	word = mb_progm_next_word(progm, &start, &playing);
+ *
+ *	act = mb_shift_new(50, 50, coord1, word);
+ *	act = mb_shift_new(-50, 50, coord2, word);
+ *
+ *	MB_TIMEVAL_SET(&start, 1, 0);
+ *	MB_TIMEVAL_SET(&playing, 2, 0);
+ *	word = mb_progm_next_word(progm, &start, &playing);
+ *
+ *	act = mb_shift_new(0, 20, coord1, word);
+ *	act = mb_shift_new(0, -20, coord2, word);
+ *	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+ *
+ *	gettimeofday(&tv, NULL);
+ *	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
+ *	mb_progm_start(progm, tman, &mbtv);
+ * \endcode
+ *
+ *
+ * \sa \ref animate.c
  */
 #include <stdio.h>
 #include <stdlib.h>

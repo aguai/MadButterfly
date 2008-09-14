@@ -5,19 +5,7 @@
 #include "mb_timer.h"
 #include "paint.h"
 
-/*! \defgroup anim Animation
- * \brief Animation is a set of functions to make graph moving.
- * @{
- */
-typedef struct _mb_progm mb_progm_t;
-typedef struct _mb_word mb_word_t;
-typedef struct _mb_action mb_action_t;
-typedef struct _mb_progm_state mb_progm_state_t;
-
-/*! \defgroup act_support Action Supports.
- * @{
- */
-/*! \brief Basic class of nnimation actions.
+/*! \page def_action How to Define An Action?
  *
  * A action must implement following 4 functions.
  * \li start,
@@ -30,6 +18,22 @@ typedef struct _mb_progm_state mb_progm_state_t;
  * as one of actions in the word specified as an argument of it.
  * It also means *_new() must have an argument with type of
  * (mb_word_t *).
+ */
+
+/*! \defgroup anim Animation
+ * \brief Animation is a set of functions to make graph moving.
+ * @{
+ */
+typedef struct _mb_progm mb_progm_t;
+typedef struct _mb_word mb_word_t;
+typedef struct _mb_action mb_action_t;
+
+/*! \defgroup act_support Action Supports.
+ * @{
+ */
+/*! \brief Basic class of nnimation actions.
+ *
+ * \sa \ref def_action
  */
 struct _mb_action {
     void (*start)(mb_action_t *act,
@@ -63,6 +67,8 @@ extern mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord,
 extern mb_action_t *mb_chgcolor_new(co_comp_t r, co_comp_t g,
 				    co_comp_t b, co_comp_t a,
 				    paint_t *paint, mb_word_t *word);
+extern mb_action_t *mb_rotate_new(float angle1, float angle2,
+				  coord_t *coord, mb_word_t *word);
 
 enum { VIS_VISIBLE, VIS_HIDDEN };
 extern mb_action_t *mb_visibility_new(int visib, coord_t *coord,
