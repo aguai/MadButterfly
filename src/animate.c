@@ -103,6 +103,11 @@ struct _mb_progm {
     mb_word_t words[1];
 };
 
+/*! \brief Create a program object.
+ *
+ * \param max_words is maximum number of words the program can hold.
+ * \param rdman is a rdman that show graphics manipulated by it.
+ */
 mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
     mb_progm_t *progm;
     int i;
