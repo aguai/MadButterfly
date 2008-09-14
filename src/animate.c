@@ -74,7 +74,7 @@
 #include "animate.h"
 
 
-#define STEP_INTERVAL 100000
+#define STEP_INTERVAL 50000
 #define ASSERT(x)
 
 /*! \brief A word is a set of concurrent actions in a program.
@@ -206,8 +206,8 @@ static void mb_word_stop(mb_word_t *word, const mb_timeval_t *tmo,
  * Start time of words in a program are specified in incremental order.
  */
 static void mb_progm_step(const mb_timeval_t *tmo,
-			     const mb_timeval_t *now,
-			     void *arg) {
+			  const mb_timeval_t *now,
+			  void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
     mb_timeval_t next_tmo;
     mb_word_t *word;
@@ -215,7 +215,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
     int i;
 
     MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
-    MB_TIMEVAL_ADD(&next_tmo, tmo);
+    MB_TIMEVAL_ADD(&next_tmo, now);
 
     /* _step() or _stop() words that in playing. */
     i = progm->first_playing;
