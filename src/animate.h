@@ -14,6 +14,39 @@ typedef struct _mb_word mb_word_t;
 typedef struct _mb_action mb_action_t;
 typedef struct _mb_progm_state mb_progm_state_t;
 
+/*! \defgroup act_support Action Supports.
+ * @{
+ */
+/*! \brief Basic class of nnimation actions.
+ *
+ * A action must implement following 4 functions.
+ * \li start,
+ * \li step,
+ * \li stop,
+ * \li free, and
+ * \li *_new().
+ *
+ * *_new() must invokes mb_word_add_action() to add new object
+ * as one of actions in the word specified as an argument of it.
+ * It also means *_new() must have an argument with type of
+ * (mb_word_t *).
+ */
+struct _mb_action {
+    void (*start)(mb_action_t *act,
+		  const mb_timeval_t *now,
+		  const mb_timeval_t *playing_time,
+		  redraw_man_t *rdman);
+    void (*step)(mb_action_t *act, const mb_timeval_t *now,
+		 redraw_man_t *rdman);
+    void (*stop)(mb_action_t *act, const mb_timeval_t *now,
+		 redraw_man_t *rdman);
+    void (*free)(mb_action_t *act);
+    mb_action_t *next;
+};
+
+extern void mb_word_add_action(mb_word_t *word, mb_action_t *act);
+/* @} */
+
 extern mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman);
 extern void mb_progm_free(mb_progm_t *progm);
 extern mb_word_t *mb_progm_next_word(mb_progm_t *progm,
