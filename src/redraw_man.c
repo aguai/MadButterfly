@@ -40,15 +40,17 @@ static subject_t *ob_get_parent_subject(ob_factory_t *factory,
 static void _insert_sort(void **elms, int num, int off) {
     int i, j;
     unsigned int val;
+    void *elm_i;
 
     for(i = 1; i < num; i++) {
-	val = *(unsigned int *)(elms[i] + off);
+	elm_i = elms[i];
+	val = *(unsigned int *)(elm_i + off);
 	for(j = i; j > 0; j--) {
 	    if(*(unsigned int *)(elms[j - 1] + off) <= val)
 		break;
 	    elms[j] = elms[j - 1];
 	}
-	elms[j] = elms[i];
+	elms[j] = elm_i;
     }
 }
 
