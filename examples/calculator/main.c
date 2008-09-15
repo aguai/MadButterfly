@@ -61,22 +61,26 @@ static int real_compute(int op, int v1, int v2) {
 static void show_text(calc_data_t *calc_data, int num, int saved, int op,
 		      const char *suffix) {
     char buf[20];
+    redraw_man_t *rdman;
+
+    rdman = X_MB_rdman(calc_data->rt);
 
     sprintf(buf, "%d%s", num, suffix);
     sh_text_set_text(calc_data->code->screen_text, buf);
-    rdman_shape_changed(calc_data->rt->rdman, calc_data->code->screen_text);
+    rdman_shape_changed(rdman, calc_data->code->screen_text);
 
     if(op == 'n')
 	sprintf(buf, "None");
     else
 	sprintf(buf, "%d%c", saved, op);
     sh_text_set_text(calc_data->code->saved_text, buf);
-    rdman_shape_changed(calc_data->rt->rdman, calc_data->code->saved_text);
+    rdman_shape_changed(rdman, calc_data->code->saved_text);
 }
 
 static void compute(calc_data_t *calc_data, coord_t *tgt) {
     int i;
     coord_t **coord_p;
+    redraw_man_t *rdman;
     static int valid_num = 0;
     static int factor = 1;
     static int num = 0;
@@ -131,7 +135,8 @@ static void compute(calc_data_t *calc_data, coord_t *tgt) {
 	    break;
 	}
     }
-    rdman_redraw_changed(calc_data->rt->rdman);
+    rdman = X_MB_rdman(calc_data->rt);
+    rdman_redraw_changed(rdman);
 }
 
 static void buttons_handler(event_t *evt, void *arg) {
@@ -149,11 +154,13 @@ static void setup_observers(calc_data_t *calc_data) {
     ob_factory_t *factory;
     subject_t *subject;
     coord_t *coord;
+    redraw_man_t *rdman;
     int off;
     int i;
 
     calculator_scr = calc_data->code;
-    factory = rdman_get_ob_factory(calc_data->rt->rdman);
+    rdman = X_MB_rdman(calc_data->rt);
+    factory = rdman_get_ob_factory(rdman);
 
     for(i = 0; i < 16; i++) {
 	off = tgt_list[i].off;
@@ -164,23 +171,24 @@ static void setup_observers(calc_data_t *calc_data) {
 }
 
 int main(int argc, char * const argv[]) {
-    X_MB_runtime_t rt;
+    X_MB_runtime_t *rt;
+    redraw_man_t *rdman;
     calculator_scr_t *calculator_scr;
     calc_data_t calc_data;
-    int r;
 
-    r = X_MB_init(":0.0", 300, 400, &rt);
+    rt = X_MB_new(":0.0", 300, 400);
 
-    calculator_scr = calculator_scr_new(rt.rdman);
+    rdman = X_MB_rdman(rt);
+    calculator_scr = calculator_scr_new(rdman);
 
-    calc_data.rt = &rt;
+    calc_data.rt = rt;
     calc_data.code = calculator_scr;
     setup_observers(&calc_data);
 
-    X_MB_handle_connection(&rt);
+    X_MB_handle_connection(rt);
 
     calculator_scr_free(calculator_scr);
-    X_MB_destroy(&rt);
+    X_MB_free(rt);
 
     return 0;
 }

@@ -11,7 +11,7 @@ typedef struct _ob_factory ob_factory_t;
 typedef void (*evt_handler)(event_t *event, void *arg);
 
 struct _event {
-    int type;
+    int type;			/*!< event type (a.k.a. EVT_*  */
     subject_t *tgt, *cur_tgt;
 };
 
@@ -40,7 +40,7 @@ struct _subject {
 /*! \brief Flag that make a subject to propagate events to parents. */
 #define SUBF_STOP_PROPAGATE 0x1
 
-enum {OBJT_GEO, OBJT_COORD};
+enum {OBJT_GEO, OBJT_COORD, OBJT_KB};
 
 struct _mouse_event {
     event_t event;
@@ -69,7 +69,8 @@ struct _ob_factory {
 };
 
 enum {EVT_MOUSE_OVER, EVT_MOUSE_OUT, EVT_MOUSE_MOVE,
-      EVT_MOUSE_BUT_PRESS, EVT_MOUSE_BUT_RELEASE};
+      EVT_MOUSE_BUT_PRESS, EVT_MOUSE_BUT_RELEASE,
+      EVT_KB_PRESS, EVT_KB_RELEASE};
 
 extern subject_t *subject_new(ob_factory_t *factory,
 			      void *obj, int obj_type);

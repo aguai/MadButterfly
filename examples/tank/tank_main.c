@@ -54,6 +54,7 @@ struct _tank_rt {
 void
 initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     redraw_man_t *rdman;
+    mb_tman_t *tman;
     mud_t *mud;
     brick_t *brick;
     rock_t *rock;
@@ -63,7 +64,7 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     mb_timeval_t mbtv;
     int i, j;
 
-    rdman = mb_rt->rdman;
+    rdman = X_MB_rdman(mb_rt);
 
     tank_rt->mb_rt = mb_rt;
     for(i = 0; i < 12; i++) {
@@ -119,20 +120,21 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     mb_shift_new(0, 150, tank_rt->tank1->root_coord, word);
     mb_shift_new(0, 150, tank_rt->tank2->root_coord, word);
 
+    tman = X_MB_tman(mb_rt);
     get_now(&mbtv);
-    mb_progm_start(tank_rt->tank1_progm, mb_rt->tman, &mbtv);
+    mb_progm_start(tank_rt->tank1_progm, tman, &mbtv);
 }
 
 int
 main(int argc, char *const argv[]) {
-    X_MB_runtime_t rt;
+    X_MB_runtime_t *rt;
     tank_rt_t tank_rt;
 
-    X_MB_init(":0.0", 800, 600, &rt);
+    rt = X_MB_new(":0.0", 800, 600);
 
-    initial_tank(&tank_rt, &rt);
+    initial_tank(&tank_rt, rt);
     
-    X_MB_handle_connection(&rt);
+    X_MB_handle_connection(rt);
 
-    X_MB_destroy(&rt);
+    X_MB_free(rt);
 }
