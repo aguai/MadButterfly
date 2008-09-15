@@ -9,6 +9,108 @@
 #include "mb_timer.h"
 #include "X_supp.h"
 
+#define ERR -1
+#define OK 0
+
+/*! \ingroup xkb
+ * @{
+ */
+struct _X_kb_info {
+    int keycode_min, keycode_max;
+    int ksym_per_code;
+    KeySym *syms;
+    subject_t *kbevents;
+    ob_factory_t *ob_factory;
+};
+
+/* @} */
+
+struct _X_MB_runtime {
+    Display *display;
+    Window win;
+    Visual *visual;
+    cairo_surface_t *surface, *backend_surface;
+    cairo_t *cr, *backend_cr;
+    redraw_man_t *rdman;
+    mb_tman_t *tman;
+    int w, h;
+
+    X_kb_info_t kbinfo;
+
+    /* States */
+    shape_t *last;
+};
+
+/*! \defgroup xkb X Keyboard Handling
+ *
+ * Accept keyboard events from X server and delivery it to
+ * application through observer pattern.  There is a subject,
+ * per X-connection, for that.
+ * @{
+ */
+static int keycode2sym(X_kb_info_t *kbinfo, unsigned int keycode) {
+    int sym_idx;
+    int sym;
+
+    sym_idx = kbinfo->ksym_per_code * (keycode - kbinfo->keycode_min);
+    sym =  kbinfo->syms[sym_idx];
+    return sym;
+}
+
+static int X_kb_init(X_kb_info_t *kbinfo, Display *display,
+		     redraw_man_t *rdman) {
+    int n_syms;
+    ob_factory_t *factory;
+    int r;
+
+    r = XDisplayKeycodes(display,
+			 &kbinfo->keycode_min,
+			 &kbinfo->keycode_max);
+    if(r == 0)
+	return ERR;
+
+    n_syms = kbinfo->keycode_max - kbinfo->keycode_min + 1;
+    kbinfo->syms = XGetKeyboardMapping(display, kbinfo->keycode_min,
+				       n_syms,
+				       &kbinfo->ksym_per_code);
+    if(kbinfo->syms == NULL)
+	return ERR;
+
+    factory = rdman_get_ob_factory(rdman);
+    kbinfo->kbevents = subject_new(factory, kbinfo, OBJT_KB);
+    if(kbinfo->kbevents == NULL)
+	return ERR;
+    kbinfo->ob_factory = factory;
+
+    return OK;
+}
+
+static void X_kb_destroy(X_kb_info_t *kbinfo) {
+    subject_free(kbinfo->ob_factory, kbinfo->kbevents);
+    XFree(kbinfo->syms);
+}
+
+/*! \brief Accept X keyboard events from handle_x_event() and dispatch it.
+ */
+static void X_kb_handle_event(X_kb_info_t *kbinfo, XKeyEvent *xkey) {
+    unsigned int code;
+    int sym;
+    X_kb_event_t event;
+
+    code = xkey->keycode;
+    sym = keycode2sym(kbinfo, code);
+    if(xkey->type == KeyPress)
+	event.event.type = EVT_KB_PRESS;
+    else if(xkey->type == KeyRelease)
+	event.event.type = EVT_KB_RELEASE;
+    event.event.tgt = event.event.cur_tgt = kbinfo->kbevents;
+    event.keycode = code;
+    event.sym = sym;
+
+    subject_notify(kbinfo->ob_factory, kbinfo->kbevents, &event.event);
+}
+
+/* @} */
 
 static unsigned int get_button_state(unsigned int state) {
     unsigned int but = 0;
@@ -72,6 +174,7 @@ static void handle_x_event(X_MB_runtime_t *rt) {
     XMotionEvent *mevt;
     XButtonEvent *bevt;
     XExposeEvent *eevt;
+    XKeyEvent *xkey;
     co_aix x, y, w, h;
 
     int eflag = 0;
@@ -143,6 +246,12 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 		    rt->last = NULL;
 		}
 	    }
+	    break;
+
+	case KeyPress:
+	case KeyRelease:
+	    xkey = &evt.xkey;
+	    X_kb_handle_event(&rt->kbinfo, xkey);
 	    break;
 
 	case Expose:
@@ -273,7 +382,8 @@ static int X_init_connection(const char *display_name,
     }
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask |
-		 ButtonPressMask | ButtonReleaseMask);
+		 ButtonPressMask | ButtonReleaseMask |
+		 KeyPressMask | KeyReleaseMask);
     XFlush(display);
 
     *displayp = display;
@@ -288,7 +398,7 @@ static int X_init_connection(const char *display_name,
  * It setups a runtime environment to run MadButterfly with Xlib.
  * Users should specify width and height of the opening window.
  */
-int X_MB_init(const char *display_name,
+static int X_MB_init(const char *display_name,
 	      int w, int h, X_MB_runtime_t *xmb_rt) {
     memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
 
@@ -318,10 +428,12 @@ int X_MB_init(const char *display_name,
 
     xmb_rt->last = NULL;
 
+    X_kb_init(&xmb_rt->kbinfo, xmb_rt->display, xmb_rt->rdman);
+
     return OK;
 }
 
-void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
+static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
     if(xmb_rt->rdman) {
 	redraw_man_destroy(xmb_rt->rdman);
 	free(xmb_rt->rdman);
@@ -342,5 +454,38 @@ void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 
     if(xmb_rt->display)
 	XCloseDisplay(xmb_rt->display);
+
+    X_kb_destroy(&xmb_rt->kbinfo);
 }
 
+X_MB_runtime_t *X_MB_new(const char *display_name, int w, int h) {
+    X_MB_runtime_t *rt;
+    int r;
+
+    rt = O_ALLOC(X_MB_runtime_t);
+    if(rt == NULL)
+	return NULL;
+
+    r = X_MB_init(display_name, w, h, rt);
+    if(r != OK)
+	return NULL;
+
+    return rt;
+}
+
+void X_MB_free(X_MB_runtime_t *rt) {
+    X_MB_destroy(rt);
+    free(rt);
+}
+
+subject_t *X_MB_kbevents(X_MB_runtime_t *xmb_rt) {
+    return xmb_rt->kbinfo.kbevents;
+}
+
+redraw_man_t *X_MB_rdman(X_MB_runtime_t *xmb_rt) {
+    return xmb_rt->rdman;
+}
+
+mb_tman_t *X_MB_tman(X_MB_runtime_t *xmb_rt) {
+    return xmb_rt->tman;
+}
