@@ -32,13 +32,15 @@ struct _observer {
  * \see http://en.wikipedia.org/wiki/Observer_pattern
  */
 struct _subject {
-    int obj_type;		/*!< type of object (a.k.a. OBJT_*). */
-    void *obj;			/*!< the object this subject for. */
+    int obj_type;		/*!< \brief type of object (a.k.a. OBJT_*). */
+    void *obj;			/*!< \brief the object this subject for. */
     int flags;
     STAILQ(observer_t) observers;
 };
 /*! \brief Flag that make a subject to propagate events to parents. */
 #define SUBF_STOP_PROPAGATE 0x1
+#define SUBF_BUSY 0x2		/*!< \brief in subject_notify() */
+#define SUBF_FREE 0x4		/*!< \brief in postponding subject_free() */
 
 enum {OBJT_GEO, OBJT_COORD, OBJT_KB, OBJT_PROGM};
 
