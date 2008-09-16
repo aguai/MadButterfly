@@ -111,7 +111,9 @@ struct _mb_progm {
  */
 mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
     mb_progm_t *progm;
+#ifndef UNITTEST
     ob_factory_t *factory;
+#endif /* UNITTEST */
     int i;
 
     progm = (mb_progm_t *)malloc(sizeof(mb_progm_t) +
@@ -121,8 +123,10 @@ mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
 
     progm->rdman = rdman;
 
+#ifndef UNITTEST
     factory = rdman_get_ob_factory(rdman);
     progm->complete = subject_new(factory, progm, OBJT_PROGM);
+#endif /* UNITTEST */
 
     progm->n_words = 0;
     progm->max_words = max_words;
@@ -135,7 +139,9 @@ void mb_progm_free(mb_progm_t *progm) {
     int n_words;
     mb_word_t *word;
     mb_action_t *cur_act;
+#ifndef UNITTEST
     ob_factory_t *factory;
+#endif /* UNITTEST */
     int i;
 
     n_words = progm->n_words;
@@ -149,8 +155,10 @@ void mb_progm_free(mb_progm_t *progm) {
 	}
     }
 
+#ifndef UNITTEST
     factory = rdman_get_ob_factory(progm->rdman);
     subject_free(factory, progm->complete);
+#endif /* UNITTEST */
 
     free(progm);
 }
@@ -226,8 +234,10 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 			  const mb_timeval_t *now,
 			  void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
+#ifndef UNITTEST
     ob_factory_t *factory;
     mb_progm_complete_t comp_evt;
+#endif /* UNITTEST */
     mb_timeval_t next_tmo;
     mb_word_t *word;
     mb_timer_t *timer;
@@ -278,11 +288,13 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	timer = mb_tman_timeout(progm->tman, &next_tmo,
 				mb_progm_step, progm);	
     } else {
+#ifndef UNITTEST
 	factory = rdman_get_ob_factory(progm->rdman);
 	comp_evt.event.type = EVT_PROGM_COMPLETE;
 	comp_evt.event.tgt = comp_evt.event.cur_tgt = progm->complete;
 	comp_evt.progm = progm;
 	subject_notify(factory, progm->complete, &comp_evt.event);
+#endif /* UNITTEST */
     }
 }
 
