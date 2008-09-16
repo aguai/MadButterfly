@@ -40,7 +40,7 @@ struct _subject {
 /*! \brief Flag that make a subject to propagate events to parents. */
 #define SUBF_STOP_PROPAGATE 0x1
 
-enum {OBJT_GEO, OBJT_COORD, OBJT_KB};
+enum {OBJT_GEO, OBJT_COORD, OBJT_KB, OBJT_PROGM};
 
 struct _mouse_event {
     event_t event;
@@ -70,7 +70,7 @@ struct _ob_factory {
 
 enum {EVT_MOUSE_OVER, EVT_MOUSE_OUT, EVT_MOUSE_MOVE,
       EVT_MOUSE_BUT_PRESS, EVT_MOUSE_BUT_RELEASE,
-      EVT_KB_PRESS, EVT_KB_RELEASE};
+      EVT_KB_PRESS, EVT_KB_RELEASE, EVT_PROGM_COMPLETE};
 
 extern subject_t *subject_new(ob_factory_t *factory,
 			      void *obj, int obj_type);
