@@ -97,6 +97,7 @@ struct _mb_progm {
     mb_timeval_t start_time;
     int first_playing;		/*!< first playing word. */
     mb_tman_t *tman;
+    subject_t *complete;	/*!< notify when a program is completed. */
 
     int n_words;
     int max_words;
@@ -110,6 +111,7 @@ struct _mb_progm {
  */
 mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
     mb_progm_t *progm;
+    ob_factory_t *factory;
     int i;
 
     progm = (mb_progm_t *)malloc(sizeof(mb_progm_t) +
@@ -118,6 +120,10 @@ mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
 	return NULL;
 
     progm->rdman = rdman;
+
+    factory = rdman_get_ob_factory(rdman);
+    progm->complete = subject_new(factory, progm, OBJT_PROGM);
+
     progm->n_words = 0;
     progm->max_words = max_words;
     for(i = 0; i < max_words; i++)
@@ -215,6 +221,8 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 			  const mb_timeval_t *now,
 			  void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
+    ob_factory_t *factory;
+    mb_progm_complete_t comp_evt;
     mb_timeval_t next_tmo;
     mb_word_t *word;
     mb_timer_t *timer;
@@ -264,6 +272,12 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	    MB_TIMEVAL_CP(&next_tmo, &word->abs_start);
 	timer = mb_tman_timeout(progm->tman, &next_tmo,
 				mb_progm_step, progm);	
+    } else {
+	factory = rdman_get_ob_factory(progm->rdman);
+	comp_evt.event.type = EVT_PROGM_COMPLETE;
+	comp_evt.event.tgt = comp_evt.event.cur_tgt = progm->complete;
+	comp_evt.progm = progm;
+	subject_notify(factory, progm->complete, &comp_evt.event);
     }
 }
 
@@ -299,6 +313,12 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 }
 
 void mb_progm_abort(mb_progm_t *progm, mb_tman_t *tman) {
+}
+
+/*! \brief Return event subject for completion of a program.
+ */
+subject_t *mb_progm_get_complete(mb_progm_t *progm) {
+    return progm->complete;
 }
 
 #ifdef UNITTEST

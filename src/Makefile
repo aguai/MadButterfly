@@ -50,7 +50,7 @@ X_main.o: X_main.c
 	$(CC) $(CFLAGS) `pkg-config --cflags cairo` -c $(.ALLSRC)
 
 clean:
-	for i in *.o *~ *.core $(SHAPE_OBJS) $(BINS); do \
+	for i in *.o *~ *.core $(SHAPE_OBJS) $(BINS) testcase; do \
 		echo "delete $$i"; \
 		rm -f $$i; \
 	done
