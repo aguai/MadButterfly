@@ -3,6 +3,10 @@
 #include "observer.h"
 #include "tools.h"
 
+#ifndef ASSERT
+#define ASSERT(x)
+#endif
+
 subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
     subject_t *subject;
 
@@ -24,6 +28,7 @@ subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
 void subject_free(ob_factory_t *factory, subject_t *subject) {
     observer_t *observer;
 
+    ASSERT(!(subject->flags & SUBF_FREE));
     if(subject->flags & SUBF_BUSY) {
 	/* Postpond the request until busy status been stoped.
 	 * SUBF_BUSY means in subject_notify().
