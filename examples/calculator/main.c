@@ -179,7 +179,7 @@ int main(int argc, char * const argv[]) {
     rt = X_MB_new(":0.0", 300, 400);
 
     rdman = X_MB_rdman(rt);
-    calculator_scr = calculator_scr_new(rdman);
+    calculator_scr = calculator_scr_new(rdman, rdman->root_coord);
 
     calc_data.rt = rt;
     calc_data.code = calculator_scr;

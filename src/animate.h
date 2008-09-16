@@ -11,8 +11,9 @@
  * \li start,
  * \li step,
  * \li stop,
- * \li free, and
- * \li *_new().
+ * \li free,
+ * \li *_new(), and
+ * \li add *_new() to \ref animate.h .
  *
  * *_new() must invokes mb_word_add_action() to add new object
  * as one of actions in the word specified as an argument of it.

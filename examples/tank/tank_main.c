@@ -152,22 +152,22 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
 	for(j = 0; j < 16; j++) {
 	    switch(map[i][j]) {
 	    case MUD:
-		mud = mud_new(rdman);
+		mud = mud_new(rdman, rdman->root_coord);
 		CHANGE_POS(mud, j * 50, i * 50);
 		tank_rt->map[i][j] = (void *)mud;
 		break;
 	    case BRI:
-		brick = brick_new(rdman);
+		brick = brick_new(rdman, rdman->root_coord);
 		CHANGE_POS(brick, j * 50, i * 50);
 		tank_rt->map[i][j] = (void *)brick;
 		break;
 	    case ROC:
-		rock = rock_new(rdman);
+		rock = rock_new(rdman, rdman->root_coord);
 		CHANGE_POS(rock, j * 50, i * 50);
 		tank_rt->map[i][j] = (void *)rock;
 		break;
 	    case BSH:
-		bush = bush_new(rdman);
+		bush = bush_new(rdman, rdman->root_coord);
 		CHANGE_POS(bush, j * 50, i * 50);
 		tank_rt->map[i][j] = (void *)bush;
 		break;
@@ -175,12 +175,12 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
 	}
     }
 
-    tank_rt->tank1 = tank1_new(rdman);
+    tank_rt->tank1 = tank1_new(rdman, rdman->root_coord);
     CHANGE_POS(tank_rt->tank1, 5 * 50, 11 * 50);
-    tank_rt->tank2 = tank2_new(rdman);
+    tank_rt->tank2 = tank2_new(rdman, rdman->root_coord);
     CHANGE_POS(tank_rt->tank2, 10 * 50, 11 * 50);
     for(i = 0; i < 3; i++) {
-	tank_rt->tank_enemies[i] = tank_en_new(rdman);
+	tank_rt->tank_enemies[i] = tank_en_new(rdman, rdman->root_coord);
 	CHANGE_POS(tank_rt->tank_enemies[i], (2 + i * 3) * 50, 0);
     }
     tank_rt->n_enemy = i;
