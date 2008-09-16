@@ -18,9 +18,20 @@ subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
     return subject;
 }
 
+/*!
+ * \todo Keep ob_factory following subject objects.
+ */
 void subject_free(ob_factory_t *factory, subject_t *subject) {
     observer_t *observer;
 
+    if(subject->flags & SUBF_BUSY) {
+	/* Postpond the request until busy status been stoped.
+	 * SUBF_BUSY means in subject_notify().
+	 */
+	subject->flags |= SUBF_FREE;
+	return;
+    }
+	
     while((observer = STAILQ_HEAD(subject->observers))) {
 	STAILQ_REMOVE(subject->observers, observer_t, next, observer);
 	factory->observer_free(factory, observer);
@@ -31,6 +42,13 @@ void subject_free(ob_factory_t *factory, subject_t *subject) {
 
 void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
     observer_t *observer;
+
+    /*!
+     * \note What is happend when the subject is freed by observer?
+     *		Postponding the request of free until notification
+     *		been finished. (\ref SUBF_BUSY / \ref SUBF_FREE)
+     */
+    subject->flags |= SUBF_BUSY;
 
     evt->tgt = subject;
     while(subject) {
@@ -46,6 +64,10 @@ void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
 
 	subject = factory->get_parent_subject(factory, subject);
     }
+
+    subject->flags &= ~SUBF_BUSY;
+    if(subject->flags & SUBF_FREE)
+	subject_free(factory, subject);
 }
 
 observer_t *subject_add_observer(ob_factory_t *factory,
