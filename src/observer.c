@@ -48,15 +48,15 @@ void subject_free(ob_factory_t *factory, subject_t *subject) {
 void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
     observer_t *observer;
 
-    /*!
-     * \note What is happend when the subject is freed by observer?
-     *		Postponding the request of free until notification
-     *		been finished. (\ref SUBF_BUSY / \ref SUBF_FREE)
-     */
-    subject->flags |= SUBF_BUSY;
-
     evt->tgt = subject;
     while(subject) {
+	/*!
+	 * \note What is happend when the subject is freed by observer?
+	 *		Postponding the request of free until notification
+	 *		been finished. (\ref SUBF_BUSY / \ref SUBF_FREE)
+	 */
+	subject->flags |= SUBF_BUSY;
+
 	evt->cur_tgt = subject->obj;
 	for(observer = STAILQ_HEAD(subject->observers);
 	    observer != NULL;
@@ -64,15 +64,16 @@ void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
 	    observer->hdr(evt, observer->arg);
 	}
 
+	subject->flags &= ~SUBF_BUSY;
+	if(subject->flags & SUBF_FREE)
+	    subject_free(factory, subject);
+
 	if(subject->flags & SUBF_STOP_PROPAGATE)
 	    break;
 
 	subject = factory->get_parent_subject(factory, subject);
     }
 
-    subject->flags &= ~SUBF_BUSY;
-    if(subject->flags & SUBF_FREE)
-	subject_free(factory, subject);
 }
 
 observer_t *subject_add_observer(ob_factory_t *factory,
