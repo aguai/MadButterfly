@@ -1,7 +1,6 @@
 #ifndef __TOOLS_H_
 #define __TOOLS_H_
 
-
 typedef struct _elmpool elmpool_t;
 
 extern elmpool_t *elmpool_new(int elm_sz, int inc_num);
@@ -63,6 +62,8 @@ extern void elmpool_free(elmpool_t *pool);
 	}						\
     } while(0)
 
+
+#include <stdlib.h>
 
 #define O_ALLOC(type) ((type *)malloc(sizeof(type)))
 

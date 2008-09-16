@@ -332,6 +332,7 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 }
 
 void mb_progm_abort(mb_progm_t *progm, mb_tman_t *tman) {
+    /*! \todo Make sure abort release resources. */
 }
 
 /*! \brief Return event subject for completion of a program.

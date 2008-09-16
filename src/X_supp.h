@@ -29,5 +29,6 @@ extern void X_MB_free(X_MB_runtime_t *xmb_rt);
 extern subject_t *X_MB_kbevents(X_MB_runtime_t *xmb_rt);
 extern redraw_man_t *X_MB_rdman(X_MB_runtime_t *xmb_rt);
 extern mb_tman_t *X_MB_tman(X_MB_runtime_t *xmb_rt);
+extern ob_factory_t *X_MB_ob_factory(X_MB_runtime_t *xmb_rt);
 
 #endif
