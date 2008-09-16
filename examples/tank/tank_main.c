@@ -40,7 +40,10 @@ struct _tank_rt {
     tank_en_t *tank_enemies[10];
     void *map[12][16];
     X_MB_runtime_t *mb_rt;
+
     mb_progm_t *tank1_progm;
+
+    observer_t *kb_observer;
 };
 
 #define CHANGE_POS(g, x, y) do {			\
@@ -50,6 +53,82 @@ struct _tank_rt {
 	(g)->root_coord->matrix[5] = y;			\
 	rdman_coord_changed(rdman, (g)->root_coord);	\
     } while(0)
+
+static void free_progm_handler(event_t *event, void *arg) {
+    tank_rt_t *tank_rt = (tank_rt_t *)arg;
+
+    mb_progm_free(tank_rt->tank1_progm);
+    tank_rt->tank1_progm = NULL;
+}
+
+static void keyboard_handler(event_t *event, void *arg) {
+    X_kb_event_t *xkey = (X_kb_event_t *)event;
+    tank_rt_t *tank_rt = (tank_rt_t *)arg;
+    redraw_man_t *rdman;
+    mb_tman_t *tman;
+    mb_word_t *word;
+    ob_factory_t *factory;
+    subject_t *comp_sub;
+    mb_timeval_t start_tm, playing, now;
+
+    if(tank_rt->tank1_progm != NULL)
+	return;
+
+    rdman = X_MB_rdman(tank_rt->mb_rt);
+    tman = X_MB_tman(tank_rt->mb_rt);
+
+    tank_rt->tank1_progm = mb_progm_new(2, rdman);
+    comp_sub = mb_progm_get_complete(tank_rt->tank1_progm);
+    factory = rdman_get_ob_factory(rdman);
+    subject_add_observer(factory, comp_sub,
+			 free_progm_handler,
+			 tank_rt);
+
+    MB_TIMEVAL_SET(&start_tm, 0, 0);
+    MB_TIMEVAL_SET(&playing, 0, 500000);
+    word = mb_progm_next_word(tank_rt->tank1_progm,
+			      &start_tm, &playing);
+
+    switch(xkey->sym) {
+    case 0xff51:		/* left */
+	mb_shift_new(-50, 0, tank_rt->tank1->root_coord, word);
+	break;
+
+    case 0xff52:		/* up */
+	mb_shift_new(0, -50, tank_rt->tank1->root_coord, word);
+	break;
+
+    case 0xff53:		/* right */
+	mb_shift_new(50, 0, tank_rt->tank1->root_coord, word);
+	break;
+
+    case 0xff54:		/* down */
+	mb_shift_new(0, 50, tank_rt->tank1->root_coord, word);
+	break;
+
+    case 0x20:			/* space */
+    case 0xff0d:		/* enter */
+	break;
+    }
+    get_now(&now);
+    mb_progm_start(tank_rt->tank1_progm, tman, &now);
+}
+
+static void init_keyboard(tank_rt_t *tank_rt) {
+    X_MB_runtime_t *mb_rt;
+    subject_t *kbevents;
+    redraw_man_t *rdman;
+    ob_factory_t *factory;
+
+    mb_rt = tank_rt->mb_rt;
+    kbevents = X_MB_kbevents(mb_rt);
+
+    rdman = X_MB_rdman(mb_rt);
+    factory = rdman_get_ob_factory(rdman);
+
+    tank_rt->kb_observer =
+	subject_add_observer(factory, kbevents, keyboard_handler, tank_rt);
+}
 
 void
 initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
@@ -62,6 +141,8 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     mb_word_t *word;
     mb_timeval_t start, playing;
     mb_timeval_t mbtv;
+    subject_t *comp_sub;
+    ob_factory_t *factory;
     int i, j;
 
     rdman = X_MB_rdman(mb_rt);
@@ -120,9 +201,16 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     mb_shift_new(0, 150, tank_rt->tank1->root_coord, word);
     mb_shift_new(0, 150, tank_rt->tank2->root_coord, word);
 
+    /* Free program after program completed. */
+    comp_sub = mb_progm_get_complete(tank_rt->tank1_progm);
+    factory = rdman_get_ob_factory(rdman);
+    subject_add_observer(factory, comp_sub, free_progm_handler, tank_rt);
+
     tman = X_MB_tman(mb_rt);
     get_now(&mbtv);
     mb_progm_start(tank_rt->tank1_progm, tman, &mbtv);
+
+    init_keyboard(tank_rt);
 }
 
 int

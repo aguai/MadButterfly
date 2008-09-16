@@ -235,6 +235,8 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 			  void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
 #ifndef UNITTEST
+    /*! \todo Leverage aspective programming to prevent problem of unittest.
+     */
     ob_factory_t *factory;
     mb_progm_complete_t comp_evt;
 #endif /* UNITTEST */
