@@ -489,3 +489,10 @@ redraw_man_t *X_MB_rdman(X_MB_runtime_t *xmb_rt) {
 mb_tman_t *X_MB_tman(X_MB_runtime_t *xmb_rt) {
     return xmb_rt->tman;
 }
+
+ob_factory_t *X_MB_ob_factory(X_MB_runtime_t *xmb_rt) {
+    ob_factory_t *factory;
+
+    factory = rdman_get_ob_factory(xmb_rt->rdman);
+    return factory;
+}

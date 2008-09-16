@@ -1,5 +1,7 @@
 #include <sys/time.h>
+#include <string.h>
 #include <mb/mb.h>
+#include <mb/tools.h>
 #include "svgs.h"
 
 enum { MUD, ROC, BRI, BSH };
@@ -31,18 +33,183 @@ static char map[12][16] = {
       MUD, BRI, MUD, BRI, MUD, MUD, MUD, MUD}
 };
 
+#define MAP_W 16
+#define MAP_H 12
+
+/*! \defgroup tank_elf Tank Elf
+ * \brief Tank elf module provides control functions of tanks in game.
+ * @{
+ */
+struct _tank {
+    coord_t *coord_pos;		/*!< \brief coordinate for position */
+    coord_t *coord_rot;		/*!< \brief coordinate for rotation */
+    int map_x, map_y;
+    int direction;
+    mb_progm_t *progm;
+};
+typedef struct _tank tank_t;
+enum { TD_UP = 0, TD_RIGHT, TD_DOWN, TD_LEFT };
+
+static tank_t *tank_new(coord_t *coord_pos,
+			coord_t *coord_rot,
+			int map_x, int map_y,
+			X_MB_runtime_t *mb_rt) {
+    tank_t *tank;
+    redraw_man_t *rdman;
+
+    tank = O_ALLOC(tank_t);
+    if(tank == NULL)
+	return NULL;
+
+    rdman = X_MB_rdman(mb_rt);
+
+    tank->coord_pos = coord_pos;
+    tank->coord_rot = coord_rot;
+    tank->map_x = map_x;
+    tank->map_y = map_y;
+    tank->direction = TD_UP;
+    tank->progm = NULL;
+
+    memset(coord_pos->matrix, 0, sizeof(co_aix[6]));
+    coord_pos->matrix[0] = 1;
+    coord_pos->matrix[2] = map_x * 50;
+    coord_pos->matrix[4] = 1;
+    coord_pos->matrix[5] = map_y * 50;
+    rdman_coord_changed(rdman, coord_pos);
+
+    return tank;
+}
+
+static void tank_free(tank_t *tank, X_MB_runtime_t *xmb_rt) {
+    mb_tman_t *tman;
+
+    if(tank->progm) {
+	tman = X_MB_tman(xmb_rt);
+	mb_progm_abort(tank->progm, tman);
+    }
+    free(tank);
+}
+
+/*! \brief Clean program for a tank.
+ *
+ * It is called when the program is completed.
+ */
+static void clean_tank_progm_handler(event_t *event, void *arg) {
+    tank_t *tank = (tank_t *)arg;
+
+    mb_progm_free(tank->progm);
+    tank->progm = NULL;
+}
+
+#define PI 3.1415926
+
+static void tank_move(tank_t *tank, int direction,
+		    X_MB_runtime_t *xmb_rt) {
+    redraw_man_t *rdman;
+    mb_tman_t *tman;
+    ob_factory_t *factory;
+    /* for the program */
+    mb_progm_t *progm;
+    subject_t *comp_sub;
+    mb_word_t *word;
+    mb_timeval_t start, playing;
+    mb_timeval_t now;
+    /* for position */
+    co_aix sh_x, sh_y;
+    /* for direction */
+    float ang1, ang2;
+    float rot_diff;
+    static co_aix shift_xy[][2] = {{0, -50}, {50, 0}, {0, 50}, {-50, 0}};
+    static int map_shift[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+    static float angles[4] = {0, PI / 2, PI , PI * 3 / 2};
+    static float rotations[7] = {PI / 2, PI , -PI / 2,
+				 0, PI / 2, PI , -PI / 2};
+
+    if(tank->progm != NULL)
+	return;
+
+    /*
+     * Keep inside the map.
+     */
+    if(direction == tank->direction) {
+	switch(direction) {
+	case TD_UP:
+	    if(tank->map_y == 0)
+		return;
+	    if(map[tank->map_y - 1][tank->map_x] != MUD)
+		return;
+	    break;
+	case TD_RIGHT:
+	    if(tank->map_x >= (MAP_W - 1))
+		return;
+	    if(map[tank->map_y][tank->map_x + 1] != MUD)
+		return;
+	    break;
+	case TD_DOWN:
+	    if(tank->map_y >= (MAP_H - 1))
+		return;
+	    if(map[tank->map_y + 1][tank->map_x] != MUD)
+		return;
+	    break;
+	case TD_LEFT:
+	    if(tank->map_x == 0)
+		return;
+	    if(map[tank->map_y][tank->map_x - 1] != MUD)
+		return;
+	    break;
+	}
+    }
+
+    rdman = X_MB_rdman(xmb_rt);
+    tman = X_MB_tman(xmb_rt);
+    factory = X_MB_ob_factory(xmb_rt);
+
+    progm = mb_progm_new(1, rdman);
+    tank->progm = progm;
+
+    MB_TIMEVAL_SET(&start, 0, 0);
+    MB_TIMEVAL_SET(&playing, 0, 500000);
+    word = mb_progm_next_word(progm, &start, &playing);
+
+    if(direction == tank->direction) {
+	/* Shift/move */
+	sh_x = shift_xy[direction][0];
+	sh_y = shift_xy[direction][1];
+	mb_shift_new(sh_x, sh_y, tank->coord_pos, word);
+	tank->map_x += map_shift[direction][0];
+	tank->map_y += map_shift[direction][1];
+    } else {
+	/* Change direction */
+	rot_diff = rotations[3 - tank->direction + direction];
+	ang1 = angles[tank->direction];
+	ang2 = ang1 + rot_diff;
+	mb_rotate_new(ang1, ang2, tank->coord_rot, word);
+	tank->direction = direction;
+    }
+
+    /* Clean program when it is completed. */
+    comp_sub = mb_progm_get_complete(progm);
+    subject_add_observer(factory, comp_sub,
+			 clean_tank_progm_handler, tank);
+
+    get_now(&now);
+    mb_progm_start(progm, tman, &now);
+}
+
+/* @} */
+
 typedef struct _tank_rt tank_rt_t;
 
 struct _tank_rt {
-    tank1_t *tank1;
-    tank2_t *tank2;
+    tank_t *tank1;
+    tank1_t *tank1_o;
+    tank_t *tank2;
+    tank2_t *tank2_o;
     int n_enemy;
-    tank_en_t *tank_enemies[10];
+    tank_t *tank_enemies[10];
+    tank_en_t *tank_enemies_o[10];
     void *map[12][16];
     X_MB_runtime_t *mb_rt;
-
-    mb_progm_t *tank1_progm;
-
     observer_t *kb_observer;
 };
 
@@ -54,64 +221,38 @@ struct _tank_rt {
 	rdman_coord_changed(rdman, (g)->root_coord);	\
     } while(0)
 
-static void free_progm_handler(event_t *event, void *arg) {
-    tank_rt_t *tank_rt = (tank_rt_t *)arg;
-
-    mb_progm_free(tank_rt->tank1_progm);
-    tank_rt->tank1_progm = NULL;
-}
-
 static void keyboard_handler(event_t *event, void *arg) {
     X_kb_event_t *xkey = (X_kb_event_t *)event;
     tank_rt_t *tank_rt = (tank_rt_t *)arg;
-    redraw_man_t *rdman;
-    mb_tman_t *tman;
-    mb_word_t *word;
-    ob_factory_t *factory;
-    subject_t *comp_sub;
-    mb_timeval_t start_tm, playing, now;
+    int direction;
 
-    if(tank_rt->tank1_progm != NULL)
+    if(xkey->event.type != EVT_KB_PRESS)
 	return;
-
-    rdman = X_MB_rdman(tank_rt->mb_rt);
-    tman = X_MB_tman(tank_rt->mb_rt);
-
-    tank_rt->tank1_progm = mb_progm_new(2, rdman);
-    comp_sub = mb_progm_get_complete(tank_rt->tank1_progm);
-    factory = rdman_get_ob_factory(rdman);
-    subject_add_observer(factory, comp_sub,
-			 free_progm_handler,
-			 tank_rt);
-
-    MB_TIMEVAL_SET(&start_tm, 0, 0);
-    MB_TIMEVAL_SET(&playing, 0, 500000);
-    word = mb_progm_next_word(tank_rt->tank1_progm,
-			      &start_tm, &playing);
 
     switch(xkey->sym) {
     case 0xff51:		/* left */
-	mb_shift_new(-50, 0, tank_rt->tank1->root_coord, word);
+	direction = TD_LEFT;
 	break;
 
     case 0xff52:		/* up */
-	mb_shift_new(0, -50, tank_rt->tank1->root_coord, word);
+	direction = TD_UP;
 	break;
 
     case 0xff53:		/* right */
-	mb_shift_new(50, 0, tank_rt->tank1->root_coord, word);
+	direction = TD_RIGHT;
 	break;
 
     case 0xff54:		/* down */
-	mb_shift_new(0, 50, tank_rt->tank1->root_coord, word);
+	direction = TD_DOWN;
 	break;
 
     case 0x20:			/* space */
     case 0xff0d:		/* enter */
-	break;
+    default:
+	return;
     }
-    get_now(&now);
-    mb_progm_start(tank_rt->tank1_progm, tman, &now);
+
+    tank_move(tank_rt->tank1, direction, tank_rt->mb_rt);
 }
 
 static void init_keyboard(tank_rt_t *tank_rt) {
@@ -130,19 +271,39 @@ static void init_keyboard(tank_rt_t *tank_rt) {
 	subject_add_observer(factory, kbevents, keyboard_handler, tank_rt);
 }
 
+/*! \brief Make coord objects for elfs (tanks). */
+static void make_elf_coords(redraw_man_t *rdman, coord_t **coord_pos,
+			    coord_t **coord_rot, coord_t **coord_center) {
+    coord_t *coord_back;
+
+    *coord_pos = rdman_coord_new(rdman, rdman->root_coord);
+
+    coord_back = rdman_coord_new(rdman, *coord_pos);
+    coord_back->matrix[2] = 25;
+    coord_back->matrix[5] = 25;
+    rdman_coord_changed(rdman, coord_back);
+
+    *coord_rot = rdman_coord_new(rdman, coord_back);
+
+    *coord_center = rdman_coord_new(rdman, *coord_rot);
+    (*coord_center)->matrix[2] = -25;
+    (*coord_center)->matrix[5] = -25;
+    rdman_coord_changed(rdman, *coord_center);
+}
+
 void
 initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     redraw_man_t *rdman;
-    mb_tman_t *tman;
+    /* for map areas */
     mud_t *mud;
     brick_t *brick;
     rock_t *rock;
     bush_t *bush;
-    mb_word_t *word;
-    mb_timeval_t start, playing;
-    mb_timeval_t mbtv;
-    subject_t *comp_sub;
-    ob_factory_t *factory;
+    /* for tanks */
+    coord_t *coord_center, *coord_pos, *coord_rot;
+    tank1_t *tank1_o;
+    tank2_t *tank2_o;
+    tank_en_t *tank_en_o;
     int i, j;
 
     rdman = X_MB_rdman(mb_rt);
@@ -175,40 +336,24 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
 	}
     }
 
-    tank_rt->tank1 = tank1_new(rdman, rdman->root_coord);
-    CHANGE_POS(tank_rt->tank1, 5 * 50, 11 * 50);
-    tank_rt->tank2 = tank2_new(rdman, rdman->root_coord);
-    CHANGE_POS(tank_rt->tank2, 10 * 50, 11 * 50);
+    make_elf_coords(rdman, &coord_pos, &coord_rot, &coord_center);
+    tank1_o = tank1_new(rdman, coord_center);
+    tank_rt->tank1 = tank_new(coord_pos, coord_rot, 5, 11, mb_rt);
+    tank_rt->tank1_o = tank1_o;
+
+    make_elf_coords(rdman, &coord_pos, &coord_rot, &coord_center);
+    tank2_o = tank2_new(rdman, coord_center);
+    tank_rt->tank2 = tank_new(coord_pos, coord_rot, 10, 11, mb_rt);
+    tank_rt->tank2_o = tank2_o;
+
     for(i = 0; i < 3; i++) {
-	tank_rt->tank_enemies[i] = tank_en_new(rdman, rdman->root_coord);
-	CHANGE_POS(tank_rt->tank_enemies[i], (2 + i * 3) * 50, 0);
+	make_elf_coords(rdman, &coord_pos, &coord_rot, &coord_center);
+	tank_en_o = tank_en_new(rdman, coord_center);
+	tank_rt->tank_enemies[i] = tank_new(coord_pos, coord_rot,
+					    i * 3 + 3, 0, mb_rt);
+	tank_rt->tank_enemies_o[i] = tank_en_o;
     }
     tank_rt->n_enemy = i;
-
-    tank_rt->tank1_progm = mb_progm_new(4, rdman);
-
-    MB_TIMEVAL_SET(&start, 1, 0);
-    MB_TIMEVAL_SET(&playing, 3, 0);
-    word = mb_progm_next_word(tank_rt->tank1_progm, &start, &playing);
-
-    mb_shift_new(0, -150, tank_rt->tank1->root_coord, word);
-    mb_shift_new(0, -150, tank_rt->tank2->root_coord, word);
-
-    MB_TIMEVAL_SET(&start, 5, 0);
-    MB_TIMEVAL_SET(&playing, 3, 0);
-    word = mb_progm_next_word(tank_rt->tank1_progm, &start, &playing);
-
-    mb_shift_new(0, 150, tank_rt->tank1->root_coord, word);
-    mb_shift_new(0, 150, tank_rt->tank2->root_coord, word);
-
-    /* Free program after program completed. */
-    comp_sub = mb_progm_get_complete(tank_rt->tank1_progm);
-    factory = rdman_get_ob_factory(rdman);
-    subject_add_observer(factory, comp_sub, free_progm_handler, tank_rt);
-
-    tman = X_MB_tman(mb_rt);
-    get_now(&mbtv);
-    mb_progm_start(tank_rt->tank1_progm, tman, &mbtv);
 
     init_keyboard(tank_rt);
 }
