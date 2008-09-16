@@ -135,6 +135,7 @@ void mb_progm_free(mb_progm_t *progm) {
     int n_words;
     mb_word_t *word;
     mb_action_t *cur_act;
+    ob_factory_t *factory;
     int i;
 
     n_words = progm->n_words;
@@ -147,6 +148,10 @@ void mb_progm_free(mb_progm_t *progm) {
 	    cur_act->free(cur_act);
 	}
     }
+
+    factory = rdman_get_ob_factory(progm->rdman);
+    subject_free(factory, progm->complete);
+
     free(progm);
 }
 
