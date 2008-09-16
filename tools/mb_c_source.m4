@@ -267,7 +267,7 @@ define([MADBUTTERFLY],[dnl
 #include "mb/paint.h"
 #include "$1.h"
 
-$1_t *$1_new(redraw_man_t *rdman) {
+$1_t *$1_new(redraw_man_t *rdman, coord_t *parent_coord) {
     $1_t *obj;
     grad_stop_t *stops = NULL;]DECLARE_VARS
 $2[]dnl
@@ -275,7 +275,7 @@ $2[]dnl
     obj = ($1_t *)malloc(sizeof($1_t));
     if(obj == NULL) return NULL;
 ]SETUP_VARS
-    obj->root_coord = rdman_coord_new(rdman, rdman->root_coord);
+    obj->root_coord = rdman_coord_new(rdman, parent_coord);
 $2
 [    return obj;
 }

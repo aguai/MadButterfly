@@ -61,7 +61,7 @@ int main(int argc, char * const argv[]) {
      * Instantiate objects from a SVG file.
      */
     rdman = X_MB_rdman(rt);
-    svg2code = svg2code_ex_new(rdman);
+    svg2code = svg2code_ex_new(rdman, rdman->root_coord);
 
     /*
      * Get observer factory
