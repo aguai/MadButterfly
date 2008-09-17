@@ -40,19 +40,21 @@ typedef struct _redraw_man {
 
     int max_dirty_coords;
     int n_dirty_coords;
-    coord_t **dirty_coords;
+    coord_t **dirty_coords;	/*!< coordinates their transform
+				 * matric are chagned.
+				 */
 
     int max_dirty_geos;
     int n_dirty_geos;
-    geo_t **dirty_geos;
+    geo_t **dirty_geos;		/*!< geometries that need re-computed */
 
     int max_dirty_areas;
     int n_dirty_areas;
-    area_t **dirty_areas;
+    area_t **dirty_areas;	/*!< \brief are areas need to redraw. */
 
     int max_gen_geos;
     int n_gen_geos;
-    geo_t **gen_geos;		/* general geo list */
+    geo_t **gen_geos;		/* general geo list (for temporary store) */
 
     cairo_t *cr;
     cairo_t *backend;

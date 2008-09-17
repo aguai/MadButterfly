@@ -524,6 +524,26 @@ static int clean_coord(coord_t *coord) {
     return OK;
 }
 
+/*! \page dirty Relationships of dirty coord, geo, and area.
+ *
+ * A coord_t instance is dirty if it's matrix had been changed.  Once
+ * it is changed, all shapes in it's descendants would be effected.
+ * Shapes in descendants are dirtied.  Dirty coords and dirty shapes
+ * should be clean.  The procedure of clean for dirty coords re-compute
+ * aggregated matric and areas of coords.  The area of a coord is a
+ * rectangle area where member shapes of the coord occupy.  Old 
+ * and new value of coord area are putten into dirty area list.
+ *
+ * A dirty shape means it's geo being dirty.  A dirty geo is clean by
+ * recomputing area and transform shape it-self according aggregated
+ * matrix of the coord that it is a member of.  Old and new value of
+ * geo area are also putten into dirty area list.
+ *
+ * Shapes that should be redrawed are selected by if it overlaid with any
+ * of dirty areas.  Once it overlaid with one or more dirty areas, it
+ * is redrawed.
+ */
+
 static int clean_rdman_coords(redraw_man_t *rdman) {
     coord_t *coord;
     coord_t **dirty_coords;
