@@ -50,6 +50,29 @@ struct _tank {
 typedef struct _tank tank_t;
 enum { TD_UP = 0, TD_RIGHT, TD_DOWN, TD_LEFT };
 
+
+/* @} */
+
+typedef struct _tank_rt tank_rt_t;
+
+struct _tank_rt {
+    tank_t *tank1;
+    tank1_t *tank1_o;
+    tank_t *tank2;
+    tank2_t *tank2_o;
+    int n_enemy;
+    tank_t *tank_enemies[10];
+    tank_en_t *tank_enemies_o[10];
+    tank_t *tanks[12];
+    int n_tanks;
+    void *map[12][16];
+    X_MB_runtime_t *mb_rt;
+    observer_t *kb_observer;
+};
+
+/*! \ingroup tank_elf
+ * @{
+ */
 static tank_t *tank_new(coord_t *coord_pos,
 			coord_t *coord_rot,
 			int map_x, int map_y,
@@ -104,7 +127,8 @@ static void clean_tank_progm_handler(event_t *event, void *arg) {
 #define PI 3.1415926
 
 static void tank_move(tank_t *tank, int direction,
-		    X_MB_runtime_t *xmb_rt) {
+		      tank_rt_t *tank_rt) {
+    X_MB_runtime_t *xmb_rt = tank_rt->mb_rt;
     redraw_man_t *rdman;
     mb_tman_t *tman;
     ob_factory_t *factory;
@@ -119,6 +143,7 @@ static void tank_move(tank_t *tank, int direction,
     /* for direction */
     float ang1, ang2;
     float rot_diff;
+    int i;
     static co_aix shift_xy[][2] = {{0, -50}, {50, 0}, {0, 50}, {-50, 0}};
     static int map_shift[4][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
     static float angles[4] = {0, PI / 2, PI , PI * 3 / 2};
@@ -158,6 +183,18 @@ static void tank_move(tank_t *tank, int direction,
 		return;
 	    break;
 	}
+
+	tank->map_x += map_shift[direction][0];
+	tank->map_y += map_shift[direction][1];
+	for(i = 0; i < tank_rt->n_tanks; i++) {
+	    if(tank != tank_rt->tanks[i] &&
+	       tank->map_x == tank_rt->tanks[i]->map_x &&
+	       tank->map_y == tank_rt->tanks[i]->map_y) {
+		tank->map_x -= map_shift[direction][0];
+		tank->map_y -= map_shift[direction][1];
+		return;
+	    }
+	}
     }
 
     rdman = X_MB_rdman(xmb_rt);
@@ -176,8 +213,6 @@ static void tank_move(tank_t *tank, int direction,
 	sh_x = shift_xy[direction][0];
 	sh_y = shift_xy[direction][1];
 	mb_shift_new(sh_x, sh_y, tank->coord_pos, word);
-	tank->map_x += map_shift[direction][0];
-	tank->map_y += map_shift[direction][1];
     } else {
 	/* Change direction */
 	rot_diff = rotations[3 - tank->direction + direction];
@@ -197,21 +232,6 @@ static void tank_move(tank_t *tank, int direction,
 }
 
 /* @} */
-
-typedef struct _tank_rt tank_rt_t;
-
-struct _tank_rt {
-    tank_t *tank1;
-    tank1_t *tank1_o;
-    tank_t *tank2;
-    tank2_t *tank2_o;
-    int n_enemy;
-    tank_t *tank_enemies[10];
-    tank_en_t *tank_enemies_o[10];
-    void *map[12][16];
-    X_MB_runtime_t *mb_rt;
-    observer_t *kb_observer;
-};
 
 #define CHANGE_POS(g, x, y) do {			\
 	(g)->root_coord->matrix[0] = 1.0;		\
@@ -252,7 +272,7 @@ static void keyboard_handler(event_t *event, void *arg) {
 	return;
     }
 
-    tank_move(tank_rt->tank1, direction, tank_rt->mb_rt);
+    tank_move(tank_rt->tank1, direction, tank_rt);
 }
 
 static void init_keyboard(tank_rt_t *tank_rt) {
@@ -352,8 +372,13 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
 	tank_rt->tank_enemies[i] = tank_new(coord_pos, coord_rot,
 					    i * 3 + 3, 0, mb_rt);
 	tank_rt->tank_enemies_o[i] = tank_en_o;
+	tank_rt->tanks[i] = tank_rt->tank_enemies[i];
     }
     tank_rt->n_enemy = i;
+
+    tank_rt->tanks[i++] =tank_rt->tank1;
+    tank_rt->tanks[i++] =tank_rt->tank2;
+    tank_rt->n_tanks = i;
 
     init_keyboard(tank_rt);
 }
