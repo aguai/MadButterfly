@@ -524,26 +524,10 @@ static int clean_coord(coord_t *coord) {
     return OK;
 }
 
-/*! \page dirty Relationships of dirty coord, geo, and area.
+/*! \brief Clean coord_t objects.
  *
- * A coord_t instance is dirty if it's matrix had been changed.  Once
- * it is changed, all shapes in it's descendants would be effected.
- * Shapes in descendants are dirtied.  Dirty coords and dirty shapes
- * should be clean.  The procedure of clean for dirty coords re-compute
- * aggregated matric and areas of coords.  The area of a coord is a
- * rectangle area where member shapes of the coord occupy.  Old 
- * and new value of coord area are putten into dirty area list.
- *
- * A dirty shape means it's geo being dirty.  A dirty geo is clean by
- * recomputing area and transform shape it-self according aggregated
- * matrix of the coord that it is a member of.  Old and new value of
- * geo area are also putten into dirty area list.
- *
- * Shapes that should be redrawed are selected by if it overlaid with any
- * of dirty areas.  Once it overlaid with one or more dirty areas, it
- * is redrawed.
+ * \todo Make objects can be addin or remove out of coord tree any time.
  */
-
 static int clean_rdman_coords(redraw_man_t *rdman) {
     coord_t *coord;
     coord_t **dirty_coords;
@@ -749,6 +733,21 @@ static void draw_shapes_in_areas(redraw_man_t *rdman,
 }
 
 
+/*! \page coord_opacity How to support opacity attribute for group (coord)?
+ *
+ * I have several ideas to do that.  This page show you all ideas.
+ *
+ * \section idea_one First One
+ * Change the structure of tree of coords.  It is organized as tree of
+ * SVG document, shapes and coords are putten in tree with order the same
+ * as the document.  The idea can solve the problem, but also seriously
+ * impact current code.
+ *
+ * \section idea_two Second One
+ * Add opacity and agg_opacity attribute to coord_t, and update
+ *
+ */
+
 /*! \brief Re-draw all changed shapes or shapes affected by changed coords.
  *
  * A coord object has a geo to keep track the range that it's members will
@@ -793,6 +792,9 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     n_dirty_areas = rdman->n_dirty_areas;
     dirty_areas = rdman->dirty_areas;
     if(n_dirty_areas > 0) {
+	/*! \brief Draw shapes in preorder of coord tree and support opacity
+	 * rules.
+	 */
 	clean_canvas(rdman->cr);
 	draw_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
 	copy_cr_2_backend(rdman, rdman->n_dirty_areas, rdman->dirty_areas);
@@ -866,15 +868,16 @@ shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape) {
     return node;
 }
 
-/*
- * Dirty of geo
+/*! \page dirty Dirty geo, coord, and area.
+ *
+ * \section dirty_of_ego Dirty of geo
  * A geo is dirty when any of the shape, size or positions is changed.
  * It's geo and positions should be recomputed before drawing.  So,
  * dirty geos are marked as dirty and put into dirty_geos list.
  * The list is inspected before drawing to make sure the right shape,
  * size, and positions.
  *
- * Dirty of coord
+ * \section dirty_of_coord Dirty of coord
  * A coord is dirty when it's transformation matrix being changed.
  * Dirty coords are marked as dirty and put into dirty_coords list.
  * Once a coord is dirty, every member geos of it are also dirty.
