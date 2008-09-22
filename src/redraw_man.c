@@ -15,6 +15,8 @@
 #define OK 0
 #define ERR -1
 
+#define ARRAY_EXT_SZ 64
+
 #define SWAP(a, b, t) do { t c;  c = a; a = b; b = c; } while(0)
 
 #ifdef UNITTEST
@@ -71,7 +73,7 @@ static int add_dirty_geo(redraw_man_t *rdman, geo_t *geo) {
     int r;
 
     if(rdman->n_dirty_geos >= rdman->max_dirty_geos) {
-	max_dirty_geos = rdman->n_geos;
+	max_dirty_geos = rdman->max_dirty_geos + ARRAY_EXT_SZ;
 	r = extend_memblk((void **)&rdman->dirty_geos,
 			  sizeof(geo_t *) * rdman->n_dirty_geos,
 			  sizeof(geo_t *) * max_dirty_geos);
@@ -92,7 +94,7 @@ static int add_dirty_area(redraw_man_t *rdman, area_t *area) {
 	/* every geo object and coord object can contribute 2 areas.
 	 * rdman_draw_area() may also contribute 1 area.
 	 */
-	max_dirty_areas = (rdman->n_geos + rdman->n_coords) * 2 + 1;
+	max_dirty_areas = rdman->max_dirty_areas + ARRAY_EXT_SZ;
 	r = extend_memblk((void **)&rdman->dirty_areas,
 			  sizeof(area_t *) * rdman->n_dirty_areas,
 			  sizeof(area_t *) * max_dirty_areas);
@@ -247,54 +249,8 @@ void redraw_man_destroy(redraw_man_t *rdman) {
  * and gain interest of higher cache hit rate.
  */
 
-/*! \brief Find out all affected shape objects.
- *
- * Find out all shape objects that are overalid with geo_t of
- * a geometry changed object.
- *
- * Linear scan geo_t objects of all shape objects in all_shapes
- * list of a redraw_man_t object.
- */
-int rdman_find_overlaid_shapes(redraw_man_t *rdman, geo_t *geo,
-			 geo_t ***overlays) {
-    int n_geos;
-    geo_t **geos;
-    geo_t *geo_cur;
-    int n_overlays;
-    geo_t **_overlays;
-    int i;
-
-    n_geos = rdman->n_geos;
-
-    geos = (geo_t **)malloc(sizeof(geo_t *) * n_geos);
-    if(geos == NULL)
-	return -1;
-
-    _overlays = (geo_t **)malloc(sizeof(geo_t *) * n_geos);
-    if(geos == NULL) {
-	free(geos);
-	return -1;
-    }
-
-    geo_cur = STAILQ_HEAD(rdman->all_geos);
-    for(i = 0; i < n_geos; i++) {
-	geos[i] = geo_cur;
-	geo_cur = STAILQ_NEXT(geo_t, next, geo_cur);
-    }
-    geo_mark_overlay(geo, n_geos, geos, &n_overlays, _overlays);
-
-    free(geos);
-    *overlays = _overlays;
-
-    return n_overlays;
-}
-
 int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
     geo_t *geo;
-#ifdef GEO_ORDER
-    geo_t *visit;
-    unsigned int next_order;
-#endif
     int r;
 
     geo = elmpool_elm_alloc(rdman->geo_pool);
@@ -304,22 +260,8 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
     geo_init(geo);
     geo->mouse_event = subject_new(&rdman->ob_factory, geo, OBJT_GEO);
 
-    sh_attach_geo(shape, geo);
-    STAILQ_INS_TAIL(rdman->all_geos, geo_t, next, geo);
-    rdman->n_geos++;
-
-    /*! \todo remove order number. */
-#ifdef GEO_ORDER
-    geo->order = ++rdman->next_geo_order;
-    if(geo->order == 0) {
-	next_order = 0;
-	for(visit = STAILQ_HEAD(rdman->all_geos);
-	    visit != NULL;
-	    visit = STAILQ_NEXT(geo_t, next, visit))
-	    visit->order = ++next_order;
-	rdman->next_geo_order = next_order;
-    }
-#endif
+    STAILQ_INS_TAIL(coord->members, geo_t, coord_next, geo);
+    coord->num_members++;
 
     /* New one should be dirty to recompute it when drawing. */
     geo->flags |= GEF_DIRTY;
@@ -328,6 +270,7 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
 	return ERR;
 
     sh_attach_coord(shape, coord);
+    sh_attach_geo(shape, geo);
 
     return OK;
 }
@@ -337,11 +280,15 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
  * \todo redraw shape objects that overlaid with removed one.
  */
 int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
-    STAILQ_REMOVE(rdman->all_geos, geo_t, next, shape->geo);
-    subject_free(&rdman->ob_factory, shape->geo->mouse_event);
+    geo_t *geo;
+    coord_t *coord;
+
+    geo = shape->geo;
+    coord = shape->coord;
+    STAILQ_REMOVE(coord->members, geo_t, coord_next, geo);
+    subject_free(&rdman->ob_factory, geo->mouse_event);
     sh_detach_geo(shape);
     elmpool_elm_free(rdman->geo_pool, shape->geo);
-    rdman->n_geos--;
     sh_detach_coord(shape);
     return OK;
 }
@@ -375,6 +322,8 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
 	    visit = preorder_coord_subtree(root_coord, visit);
 	}
     }
+
+    coord->before_pmem = parent->num_members;
 
     return coord;
 }
@@ -551,7 +500,6 @@ static void setup_canvas(redraw_man_t *rdman, coord_t *coord) {
 }
 
 static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
-    shape_t *shape;
     geo_t *geo;
     co_aix (*poses)[2];
     int cnt, pos_cnt;
@@ -562,12 +510,11 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 
     /* Clean member shapes. */
     cnt = 0;
-    for(shape = STAILQ_HEAD(coord->members);
-	shape != NULL;
-	shape = STAILQ_NEXT(shape_t, coord_mem_next, shape)) {
-	geo = shape->geo;
+    for(geo = STAILQ_HEAD(coord->members);
+	geo != NULL;
+	geo = STAILQ_NEXT(geo_t, coord_next, geo)) {
 	SWAP(geo->cur_area, geo->last_area, area_t *);
-	clean_shape(shape);
+	clean_shape(geo->shape);
 	cnt++;
     }
 
@@ -577,11 +524,9 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 	return ERR;
 
     pos_cnt = 0;
-    for(shape = STAILQ_HEAD(coord->members);
-	shape != NULL;
-	shape = STAILQ_NEXT(shape_t, coord_mem_next, shape)) {
-	geo = shape->geo;
-	
+    for(geo = STAILQ_HEAD(coord->members);
+	geo != NULL;
+	geo = STAILQ_NEXT(geo_t, coord_next, geo)) {
 	area_to_positions(geo->cur_area, poses + pos_cnt);
 	pos_cnt += 2;
     }
@@ -788,13 +733,11 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 }
 #endif /* UNITTEST */
 
-static int is_shape_in_areas(shape_t *shape,
+static int is_geo_in_areas(geo_t *geo,
 			     int n_areas,
 			     area_t **areas) {
     int i;
-    geo_t *geo;
 
-    geo = shape->geo;
     for(i = 0; i < n_areas; i++) {
 	if(is_overlay(geo->cur_area, areas[i]))
 	    return 1;
@@ -822,7 +765,7 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
 				       area_t **areas) {
     int dirty = 0;
     int r;
-    shape_t *member;
+    geo_t *member;
     coord_t *child;
     cairo_t *canvas;
     int mem_idx;
@@ -838,11 +781,12 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
 	    child = STAILQ_NEXT(coord_t, sibling, child);
 	} else {
 	    ASSERT(member != NULL);
-	    if(is_shape_in_areas(member, n_areas, areas)) {
-		draw_shape(rdman, canvas, member);
+	    if(is_geo_in_areas(member, n_areas, areas)) {
+		draw_shape(rdman, canvas, member->shape);
 		dirty = 1;
 	    }
-	    member = STAILQ_NEXT(shape_t, coord_mem_next, member);
+	    member = STAILQ_NEXT(geo_t, coord_next, member);
+	    mem_idx++;
 	}
     }
 
@@ -961,7 +905,6 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
  */
 
 int rdman_redraw_all(redraw_man_t *rdman) {
-    geo_t *geo;
     cairo_surface_t *surface;
     area_t area;
     int r;
@@ -998,6 +941,30 @@ int rdman_redraw_area(redraw_man_t *rdman, co_aix x, co_aix y,
     r = rdman_redraw_changed(rdman);
 
     return r;
+}
+
+geo_t *rdman_geos(redraw_man_t *rdman, geo_t *last) {
+    geo_t *next;
+    coord_t *coord;
+    
+    if(last == NULL) {
+	coord = rdman->root_coord;
+	while(coord != NULL && STAILQ_HEAD(coord->members) == NULL)
+	    coord = preorder_coord_subtree(rdman->root_coord, coord);
+	if(coord == NULL)
+	    return NULL;
+	return STAILQ_HEAD(coord->members);
+    }
+
+    coord = last->shape->coord;
+    next = STAILQ_NEXT(geo_t, coord_next, last);
+    while(next == NULL) {
+	coord = preorder_coord_subtree(rdman->root_coord, coord);
+	if(coord == NULL)
+	    return NULL;
+	next = STAILQ_HEAD(coord->members);
+    }
+    return next;
 }
 
 int rdman_force_clean(redraw_man_t *rdman) {
@@ -1238,57 +1205,6 @@ paint_t *dummy_paint_new(redraw_man_t *rdman) {
     return paint;
 }
 
-void test_rdman_find_overlaid_shapes(void) {
-    redraw_man_t rdman;
-    geo_t geo;
-    coord_t *coords[3];
-    shape_t *shapes[5];
-    geo_t **overlays;
-    co_aix pos[2][2];
-    int n;
-    int i;
-
-    redraw_man_init(&rdman, NULL, NULL);
-    coords[0] = rdman.root_coord;
-    for(i = 1; i < 3; i++) {
-	coords[i] = rdman_coord_new(&rdman, rdman.root_coord);
-    }
-    for(i = 0; i < 5; i++) {
-	shapes[i] = sh_dummy_new(10 + i * 30, 10 + i * 20, 25, 15);
-	CU_ASSERT(shapes[i] != NULL);
-    }
-    for(i = 0; i < 3; i++)
-	rdman_add_shape(&rdman, shapes[i], coords[1]);
-    for(i = 3; i < 5; i++)
-	rdman_add_shape(&rdman, shapes[i], coords[2]);
-
-    coords[1]->matrix[0] = 2;
-    coords[0]->matrix[4] = 2;
-
-    update_aggr_matrix(coords[0]);
-    for(i = 0; i < 5; i++)
-	sh_dummy_transform(shapes[i]);
-
-    pos[0][0] = 100;
-    pos[0][1] = 120;
-    pos[1][0] = 100 + 140;
-    pos[1][1] = 120 + 40;
-    geo_init(&geo);
-    geo_from_positions(&geo, 2, pos);
-
-    n = rdman_find_overlaid_shapes(&rdman, &geo, &overlays);
-    CU_ASSERT(n == 2);
-    CU_ASSERT(overlays != NULL);
-    CU_ASSERT(overlays[0] == shapes[2]->geo);
-    CU_ASSERT(overlays[1] == shapes[3]->geo);
-
-    free(overlays);
-    for(i = 0; i < 5; i++)
-	sh_dummy_free(shapes[i]);
-
-    redraw_man_destroy(&rdman);
-}
-
 void test_rdman_redraw_changed(void) {
     coord_t *coords[3];
     shape_t *shapes[3];
@@ -1338,7 +1254,6 @@ CU_pSuite get_redraw_man_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_redraw_man", NULL, NULL);
-    CU_ADD_TEST(suite, test_rdman_find_overlaid_shapes);
     CU_ADD_TEST(suite, test_rdman_redraw_changed);
 
     return suite;

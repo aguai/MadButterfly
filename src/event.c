@@ -8,6 +8,8 @@
 #define OK 0
 #define ERR -1
 
+#define ARRAY_EXT_SZ 64
+
 
 static int extend_memblk(void **buf, int o_size, int n_size) {
     void *new_buf;
@@ -33,7 +35,7 @@ static int add_gen_geo(redraw_man_t *rdman, geo_t *geo) {
     int r;
 
     if(rdman->n_gen_geos >= rdman->max_gen_geos) {
-	max_gen_geos = rdman->n_geos;
+	max_gen_geos = rdman->max_gen_geos + ARRAY_EXT_SZ;
 	r = extend_memblk((void **)&rdman->gen_geos,
 			  sizeof(geo_t *) * rdman->n_gen_geos,
 			  sizeof(geo_t *) * max_gen_geos);
@@ -57,9 +59,9 @@ static int collect_shapes_at_point(redraw_man_t *rdman,
 
     rdman->n_gen_geos = 0;
 
-    for(geo = STAILQ_HEAD(rdman->all_geos);
+    for(geo = rdman_geos(rdman, NULL);
 	geo != NULL;
-	geo = STAILQ_NEXT(geo_t, next, geo)) {
+	geo = rdman_geos(rdman, geo)) {
 	if(geo_pos_is_in(geo, x, y)) {
 	    r = add_gen_geo(rdman, geo);
 	    if(r != OK)
