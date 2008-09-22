@@ -112,6 +112,31 @@ static void area_to_positions(area_t *area, co_aix (*poses)[2]) {
     poses[1][1] = area->y + area->h;;
 }
 
+static cairo_t *new_canvas(redraw_man_t *rdman) {
+#ifndef UNITTEST
+    cairo_t *cr;
+    cairo_surface_t *surface, *cr_surface;
+    int w, h;
+
+    cr_surface = cairo_get_target(rdman->cr);
+    w = cairo_image_surface_get_width(cr_surface);
+    h = cairo_image_surface_get_height(cr_surface);
+    surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+					 w, h);
+    cr = cairo_create(surface);
+
+    return cr;
+#else
+    return NULL;
+#endif
+}
+
+static void free_canvas(cairo_t *canvas) {
+#ifndef UNITTEST
+    cairo_destroy(canvas);
+#endif
+}
+
 int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
 
@@ -165,6 +190,9 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     rdman->root_coord->mouse_event = subject_new(&rdman->ob_factory,
 						 rdman->root_coord,
 						 OBJT_COORD);
+    rdman->root_coord->flags |= COF_OWN_CANVAS;
+    rdman->root_coord->canvas = cr;
+    rdman->root_coord->opacity = 1;
 
     rdman->cr = cr;
     rdman->backend = backend;
@@ -173,6 +201,15 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 }
 
 void redraw_man_destroy(redraw_man_t *rdman) {
+    coord_t *coord, *saved_coord;
+
+    coord = postorder_coord_subtree(rdman->root_coord, NULL);
+    while(coord) {
+	saved_coord = coord;
+	coord = postorder_coord_subtree(rdman->root_coord, coord);
+	rdman_coord_free(rdman, saved_coord);
+    }
+
     elmpool_free(rdman->coord_pool);
     elmpool_free(rdman->geo_pool);
     elmpool_free(rdman->shnode_pool);
@@ -321,6 +358,10 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
     coord->mouse_event = subject_new(&rdman->ob_factory,
 				     coord,
 				     OBJT_COORD);
+    /*! \note default opacity == 1 */
+    coord->opacity = 1;
+    if(parent)
+	coord->canvas = parent->canvas;
     rdman->n_coords++;
 
     coord->order = ++rdman->next_coord_order;
@@ -355,6 +396,10 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
 
     if(STAILQ_HEAD(coord->children) != NULL)
 	return ERR;
+
+    /* Free canvas (\ref redraw) */
+    if(coord->flags & COF_OWN_CANVAS)
+	free_canvas(coord->canvas);
 
     STAILQ_REMOVE(parent->children, coord_t, sibling, coord);
     subject_free(&rdman->ob_factory, coord->mouse_event);
@@ -481,11 +526,37 @@ static void clean_shape(shape_t *shape) {
 	shape->geo->flags &= ~GEF_HIDDEN;
 }
 
-static int clean_coord(coord_t *coord) {
+/*! \brief Setup canvas for the coord.
+ *
+ * Own a canvas or inherit it from parent.
+ * \sa
+ * - \ref redraw
+ */
+static void setup_canvas(redraw_man_t *rdman, coord_t *coord) {
+    if(coord->parent == NULL)
+	return;
+
+    if(coord->opacity != 1) {
+	if(!(coord->flags & COF_OWN_CANVAS)) {
+	    coord->canvas = new_canvas(rdman);
+	    coord->flags |= COF_OWN_CANVAS;
+	}
+    } else {
+	if(coord->flags & COF_OWN_CANVAS) {
+	    free_canvas(coord->canvas);
+	    coord->flags &= ~COF_OWN_CANVAS;
+	}
+	coord->canvas = coord->parent->canvas;
+    }
+}
+
+static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
     shape_t *shape;
     geo_t *geo;
     co_aix (*poses)[2];
     int cnt, pos_cnt;
+
+    setup_canvas(rdman, coord);
 
     compute_aggr_of_coord(coord);
 
@@ -525,8 +596,6 @@ static int clean_coord(coord_t *coord) {
 }
 
 /*! \brief Clean coord_t objects.
- *
- * \todo Make objects can be addin or remove out of coord tree any time.
  */
 static int clean_rdman_coords(redraw_man_t *rdman) {
     coord_t *coord;
@@ -543,7 +612,7 @@ static int clean_rdman_coords(redraw_man_t *rdman) {
 	    coord = dirty_coords[i];
 	    if(!(coord->flags & COF_DIRTY))
 		continue;
-	    r = clean_coord(coord);
+	    r = clean_coord(rdman, coord);
 	    if(r != OK)
 		return ERR;
 	    /* These two steps can be avoided for drawing all. */
@@ -629,30 +698,30 @@ static void stroke_path(redraw_man_t *rdman) {
 }
 #endif
 
-static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
+static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
     paint_t *fill, *stroke;
 
     if(shape->fill || shape->stroke) {
 	switch(shape->sh_type) {
 	case SHT_PATH:
-	    sh_path_draw(shape, rdman->cr);
+	    sh_path_draw(shape, cr);
 	    break;
 	case SHT_TEXT:
-	    sh_text_draw(shape, rdman->cr);
+	    sh_text_draw(shape, cr);
 	    break;
 	case SHT_RECT:
-	    sh_rect_draw(shape, rdman->cr);
+	    sh_rect_draw(shape, cr);
 	    break;
 #ifdef UNITTEST
 	default:
-	    sh_dummy_fill(shape, rdman->cr);
+	    sh_dummy_fill(shape, cr);
 	    break;
 #endif /* UNITTEST */
 	}
 
 	fill = shape->fill;
 	if(shape->fill) {
-	    fill->prepare(fill, rdman->cr);
+	    fill->prepare(fill, cr);
 	    if(shape->stroke)
 		fill_path_preserve(rdman);
 	    else
@@ -661,8 +730,8 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 
 	stroke = shape->stroke;
 	if(stroke) {
-	    stroke->prepare(stroke, rdman->cr);
-	    set_shape_stroke_param(shape, rdman->cr);
+	    stroke->prepare(stroke, cr);
+	    set_shape_stroke_param(shape, cr);
 	    stroke_path(rdman);
 	}
     }
@@ -672,6 +741,12 @@ static void draw_shape(redraw_man_t *rdman, shape_t *shape) {
 static void clean_canvas(cairo_t *cr) {
     /*! \todo clean to background color. */
     cairo_set_source_rgb(cr, 1, 1, 1);
+    cairo_paint(cr);
+}
+
+static void clean_canvas_black(cairo_t *cr) {
+    /*! \todo clean to background color. */
+    cairo_set_source_rgba(cr, 0, 0, 0, 0);
     cairo_paint(cr);
 }
 
@@ -702,6 +777,9 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 static void clean_canvas(cairo_t *cr) {
 }
 
+static void clean_canvas_black(cairo_t *cr) {
+}
+
 static void reset_clip(redraw_man_t *rdman) {
 }
 
@@ -710,26 +788,76 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 }
 #endif /* UNITTEST */
 
+static int is_shape_in_areas(shape_t *shape,
+			     int n_areas,
+			     area_t **areas) {
+    int i;
+    geo_t *geo;
+
+    geo = shape->geo;
+    for(i = 0; i < n_areas; i++) {
+	if(is_overlay(geo->cur_area, areas[i]))
+	    return 1;
+    }
+    return 0;
+}
+
+static void update_canvas_2_parent(redraw_man_t *rdman, coord_t *coord) {
+    cairo_t *pcanvas, *canvas;
+    cairo_surface_t *surface;
+
+    if(coord == rdman->root_coord)
+	return;
+
+    canvas = coord->canvas;
+    pcanvas = coord->parent->canvas;
+    surface = cairo_get_target(canvas);
+    cairo_set_source_surface(pcanvas, surface, 0, 0);
+    cairo_paint_with_alpha(pcanvas, coord->opacity);
+}
+
+static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
+				       coord_t *coord,
+				       int n_areas,
+				       area_t **areas) {
+    int dirty = 0;
+    int r;
+    shape_t *member;
+    coord_t *child;
+    cairo_t *canvas;
+    int mem_idx;
+
+    canvas = coord->canvas;
+    member = STAILQ_HEAD(coord->members);
+    mem_idx = 0;
+    child = STAILQ_HEAD(coord->children);
+    while(child != NULL || member != NULL) {
+	if(child && child->before_pmem == mem_idx) {
+	    r = draw_coord_shapes_in_areas(rdman, child, n_areas, areas);
+	    dirty |= r;
+	    child = STAILQ_NEXT(coord_t, sibling, child);
+	} else {
+	    ASSERT(member != NULL);
+	    if(is_shape_in_areas(member, n_areas, areas)) {
+		draw_shape(rdman, canvas, member);
+		dirty = 1;
+	    }
+	    member = STAILQ_NEXT(shape_t, coord_mem_next, member);
+	}
+    }
+
+    if(dirty && coord->flags & COF_OWN_CANVAS) {
+	update_canvas_2_parent(rdman, coord);
+	clean_canvas_black(coord->canvas);
+    }
+
+    return dirty;
+}
+
 static void draw_shapes_in_areas(redraw_man_t *rdman,
 				 int n_areas,
 				 area_t **areas) {
-    geo_t *visit_geo;
-    int i;
-
-    for(visit_geo = STAILQ_HEAD(rdman->all_geos);
-	visit_geo != NULL;
-	visit_geo = STAILQ_NEXT(geo_t, next, visit_geo)) {
-	if(visit_geo->flags & GEF_DIRTY)
-	    clean_shape(visit_geo->shape);
-	if(visit_geo->flags & GEF_HIDDEN)
-	    continue;
-	for(i = 0; i < n_areas; i++) {
-	    if(is_overlay(visit_geo->cur_area, areas[i])) {
-		draw_shape(rdman, visit_geo->shape);
-		break;
-	    }
-	}
-    }
+    draw_coord_shapes_in_areas(rdman, rdman->root_coord, n_areas, areas);
 }
 
 
@@ -810,25 +938,48 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
  * NOTE: After redrawing, the content must be copied to the backend surface.
  */
 
+/*! \page redraw How to Redraw Shapes?
+ *
+ * Coords are corresponding objects for group tags of SVG files.
+ * In conceptional, every SVG group has a canvas, graphics of child shapes
+ * are drawed into the canvas, applied filters of group, and blended into
+ * canvas of parent of the group.
+ *
+ * But, we don't need to create actually a surface/canvas for every coord.
+ * We only create surface for coords their opacity value are not 1 or they
+ * apply filters on background.  Child shapes of coords without canvas
+ * are drawed on canvas of nearest ancestor which have canvas.  It said
+ * a coord owns a canvas or inherits from an ancestor. (\ref COF_OWN_CANVAS,
+ * clean_coord()) Except, root_coord always owns a canvas.
+ *
+ * \note Default opacity of a coord is 1.
+ *
+ * \sa
+ * - rdman_redraw_all()
+ * - rdman_redraw_changed()
+ * = draw_shapes_in_areas()
+ */
+
 int rdman_redraw_all(redraw_man_t *rdman) {
     geo_t *geo;
+    cairo_surface_t *surface;
+    area_t area;
     int r;
 
-    r = clean_rdman_dirties(rdman);
+    area.x = area.y = 0;
+#ifndef UNITTEST
+    surface = cairo_get_target(rdman->cr);
+    area.w = cairo_image_surface_get_width(surface);
+    area.h = cairo_image_surface_get_height(surface);
+#else
+    area.w = 1024;
+    area.h = 1024;
+#endif
+    add_dirty_area(rdman, &area);
+
+    r = rdman_redraw_changed(rdman);
     if(r != OK)
 	return ERR;
-
-    clean_canvas(rdman->cr);
-
-    for(geo = STAILQ_HEAD(rdman->all_geos);
-	geo != NULL;
-	geo = STAILQ_NEXT(geo_t, next, geo)) {
-	if(geo->flags & GEF_HIDDEN)
-	    continue;
-	draw_shape(rdman, geo->shape);
-    }
-    copy_cr_2_backend(rdman, 0, NULL);
-    rdman->n_dirty_areas = 0;
 
     return OK;
 }
