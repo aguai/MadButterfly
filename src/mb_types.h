@@ -44,7 +44,7 @@ struct _geo {
 #endif
     unsigned int flags;
     shape_t *shape;
-    geo_t *next;		/*!< \brief Link all geo objects. */
+    geo_t *coord_next;		/*!< \brief Link all member geos together. */
 
     area_t *cur_area, *last_area;
     area_t areas[2];
@@ -108,7 +108,8 @@ typedef struct _coord {
     unsigned int before_pmem;	/*!< \brief The coord is before nth member
 				 * of parent. */
 
-    STAILQ(shape_t) members;	/*!< All shape_t objects in this coord. */
+    int num_members;
+    STAILQ(geo_t) members;	/*!< All geo_t members in this coord. */
     subject_t *mouse_event;
 } coord_t;
 #define COF_DIRTY 0x1
@@ -145,7 +146,6 @@ struct _shape {
     int sh_type;
     geo_t *geo;
     coord_t *coord;
-    shape_t *coord_mem_next;
     paint_t *fill, *stroke;
     co_aix stroke_width;
     int stroke_linecap:2;

@@ -167,12 +167,10 @@ coord_t *postorder_coord_subtree(coord_t *root, coord_t *last) {
 }
 
 void sh_attach_coord(shape_t *sh, coord_t *coord) {
-    STAILQ_INS_TAIL(coord->members, shape_t, coord_mem_next, sh);
     sh->coord = coord;
 }
 
 void sh_detach_coord(shape_t *sh) {
-    STAILQ_REMOVE(sh->coord->members, shape_t, coord_mem_next, sh);
     sh->coord = NULL;
 }
 

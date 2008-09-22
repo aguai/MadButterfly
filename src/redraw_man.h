@@ -22,12 +22,6 @@
  * object been recomputed or when a geo_t objects been redrawed.
  */
 typedef struct _redraw_man {
-#ifdef GEO_ORDER
-    unsigned int next_geo_order;
-#endif
-    int n_geos;
-    STAILQ(geo_t) all_geos;
-
     unsigned int next_coord_order;
     int n_coords;
     coord_t *root_coord;
@@ -79,6 +73,7 @@ extern int rdman_redraw_changed(redraw_man_t *rdman);
 extern int rdman_redraw_all(redraw_man_t *rdman);
 extern int rdman_redraw_area(redraw_man_t *rdman, co_aix x, co_aix y,
 			     co_aix w, co_aix h);
+extern geo_t *rdman_geos(redraw_man_t *rdman, geo_t *last);
 extern int rdman_force_clean(redraw_man_t *rdman);
 extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 #define shnode_free(rdman, node) elmpool_elm_free((rdman)->shnode_pool, node)
