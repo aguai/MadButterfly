@@ -123,7 +123,7 @@ co_aix coord_trans_size(coord_t *co, co_aix sz) {
 coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
     coord_t *next;
 
-    ASSERT(last == NULL);
+    ASSERT(last != NULL);
     
     if(STAILQ_HEAD(last->children))
 	next = STAILQ_HEAD(last->children);
@@ -136,6 +136,32 @@ coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
 	if(next)
 	    next = STAILQ_NEXT(coord_t, sibling, next);
     }
+
+    return next;
+}
+
+coord_t *postorder_coord_subtree(coord_t *root, coord_t *last) {
+    coord_t *next;
+
+    if(root == last)
+	return NULL;
+    
+    if(last == NULL) {
+	/* Go most left leaf. */
+	next = root;
+	while(STAILQ_HEAD(next->children))
+	    next = STAILQ_HEAD(next->children);
+	return next;
+    }
+
+    next = last;
+    if(STAILQ_NEXT(coord_t, sibling, next) == NULL) /* most right */
+	return next->parent;
+
+    /* Go most left leaf of right sibling sub-tree. */
+    next = STAILQ_NEXT(coord_t, sibling, next);
+    while(STAILQ_HEAD(next->children))
+	next = STAILQ_HEAD(next->children);
 
     return next;
 }

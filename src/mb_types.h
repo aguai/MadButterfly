@@ -88,6 +88,14 @@ extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 typedef struct _coord {
     unsigned int order;
     unsigned int flags;
+    co_aix opacity;
+    /*! Own one or inherit from an ancestor.
+     * Setup it when clean coords.
+     * \sa
+     * - \ref COF_OWN_CANVAS
+     * - \ref redraw
+     */
+    cairo_t *canvas;
     area_t *cur_area, *last_area;
     area_t areas[2];
 
@@ -97,12 +105,17 @@ typedef struct _coord {
     struct _coord *parent;
     STAILQ(struct _coord) children;
     struct _coord *sibling;
+    unsigned int before_pmem;	/*!< \brief The coord is before nth member
+				 * of parent. */
 
     STAILQ(shape_t) members;	/*!< All shape_t objects in this coord. */
     subject_t *mouse_event;
 } coord_t;
 #define COF_DIRTY 0x1
 #define COF_HIDDEN 0x2
+#define COF_OWN_CANVAS 0x4	/*!< A coord owns a canvas or inherit it
+				 * from an ancestor.
+				 */
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
@@ -110,6 +123,7 @@ extern co_aix coord_trans_size(coord_t *co, co_aix size);
 extern void compute_aggr_of_coord(coord_t *coord);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
+extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 #define coord_hide(co) do { co->flags |= COF_HIDDEN; } while(0)
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
