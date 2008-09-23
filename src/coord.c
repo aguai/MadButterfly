@@ -166,14 +166,6 @@ coord_t *postorder_coord_subtree(coord_t *root, coord_t *last) {
     return next;
 }
 
-void sh_attach_coord(shape_t *sh, coord_t *coord) {
-    sh->coord = coord;
-}
-
-void sh_detach_coord(shape_t *sh) {
-    sh->coord = NULL;
-}
-
 #ifdef UNITTEST
 
 #include <CUnit/Basic.h>

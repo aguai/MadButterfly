@@ -32,7 +32,29 @@ static observer_t *ob_observer_alloc(ob_factory_t *factory);
 static void ob_observer_free(ob_factory_t *factory, observer_t *observer);
 static subject_t *ob_get_parent_subject(ob_factory_t *factory,
 					subject_t *cur_subject);
+/* Functions for children. */
+#define FORCHILDREN(coord, child)				\
+    for((child) = STAILQ_HEAD((coord)->children);		\
+	(child) != NULL;					\
+	(child) = STAILQ_NEXT(coord_t, sibling, (child)))
+#define NEXT_CHILD(child) STAILQ_NEXT(coord_t, sibling, child)
+#define ADD_CHILD(parent, child)					\
+    STAILQ_INS_TAIL((parent)->children, coord_t, sibling, (child))
+#define RM_CHILD(parent, child)						\
+    STAILQ_REMOVE((parent)->children, coord_t, sibling, (child))
+#define FIRST_CHILD(parent) STAILQ_HEAD((parent)->children)
 
+/* Functions for members. */
+#define FORMEMBERS(coord, member)				\
+    for((member) = STAILQ_HEAD((coord)->members);		\
+	(member) != NULL;					\
+	(member) = STAILQ_NEXT(geo_t, coord_next, (member)))
+#define NEXT_MEMBER(member) STAILQ_NEXT(geo_t, coord_next, (member))
+#define ADD_MEMBER(coord, member)					\
+    STAILQ_INS_TAIL((coord)->members, geo_t, coord_next, (member))
+#define RM_MEMBER(coord, member)					\
+    STAILQ_REMOVE((coord)->members, geo_t, coord_next, (member))
+#define FIRST_MEMBER(coord) STAILQ_HEAD((coord)->members)
 
 /*! \brief Sort a list of element by a unsigned integer.
  *
@@ -137,6 +159,39 @@ static void free_canvas(cairo_t *canvas) {
 #ifndef UNITTEST
     cairo_destroy(canvas);
 #endif
+}
+
+static int geo_off_in_coord(geo_t *geo, coord_t *coord) {
+    int off = 0;
+    geo_t *vgeo;
+
+    FORMEMBERS(coord, vgeo) {
+	if(vgeo == geo)
+	    return off;
+	off++;
+    }
+    return -1;
+}
+
+static void geo_attach_coord(geo_t *geo, coord_t *coord) {
+    ADD_MEMBER(coord, geo);
+    coord->num_members++;
+}
+
+static void geo_detach_coord(geo_t *geo, coord_t *coord) {
+    int off;
+    coord_t *child;
+
+    off = geo_off_in_coord(geo, coord);
+    if(off < 0)
+	return;
+    FORCHILDREN(coord, child) {
+	if(child->before_pmem >= off)
+	    child->before_pmem--;
+    }
+
+    RM_MEMBER(coord, geo);
+    coord->num_members--;
 }
 
 int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
@@ -260,8 +315,7 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
     geo_init(geo);
     geo->mouse_event = subject_new(&rdman->ob_factory, geo, OBJT_GEO);
 
-    STAILQ_INS_TAIL(coord->members, geo_t, coord_next, geo);
-    coord->num_members++;
+    geo_attach_coord(geo, coord);
 
     /* New one should be dirty to recompute it when drawing. */
     geo->flags |= GEF_DIRTY;
@@ -285,7 +339,7 @@ int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
 
     geo = shape->geo;
     coord = shape->coord;
-    STAILQ_REMOVE(coord->members, geo_t, coord_next, geo);
+    geo_detach_coord(geo, coord);
     subject_free(&rdman->ob_factory, geo->mouse_event);
     sh_detach_geo(shape);
     elmpool_elm_free(rdman->geo_pool, shape->geo);
@@ -340,17 +394,17 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     if(parent == NULL)
 	return ERR;
 
-    if(STAILQ_HEAD(coord->members) != NULL)
+    if(FIRST_MEMBER(coord) != NULL)
 	return ERR;
 
-    if(STAILQ_HEAD(coord->children) != NULL)
+    if(FIRST_CHILD(coord) != NULL)
 	return ERR;
 
     /* Free canvas (\ref redraw) */
     if(coord->flags & COF_OWN_CANVAS)
 	free_canvas(coord->canvas);
 
-    STAILQ_REMOVE(parent->children, coord_t, sibling, coord);
+    RM_CHILD(parent, coord);
     subject_free(&rdman->ob_factory, coord->mouse_event);
     elmpool_elm_free(rdman->coord_pool, coord);
     rdman->n_coords--;
@@ -510,9 +564,7 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 
     /* Clean member shapes. */
     cnt = 0;
-    for(geo = STAILQ_HEAD(coord->members);
-	geo != NULL;
-	geo = STAILQ_NEXT(geo_t, coord_next, geo)) {
+    FORMEMBERS(coord, geo) {
 	SWAP(geo->cur_area, geo->last_area, area_t *);
 	clean_shape(geo->shape);
 	cnt++;
@@ -524,9 +576,7 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 	return ERR;
 
     pos_cnt = 0;
-    for(geo = STAILQ_HEAD(coord->members);
-	geo != NULL;
-	geo = STAILQ_NEXT(geo_t, coord_next, geo)) {
+    FORMEMBERS(coord, geo) {
 	area_to_positions(geo->cur_area, poses + pos_cnt);
 	pos_cnt += 2;
     }
@@ -771,21 +821,21 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
     int mem_idx;
 
     canvas = coord->canvas;
-    member = STAILQ_HEAD(coord->members);
+    member = FIRST_MEMBER(coord);
     mem_idx = 0;
-    child = STAILQ_HEAD(coord->children);
+    child = FIRST_CHILD(coord);
     while(child != NULL || member != NULL) {
 	if(child && child->before_pmem == mem_idx) {
 	    r = draw_coord_shapes_in_areas(rdman, child, n_areas, areas);
 	    dirty |= r;
-	    child = STAILQ_NEXT(coord_t, sibling, child);
+	    child = NEXT_CHILD(child);
 	} else {
 	    ASSERT(member != NULL);
 	    if(is_geo_in_areas(member, n_areas, areas)) {
 		draw_shape(rdman, canvas, member->shape);
 		dirty = 1;
 	    }
-	    member = STAILQ_NEXT(geo_t, coord_next, member);
+	    member = NEXT_MEMBER(member);
 	    mem_idx++;
 	}
     }
@@ -949,20 +999,20 @@ geo_t *rdman_geos(redraw_man_t *rdman, geo_t *last) {
     
     if(last == NULL) {
 	coord = rdman->root_coord;
-	while(coord != NULL && STAILQ_HEAD(coord->members) == NULL)
+	while(coord != NULL && FIRST_MEMBER(coord) == NULL)
 	    coord = preorder_coord_subtree(rdman->root_coord, coord);
 	if(coord == NULL)
 	    return NULL;
-	return STAILQ_HEAD(coord->members);
+	return FIRST_MEMBER(coord);
     }
 
     coord = last->shape->coord;
-    next = STAILQ_NEXT(geo_t, coord_next, last);
+    next = NEXT_MEMBER(last);
     while(next == NULL) {
 	coord = preorder_coord_subtree(rdman->root_coord, coord);
 	if(coord == NULL)
 	    return NULL;
-	next = STAILQ_HEAD(coord->members);
+	next = FIRST_MEMBER(coord);
     }
     return next;
 }
