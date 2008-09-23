@@ -855,21 +855,6 @@ static void draw_shapes_in_areas(redraw_man_t *rdman,
 }
 
 
-/*! \page coord_opacity How to support opacity attribute for group (coord)?
- *
- * I have several ideas to do that.  This page show you all ideas.
- *
- * \section idea_one First One
- * Change the structure of tree of coords.  It is organized as tree of
- * SVG document, shapes and coords are putten in tree with order the same
- * as the document.  The idea can solve the problem, but also seriously
- * impact current code.
- *
- * \section idea_two Second One
- * Add opacity and agg_opacity attribute to coord_t, and update
- *
- */
-
 /*! \brief Re-draw all changed shapes or shapes affected by changed coords.
  *
  * A coord object has a geo to keep track the range that it's members will
