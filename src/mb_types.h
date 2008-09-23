@@ -168,7 +168,8 @@ enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
 #define sh_get_mouse_event_subject(sh) ((sh)->geo->mouse_event)
 #define sh_hide(sh) do { (sh)->geo->flags |= GEF_HIDDEN; } while(0)
 #define sh_show(sh) do { (sh)->geo->flags &= ~GEF_HIDDEN; } while(0)
-extern void sh_attach_coord(shape_t *sh, coord_t *coord);
-extern void sh_detach_coord(shape_t *sh);
+#define sh_attach_coord(sh, coord) do { (sh)->coord = coord; } while(0)
+#define sh_detach_coord(sh) do { (sh)->coord = NULL; } while(0)
+
 
 #endif /* __MB_TYPES_H_ */
