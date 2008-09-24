@@ -20,12 +20,11 @@ static int is_scale_overlay(co_aix x1, co_aix w1, co_aix x2, co_aix w2) {
 }
 
 static int _is_overlay(area_t *r1, area_t *r2) {
-    if(!is_scale_overlay(r1->x, r1->w, r2->x, r2->w))
-	return 0;
-    if(!is_scale_overlay(r1->y, r1->h, r2->y, r2->h))
-	return 0;
-
-    return 1;
+    if(is_scale_overlay(r1->x, r1->w, r2->x, r2->w) &&
+       is_scale_overlay(r1->y, r1->h, r2->y, r2->h))
+	return 1;
+    
+    return 0;
 }
 
 int is_overlay(area_t *r1, area_t *r2) {
@@ -38,6 +37,14 @@ void area_init(area_t *area, int n_pos, co_aix pos[][2]) {
     co_aix x, y;
     int i;
     
+    if(n_pos == 0) {
+	area->x = 0;
+	area->w = 0;
+	area->y = 0;
+	area->h = 0;
+	return;
+    }
+
     min_x = max_x = pos[0][0];
     min_y = max_y = pos[0][1];
     for(i = 1; i < n_pos; i++) {
