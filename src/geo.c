@@ -37,6 +37,10 @@ void area_init(area_t *area, int n_pos, co_aix pos[][2]) {
     co_aix x, y;
     int i;
     
+    /*! \note {x=0, y=0, w=0, h=0} geometry value for a n_pos=0 request
+     * can prevent cursor flasing for Cairo XLib.
+     * (see changeset 21db69d46835)
+     */
     if(n_pos == 0) {
 	area->x = 0;
 	area->w = 0;
