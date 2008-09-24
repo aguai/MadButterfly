@@ -300,8 +300,6 @@ static void sh_path_free(shape_t *shape) {
     sh_path_t *path = (sh_path_t *)shape;
     if(path->user_data)
 	free(path->user_data);
-    if(path->dev_data)
-	free(path->dev_data);
     free(path);
 }
 
@@ -685,24 +683,19 @@ shape_t *sh_path_new(char *data) {
     path->cmd_len = cmd_cnt;
     path->arg_len = arg_cnt;
     path->fix_arg_len = fix_arg_cnt;
+
     msz = cmd_cnt + sizeof(co_aix) * arg_cnt + sizeof(int) * fix_arg_cnt;
-    path->user_data = (char *)malloc(msz);
+    path->user_data = (char *)malloc(msz * 2);
     if(path->user_data == NULL) {
 	free(path);
 	return NULL;
     }
-    path->dev_data = (char *)malloc(msz);
-    if(path->dev_data == NULL) {
-	free(path->dev_data);
-	free(path);
-	return NULL;
-    }
 
-    memset(path->user_data, 0, cmd_cnt);
+    path->dev_data = path->user_data + msz;
+
     r = sh_path_cmd_arg_fill(data, path);
     if(r == ERR) {
 	free(path->user_data);
-	free(path->dev_data);
 	free(path);
 	return NULL;
     }
@@ -847,8 +840,8 @@ void test_sh_path_new(void) {
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
-    CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
-    CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);
+    CU_ASSERT(strncmp(path->user_data, "MLCLZ", 5) == 0);
+    CU_ASSERT(strncmp(path->dev_data, "MLCLZ", 5) == 0);
 
     args = (co_aix *)(path->user_data + path->cmd_len);
     CU_ASSERT(args[0] == 33);
@@ -876,8 +869,8 @@ void test_path_transform(void) {
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
-    CU_ASSERT(strcmp(path->user_data, "MLCLZ") == 0);
-    CU_ASSERT(strcmp(path->dev_data, "MLCLZ") == 0);
+    CU_ASSERT(strncmp(path->user_data, "MLCLZ", 5) == 0);
+    CU_ASSERT(strncmp(path->dev_data, "MLCLZ", 5) == 0);
 
     geo_init(&geo);
     path->shape.geo = &geo;
