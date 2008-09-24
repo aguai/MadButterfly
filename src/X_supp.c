@@ -307,8 +307,7 @@ void X_MB_handle_connection(X_MB_runtime_t *rt) {
     int nfds;
     int r, r1;
 
-    rdman_redraw_all(rdman);
-    XFlush(display);
+    handle_x_event(rt);
 
     fd = XConnectionNumber(display);
     nfds = fd + 1;
