@@ -196,6 +196,7 @@ static void geo_detach_coord(geo_t *geo, coord_t *coord) {
 
 int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
+    extern int paint_color_size;
 
     memset(rdman, 0, sizeof(redraw_man_t));
 
@@ -230,6 +231,16 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 	elmpool_free(rdman->coord_pool);
 	elmpool_free(rdman->shnode_pool);
 	elmpool_free(rdman->observer_pool);
+	return ERR;
+    }
+
+    rdman->paint_color_pool = elmpool_new(paint_color_size, 64);
+    if(rdman->subject_pool == NULL) {
+	elmpool_free(rdman->geo_pool);
+	elmpool_free(rdman->coord_pool);
+	elmpool_free(rdman->shnode_pool);
+	elmpool_free(rdman->observer_pool);
+	elmpool_free(rdman->subject_pool);
 	return ERR;
     }
 
@@ -272,6 +283,7 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->shnode_pool);
     elmpool_free(rdman->observer_pool);
     elmpool_free(rdman->subject_pool);
+    elmpool_free(rdman->paint_color_pool);
     if(rdman->dirty_coords)
 	free(rdman->dirty_coords);
     if(rdman->dirty_geos)
@@ -553,6 +565,7 @@ static void setup_canvas(redraw_man_t *rdman, coord_t *coord) {
     }
 }
 
+/*! \todo Use a static variable to hold positions array for clean_coord()? */
 static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
     geo_t *geo;
     co_aix (*poses)[2];
