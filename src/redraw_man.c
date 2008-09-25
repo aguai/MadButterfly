@@ -196,7 +196,7 @@ static void geo_detach_coord(geo_t *geo, coord_t *coord) {
 
 int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
-    extern int paint_color_size;
+    extern int _paint_color_size;
 
     memset(rdman, 0, sizeof(redraw_man_t));
 
@@ -234,7 +234,7 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 	return ERR;
     }
 
-    rdman->paint_color_pool = elmpool_new(paint_color_size, 64);
+    rdman->paint_color_pool = elmpool_new(_paint_color_size, 64);
     if(rdman->subject_pool == NULL) {
 	elmpool_free(rdman->geo_pool);
 	elmpool_free(rdman->coord_pool);
@@ -565,10 +565,11 @@ static void setup_canvas(redraw_man_t *rdman, coord_t *coord) {
     }
 }
 
-/*! \todo Use a static variable to hold positions array for clean_coord()? */
 static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
     geo_t *geo;
-    co_aix (*poses)[2];
+    /*! \note poses is shared by invokings, it is not support reentrying. */
+    static co_aix (*poses)[2];
+    static int max_poses = 0;
     int cnt, pos_cnt;
 
     setup_canvas(rdman, coord);
@@ -584,9 +585,13 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
     }
 
     /* Compute area of the coord. */
-    poses = (co_aix (*)[2])malloc(sizeof(co_aix [2]) * 2 * cnt);
-    if(poses == NULL)
-	return ERR;
+    if(max_poses < (cnt * 2)) {
+	free(poses);
+	max_poses = cnt * 2;
+	poses = (co_aix (*)[2])malloc(sizeof(co_aix [2]) * max_poses);
+	if(poses == NULL)
+	    return ERR;
+    }
 
     pos_cnt = 0;
     FORMEMBERS(coord, geo) {
@@ -596,7 +601,6 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 
     SWAP(coord->cur_area, coord->last_area, area_t *);
     area_init(coord->cur_area, pos_cnt, poses);
-    free(poses);
     
     coord->flags &= ~COF_DIRTY;
 
