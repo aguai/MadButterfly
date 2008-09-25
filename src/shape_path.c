@@ -677,6 +677,7 @@ shape_t *sh_path_new(char *data) {
     cmd_cnt += RESERVED_AIXS;
     cmd_cnt = (cmd_cnt + 3) & ~0x3;
 
+    /*! \todo Use elmpool to manage sh_path_t objects. */
     path = (sh_path_t *)malloc(sizeof(sh_path_t));
     /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
