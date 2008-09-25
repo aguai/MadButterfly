@@ -13,7 +13,7 @@ typedef struct _paint_color {
     redraw_man_t *rdman;
 } paint_color_t;
 
-int paint_color_size = sizeof(paint_color_t);
+int _paint_color_size = sizeof(paint_color_t);
 
 
 static void paint_color_prepare(paint_t *paint, cairo_t *cr) {
