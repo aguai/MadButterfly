@@ -31,6 +31,7 @@ typedef struct _redraw_man {
     elmpool_t *shnode_pool;
     elmpool_t *observer_pool;
     elmpool_t *subject_pool;
+    elmpool_t *paint_color_pool;
 
     int max_dirty_coords;
     int n_dirty_coords;

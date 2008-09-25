@@ -13,6 +13,8 @@ typedef struct _paint_color {
     redraw_man_t *rdman;
 } paint_color_t;
 
+int paint_color_size = sizeof(paint_color_t);
+
 
 static void paint_color_prepare(paint_t *paint, cairo_t *cr) {
     paint_color_t *color = (paint_color_t *)paint;
@@ -32,7 +34,7 @@ paint_t *paint_color_new(redraw_man_t *rdman,
 			 co_comp_t b, co_comp_t a) {
     paint_color_t *color;
 
-    color = (paint_color_t *)malloc(sizeof(paint_color_t));
+    color = (paint_color_t *)elmpool_elm_alloc(rdman->paint_color_pool);
     if(color == NULL)
 	return NULL;
     color->rdman = rdman;

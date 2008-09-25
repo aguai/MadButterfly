@@ -678,6 +678,7 @@ shape_t *sh_path_new(char *data) {
     cmd_cnt = (cmd_cnt + 3) & ~0x3;
 
     path = (sh_path_t *)malloc(sizeof(sh_path_t));
+    /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
     path->shape.sh_type = SHT_PATH;
     path->cmd_len = cmd_cnt;
