@@ -584,7 +584,6 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 	cnt++;
     }
 
-    /* Compute area of the coord. */
     if(max_poses < (cnt * 2)) {
 	free(poses);
 	max_poses = cnt * 2;
@@ -593,6 +592,7 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 	    return ERR;
     }
 
+    /* Compute area of the coord. */
     pos_cnt = 0;
     FORMEMBERS(coord, geo) {
 	area_to_positions(geo->cur_area, poses + pos_cnt);
