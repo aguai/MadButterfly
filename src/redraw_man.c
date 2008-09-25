@@ -848,7 +848,8 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
 	    child = NEXT_CHILD(child);
 	} else {
 	    ASSERT(member != NULL);
-	    if(is_geo_in_areas(member, n_areas, areas)) {
+	    if((!(member->flags & GEF_HIDDEN)) &&
+	       is_geo_in_areas(member, n_areas, areas)) {
 		draw_shape(rdman, canvas, member->shape);
 		dirty = 1;
 	    }
