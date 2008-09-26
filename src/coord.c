@@ -120,22 +120,33 @@ co_aix coord_trans_size(coord_t *co, co_aix sz) {
     return sqrt(x * x + y * y);
 }
 
+/*!
+ * \note Coords, marked with COF_SKIP_TRIVAL (for temporary), and
+ * descendants of them will not be trivaled and the flag with be removed
+ * after skipping them.
+ */
 coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
-    coord_t *next;
+    coord_t *next = NULL;
 
     ASSERT(last != NULL);
     
-    if(STAILQ_HEAD(last->children))
+    if((!(last->flags & COF_SKIP_TRIVAL)) &&
+       STAILQ_HEAD(last->children)) {
 	next = STAILQ_HEAD(last->children);
-    else {
+	if(!(next->flags & COF_SKIP_TRIVAL))
+	    return next;
+    } else {
 	next = last;
+    }
+
+    do {
+	next->flags &= ~COF_SKIP_TRIVAL;
 	while(next != root && STAILQ_NEXT(coord_t, sibling, next) == NULL)
 	    next = next->parent;
 	if(next == root)
-	    next = NULL;
-	if(next)
-	    next = STAILQ_NEXT(coord_t, sibling, next);
-    }
+	    return NULL;
+	next = STAILQ_NEXT(coord_t, sibling, next);
+    } while(next->flags & COF_SKIP_TRIVAL);
 
     return next;
 }

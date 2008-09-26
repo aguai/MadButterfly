@@ -117,6 +117,9 @@ typedef struct _coord {
 #define COF_OWN_CANVAS 0x4	/*!< A coord owns a canvas or inherit it
 				 * from an ancestor.
 				 */
+#define COF_SKIP_TRIVAL 0x8	/*!< Temporary skip descendants
+				 * when trivaling.
+				 */
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
@@ -125,6 +128,9 @@ extern void compute_aggr_of_coord(coord_t *coord);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
 extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
+extern void preorder_coord_skip_subtree(coord_t *subroot);
+#define preorder_coord_skip_subtree(sub)		\
+    do { (sub)->flags |= COF_SKIP_TRIVAL; } while(0)
 #define coord_hide(co) do { co->flags |= COF_HIDDEN; } while(0)
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
