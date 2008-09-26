@@ -391,6 +391,10 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
 
     coord->before_pmem = parent->num_members;
 
+    /* If parent is dirty, children should be dirty. */
+    if(parent && (parent->flags & COF_DIRTY))
+	rdman_coord_changed(rdman, coord);
+
     return coord;
 }
 
@@ -449,15 +453,21 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
 
     if(coord->flags & COF_DIRTY)
 	return OK;
-    
-    /* Make the coord and child coords dirty. */
-    for(child = coord;
+
+    make_sure_dirty_coords(rdman);
+    rdman->dirty_coords[rdman->n_dirty_coords++] = coord;
+    coord->flags |= COF_DIRTY;
+
+    /* Make child coords dirty. */
+    for(child = preorder_coord_subtree(coord, coord);
 	child != NULL;
 	child = preorder_coord_subtree(coord, child)) {
-	if(child->flags & COF_DIRTY)
+	if(child->flags & (COF_DIRTY | COF_HIDDEN)) {
+	    preorder_coord_skip_subtree(child);
 	    continue;
+	}
+
 	make_sure_dirty_coords(rdman);
- 
 	rdman->dirty_coords[rdman->n_dirty_coords++] = child;
 	child->flags |= COF_DIRTY;
     }
