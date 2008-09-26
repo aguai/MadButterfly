@@ -98,6 +98,7 @@ struct _mb_progm {
     int first_playing;		/*!< first playing word. */
     mb_tman_t *tman;
     subject_t *complete;	/*!< notify when a program is completed. */
+    mb_timer_t *cur_timer;
 
     int n_words;
     int max_words;
@@ -290,6 +291,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	timer = mb_tman_timeout(progm->tman, &next_tmo,
 				mb_progm_step, progm);	
     } else {
+	/* Make program to complete. */
 #ifndef UNITTEST
 	factory = rdman_get_ob_factory(progm->rdman);
 	comp_evt.event.type = EVT_PROGM_COMPLETE;
@@ -297,6 +299,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	comp_evt.progm = progm;
 	subject_notify(factory, progm->complete, &comp_evt.event);
 #endif /* UNITTEST */
+	progm->cur_timer = NULL;
     }
 }
 
@@ -329,10 +332,17 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
     timer = mb_tman_timeout(tman, &progm->words[0].abs_start,
 			    mb_progm_step, progm);
     ASSERT(timer != NULL);
+
+    /* We need timer to abort it. */
+    progm->cur_timer = timer;
 }
 
-void mb_progm_abort(mb_progm_t *progm, mb_tman_t *tman) {
+void mb_progm_abort(mb_progm_t *progm) {
     /*! \todo Make sure abort release resources. */
+    if(progm->cur_timer) {
+	mb_tman_remove(progm->tman, progm->cur_timer);
+	progm->cur_timer = NULL;
+    }
 }
 
 /*! \brief Return event subject for completion of a program.
