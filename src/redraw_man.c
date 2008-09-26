@@ -90,6 +90,27 @@ static int extend_memblk(void **buf, int o_size, int n_size) {
     return OK;
 }
 
+static int add_dirty_coord(redraw_man_t *rdman, coord_t *coord) {
+    int max_dirty_coords;
+    int r;
+    
+    if(rdman->n_dirty_coords >= rdman->max_dirty_coords) {
+	/* Max of dirty_coords is not big enough. */
+	max_dirty_coords = rdman->max_dirty_coords + 16;
+	
+	r = extend_memblk((void **)&rdman->dirty_coords,
+			  sizeof(coord_t *) * rdman->n_dirty_coords,
+			  sizeof(coord_t *) * max_dirty_coords);
+	if(r != OK)
+	    return ERR;
+	rdman->max_dirty_coords = max_dirty_coords;
+    }
+
+    rdman->dirty_coords[rdman->n_dirty_coords++] = coord;
+    coord->flags |= COF_DIRTY;
+    return OK;
+}
+
 static int add_dirty_geo(redraw_man_t *rdman, geo_t *geo) {
     int max_dirty_geos;
     int r;
@@ -393,7 +414,7 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
 
     /* If parent is dirty, children should be dirty. */
     if(parent && (parent->flags & COF_DIRTY))
-	rdman_coord_changed(rdman, coord);
+	add_dirty_coord(rdman, coord);
 
     return coord;
 }
@@ -428,21 +449,6 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     return OK;
 }
 
-static void make_sure_dirty_coords(redraw_man_t *rdman) {
-    int max_dirty_coords;
-    int r;
-    
-    if(rdman->n_dirty_coords >= rdman->max_dirty_coords) {
-	/* Max of dirty_coords is not big enough. */
-	max_dirty_coords = rdman->max_dirty_coords + 16;
-	
-	r = extend_memblk((void **)&rdman->dirty_coords,
-			  sizeof(coord_t *) * rdman->n_dirty_coords,
-			  sizeof(coord_t *) * max_dirty_coords);
-	rdman->max_dirty_coords = max_dirty_coords;
-    }
-}
-
 /*! \brief Mark a coord is changed.
  *
  * A changed coord_t object is marked as dirty and put
@@ -454,9 +460,7 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
     if(coord->flags & COF_DIRTY)
 	return OK;
 
-    make_sure_dirty_coords(rdman);
-    rdman->dirty_coords[rdman->n_dirty_coords++] = coord;
-    coord->flags |= COF_DIRTY;
+    add_dirty_coord(rdman, coord);
 
     /* Make child coords dirty. */
     for(child = preorder_coord_subtree(coord, coord);
@@ -467,9 +471,7 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
 	    continue;
 	}
 
-	make_sure_dirty_coords(rdman);
-	rdman->dirty_coords[rdman->n_dirty_coords++] = child;
-	child->flags |= COF_DIRTY;
+	add_dirty_coord(rdman, child);
     }
 
     return OK;
