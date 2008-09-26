@@ -108,7 +108,7 @@ static void tank_free(tank_t *tank, X_MB_runtime_t *xmb_rt) {
 
     if(tank->progm) {
 	tman = X_MB_tman(xmb_rt);
-	mb_progm_abort(tank->progm, tman);
+	mb_progm_abort(tank->progm);
     }
     free(tank);
 }
@@ -252,27 +252,31 @@ static void keyboard_handler(event_t *event, void *arg) {
     switch(xkey->sym) {
     case 0xff51:		/* left */
 	direction = TD_LEFT;
+	tank_move(tank_rt->tank1, direction, tank_rt);
 	break;
 
     case 0xff52:		/* up */
 	direction = TD_UP;
+	tank_move(tank_rt->tank1, direction, tank_rt);
 	break;
 
     case 0xff53:		/* right */
 	direction = TD_RIGHT;
+	tank_move(tank_rt->tank1, direction, tank_rt);
 	break;
 
     case 0xff54:		/* down */
 	direction = TD_DOWN;
+	tank_move(tank_rt->tank1, direction, tank_rt);
 	break;
 
     case 0x20:			/* space */
+	break;
     case 0xff0d:		/* enter */
     default:
 	return;
     }
 
-    tank_move(tank_rt->tank1, direction, tank_rt);
 }
 
 static void init_keyboard(tank_rt_t *tank_rt) {
