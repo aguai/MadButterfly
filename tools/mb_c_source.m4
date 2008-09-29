@@ -213,14 +213,17 @@ define([F_ADD_RADIAL_PAINT],[[
 ]])
 
 define([F_ADD_PATH],[[
+    rdman_remove_shape(rdman, obj->$1);
     obj->$1->free(obj->$1);
 ]])
 
 define([F_ADD_RECT],[[
+    rdman_remove_shape(rdman, obj->$1);
     obj->$1->free(obj->$1);
 ]])
 
 define([F_ADD_TEXT],[[
+    rdman_remove_shape(rdman, obj->$1);
     obj->$1->free(obj->$1);
 ]])
 
@@ -257,6 +260,42 @@ define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
 divert[]])
 
+define([REVERSE_VARS],[divert([-1])
+define([__REV_VAR],[])
+define([PUSH_REV], [
+	pushdef([__REV_VAR])
+	define([__REV_VAR], ]QUOTE(QUOTE($[]1))[)])
+define([POP_ALL_REV], [dnl
+ifelse(__REV_VAR, [], ,[UNQUOTE(__REV_VAR)[]dnl
+popdef([__REV_VAR])[]POP_ALL_REV[]])])
+define([RIMPORT], [
+	define(]QUOTE($[]1)[,
+		[PUSH_REV(]]QUOTE(QUOTE($[]1))[[(]QUOTE($[]@)[))])
+])
+RIMPORT([ADD_LINEAR_PAINT])
+RIMPORT([ADD_RADIAL_PAINT])
+RIMPORT([COLOR_STOP])
+RIMPORT([REF_STOPS_RADIAL])
+RIMPORT([REF_STOPS_LINEAR])
+RIMPORT([ADD_PATH])
+RIMPORT([ADD_RECT])
+RIMPORT([ADD_COORD])
+RIMPORT([ADD_TEXT])
+RIMPORT([FILL_SHAPE])
+RIMPORT([STROKE_SHAPE])
+RIMPORT([FILL_SHAPE_WITH_PAINT])
+RIMPORT([STROKE_SHAPE_WITH_PAINT])
+RIMPORT([STROKE_WIDTH])
+RIMPORT([GROUP_HIDE])
+RIMPORT([RECT_HIDE])
+RIMPORT([PATH_HIDE])
+RIMPORT([COORD_TRANSLATE])
+RIMPORT([COORD_MATRIX])
+RIMPORT([SHAPE_TRANSLATE])
+RIMPORT([SHAPE_MATRIX])
+divert[]dnl
+])
+
 define([MADBUTTERFLY],[dnl
 [#include <stdio.h>
 #include <stdlib.h>
@@ -274,6 +313,7 @@ $2[]dnl
 [
     obj = ($1_t *)malloc(sizeof($1_t));
     if(obj == NULL) return NULL;
+    obj->rdman = rdman;
 ]SETUP_VARS
     obj->root_coord = rdman_coord_new(rdman, parent_coord);
 $2
@@ -282,7 +322,16 @@ $2
 
 void $1_free($1_t *obj) {
     grad_stop_t *stops = NULL;
-]CLEAR_VARS[]$2[
+    redraw_man_t *rdman;
+
+    rdman = obj->rdman;
+]REVERSE_VARS[]dnl
+divert([-1])dnl
+$2[]dnl
+divert[]dnl
+CLEAR_VARS[]dnl
+POP_ALL_REV[
+    rdman_coord_subtree_free(rdman, obj->root_coord);
     free(obj);
 }
 ]dnl

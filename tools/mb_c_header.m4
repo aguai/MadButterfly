@@ -48,6 +48,7 @@ define([MADBUTTERFLY],[dnl
 typedef struct $1 $1_t;
 
 struct $1 {
+    redraw_man_t *rdman;
     coord_t *root_coord;]
 $2[]dnl
 [};

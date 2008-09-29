@@ -42,7 +42,7 @@ struct _subject {
 #define SUBF_BUSY 0x2		/*!< \brief in subject_notify() */
 #define SUBF_FREE 0x4		/*!< \brief in postponding subject_free() */
 
-enum {OBJT_GEO, OBJT_COORD, OBJT_KB, OBJT_PROGM};
+enum {OBJT_GEO, OBJT_COORD, OBJT_KB, OBJT_PROGM, OBJT_RDMAN};
 
 struct _mouse_event {
     event_t event;
@@ -72,7 +72,8 @@ struct _ob_factory {
 
 enum {EVT_MOUSE_OVER, EVT_MOUSE_OUT, EVT_MOUSE_MOVE,
       EVT_MOUSE_BUT_PRESS, EVT_MOUSE_BUT_RELEASE,
-      EVT_KB_PRESS, EVT_KB_RELEASE, EVT_PROGM_COMPLETE};
+      EVT_KB_PRESS, EVT_KB_RELEASE, EVT_PROGM_COMPLETE,
+      EVT_RDMAN_REDRAW };
 
 extern subject_t *subject_new(ob_factory_t *factory,
 			      void *obj, int obj_type);
