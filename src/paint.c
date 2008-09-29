@@ -26,7 +26,7 @@ static void paint_color_free(paint_t *paint) {
     paint_color_t *color = (paint_color_t *)paint;
 
     shnode_list_free(color->rdman, paint->members);
-    free(paint);
+    elmpool_elm_free(color->rdman->paint_color_pool, paint);
 }
 
 paint_t *paint_color_new(redraw_man_t *rdman,

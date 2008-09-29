@@ -55,6 +55,8 @@ typedef struct _redraw_man {
     cairo_t *backend;
 
     ob_factory_t ob_factory;
+
+    subject_t *redraw;		/*!< \brief Notified after redrawing. */
 } redraw_man_t;
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
@@ -68,6 +70,7 @@ extern int rdman_add_shape(redraw_man_t *rdman,
 extern int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape);
 extern coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent);
 extern int rdman_coord_free(redraw_man_t *rdman, coord_t *coord);
+extern int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree);
 extern int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord);
 extern int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape);
 extern int rdman_redraw_changed(redraw_man_t *rdman);
@@ -116,6 +119,7 @@ extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
 extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
 				  co_aix x, co_aix y, int *in_stroke);
 #define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
+#define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
 
 
 #endif /* __REDRAW_MAN_H_ */

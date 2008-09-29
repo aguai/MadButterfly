@@ -91,6 +91,7 @@ mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord,
     shift->action.stop = mb_shift_stop;
     shift->action.free = mb_shift_free;
 
+    /*! \note mb_shift_new() will add itself to the specified word. */
     mb_word_add_action(word, (mb_action_t *)shift);
 
     return (mb_action_t *)shift;

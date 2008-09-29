@@ -40,16 +40,31 @@ static char map[12][16] = {
  * \brief Tank elf module provides control functions of tanks in game.
  * @{
  */
+struct _tank_bullet {
+    redraw_man_t *rdman;
+    coord_t *coord_pos;
+    coord_t *coord_rot;
+    bullet_t *bullet_obj;
+    int start_map_x, start_map_y;
+    int direction;
+    mb_progm_t *progm;
+    mb_timeval_t start_time;
+    observer_t *ob_redraw;
+};
+typedef struct _tank_bullet tank_bullet_t;
+enum { BU_UP = 0, BU_RIGHT, BU_DOWN, BU_LEFT };
+
 struct _tank {
     coord_t *coord_pos;		/*!< \brief coordinate for position */
     coord_t *coord_rot;		/*!< \brief coordinate for rotation */
+    coord_t *coord_center;
     int map_x, map_y;
     int direction;
     mb_progm_t *progm;
+    tank_bullet_t *bullet;
 };
 typedef struct _tank tank_t;
 enum { TD_UP = 0, TD_RIGHT, TD_DOWN, TD_LEFT };
-
 
 /* @} */
 
@@ -92,6 +107,7 @@ static tank_t *tank_new(coord_t *coord_pos,
     tank->map_y = map_y;
     tank->direction = TD_UP;
     tank->progm = NULL;
+    tank->bullet = NULL;
 
     memset(coord_pos->matrix, 0, sizeof(co_aix[6]));
     coord_pos->matrix[0] = 1;
@@ -233,6 +249,174 @@ static void tank_move(tank_t *tank, int direction,
 
 /* @} */
 
+/*! \brief Make coord objects for bullet elfs. */
+static void make_bullet_elf_coords(redraw_man_t *rdman, coord_t **coord_pos,
+				   coord_t **coord_rot,
+				   coord_t **coord_center) {
+    coord_t *coord_back;
+
+    *coord_pos = rdman_coord_new(rdman, rdman->root_coord);
+
+    coord_back = rdman_coord_new(rdman, *coord_pos);
+    coord_back->matrix[2] = 25;
+    coord_back->matrix[5] = 25;
+    rdman_coord_changed(rdman, coord_back);
+
+    *coord_rot = rdman_coord_new(rdman, coord_back);
+
+    *coord_center = rdman_coord_new(rdman, *coord_rot);
+    (*coord_center)->matrix[2] = -5;
+    (*coord_center)->matrix[5] = +15;
+    rdman_coord_changed(rdman, *coord_center);
+}
+
+static tank_bullet_t *tank_bullet_new(redraw_man_t *rdman,
+				      int map_x, int map_y,
+				      int direction) {
+    tank_bullet_t *bullet;
+    coord_t *coord_center;
+    co_aix *matrix;
+    static float _sins[] = { 0, 1, 0, -1};
+    static float _coss[] = { 1, 0, -1, 0};
+    float _sin, _cos;
+
+    bullet = O_ALLOC(tank_bullet_t);
+    bullet->rdman = rdman;
+
+    make_bullet_elf_coords(rdman, &bullet->coord_pos,
+			   &bullet->coord_rot,
+			   &coord_center);
+    bullet->bullet_obj = bullet_new(rdman, coord_center);
+    
+    bullet->start_map_x = map_x;
+    bullet->start_map_y = map_y;
+    bullet->direction = direction;
+    bullet->progm = NULL;
+
+    matrix = bullet->coord_pos->matrix;
+    matrix[2] = map_x * 50;
+    matrix[5] = map_y * 50;
+    rdman_coord_changed(rdman, bullet->coord_pos);
+
+    _sin = _sins[direction];
+    _cos = _coss[direction];
+    matrix = bullet->coord_rot->matrix;
+    matrix[0] = _cos;
+    matrix[1] = -_sin;
+    matrix[3] = _sin;
+    matrix[4] = _cos;
+
+    return bullet;
+}
+
+static void tank_bullet_free(tank_bullet_t *bullet) {
+    bullet_free(bullet->bullet_obj);
+    rdman_coord_subtree_free(bullet->rdman, bullet->coord_pos);
+}
+
+static void bullet_go_out_map_and_redraw(event_t *event, void *arg) {
+    tank_t *tank = (tank_t *)arg;
+    tank_bullet_t *bullet;
+    ob_factory_t *factory;
+    subject_t *redraw;
+
+    bullet = tank->bullet;
+    mb_progm_free(bullet->progm);
+    rdman_force_clean(bullet->rdman);
+    factory = rdman_get_ob_factory(bullet->rdman);
+    redraw = rdman_get_redraw_subject(bullet->rdman);
+    subject_remove_observer(factory, redraw, bullet->ob_redraw);
+    tank_bullet_free(tank->bullet);
+    tank->bullet = NULL;
+}
+
+static void bullet_go_out_map(event_t *event, void *arg) {
+    tank_t *tank = (tank_t *)arg;
+    tank_bullet_t *bullet;
+    redraw_man_t *rdman;
+    subject_t *redraw;
+    ob_factory_t *factory;
+    
+    /*! \todo Simplify the procdure of using observer pattern. */
+    bullet = tank->bullet;
+    rdman = bullet->rdman;
+    factory = rdman_get_ob_factory(rdman);
+    redraw = rdman_get_redraw_subject(rdman);
+    bullet->ob_redraw =
+	subject_add_observer(factory, redraw,
+			     bullet_go_out_map_and_redraw, tank);
+}
+
+static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
+    X_MB_runtime_t *xmb_rt;
+    redraw_man_t *rdman;
+    int map_x, map_y;
+    int shift_x, shift_y;
+    int shift_len;
+    int dir;
+    tank_bullet_t *bullet;
+    mb_progm_t *progm;
+    mb_word_t *word;
+    mb_action_t *act;
+    mb_timeval_t start, playing;
+    mb_timeval_t now;
+    ob_factory_t *factory;
+    mb_tman_t *tman;
+    subject_t *subject;
+    static int map_xy_adj[][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+
+    if(tank->bullet != NULL)
+	return;
+
+    xmb_rt = tank_rt->mb_rt;
+    rdman = X_MB_rdman(xmb_rt);
+    tman = X_MB_tman(xmb_rt);
+
+    dir = tank->direction;
+    map_x = tank->map_x + map_xy_adj[dir][0];
+    map_y = tank->map_y + map_xy_adj[dir][1];
+    tank->bullet = tank_bullet_new(rdman, map_x, map_y, dir);
+    bullet = tank->bullet;
+
+    switch(dir) {
+    case TD_UP:
+	shift_len = map_y + 1;
+	shift_x = 0;
+	shift_y = -shift_len * 50;
+	break;
+    case TD_RIGHT:
+	shift_len = 16 - map_x;
+	shift_x = shift_len * 50;
+	shift_y = 0;
+	break;
+    case TD_DOWN:
+	shift_len = 12 - map_y;
+	shift_x = 0;
+	shift_y = shift_len * 50;
+	break;
+    case TD_LEFT:
+	shift_len = map_x + 1;
+	shift_x = -shift_len * 50;
+	shift_y = 0;
+	break;
+    }
+
+    progm = mb_progm_new(2, rdman);
+    MB_TIMEVAL_SET(&start, 0, 0);
+    MB_TIMEVAL_SET(&playing, shift_len / 4, (shift_len % 4) * 250000);
+    word = mb_progm_next_word(progm, &start, &playing);
+    act = mb_shift_new(shift_x, shift_y, bullet->coord_pos, word);
+    bullet->progm = progm;
+    
+    subject = mb_progm_get_complete(progm);
+    factory = rdman_get_ob_factory(rdman);
+    subject_add_observer(factory, subject, bullet_go_out_map, tank);
+
+    get_now(&now);
+    MB_TIMEVAL_CP(&bullet->start_time, &now);
+    mb_progm_start(progm, tman, &now);
+}
+
 #define CHANGE_POS(g, x, y) do {			\
 	(g)->root_coord->matrix[0] = 1.0;		\
 	(g)->root_coord->matrix[2] = x;			\
@@ -271,6 +455,7 @@ static void keyboard_handler(event_t *event, void *arg) {
 	break;
 
     case 0x20:			/* space */
+	tank_fire_bullet(tank_rt, tank_rt->tank1);
 	break;
     case 0xff0d:		/* enter */
     default:

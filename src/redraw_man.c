@@ -271,6 +271,9 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     rdman->ob_factory.observer_free = ob_observer_free;
     rdman->ob_factory.get_parent_subject = ob_get_parent_subject;
 
+    rdman->redraw =
+	subject_new(&rdman->ob_factory, rdman, OBJT_RDMAN);
+
     rdman->root_coord = elmpool_elm_alloc(rdman->coord_pool);
     if(rdman->root_coord == NULL)
 	redraw_man_destroy(rdman);
@@ -364,7 +367,9 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
 
 /*! \brief Remove a shape object from redraw manager.
  *
+ * \note Shapes should be removed after redrawing or when rdman is in clean.
  * \todo redraw shape objects that overlaid with removed one.
+ * \todo To allow shapes be removed at anytime.
  */
 int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
     geo_t *geo;
@@ -375,7 +380,7 @@ int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
     geo_detach_coord(geo, coord);
     subject_free(&rdman->ob_factory, geo->mouse_event);
     sh_detach_geo(shape);
-    elmpool_elm_free(rdman->geo_pool, shape->geo);
+    elmpool_elm_free(rdman->geo_pool, geo);
     sh_detach_coord(shape);
     return OK;
 }
@@ -445,6 +450,29 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     subject_free(&rdman->ob_factory, coord->mouse_event);
     elmpool_elm_free(rdman->coord_pool, coord);
     rdman->n_coords--;
+
+    return OK;
+}
+
+int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree) {
+    coord_t *coord, *prev_coord;
+    int r;
+
+    if(subtree == NULL)
+	return OK;
+
+    prev_coord = postorder_coord_subtree(subtree, NULL);
+    for(coord = postorder_coord_subtree(subtree, prev_coord);
+	coord != NULL;
+	coord = postorder_coord_subtree(subtree, coord)) {
+	r = rdman_coord_free(rdman, prev_coord);
+	if(r != OK)
+	    return ERR;
+	prev_coord = coord;
+    }
+    r = rdman_coord_free(rdman, prev_coord);
+    if(r != OK)
+	return ERR;
 
     return OK;
 }
@@ -921,6 +949,9 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     int r;
     int n_dirty_areas;
     area_t **dirty_areas;
+    event_t event;
+    ob_factory_t *factory;
+    subject_t *redraw;
 
     r = clean_rdman_dirties(rdman);
     if(r != OK)
@@ -939,6 +970,12 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	reset_clip(rdman);
     }
     rdman->n_dirty_areas = 0;
+
+    factory = rdman_get_ob_factory(rdman);
+    redraw = rdman_get_redraw_subject(rdman);
+    event.type = EVT_RDMAN_REDRAW;
+    event.tgt = event.cur_tgt = redraw;
+    subject_notify(factory, redraw, &event);
 
     return OK;
 }

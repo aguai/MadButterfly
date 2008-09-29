@@ -16,9 +16,9 @@
  * programs.
  *
  * For example, to translate foo.svg with steps
- * - $(PREFIX)/bin/svg2code.py foo.svg foo.mb
- * - m4 -I $(PREFIX)/share/mb mb_c_source.m4 foo.mb > foo.c
- * - m4 -I $(PREFIX)/share/mb mb_c_header.m4 foo.mb > foo.h
+ * - \$(PREFIX)/bin/svg2code.py foo.svg foo.mb
+ * - m4 -I \$(PREFIX)/share/mb mb_c_source.m4 foo.mb > foo.c
+ * - m4 -I \$(PREFIX)/share/mb mb_c_header.m4 foo.mb > foo.h
  *
  * foo.h declares a structure, named 'foo' and two functions,
  * foo_new() and foo_free(). An instance of 'foo' holds all objects for
