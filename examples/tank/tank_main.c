@@ -424,10 +424,6 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     dir = tank->direction;
     map_x = tank->map_x + map_xy_adj[dir][0];
     map_y = tank->map_y + map_xy_adj[dir][1];
-    tank->bullet = tank_bullet_new(rdman, map_x, map_y, dir);
-    bullet = tank->bullet;
-    bullet->tman = tman;
-
     switch(dir) {
     case TD_UP:
 	shift_len = map_y + 1;
@@ -450,6 +446,13 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
 	shift_y = 0;
 	break;
     }
+
+    if(shift_len <= 0)
+	return;
+
+    tank->bullet = tank_bullet_new(rdman, map_x, map_y, dir);
+    bullet = tank->bullet;
+    bullet->tman = tman;
 
     progm = mb_progm_new(2, rdman);
     MB_TIMEVAL_SET(&start, 0, 0);
