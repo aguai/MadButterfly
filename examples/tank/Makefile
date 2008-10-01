@@ -1,5 +1,5 @@
 SVGS =	brick.svg bullet.svg bush.svg mud.svg rock.svg \
-	tank1.svg tank2.svg tank_en.svg
+	tank1.svg tank2.svg tank_en.svg bang.svg
 SVGHS =	$(SVGS:C/\.svg/.h/)
 SVGCS =	$(SVGS:C/\.svg/.c/)
 SVGOS = $(SVGS:C/\.svg/.o/)

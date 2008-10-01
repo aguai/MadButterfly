@@ -67,6 +67,9 @@ extern int mb_tman_handle_timeout(mb_tman_t *tman, mb_timeval_t *now);
 	    (a)->tv_usec -= 1000000;		\
 	}					\
     } while(0)
+#define MB_TIMEVAL_DIV(a, b)			\
+    (((a)->tv_sec * 1000000.0 + (a)->tv_usec) /	\
+     ((b)->tv_sec * 1000000.0 + (b)->tv_usec))
 
 
 extern void get_now(mb_timeval_t *tmo);

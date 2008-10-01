@@ -1,3 +1,4 @@
+#include <math.h>
 #include <sys/time.h>
 #include <string.h>
 #include <mb/mb.h>
@@ -50,6 +51,8 @@ struct _tank_bullet {
     mb_progm_t *progm;
     mb_timeval_t start_time;
     observer_t *ob_redraw;
+    mb_timer_t *hit_tmr;
+    mb_tman_t *tman;
 };
 typedef struct _tank_bullet tank_bullet_t;
 enum { BU_UP = 0, BU_RIGHT, BU_DOWN, BU_LEFT };
@@ -336,15 +339,58 @@ static void bullet_go_out_map(event_t *event, void *arg) {
     redraw_man_t *rdman;
     subject_t *redraw;
     ob_factory_t *factory;
-    
-    /*! \todo Simplify the procdure of using observer pattern. */
+
     bullet = tank->bullet;
     rdman = bullet->rdman;
+
+    if(bullet->hit_tmr != NULL)
+	mb_tman_remove(bullet->tman, bullet->hit_tmr);
+    
+    /*! \todo Simplify the procdure of using observer pattern. */
     factory = rdman_get_ob_factory(rdman);
     redraw = rdman_get_redraw_subject(rdman);
     bullet->ob_redraw =
 	subject_add_observer(factory, redraw,
 			     bullet_go_out_map_and_redraw, tank);
+}
+
+static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
+}
+
+static void bullet_hit_chk(const mb_timeval_t *tmo,
+			   const mb_timeval_t *now,
+			   void *arg) {
+    tank_t *tank = (tank_t *)arg;
+    tank_bullet_t *bullet;
+    mb_timeval_t diff, next;
+    mb_timeval_t unit_tm;
+    float move_units_f;
+    int move_units;
+    int x, y;
+    int dir;
+    static int move_adj[][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+
+    bullet = tank->bullet;
+    MB_TIMEVAL_CP(&diff, now);
+    MB_TIMEVAL_DIFF(&diff, &bullet->start_time);
+    MB_TIMEVAL_SET(&unit_tm, 0, 250000);
+    move_units_f = MB_TIMEVAL_DIV(&diff, &unit_tm);
+    move_units = floorl(move_units_f);
+    dir = bullet->direction;
+    x = bullet->start_map_x + move_adj[dir][0] * move_units;
+    y = bullet->start_map_y + move_adj[dir][1] * move_units;
+
+    if(map[y][x] != MUD) {
+	bullet->hit_tmr = NULL;
+	mb_progm_abort(bullet->progm);
+	bullet_go_out_map(NULL, arg);
+	bullet_bang(bullet, x, y);
+    } else {
+	MB_TIMEVAL_SET(&next, 0, 100000);
+	MB_TIMEVAL_ADD(&next, now);
+	bullet->hit_tmr = mb_tman_timeout(bullet->tman, &next,
+					  bullet_hit_chk, arg);
+    }
 }
 
 static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
@@ -359,7 +405,7 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     mb_word_t *word;
     mb_action_t *act;
     mb_timeval_t start, playing;
-    mb_timeval_t now;
+    mb_timeval_t now, next;
     ob_factory_t *factory;
     mb_tman_t *tman;
     subject_t *subject;
@@ -377,6 +423,7 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     map_y = tank->map_y + map_xy_adj[dir][1];
     tank->bullet = tank_bullet_new(rdman, map_x, map_y, dir);
     bullet = tank->bullet;
+    bullet->tman = tman;
 
     switch(dir) {
     case TD_UP:
@@ -415,6 +462,10 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     get_now(&now);
     MB_TIMEVAL_CP(&bullet->start_time, &now);
     mb_progm_start(progm, tman, &now);
+
+    MB_TIMEVAL_SET(&next, 0, 100000);
+    MB_TIMEVAL_ADD(&next, &now);
+    bullet->hit_tmr = mb_tman_timeout(tman, &next, bullet_hit_chk, tank);
 }
 
 #define CHANGE_POS(g, x, y) do {			\

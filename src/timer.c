@@ -61,7 +61,8 @@ mb_timer_t *mb_tman_timeout(mb_tman_t *tman,
     for(visit = STAILQ_HEAD(tman->timers);
 	visit != NULL;
 	visit = STAILQ_NEXT(mb_timer_t, next, visit)) {
-	if(MB_TIMEVAL_LATER(&visit->tmo, tmo))
+	if(MB_TIMEVAL_LATER(&visit->tmo, tmo) ||
+	   MB_TIMEVAL_EQ(&visit->tmo, tmo))
 	    break;
 	last = visit;
     }
