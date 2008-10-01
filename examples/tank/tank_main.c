@@ -345,6 +345,9 @@ static void bullet_go_out_map(event_t *event, void *arg) {
 
     if(bullet->hit_tmr != NULL)
 	mb_tman_remove(bullet->tman, bullet->hit_tmr);
+
+    coord_hide(bullet->coord_pos);
+    rdman_coord_changed(rdman, bullet->coord_pos);
     
     /*! \todo Simplify the procdure of using observer pattern. */
     factory = rdman_get_ob_factory(rdman);
