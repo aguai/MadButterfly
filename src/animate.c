@@ -290,6 +290,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	    MB_TIMEVAL_CP(&next_tmo, &word->abs_start);
 	timer = mb_tman_timeout(progm->tman, &next_tmo,
 				mb_progm_step, progm);	
+	progm->cur_timer = timer;
     } else {
 	/* Make program to complete. */
 #ifndef UNITTEST

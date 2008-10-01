@@ -55,7 +55,7 @@ extern void elmpool_free(elmpool_t *pool);
 		  _stailq_cur->field != (elm))		\
 		_stailq_cur = _stailq_cur->field;	\
 	    if(_stailq_cur != NULL) {			\
-		_stailq_cur->field = elm;		\
+		_stailq_cur->field = (elm)->field;	\
 		if((q).tail == (elm))			\
 		    (q).tail = _stailq_cur;		\
 	    }						\
