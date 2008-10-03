@@ -62,6 +62,68 @@ extern void elmpool_free(elmpool_t *pool);
 	}						\
     } while(0)
 
+/*! \defgroup darray Dynamic Array
+ *
+ * DARRAY is a dynamic sized array/list, it's length is a variable.
+ * It is extended, automatically, if it is full and more elemnts are
+ * putted in.
+ *
+ * Users of DARRAY must declare a new type to store data.  The way to
+ * declear a new type is to invoke DARRAY() with paramters of name of
+ * type and type of data to be stored in.  The new storage type is named
+ * with foo_t where foo is the name you pass in.
+ *
+ * DARRAY_DEFINE() is inovked to define foo_add() function; foo is name
+ * of storage type.  You can call foo_add() to add a data element
+ * into a storage object.
+ *
+ * Get ith element in a storage object, use
+ * \code
+ * obj->ds[i]
+ * \endcode
+ *
+ * To loop over elements in a storage object, us
+ * \code
+ * for(i = 0; i < obj->num; i++) {
+ *	v = obj->ds[i];
+ *	......
+ * }
+ * \endcode
+ * @{
+ */
+/*! \brief Declare a DARRAY storage type.
+ *
+ * \param name is name of storage type.
+ * \param type is type of data elements that will be stored in.
+ *
+ * Type of <name>_t is defined by the macro.  It is used to define a
+ * storage object to contain data elements.
+ */
+#define DARRAY(name, type)				\
+    struct _ ## name {					\
+	int max, num;					\
+	type *ds;					\
+    };							\
+    typedef struct _ ## name name ## _t
+#define DARRAY_DEFINE(name, type)			\
+    static int name ## _add(name ## _t *da, type v) {	\
+	type *new_ds;					\
+	int max;					\
+	if(da->num >= (da)->max) {			\
+	    max = (da)->max + 32;			\
+	    new_ds = realloc(da->ds,			\
+			     max * sizeof(type));	\
+	    if(new_ds == NULL) return -1;		\
+	    da->ds = new_ds;				\
+	    da->max = max;				\
+	}						\
+	da->ds[da->num++] = v;				\
+	return 0;					\
+    }
+#define DARRAY_CLEAN(da) do { (da)->num = 0; } while(0)
+#define DARRAY_INIT(da) do { (da)->num = (da)->max = 0; (da)->ds = NULL; }
+#define DARRAY_DESTROY(da) do { if((da)->ds) free((da)->ds); } while(0)
+/* @} */
 
 #include <stdlib.h>
 

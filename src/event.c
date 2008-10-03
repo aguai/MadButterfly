@@ -23,6 +23,8 @@ static int extend_memblk(void **buf, int o_size, int n_size) {
     return OK;
 }
 
+DARRAY_DEFINE(geos, geo_t *);
+
 /*! \brief Add a geo_t object to general geo list.
  *
  * General geo list can use to temporary keep a list of geo_t
@@ -31,21 +33,10 @@ static int extend_memblk(void **buf, int o_size, int n_size) {
  * from a redraw manager.
  */
 static int add_gen_geo(redraw_man_t *rdman, geo_t *geo) {
-    int max_gen_geos;
     int r;
 
-    if(rdman->n_gen_geos >= rdman->max_gen_geos) {
-	max_gen_geos = rdman->max_gen_geos + ARRAY_EXT_SZ;
-	r = extend_memblk((void **)&rdman->gen_geos,
-			  sizeof(geo_t *) * rdman->n_gen_geos,
-			  sizeof(geo_t *) * max_gen_geos);
-	if(r != OK)
-	    return ERR;
-	rdman->max_gen_geos = max_gen_geos;
-    }
-
-    rdman->gen_geos[rdman->n_gen_geos++] = geo;
-    return OK;
+    r = geos_add(&rdman->gen_geos, geo);
+    return r == 0? OK: ERR;
 }
 
 static int collect_shapes_at_point(redraw_man_t *rdman,
@@ -57,7 +48,7 @@ static int collect_shapes_at_point(redraw_man_t *rdman,
     if(r != OK)
 	return ERR;
 
-    rdman->n_gen_geos = 0;
+    rdman->gen_geos.num = 0;
 
     for(geo = rdman_geos(rdman, NULL);
 	geo != NULL;
@@ -94,9 +85,9 @@ static geo_t *find_geo_in_pos(redraw_man_t *rdman,
     cairo_t *cr;
     int i;
 
-    geos = rdman->gen_geos;
+    geos = rdman->gen_geos.ds;
     cr = rdman->cr;
-    for(i = rdman->n_gen_geos - 1; i >= 0; i--) {
+    for(i = rdman->gen_geos.num - 1; i >= 0; i--) {
 	geo = geos[i];
 	if(geo->flags & GEF_HIDDEN)
 	    continue;
