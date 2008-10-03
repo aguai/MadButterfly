@@ -6,6 +6,10 @@
 #include "mb_types.h"
 #include "observer.h"
 
+DARRAY(coords, coord_t *);
+DARRAY(geos, geo_t *);
+DARRAY(areas, area_t *);
+
 /*! \brief Manage redrawing of shapes (graphic elements).
  *
  * Every coord_t and geo_t object is assigned with a unique
@@ -33,23 +37,14 @@ typedef struct _redraw_man {
     elmpool_t *subject_pool;
     elmpool_t *paint_color_pool;
 
-    int max_dirty_coords;
-    int n_dirty_coords;
-    coord_t **dirty_coords;	/*!< coordinates their transform
-				 * matric are chagned.
-				 */
+    coords_t dirty_coords;
+    geos_t dirty_geos;
+    areas_t dirty_areas;
 
-    int max_dirty_geos;
-    int n_dirty_geos;
-    geo_t **dirty_geos;		/*!< geometries that need re-computed */
+    geos_t gen_geos;
 
-    int max_dirty_areas;
-    int n_dirty_areas;
-    area_t **dirty_areas;	/*!< \brief are areas need to redraw. */
-
-    int max_gen_geos;
-    int n_gen_geos;
-    geo_t **gen_geos;		/* general geo list (for temporary store) */
+    coords_t free_coords;
+    geos_t free_geos;
 
     cairo_t *cr;
     cairo_t *backend;

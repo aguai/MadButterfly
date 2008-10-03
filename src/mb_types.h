@@ -53,6 +53,7 @@ struct _geo {
 };
 #define GEF_DIRTY 0x1
 #define GEF_HIDDEN 0x2
+#define GEF_FREE 0x4
 
 extern int is_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
@@ -120,6 +121,7 @@ typedef struct _coord {
 #define COF_SKIP_TRIVAL 0x8	/*!< Temporary skip descendants
 				 * when trivaling.
 				 */
+#define COF_FREE 0x10
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
@@ -160,22 +162,9 @@ struct _shape {
 };
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
 
-#define sh_attach_geo(sh, g)			\
-    do {					\
-	(sh)->geo = g;				\
-	(g)->shape = (shape_t *)(sh);		\
-    } while(0)
-#define sh_detach_geo(sh)			\
-    do {					\
-	(sh)->geo->shape = NULL;		\
-	(sh)->geo = NULL;			\
-    } while(0)
-#define sh_get_geo(sh) ((sh)->geo)
 #define sh_get_mouse_event_subject(sh) ((sh)->geo->mouse_event)
 #define sh_hide(sh) do { (sh)->geo->flags |= GEF_HIDDEN; } while(0)
 #define sh_show(sh) do { (sh)->geo->flags &= ~GEF_HIDDEN; } while(0)
-#define sh_attach_coord(sh, coord) do { (sh)->coord = coord; } while(0)
-#define sh_detach_coord(sh) do { (sh)->coord = NULL; } while(0)
 
 
 #endif /* __MB_TYPES_H_ */

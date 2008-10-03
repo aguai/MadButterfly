@@ -12,6 +12,24 @@
 /* NOTE: bounding box should also consider width of stroke.
  */
 
+#define sh_attach_geo(sh, g)			\
+    do {					\
+	(sh)->geo = g;				\
+	(g)->shape = (shape_t *)(sh);		\
+    } while(0)
+#define sh_detach_geo(sh)			\
+    do {					\
+	(sh)->geo->shape = NULL;		\
+	(sh)->geo = NULL;			\
+    } while(0)
+#define sh_get_geo(sh) ((sh)->geo)
+#define sh_attach_coord(sh, coord) do { (sh)->coord = coord; } while(0)
+#define sh_detach_coord(sh) do { (sh)->coord = NULL; } while(0)
+#define rdman_is_dirty(rdman)			\
+    ((rdman)->dirty_coords.num != 0 ||		\
+     (rdman)->dirty_geos.num != 0 ||		\
+     (rdman)->dirty_areas.num != 0)
+
 #define OK 0
 #define ERR -1
 
@@ -78,76 +96,38 @@ static void _insert_sort(void **elms, int num, int off) {
     }
 }
 
-static int extend_memblk(void **buf, int o_size, int n_size) {
-    void *new_buf;
+DARRAY_DEFINE(coords, coord_t *);
+DARRAY_DEFINE(geos, geo_t *);
+DARRAY_DEFINE(areas, area_t *);
 
-    new_buf = realloc(*buf, n_size);
-    if(new_buf == NULL)
-	return ERR;
+/*! Use \brief DARRAY to implement dirty & free lists.
+ */
+#define ADD_DATA(sttype, field, v)		\
+    int r;					\
+    r = sttype ## _add(&rdman->field, v);	\
+    return r == 0? OK: ERR;
 
-    *buf = new_buf;
-
-    return OK;
-}
 
 static int add_dirty_coord(redraw_man_t *rdman, coord_t *coord) {
-    int max_dirty_coords;
-    int r;
-    
-    if(rdman->n_dirty_coords >= rdman->max_dirty_coords) {
-	/* Max of dirty_coords is not big enough. */
-	max_dirty_coords = rdman->max_dirty_coords + 16;
-	
-	r = extend_memblk((void **)&rdman->dirty_coords,
-			  sizeof(coord_t *) * rdman->n_dirty_coords,
-			  sizeof(coord_t *) * max_dirty_coords);
-	if(r != OK)
-	    return ERR;
-	rdman->max_dirty_coords = max_dirty_coords;
-    }
-
-    rdman->dirty_coords[rdman->n_dirty_coords++] = coord;
     coord->flags |= COF_DIRTY;
-    return OK;
+    ADD_DATA(coords, dirty_coords, coord);
 }
 
 static int add_dirty_geo(redraw_man_t *rdman, geo_t *geo) {
-    int max_dirty_geos;
-    int r;
-
-    if(rdman->n_dirty_geos >= rdman->max_dirty_geos) {
-	max_dirty_geos = rdman->max_dirty_geos + ARRAY_EXT_SZ;
-	r = extend_memblk((void **)&rdman->dirty_geos,
-			  sizeof(geo_t *) * rdman->n_dirty_geos,
-			  sizeof(geo_t *) * max_dirty_geos);
-	if(r != OK)
-	    return ERR;
-	rdman->max_dirty_geos = max_dirty_geos;
-    }
-
-    rdman->dirty_geos[rdman->n_dirty_geos++] = geo;
-    return OK;
+    geo->flags |= GEF_DIRTY;
+    ADD_DATA(geos, dirty_geos, geo);
 }
 
 static int add_dirty_area(redraw_man_t *rdman, area_t *area) {
-    int max_dirty_areas;
-    int r;
+    ADD_DATA(areas, dirty_areas, area);
+}
 
-    if(rdman->n_dirty_areas >= rdman->max_dirty_areas) {
-	/* every geo object and coord object can contribute 2 areas.
-	 * rdman_draw_area() may also contribute 1 area.
-	 */
-	max_dirty_areas = rdman->max_dirty_areas + ARRAY_EXT_SZ;
-	r = extend_memblk((void **)&rdman->dirty_areas,
-			  sizeof(area_t *) * rdman->n_dirty_areas,
-			  sizeof(area_t *) * max_dirty_areas);
-	if(r != OK)
-	    return ERR;
-	rdman->max_dirty_areas = max_dirty_areas;
-    }
+static int add_free_coord(redraw_man_t *rdman, coord_t *coord) {
+    ADD_DATA(coords, free_coords, coord);
+}
 
-    rdman->dirty_areas[rdman->n_dirty_areas++] = area;
-    return OK;
+static int add_free_geo(redraw_man_t *rdman, geo_t *geo) {
+    ADD_DATA(geos, free_geos, geo);
 }
 
 static void area_to_positions(area_t *area, co_aix (*poses)[2]) {
@@ -294,13 +274,23 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 
 void redraw_man_destroy(redraw_man_t *rdman) {
     coord_t *coord, *saved_coord;
+    geo_t *member;
 
     coord = postorder_coord_subtree(rdman->root_coord, NULL);
     while(coord) {
 	saved_coord = coord;
 	coord = postorder_coord_subtree(rdman->root_coord, coord);
+	FORMEMBERS(saved_coord, member) {
+	    rdman_remove_shape(rdman, member->shape);
+	}
 	rdman_coord_free(rdman, saved_coord);
     }
+    FORMEMBERS(saved_coord, member) {
+	rdman_remove_shape(rdman, member->shape);
+    }
+    /* Resources of root_coord is free by elmpool_free() or
+     * caller; for canvas
+     */
 
     elmpool_free(rdman->coord_pool);
     elmpool_free(rdman->geo_pool);
@@ -308,12 +298,13 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->observer_pool);
     elmpool_free(rdman->subject_pool);
     elmpool_free(rdman->paint_color_pool);
-    if(rdman->dirty_coords)
-	free(rdman->dirty_coords);
-    if(rdman->dirty_geos)
-	free(rdman->dirty_geos);
-    if(rdman->gen_geos)
-	free(rdman->gen_geos);
+
+    DARRAY_DESTROY(&rdman->dirty_coords);
+    DARRAY_DESTROY(&rdman->dirty_geos);
+    DARRAY_DESTROY(&rdman->dirty_areas);
+    DARRAY_DESTROY(&rdman->gen_geos);
+    DARRAY_DESTROY(&rdman->free_coords);
+    DARRAY_DESTROY(&rdman->free_geos);
 }
 
 
@@ -354,7 +345,6 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
     geo_attach_coord(geo, coord);
 
     /* New one should be dirty to recompute it when drawing. */
-    geo->flags |= GEF_DIRTY;
     r = add_dirty_geo(rdman, geo);
     if(r != OK)
 	return ERR;
@@ -368,15 +358,31 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
 /*! \brief Remove a shape object from redraw manager.
  *
  * \note Shapes should be removed after redrawing or when rdman is in clean.
+ * \note Removing shapes or coords when a rdman is dirty, removing
+ *       is postponsed.
  * \todo redraw shape objects that overlaid with removed one.
- * \todo To allow shapes be removed at anytime.
  */
 int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape) {
     geo_t *geo;
     coord_t *coord;
+    int r;
 
     geo = shape->geo;
     coord = shape->coord;
+
+    if(rdman_is_dirty(rdman)) {
+	geo->flags |= GEF_FREE | GEF_HIDDEN;
+	if(!(geo->flags & GEF_DIRTY)) {
+	    r = add_dirty_geo(rdman, geo);
+	    if(r != OK)
+		return ERR;
+	}
+	r = add_free_geo(rdman, geo);
+	if(r != OK)
+	    return ERR;
+	return OK;
+    }
+
     geo_detach_coord(geo, coord);
     subject_free(&rdman->ob_factory, geo->mouse_event);
     sh_detach_geo(shape);
@@ -428,18 +434,47 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
  *
  * \param coord is a coord_t without children and members.
  * \return 0 for successful, -1 for error.
+ *
+ * \note Removing coords when the rdman is dirty, the removing is postponsed.
  */
 int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     coord_t *parent;
+    coord_t *child;
+    geo_t *member;
+    int r;
 
     parent = coord->parent;
     if(parent == NULL)
 	return ERR;
 
+    if(rdman_is_dirty(rdman)) {
+	FORCHILDREN(coord, child) {
+	    if(!(child->flags & COF_FREE))
+		return ERR;
+	}
+	FORMEMBERS(coord, member) {
+	    if(!(member->flags & GEF_FREE))
+		return ERR;
+	}
+	coord->flags |= COF_FREE | COF_HIDDEN;
+	if(!(coord->flags & COF_DIRTY)) {
+	    r = add_dirty_coord(rdman, coord);
+	    if(r != OK)
+		return ERR;
+	}
+	r = add_free_coord(rdman, coord);
+	if(r != OK)
+	    return ERR;
+	return OK;
+    }
+
     if(FIRST_MEMBER(coord) != NULL)
 	return ERR;
 
     if(FIRST_CHILD(coord) != NULL)
+	return ERR;
+
+    if(coord->flags & COF_FREE)
 	return ERR;
 
     /* Free canvas (\ref redraw) */
@@ -517,7 +552,6 @@ static int _rdman_shape_changed(redraw_man_t *rdman, shape_t *shape) {
     r = add_dirty_geo(rdman, geo);
     if(r == ERR)
 	return ERR;
-    geo->flags |= GEF_DIRTY;
 
     return OK;
 }
@@ -655,9 +689,9 @@ static int clean_rdman_coords(redraw_man_t *rdman) {
     int n_dirty_coords;
     int i, r;
 
-    n_dirty_coords = rdman->n_dirty_coords;
+    n_dirty_coords = rdman->dirty_coords.num;
     if(n_dirty_coords > 0) {
-	dirty_coords = rdman->dirty_coords;
+	dirty_coords = rdman->dirty_coords.ds;
 	_insert_sort((void **)dirty_coords, n_dirty_coords,
 		     OFFSET(coord_t, order));
 	for(i = 0; i < n_dirty_coords; i++) {
@@ -671,7 +705,7 @@ static int clean_rdman_coords(redraw_man_t *rdman) {
 	    add_dirty_area(rdman, &coord->areas[0]);
 	    add_dirty_area(rdman, &coord->areas[1]);
 	}
-	rdman->n_dirty_coords = 0;
+	rdman->dirty_coords.num = 0;
     }
     return OK;
 }
@@ -682,9 +716,9 @@ static int clean_rdman_geos(redraw_man_t *rdman) {
     geo_t **dirty_geos;
     geo_t *visit_geo;
 
-    n_dirty_geos = rdman->n_dirty_geos;
+    n_dirty_geos = rdman->dirty_geos.num;
     if(n_dirty_geos > 0) {
-	dirty_geos = rdman->dirty_geos;
+	dirty_geos = rdman->dirty_geos.ds;
 	for(i = 0; i < n_dirty_geos; i++) {
 	    visit_geo = dirty_geos[i];
 	    if(!(visit_geo->flags & GEF_DIRTY))
@@ -695,7 +729,7 @@ static int clean_rdman_geos(redraw_man_t *rdman) {
 	    add_dirty_area(rdman, visit_geo->cur_area);
 	    add_dirty_area(rdman, visit_geo->last_area);
 	}
-	rdman->n_dirty_geos = 0;
+	rdman->dirty_geos.num = 0;
     }    
 
     return OK;
@@ -952,24 +986,41 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     event_t event;
     ob_factory_t *factory;
     subject_t *redraw;
+    geo_t *geo;
+    coord_t *coord;
+    int i;
 
     r = clean_rdman_dirties(rdman);
     if(r != OK)
 	return ERR;
 
-    n_dirty_areas = rdman->n_dirty_areas;
-    dirty_areas = rdman->dirty_areas;
+    n_dirty_areas = rdman->dirty_areas.num;
+    dirty_areas = rdman->dirty_areas.ds;
     if(n_dirty_areas > 0) {
 	/*! \brief Draw shapes in preorder of coord tree and support opacity
 	 * rules.
 	 */
 	clean_canvas(rdman->cr);
 	draw_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
-	copy_cr_2_backend(rdman, rdman->n_dirty_areas, rdman->dirty_areas);
-	rdman->n_dirty_areas = 0;
+	copy_cr_2_backend(rdman, rdman->dirty_areas.num,
+			  rdman->dirty_areas.ds);
+	rdman->dirty_areas.num = 0;
 	reset_clip(rdman);
     }
-    rdman->n_dirty_areas = 0;
+    rdman->dirty_areas.num = 0;
+
+    /* Free postponsed removing */
+    for(i = 0; i < rdman->free_geos.num; i++) {
+	geo = rdman->free_geos.ds[i];
+	rdman_remove_shape(rdman, geo->shape);
+    }
+    DARRAY_CLEAN(&rdman->free_geos);
+
+    for(i = 0; i < rdman->free_coords.num; i++) {
+	coord = rdman->free_coords.ds[i];
+	rdman_remove_shape(rdman, coord);
+    }
+    DARRAY_CLEAN(&rdman->free_coords);
 
     factory = rdman_get_ob_factory(rdman);
     redraw = rdman_get_redraw_subject(rdman);
@@ -1003,7 +1054,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
  * \sa
  * - rdman_redraw_all()
  * - rdman_redraw_changed()
- * = draw_shapes_in_areas()
+ * - draw_shapes_in_areas()
  */
 
 int rdman_redraw_all(redraw_man_t *rdman) {
