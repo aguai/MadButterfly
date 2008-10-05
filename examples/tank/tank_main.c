@@ -320,15 +320,19 @@ static void tank_bullet_free(tank_bullet_t *bullet) {
 static void bullet_go_out_map_and_redraw(event_t *event, void *arg) {
     tank_t *tank = (tank_t *)arg;
     tank_bullet_t *bullet;
+#if 0
     ob_factory_t *factory;
     subject_t *redraw;
+#endif
 
     bullet = tank->bullet;
     mb_progm_free(bullet->progm);
     rdman_force_clean(bullet->rdman);
+#if 0
     factory = rdman_get_ob_factory(bullet->rdman);
     redraw = rdman_get_redraw_subject(bullet->rdman);
     subject_remove_observer(factory, redraw, bullet->ob_redraw);
+#endif
     tank_bullet_free(tank->bullet);
     tank->bullet = NULL;
 }
@@ -337,8 +341,10 @@ static void bullet_go_out_map(event_t *event, void *arg) {
     tank_t *tank = (tank_t *)arg;
     tank_bullet_t *bullet;
     redraw_man_t *rdman;
+#if 0
     subject_t *redraw;
     ob_factory_t *factory;
+#endif
 
     bullet = tank->bullet;
     rdman = bullet->rdman;
@@ -350,11 +356,14 @@ static void bullet_go_out_map(event_t *event, void *arg) {
     rdman_coord_changed(rdman, bullet->coord_pos);
     
     /*! \todo Simplify the procdure of using observer pattern. */
+#if 0
     factory = rdman_get_ob_factory(rdman);
     redraw = rdman_get_redraw_subject(rdman);
     bullet->ob_redraw =
 	subject_add_observer(factory, redraw,
 			     bullet_go_out_map_and_redraw, tank);
+#endif
+    bullet_go_out_map_and_redraw(NULL, tank);
 }
 
 static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {

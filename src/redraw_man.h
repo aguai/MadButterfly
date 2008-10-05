@@ -6,6 +6,20 @@
 #include "mb_types.h"
 #include "observer.h"
 
+typedef struct _redraw_man redraw_man_t;
+
+typedef void (*free_func_t)(redraw_man_t *rdman, void *obj);
+struct _free_obj {
+    void *obj;
+    free_func_t free_func;
+};
+typedef struct _free_obj free_obj_t;
+struct _free_objs {
+    int num, max;
+    free_obj_t *objs;
+};
+typedef struct _free_objs free_objs_t;
+
 DARRAY(coords, coord_t *);
 DARRAY(geos, geo_t *);
 DARRAY(areas, area_t *);
@@ -25,7 +39,7 @@ DARRAY(areas, area_t *);
  * Dirty flag is clear when the transformation matrix of a coord
  * object been recomputed or when a geo_t objects been redrawed.
  */
-typedef struct _redraw_man {
+struct _redraw_man {
     unsigned int next_coord_order;
     int n_coords;
     coord_t *root_coord;
@@ -43,8 +57,10 @@ typedef struct _redraw_man {
 
     geos_t gen_geos;
 
-    coords_t free_coords;
-    geos_t free_geos;
+    STAILQ(shape_t) shapes;	/*!< \brief All managed shapes.  */
+    STAILQ(paint_t) paints;	/*!< \brief All managed paints. */
+
+    free_objs_t free_objs;
 
     cairo_t *cr;
     cairo_t *backend;
@@ -52,7 +68,7 @@ typedef struct _redraw_man {
     ob_factory_t ob_factory;
 
     subject_t *redraw;		/*!< \brief Notified after redrawing. */
-} redraw_man_t;
+};
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
 			   cairo_t *backend);
@@ -62,7 +78,15 @@ extern int rdman_find_overlaid_shapes(redraw_man_t *rdman,
 				      geo_t ***overlays);
 extern int rdman_add_shape(redraw_man_t *rdman,
 			   shape_t *shape, coord_t *coord);
-extern int rdman_remove_shape(redraw_man_t *rdman, shape_t *shape);
+/*! \brief Make a shape been managed by a redraw manager. */
+#define rdman_shape_man(rdman, shape)				\
+    STAILQ_INS_TAIL(rdman->shapes, shape_t, sh_next, shape)
+extern int rdman_shape_free(redraw_man_t *rdman, shape_t *shape);
+
+#define rdman_paint_man(rdman, paint)		\
+    STAILQ_INS_TAIL(rdman->paints, paint_t, pnt_next, shape)
+extern int rdman_paint_free(redraw_man_t *rdman, paint_t *paint);
+
 extern coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent);
 extern int rdman_coord_free(redraw_man_t *rdman, coord_t *coord);
 extern int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree);
@@ -99,15 +123,31 @@ extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 			    shnode_t, next, __node);	\
 	}						\
     } while(0)
+extern void _rdman_paint_real_remove_child(redraw_man_t *rdman,
+					   paint_t *paint,
+					   shape_t *shape);
+#define _rdman_paint_remove_child(rdman, paint, shape)		\
+    do {							\
+	if((shape)->fill == (shape)->stroke &&			\
+	   (shape)->stroke == paint)				\
+	    break;						\
+	_rdman_paint_real_remove_child(rdman, paint, shape);	\
+    } while(0)
 #define rdman_paint_fill(rdman, paint, shape)		\
     do {						\
+	if((shape)->fill == paint)			\
+	    break;					\
+	_rdman_paint_remove_child(rdman, paint, shape);	\
 	_rdman_paint_child(rdman, paint, shape);	\
-	shape->fill = paint;				\
+	(shape)->fill = paint;				\
     } while(0)
 #define rdman_paint_stroke(rdman, paint, shape)		\
     do {						\
+	if((shape)->stroke == paint)			\
+	    break;					\
+	_rdman_paint_remove_child(rdman, paint, shape);	\
 	_rdman_paint_child(rdman, paint, shape);	\
-	shape->stroke = paint;				\
+	(shape)->stroke = paint;			\
     } while(0)
 extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
 

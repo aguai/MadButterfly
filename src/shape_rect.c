@@ -16,8 +16,9 @@ static void sh_rect_free(shape_t *shape) {
     free(shape);
 }
 
-shape_t *sh_rect_new(co_aix x, co_aix y, co_aix w, co_aix h,
-		    co_aix rx, co_aix ry) {
+shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
+			      co_aix x, co_aix y, co_aix w, co_aix h,
+			      co_aix rx, co_aix ry) {
     sh_rect_t *rect;
 
     rect = (sh_rect_t *)malloc(sizeof(sh_rect_t));
@@ -34,6 +35,8 @@ shape_t *sh_rect_new(co_aix x, co_aix y, co_aix w, co_aix h,
     rect->rx = rx;
     rect->ry = ry;
     rect->shape.free = sh_rect_free;
+
+    rdman_shape_man(rdman, (shape_t *)rect);
 
     return (shape_t *)rect;
 }

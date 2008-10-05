@@ -11,18 +11,6 @@
 #define ARRAY_EXT_SZ 64
 
 
-static int extend_memblk(void **buf, int o_size, int n_size) {
-    void *new_buf;
-
-    new_buf = realloc(*buf, n_size);
-    if(new_buf == NULL)
-	return ERR;
-
-    *buf = new_buf;
-
-    return OK;
-}
-
 DARRAY_DEFINE(geos, geo_t *);
 
 /*! \brief Add a geo_t object to general geo list.

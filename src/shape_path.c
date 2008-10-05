@@ -4,6 +4,7 @@
 #include <string.h>
 #include <cairo.h>
 #include "mb_types.h"
+#include "redraw_man.h"
 
 /*! \brief Implement respective objects for SVG path tag.
  *
@@ -660,7 +661,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 
 /*! \brief Create a path from value of 'data' of SVG path.
  */
-shape_t *sh_path_new(char *data) {
+shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data) {
     sh_path_t *path;
     int cmd_cnt, arg_cnt, fix_arg_cnt;
     int msz;
@@ -704,6 +705,10 @@ shape_t *sh_path_new(char *data) {
     memcpy(path->dev_data, path->user_data, msz);
 
     path->shape.free = sh_path_free;
+
+#ifndef UNITTEST
+    rdman_shape_man(rdman, (shape_t *)path);
+#endif
 
     return (shape_t *)path;
 }
@@ -834,11 +839,11 @@ void sh_path_draw(shape_t *shape, cairo_t *cr) {
 
 #include <CUnit/Basic.h>
 
-void test_sh_path_new(void) {
+void test_rdman_shape_path_new(void) {
     sh_path_t *path;
     co_aix *args;
 
-    path = (sh_path_t *)sh_path_new("M 33 25l33 55c 33 87 44 22 55 99L33 77z");
+    path = (sh_path_t *)rdman_shape_path_new(NULL, "M 33 25l33 55c 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
@@ -867,7 +872,7 @@ void test_path_transform(void) {
     coord_t coord;
     geo_t geo;
 
-    path = (sh_path_t *)sh_path_new("M 33 25l33 55C 33 87 44 22 55 99L33 77z");
+    path = (sh_path_t *)rdman_shape_path_new(NULL, "M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->arg_len == 12);
@@ -908,7 +913,8 @@ void test_spaces_head_tail(void) {
     sh_path_t *path;
 
     path = (sh_path_t *)
-	sh_path_new(" M 33 25l33 55C 33 87 44 22 55 99L33 77z ");
+	rdman_shape_path_new(NULL,
+			     " M 33 25l33 55C 33 87 44 22 55 99L33 77z ");
     CU_ASSERT(path != NULL);
     sh_path_free((shape_t *)path);
 }
@@ -917,7 +923,7 @@ CU_pSuite get_shape_path_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_shape_path", NULL, NULL);
-    CU_ADD_TEST(suite, test_sh_path_new);
+    CU_ADD_TEST(suite, test_rdman_shape_path_new);
     CU_ADD_TEST(suite, test_path_transform);
 
     return suite;

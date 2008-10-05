@@ -53,7 +53,7 @@ define([SHAPE_MATRIX],)
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
-    obj->$1 = paint_linear_new(rdman, $2, $3, $4, $5);
+    obj->$1 = rdman_paint_linear_new(rdman, $2, $3, $4, $5);
 ifelse(COUNT($6),0,,[dnl
     stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * n_$1_stops);
     memcpy(stops, $1_stops, sizeof(grad_stop_t) * n_$1_stops);
@@ -62,7 +62,7 @@ ifelse(COUNT($6),0,,[dnl
 ])
 
 define([S_ADD_RADIAL_PAINT],[
-    obj->$1 = paint_radial_new(rdman, $2, $3, $4);
+    obj->$1 = rdman_paint_radial_new(rdman, $2, $3, $4);
 ifelse(COUNT($5),0,,[
     stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * n_$1_stops);
     memcpy(stops, $1_stops, sizeof(grad_stop_t) * n_$1_stops);
@@ -85,12 +85,12 @@ define([S_REF_STOPS_LINEAR],[dnl
 ]])
 
 define([S_ADD_RECT],[[
-    obj->$1 = sh_rect_new($2, $3, $4, $5, $6, $7);
+    obj->$1 = rdman_shape_rect_new(rdman, $2, $3, $4, $5, $6, $7);
     rdman_add_shape(rdman, obj->$1, obj->$8);
 ]])
 
 define([S_ADD_PATH],[[
-    obj->$1 = sh_path_new("$2");
+    obj->$1 = rdman_shape_path_new(rdman, "$2");
     rdman_add_shape(rdman, obj->$1, obj->$3);
 ]])
 
@@ -99,7 +99,8 @@ define([S_ADD_COORD],[[
 ]])
 
 define([S_ADD_TEXT],[[
-    obj->$1 = sh_text_new("$2", $3, $4, $5, cairo_get_font_face(rdman->cr));
+    obj->$1 = rdman_shape_text_new(rdman, "$2", $3, $4, $5,
+    	      				  cairo_get_font_face(rdman->cr));
     rdman_add_shape(rdman, obj->$1, obj->$6);
 ]])
 
@@ -112,12 +113,12 @@ define([S_STROKE_SHAPE_WITH_PAINT],[dnl
 ]])
 
 define([S_FILL_SHAPE],[dnl
-[    obj->$1_fill = paint_color_new(rdman, $2, $3, $4, $5);
+[    obj->$1_fill = rdman_paint_color_new(rdman, $2, $3, $4, $5);
     rdman_paint_fill(rdman, obj->$1_fill, obj->$1);
 ]])
 
 define([S_STROKE_SHAPE],[dnl
-[    obj->$1_stroke = paint_color_new(rdman, $2, $3, $4, $5);
+[    obj->$1_stroke = rdman_paint_color_new(rdman, $2, $3, $4, $5);
     rdman_paint_stroke(rdman, obj->$1_stroke, obj->$1);
 ]])
 
@@ -203,36 +204,33 @@ divert[]])
 define([F_ADD_LINEAR_PAINT],[[
     stops = paint_linear_stops(obj->$1, 0, NULL);
     free(stops);
-    obj->$1->free(obj->$1);
+    rdman_paint_free(rdman, obj->$1);
 ]])
 
 define([F_ADD_RADIAL_PAINT],[[
     stops = paint_radial_stops(obj->$1, 0, NULL);
     free(stops);
-    obj->$1->free(obj->$1);
+    rdman_paint_free(rdman, obj->$1);
 ]])
 
 define([F_ADD_PATH],[[
-    rdman_remove_shape(rdman, obj->$1);
-    obj->$1->free(obj->$1);
+    rdman_shape_free(rdman, obj->$1);
 ]])
 
 define([F_ADD_RECT],[[
-    rdman_remove_shape(rdman, obj->$1);
-    obj->$1->free(obj->$1);
+    rdman_shape_free(rdman, obj->$1);
 ]])
 
 define([F_ADD_TEXT],[[
-    rdman_remove_shape(rdman, obj->$1);
-    obj->$1->free(obj->$1);
+    rdman_shape_free(rdman, obj->$1);
 ]])
 
 define([F_FILL_SHAPE],[[
-    obj->$1_fill->free(obj->$1_fill);
+    rdman_paint_free(rdman, obj->$1_fill);
 ]])
 
 define([F_STROKE_SHAPE],[[
-    obj->$1_stroke->free(obj->$1_stroke);
+    rdman_paint_free(rdman, obj->$1_stroke);
 ]])
 
 define([CLEAR_VARS],[divert([-1])
