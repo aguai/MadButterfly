@@ -12,19 +12,25 @@ typedef struct _area area_t;
 typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
 
+struct _redraw_man;
+
 /*! \brief Base of paint types.
  *
- * Paints should be freed by users by calling paint_t::free() of
+ * Paints should be freed by users by calling rdman_paint_free() of
  * the paint.
  *
  * \todo move member functions to a seperate structure and setup a
  * singleton fro each paint type.
  */
 struct _paint {
+    int flags;
     void (*prepare)(paint_t *paint, cairo_t *cr);
-    void (*free)(paint_t *paint);
+    void (*free)(struct _redraw_man *rdman, paint_t *paint);
     STAILQ(shnode_t) members;
+    paint_t *pnt_next;		/*!< \brief Collect all paints of a rdman. */
 };
+
+#define PNTF_FREE 0x1
 
 struct _shnode {
     shape_t *shape;
@@ -110,7 +116,10 @@ typedef struct _coord {
 				 * of parent. */
 
     int num_members;
-    STAILQ(geo_t) members;	/*!< All geo_t members in this coord. */
+    STAILQ(geo_t) members;	/*!< \brief All geo_t members in this coord. */
+
+    STAILQ(shape_t) shapes;	/*!< \brief All shapes managed by the rdman. */
+
     subject_t *mouse_event;
 } coord_t;
 #define COF_DIRTY 0x1
@@ -158,6 +167,7 @@ struct _shape {
     co_aix stroke_width;
     int stroke_linecap:2;
     int stroke_linejoin:2;
+    struct _shape *sh_next;	/*!< Link all shapes of a rdman together. */
     void (*free)(shape_t *shape);
 };
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };

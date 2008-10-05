@@ -32,8 +32,9 @@ static void sh_text_free(shape_t *shape) {
     cairo_font_face_destroy(text->face);
 }
 
-shape_t *sh_text_new(const char *txt, co_aix x, co_aix y,
-		     co_aix font_size, cairo_font_face_t *face) {
+shape_t *rdman_shape_text_new(redraw_man_t *rdman,
+			      const char *txt, co_aix x, co_aix y,
+			      co_aix font_size, cairo_font_face_t *face) {
     sh_text_t *text;
 
     text = (sh_text_t *)malloc(sizeof(sh_text_t));
@@ -55,6 +56,8 @@ shape_t *sh_text_new(const char *txt, co_aix x, co_aix y,
     text->flags |= TXF_SCALE_DIRTY;
 
     text->shape.free = sh_text_free;
+
+    rdman_shape_man(rdman, (shape_t *)text);
 
     return (shape_t *)text;
 }

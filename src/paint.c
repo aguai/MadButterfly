@@ -10,7 +10,6 @@
 typedef struct _paint_color {
     paint_t paint;
     co_comp_t r, g, b, a;
-    redraw_man_t *rdman;
 } paint_color_t;
 
 int _paint_color_size = sizeof(paint_color_t);
@@ -22,22 +21,19 @@ static void paint_color_prepare(paint_t *paint, cairo_t *cr) {
     cairo_set_source_rgba(cr, color->r, color->g, color->b, color->a);
 }
 
-static void paint_color_free(paint_t *paint) {
-    paint_color_t *color = (paint_color_t *)paint;
-
-    shnode_list_free(color->rdman, paint->members);
-    elmpool_elm_free(color->rdman->paint_color_pool, paint);
+static void paint_color_free(redraw_man_t *rdman, paint_t *paint) {
+    shnode_list_free(rdman, paint->members);
+    elmpool_elm_free(rdman->paint_color_pool, paint);
 }
 
-paint_t *paint_color_new(redraw_man_t *rdman,
-			 co_comp_t r, co_comp_t g,
-			 co_comp_t b, co_comp_t a) {
+paint_t *rdman_paint_color_new(redraw_man_t *rdman,
+			       co_comp_t r, co_comp_t g,
+			       co_comp_t b, co_comp_t a) {
     paint_color_t *color;
 
     color = (paint_color_t *)elmpool_elm_alloc(rdman->paint_color_pool);
     if(color == NULL)
 	return NULL;
-    color->rdman = rdman;
     color->r = r;
     color->g = g;
     color->b = b;
@@ -107,7 +103,7 @@ static void paint_linear_prepare(paint_t *paint, cairo_t *cr) {
     cairo_set_source(cr, ptn);
 }
 
-static void paint_linear_free(paint_t *paint) {
+static void paint_linear_free(redraw_man_t *rdman, paint_t *paint) {
     paint_linear_t *linear = (paint_linear_t *)paint;
 
     if(linear->ptn)
@@ -115,8 +111,9 @@ static void paint_linear_free(paint_t *paint) {
     free(paint);
 }
 
-paint_t *paint_linear_new(redraw_man_t *rdman,
-			  co_aix x1, co_aix y1, co_aix x2, co_aix y2) {
+paint_t *rdman_paint_linear_new(redraw_man_t *rdman,
+				co_aix x1, co_aix y1,
+				co_aix x2, co_aix y2) {
     paint_linear_t *linear;
 
     linear = (paint_linear_t *)malloc(sizeof(paint_linear_t));
@@ -196,7 +193,7 @@ static void paint_radial_prepare(paint_t *paint, cairo_t *cr) {
     cairo_set_source(cr, radial->ptn);
 }
 
-static void paint_radial_free(paint_t *paint) {
+static void paint_radial_free(redraw_man_t *rdman, paint_t *paint) {
     paint_radial_t *radial = (paint_radial_t *)paint;
 
     if(radial->ptn)
@@ -204,8 +201,8 @@ static void paint_radial_free(paint_t *paint) {
     free(paint);
 }
 
-paint_t *paint_radial_new(redraw_man_t *rdman,
-			  co_aix cx, co_aix cy, co_aix r) {
+paint_t *rdman_paint_radial_new(redraw_man_t *rdman,
+				co_aix cx, co_aix cy, co_aix r) {
     paint_radial_t *radial;
 
     radial = O_ALLOC(paint_radial_t);
