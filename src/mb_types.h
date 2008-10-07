@@ -58,7 +58,7 @@ struct _geo {
     subject_t *mouse_event;
 };
 #define GEF_DIRTY 0x1
-#define GEF_HIDDEN 0x2
+#define GEF_HIDDEN 0x2		/*!< The geo is hidden. */
 #define GEF_FREE 0x4
 
 extern int is_overlay(area_t *r1, area_t *r2);
@@ -123,11 +123,11 @@ typedef struct _coord {
     subject_t *mouse_event;
 } coord_t;
 #define COF_DIRTY 0x1
-#define COF_HIDDEN 0x2
+#define COF_HIDDEN 0x2	        /*!< A coord is hidden. */
 #define COF_OWN_CANVAS 0x4	/*!< A coord owns a canvas or inherit it
-				 * from an ancestor.
+				 * from an ancestor. 
 				 */
-#define COF_SKIP_TRIVAL 0x8	/*!< Temporary skip descendants
+#define COF_SKIP_TRIVAL 0x8	/*!< temporary skip descendants
 				 * when trivaling.
 				 */
 #define COF_FREE 0x10
@@ -142,7 +142,10 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 extern void preorder_coord_skip_subtree(coord_t *subroot);
 #define preorder_coord_skip_subtree(sub)		\
     do { (sub)->flags |= COF_SKIP_TRIVAL; } while(0)
-#define coord_hide(co) do { co->flags |= COF_HIDDEN; } while(0)
+#define coord_hide(co)		      \
+    do {			      \
+	(co)->flags |= COF_HIDDEN;    \
+    } while(0)
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
 
@@ -173,8 +176,14 @@ struct _shape {
 enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
 
 #define sh_get_mouse_event_subject(sh) ((sh)->geo->mouse_event)
-#define sh_hide(sh) do { (sh)->geo->flags |= GEF_HIDDEN; } while(0)
-#define sh_show(sh) do { (sh)->geo->flags &= ~GEF_HIDDEN; } while(0)
+#define sh_hide(sh)			     \
+    do {				     \
+	(sh)->geo->flags |= GEF_HIDDEN;	     \
+    } while(0)
+#define sh_show(sh)					\
+    do {						\
+	(sh)->geo->flags &= ~GEF_HIDDEN;		\
+    } while(0)
 
 
 #endif /* __MB_TYPES_H_ */

@@ -428,7 +428,8 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
 	if(geo->flags & GEF_FREE)
 	    return ERR;
 
-	geo->flags |= GEF_FREE | GEF_HIDDEN;
+	geo->flags |= GEF_FREE;
+	sh_hide(shape);
 	if(!(geo->flags & GEF_DIRTY)) {
 	    r = add_dirty_geo(rdman, geo);
 	    if(r != OK)
@@ -575,7 +576,8 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
 	    if(!(member->flags & GEF_FREE))
 		return ERR;
 	}
-	coord->flags |= COF_FREE | COF_HIDDEN;
+	coord->flags |= COF_FREE;
+	coord_hide(coord);
 	if(!(coord->flags & COF_DIRTY)) {
 	    r = add_dirty_coord(rdman, coord);
 	    if(r != OK)
@@ -635,7 +637,9 @@ int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree) {
 /*! \brief Mark a coord is changed.
  *
  * A changed coord_t object is marked as dirty and put
- * into dirty_coords list.
+ * into dirty_coords list.  rdman_coord_changed() should be called
+ * for a coord after it been changed to notify redraw manager to
+ * redraw shapes grouped by it.
  */
 int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
     coord_t *child;
@@ -644,6 +648,9 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
 	return OK;
 
     add_dirty_coord(rdman, coord);
+
+    if(coord->flags & COF_HIDDEN)
+	return OK;
 
     /* Make child coords dirty. */
     for(child = preorder_coord_subtree(coord, coord);
@@ -728,9 +735,9 @@ static void clean_shape(shape_t *shape) {
     shape->geo->flags &= ~GEF_DIRTY;
 
     if(is_coord_subtree_hidden(shape->coord))
-	shape->geo->flags |= GEF_HIDDEN;
+	sh_hide(shape);
     else
-	shape->geo->flags &= ~GEF_HIDDEN;
+	sh_show(shape);
 }
 
 /*! \brief Setup canvas for the coord.
@@ -1029,6 +1036,9 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
     cairo_t *canvas;
     int mem_idx;
 
+    if(coord->flags & COF_HIDDEN)
+	return OK;
+
     canvas = coord->canvas;
     member = FIRST_MEMBER(coord);
     mem_idx = 0;
@@ -1045,6 +1055,7 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
 		draw_shape(rdman, canvas, member->shape);
 		dirty = 1;
 	    }
+
 	    member = NEXT_MEMBER(member);
 	    mem_idx++;
 	}
@@ -1119,7 +1130,6 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	draw_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
 	copy_cr_2_backend(rdman, rdman->dirty_areas.num,
 			  rdman->dirty_areas.ds);
-	rdman->dirty_areas.num = 0;
 	reset_clip(rdman);
     }
     rdman->dirty_areas.num = 0;
