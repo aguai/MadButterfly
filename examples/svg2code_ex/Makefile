@@ -1,10 +1,13 @@
 SVG=svg2code_ex.svg
 TOOLSDIR=/usr/local/share/mb
-INCS=-I/usr/local/include
+INCS=-I/usr/local/include -I../../src/mb
 CFLAGS+=`pkg-config --cflags cairo` $(INCS) -Wall
 LDFLAGS=-L/usr/local/lib `pkg-config --libs cairo`
 LIBS=-lmbfly
 BINS=	ex1
+SVG2CODE=	../../tools/svg2code.py
+MB_C_HEADER=    ../../tools/mb_c_header.m4
+MB_C_SOURCE=    ../../tools/mb_c_source.m4
 
 all:	$(BINS)
 
@@ -18,13 +21,13 @@ $(SVG:C/.svg/.o/): $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/)
 	$(CC) -c $(CFLAGS) -o $@ $(SVG:C/.svg/.c/)
 
 $(SVG:C/.svg/.mb/): $(SVG)
-	/usr/local/bin/svg2code.py $(.ALLSRC) $@
+	$(SVG2CODE) $(.ALLSRC) $@
 
 $(SVG:C/.svg/.c/): $(SVG:C/.svg/.mb/)
-	m4 -I $(TOOLSDIR) mb_c_source.m4 $(.ALLSRC) > $@
+	m4 -I $(TOOLSDIR) $(MB_C_SOURCE) $(.ALLSRC) > $@
 
 $(SVG:C/.svg/.h/): $(SVG:C/.svg/.mb/)
-	m4 -I $(TOOLSDIR) mb_c_header.m4 $(.ALLSRC) > $@
+	m4 -I $(TOOLSDIR) $(MB_C_HEADER) $(.ALLSRC) > $@
 
 clean:
 	for i in *.mb *.o *.core *~ $(SVG:C/.svg/.c/) $(SVG:C/.svg/.h/) $(BINS); do \
