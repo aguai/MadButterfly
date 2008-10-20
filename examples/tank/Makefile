@@ -6,10 +6,11 @@ SVGOS = $(SVGS:C/\.svg/.o/)
 MBS =	$(SVGS:C/\.svg/.mb/)
 SVG2CODE=	../../tools/svg2code.py
 MB_C_HEADER=    ../../tools/mb_c_header.m4
+MB_C_SOURCE=    ../../tools/mb_c_source.m4
 M4 =	m4
 M4FLAGS ?=	-I /usr/local/share/mb 
 LDFLAGS +=	
-LIBS +=		-lmbfly -lX11 -L/usr/local/lib `pkg-config --libs cairo`
+LIBS +=		-lmbfly -lX11 -L/usr/local/lib `pkg-config --libs cairo` -L../../src
 CFLAGS +=	-I/usr/local/include `pkg-config --cflags cairo` -I../../src
 BIN = tank
 
@@ -42,7 +43,7 @@ $(SVG:C/\.svg/.h/):	$(SVG:C/\.svg/.mb/)
 	$(M4) $(M4FLAGS) $(MB_C_HEADER) $(.ALLSRC) > $@
 
 $(SVG:C/\.svg/.c/):	$(SVG:C/\.svg/.mb/)
-	$(M4) $(M4FLAGS) $(MB_C_HEADER) $(.ALLSRC) > $@
+	$(M4) $(M4FLAGS) $(MB_C_SOURCE) $(.ALLSRC) > $@
 
 .endfor
 
