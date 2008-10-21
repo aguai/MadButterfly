@@ -4,14 +4,17 @@ SVGHS =	$(SVGS:C/\.svg/.h/)
 SVGCS =	$(SVGS:C/\.svg/.c/)
 SVGOS = $(SVGS:C/\.svg/.o/)
 MBS =	$(SVGS:C/\.svg/.mb/)
-SVG2CODE=	../../tools/svg2code.py
-MB_C_HEADER=    ../../tools/mb_c_header.m4
-MB_C_SOURCE=    ../../tools/mb_c_source.m4
+SVG2CODE=	svg2code.py
+MB_C_HEADER=    mb_c_header.m4
+MB_C_SOURCE=    mb_c_source.m4
 M4 =	m4
-M4FLAGS ?=	-I /usr/local/share/mb 
+M4MACRODIR?=	/usr/local/share/mb
+M4FLAGS ?=	-I $(M4MACRODIR)
 LDFLAGS +=	
-LIBS +=		-lmbfly -lX11 -L/usr/local/lib `pkg-config --libs cairo` -L../../src
-CFLAGS +=	-I/usr/local/include `pkg-config --cflags cairo` -I../../src
+INCDIR?=	/usr/local/include
+LIBDIR?=	/usr/local/lib
+LIBS +=		-lmbfly -lX11 -L$(LIBDIR) `pkg-config --libs cairo` -L../../src
+CFLAGS +=	-I$(INCDIR) `pkg-config --cflags cairo` -I../../src
 BIN = tank
 
 all:	tank
