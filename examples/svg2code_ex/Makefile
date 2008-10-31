@@ -1,13 +1,17 @@
 SVG=svg2code_ex.svg
-TOOLSDIR=/usr/local/share/mb
-INCS=-I/usr/local/include -I../../src/mb
+PREFIX?=/usr/local
+TOOLSDIR?=$(PREFIX)/share/mb
+INCDIR?=$(PREFIX)/include
+LIBDIR?=$(PREFIX)/lib
+BINDIR?=$(PREFIX)/bin
+INCS=-I$(INCDIR)
 CFLAGS+=`pkg-config --cflags cairo` $(INCS) -Wall
-LDFLAGS=-L/usr/local/lib `pkg-config --libs cairo`
+LDFLAGS=-L$(LIBDIR) `pkg-config --libs cairo`
 LIBS=-lmbfly
 BINS=	ex1
-SVG2CODE=	../../tools/svg2code.py
-MB_C_HEADER=    ../../tools/mb_c_header.m4
-MB_C_SOURCE=    ../../tools/mb_c_source.m4
+SVG2CODE=	$(BINDIR)/svg2code.py
+MB_C_HEADER=    $(TOOLSDIR)/mb_c_header.m4
+MB_C_SOURCE=    $(TOOLSDIR)/mb_c_source.m4
 
 all:	$(BINS)
 
