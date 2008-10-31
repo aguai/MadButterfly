@@ -9,6 +9,7 @@
  *
  * Build and Install
  * - cd MadButtfly
+ * - ./configure
  * - make
  * - make install
  *
@@ -24,4 +25,16 @@
  * - cd examples/tank
  * - make
  * - ./tank
+ *
+ * You can make examples with following command,
+ * \code
+ * make PREFIX=/path/to/some/where/
+ * \endcode
+ * if MadButterfly was not installed in default path, with different prefix.
+ *
+ * You can install MadButterfly somewhere, other than /usr/local/.
+ * For example
+ * \code
+ * ./configure --prefix=${PWD}/dest
+ * \endcode
  */
