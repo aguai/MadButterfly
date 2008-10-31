@@ -8,13 +8,14 @@ SVG2CODE=	svg2code.py
 MB_C_HEADER=    mb_c_header.m4
 MB_C_SOURCE=    mb_c_source.m4
 M4 =	m4
-M4MACRODIR?=	/usr/local/share/mb
+PREFIX?=	/usr/local
+M4MACRODIR?=	$(PREFIX)/share/mb
 M4FLAGS ?=	-I $(M4MACRODIR)
 LDFLAGS +=	
-INCDIR?=	/usr/local/include
-LIBDIR?=	/usr/local/lib
-LIBS +=		-lmbfly -lX11 -L$(LIBDIR) `pkg-config --libs cairo` -L../../src
-CFLAGS +=	-I$(INCDIR) `pkg-config --cflags cairo` -I../../src
+INCDIR?=	$(PREFIX)/include
+LIBDIR?=	$(PREFIX)/lib
+LIBS +=		-lmbfly -lX11 -L$(LIBDIR) `pkg-config --libs cairo`
+CFLAGS +=	-I$(INCDIR) `pkg-config --cflags cairo`
 BIN = tank
 
 all:	tank
