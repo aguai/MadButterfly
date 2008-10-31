@@ -34,5 +34,6 @@ AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
 
 AC_CONFIG_FILES([Makefile
                  libmbfly.pc
-                 src/Makefile])
+                 src/Makefile
+                 tools/Makefile])
 AC_OUTPUT
