@@ -1,4 +1,4 @@
-SUBDIRS = src tools
+SUBDIRS = tools src
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libmbfly.pc
 EXTRA_DIST = libmbfly.pc.in
