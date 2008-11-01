@@ -1,1 +1,1 @@
-SUBDIRS = calculator svg2code_ex tank
+SUBDIRS = calculator svg2code_ex
