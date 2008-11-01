@@ -11,7 +11,7 @@ AC_PROG_CC
 AM_PROG_LIBTOOL
 
 # Checks for libraries.
-PKG_CHECK_MODULES([cairo], [cairo >= 1.6.0], , AC_MSG_ERROR([not found]))
+PKG_CHECK_MODULES([cairo], [cairo >= 1.6.4], , AC_MSG_ERROR([not found]))
 
 # Checks for header files.
 AC_PATH_X
