@@ -10,6 +10,7 @@ AM_INIT_AUTOMAKE([foreign])
 # Checks for programs.
 AC_PROG_CC
 LT_INIT
+AC_PROG_LIBTOOL
 
 # Checks for libraries.
 PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
