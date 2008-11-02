@@ -2,16 +2,17 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([MadButterfly], [0.0], [http://www.assembla.com/spaces/MadButterfly])
+AC_INIT([MadButterfly],[0.0],[http://www.assembla.com/spaces/MadButterfly])
+AC_CONFIG_SRCDIR([README.h])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE([foreign])
 
 # Checks for programs.
 AC_PROG_CC
-AM_PROG_LIBTOOL
+LT_INIT
 
 # Checks for libraries.
-PKG_CHECK_MODULES([cairo], [cairo >= 1.6.4], , AC_MSG_ERROR([not found]))
+PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
 
 # Checks for header files.
 AC_PATH_X
