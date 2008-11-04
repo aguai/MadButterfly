@@ -1,3 +1,5 @@
+include $(top_srcdir)/config.mk
+
 noinst_PROGRAMS = ex1
 EXTRA_DIST = svg2code_ex.svg
 

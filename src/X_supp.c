@@ -5,9 +5,9 @@
 #include <X11/Xutil.h>
 #include <cairo.h>
 #include <cairo-xlib.h>
-#include "redraw_man.h"
-#include "mb_timer.h"
-#include "X_supp.h"
+#include "mb/redraw_man.h"
+#include "mb/mb_timer.h"
+#include "mb/X_supp.h"
 
 #define ERR -1
 #define OK 0

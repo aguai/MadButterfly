@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cairo.h>
-#include "mb_types.h"
-#include "redraw_man.h"
-#include "shapes.h"
+#include "mb/mb_types.h"
+#include "mb/redraw_man.h"
+#include "mb/shapes.h"
 
 #define OK 0
 #define ERR -1

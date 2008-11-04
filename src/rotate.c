@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "animate.h"
+#include "mb/animate.h"
 
 static float comp_mb_timeval_ratio(const mb_timeval_t *a,
 				   const mb_timeval_t *b) {

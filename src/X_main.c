@@ -8,11 +8,11 @@
 #include <cairo-xlib.h>
 
 #include <string.h>
-#include "shapes.h"
-#include "redraw_man.h"
-#include "paint.h"
-#include "mb_timer.h"
-#include "animate.h"
+#include "mb/shapes.h"
+#include "mb/redraw_man.h"
+#include "mb/paint.h"
+#include "mb/mb_timer.h"
+#include "mb/animate.h"
 
 #define OK 0
 #define ERR -1
