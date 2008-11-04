@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cairo.h>
-#include "mb_types.h"
-#include "shapes.h"
-#include "tools.h"
-#include "redraw_man.h"
-#include "observer.h"
+#include "mb/mb_types.h"
+#include "mb/shapes.h"
+#include "mb/tools.h"
+#include "mb/redraw_man.h"
+#include "mb/observer.h"
 
 
 /* NOTE: bounding box should also consider width of stroke.
@@ -1402,7 +1402,7 @@ static subject_t *ob_get_parent_subject(ob_factory_t *factory,
 /* Test cases */
 
 #include <CUnit/Basic.h>
-#include "paint.h"
+#include "mb/paint.h"
 
 struct _sh_dummy {
     shape_t shape;

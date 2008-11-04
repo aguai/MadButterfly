@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "animate.h"
+#include "mb/animate.h"
 
 typedef struct _mb_visibility mb_visibility_t;
 

@@ -1,3 +1,5 @@
+include $(top_srcdir)/config.mk
+
 noinst_PROGRAMS = calc
 EXTRA_DIST = calculator_scr.svg
 

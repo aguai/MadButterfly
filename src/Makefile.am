@@ -1,5 +1,4 @@
-includedir = $(prefix)/include/mb
-include_HEADERS = animate.h mb.h mb_timer.h mb_types.h observer.h paint.h redraw_man.h shapes.h tools.h X_supp.h
+include $(top_srcdir)/config.mk
 
 lib_LTLIBRARIES = libmbfly.la
 

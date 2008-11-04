@@ -68,10 +68,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mb_types.h"
-#include "redraw_man.h"
-#include "mb_timer.h"
-#include "animate.h"
+#include "mb/mb_types.h"
+#include "mb/redraw_man.h"
+#include "mb/mb_timer.h"
+#include "mb/animate.h"
 
 
 #define STEP_INTERVAL 90000

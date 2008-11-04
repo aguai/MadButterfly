@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cairo.h>
-#include "paint.h"
+#include "mb/paint.h"
 
 #define ASSERT(x)
 

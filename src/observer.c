@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "redraw_man.h"
-#include "observer.h"
-#include "tools.h"
+#include "mb/redraw_man.h"
+#include "mb/observer.h"
+#include "mb/tools.h"
 
 #ifndef ASSERT
 #define ASSERT(x)
