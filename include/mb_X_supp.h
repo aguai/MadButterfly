@@ -4,7 +4,7 @@
 #include <X11/Xlib.h>
 #include "mb_types.h"
 #include "mb_timer.h"
-#include "redraw_man.h"
+#include "mb_redraw_man.h"
 
 /*! \ingroup xkb
  * @{

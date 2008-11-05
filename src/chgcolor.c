@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mb/animate.h"
-#include "mb/paint.h"
+#include "mb_animate.h"
+#include "mb_paint.h"
 
 static float comp_mb_timeval_ratio(const mb_timeval_t *a,
 				   const mb_timeval_t *b) {

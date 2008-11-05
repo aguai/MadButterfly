@@ -1,8 +1,8 @@
 #include <math.h>
 #include <sys/time.h>
 #include <string.h>
-#include <mb/mb.h>
-#include <mb/tools.h>
+#include <mb.h>
+#include <mb_tools.h>
 #include "svgs.h"
 
 enum { MUD, ROC, BRI, BSH };

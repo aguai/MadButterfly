@@ -1,12 +1,11 @@
-includedir = $(prefix)/include/mb
 include_HEADERS = 	\
-	mb/animate.h 	\
-	mb/mb.h 	\
-	mb/mb_timer.h 	\
-	mb/mb_types.h 	\
-	mb/observer.h	\
-	mb/paint.h	\
-	mb/redraw_man.h	\
-	mb/shapes.h	\
-	mb/tools.h	\
-	mb/X_supp.h
+	mb_animate.h 	\
+	mb.h	 	\
+	mb_timer.h 	\
+	mb_types.h 	\
+	mb_observer.h	\
+	mb_paint.h	\
+	mb_redraw_man.h	\
+	mb_shapes.h	\
+	mb_tools.h	\
+	mb_X_supp.h

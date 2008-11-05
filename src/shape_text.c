@@ -3,8 +3,8 @@
 #include <string.h>
 #include <math.h>
 #include <cairo.h>
-#include "mb/mb_types.h"
-#include "mb/shapes.h"
+#include "mb_types.h"
+#include "mb_shapes.h"
 
 #define ASSERT(x)
 #define OK 0

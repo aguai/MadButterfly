@@ -9,7 +9,7 @@
 
 #include <cairo.h>
 #include "mb_types.h"
-#include "redraw_man.h"
+#include "mb_redraw_man.h"
 
 /*! \page define_shape How to Define Shapes
  *

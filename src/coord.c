@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "mb/mb_types.h"
+#include "mb_types.h"
 
 
 #define ASSERT(x)

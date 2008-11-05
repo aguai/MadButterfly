@@ -2,8 +2,8 @@
 #define __MB_TYPES_H_
 
 #include <cairo.h>
-#include "tools.h"
-#include "observer.h"
+#include "mb_tools.h"
+#include "mb_observer.h"
 
 typedef float co_aix;
 typedef struct _shape shape_t;

@@ -3,8 +3,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <cairo.h>
-#include "mb/mb_types.h"
-#include "mb/redraw_man.h"
+#include "mb_types.h"
+#include "mb_redraw_man.h"
 
 /*! \brief Implement respective objects for SVG path tag.
  *

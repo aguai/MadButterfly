@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
-#include "mb/mb_timer.h"
+#include "mb_timer.h"
 
 
 #ifdef __FreeBSD__
