@@ -3,8 +3,8 @@
 
 #include <cairo.h>
 #include "mb_types.h"
-#include "redraw_man.h"
-#include "tools.h"
+#include "mb_redraw_man.h"
+#include "mb_tools.h"
 
 typedef float co_comp_t;
 

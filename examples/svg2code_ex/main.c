@@ -5,7 +5,7 @@
  *
  */
 #include <stdio.h>
-#include <mb/mb.h>
+#include <mb.h>
 #include "svg2code_ex.h"
 
 typedef struct _ex_rt ex_rt_t;

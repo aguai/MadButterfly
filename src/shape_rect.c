@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mb/mb_types.h"
-#include "mb/shapes.h"
+#include "mb_types.h"
+#include "mb_shapes.h"
 
 typedef struct _sh_rect {
     shape_t shape;

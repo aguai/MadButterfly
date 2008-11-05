@@ -298,10 +298,10 @@ define([MADBUTTERFLY],[dnl
 [#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mb/mb_types.h"
-#include "mb/redraw_man.h"
-#include "mb/shapes.h"
-#include "mb/paint.h"
+#include <mb_types.h>
+#include <mb_redraw_man.h>
+#include <mb_shapes.h>
+#include <mb_paint.h>
 #include "$1.h"
 
 $1_t *$1_new(redraw_man_t *rdman, coord_t *parent_coord) {

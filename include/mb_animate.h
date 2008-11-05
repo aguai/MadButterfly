@@ -3,7 +3,7 @@
 
 #include "mb_types.h"
 #include "mb_timer.h"
-#include "paint.h"
+#include "mb_paint.h"
 
 /*! \page def_action How to Define An Action?
  *

@@ -2,9 +2,9 @@
 #define __REDRAW_MAN_H_
 
 #include <cairo.h>
-#include "tools.h"
+#include "mb_tools.h"
 #include "mb_types.h"
-#include "observer.h"
+#include "mb_observer.h"
 
 typedef struct _redraw_man redraw_man_t;
 
