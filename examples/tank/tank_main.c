@@ -65,6 +65,9 @@ struct _tank {
     int direction;
     mb_progm_t *progm;
     tank_bullet_t *bullet;
+    struct _tank_rt *tank_rt;	/*!< \brief for bullet to check
+				 * hitting on tanks.
+				 */
 };
 typedef struct _tank tank_t;
 enum { TD_UP = 0, TD_RIGHT, TD_DOWN, TD_LEFT };
@@ -94,7 +97,7 @@ struct _tank_rt {
 static tank_t *tank_new(coord_t *coord_pos,
 			coord_t *coord_rot,
 			int map_x, int map_y,
-			X_MB_runtime_t *mb_rt) {
+			tank_rt_t *tank_rt) {
     tank_t *tank;
     redraw_man_t *rdman;
 
@@ -102,7 +105,7 @@ static tank_t *tank_new(coord_t *coord_pos,
     if(tank == NULL)
 	return NULL;
 
-    rdman = X_MB_rdman(mb_rt);
+    rdman = X_MB_rdman(tank_rt->mb_rt);
 
     tank->coord_pos = coord_pos;
     tank->coord_rot = coord_rot;
@@ -111,6 +114,7 @@ static tank_t *tank_new(coord_t *coord_pos,
     tank->direction = TD_UP;
     tank->progm = NULL;
     tank->bullet = NULL;
+    tank->tank_rt = tank_rt;
 
     memset(coord_pos->matrix, 0, sizeof(co_aix[6]));
     coord_pos->matrix[0] = 1;
@@ -317,16 +321,6 @@ static void tank_bullet_free(tank_bullet_t *bullet) {
     rdman_coord_subtree_free(bullet->rdman, bullet->coord_pos);
 }
 
-static void bullet_go_out_map_and_redraw(event_t *event, void *arg) {
-    tank_t *tank = (tank_t *)arg;
-    tank_bullet_t *bullet;
-
-    bullet = tank->bullet;
-    mb_progm_free(bullet->progm);
-    tank_bullet_free(tank->bullet);
-    tank->bullet = NULL;
-}
-
 static void bullet_go_out_map(event_t *event, void *arg) {
     tank_t *tank = (tank_t *)arg;
     tank_bullet_t *bullet;
@@ -341,18 +335,53 @@ static void bullet_go_out_map(event_t *event, void *arg) {
     coord_hide(bullet->coord_pos);
     rdman_coord_changed(rdman, bullet->coord_pos);
     
-    /*! \todo Simplify the procdure of using observer pattern. */
-
-    bullet_go_out_map_and_redraw(NULL, tank);
+    bullet = tank->bullet;
+    mb_progm_free(bullet->progm);
+    tank_bullet_free(tank->bullet);
+    tank->bullet = NULL;
 }
 
 static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
+    redraw_man_t *rdman;
+    mb_tman_t *tman;
+    mb_progm_t *progm;
+    mb_word_t *word;
+    mb_timeval_t start, playing;
+    mb_timeval_t now;
+    bang_t *bang;
+    co_aix *matrix;
+
+    rdman = bullet->rdman;
+    tman = bullet->tman;
+
+    bang = bang_new(rdman, rdman->root_coord);
+    matrix = bang->root_coord->matrix;
+    matrix[2] = map_x * 50;
+    matrix[5] = map_y * 50;
+    rdman_coord_changed(rdman, bang->root_coord);
+
+    progm = mb_progm_new(3, rdman);
+
+    MB_TIMEVAL_SET(&start, 1, 0);
+    MB_TIMEVAL_SET(&playing, 0, 0);
+    word = mb_progm_next_word(progm, &start, &playing);
+    mb_visibility_new(VIS_HIDDEN, bang->root_coord, word);
+
+    MB_TIMEVAL_SET(&start, 1, 500000);
+    word = mb_progm_next_word(progm, &start, &playing);
+    mb_visibility_new(VIS_VISIBLE, bang->root_coord, word);
+
+    /*! \todo Remove bang and program when program stops. */
+    get_now(&now);
+    mb_progm_start(progm, tman, &now);
 }
 
 static void bullet_hit_chk(const mb_timeval_t *tmo,
 			   const mb_timeval_t *now,
 			   void *arg) {
     tank_t *tank = (tank_t *)arg;
+    tank_rt_t *tank_rt = tank->tank_rt;
+    tank_t *tank_hitted;
     tank_bullet_t *bullet;
     mb_timeval_t diff, next;
     mb_timeval_t unit_tm;
@@ -360,9 +389,14 @@ static void bullet_hit_chk(const mb_timeval_t *tmo,
     int move_units;
     int x, y;
     int dir;
+    int i;
     static int move_adj[][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
     bullet = tank->bullet;
+    bullet->hit_tmr = NULL;	/* clear hit timer that bullet_go_out_map()
+				 * can not remove it & currupt memory.
+				 */
+
     MB_TIMEVAL_CP(&diff, now);
     MB_TIMEVAL_DIFF(&diff, &bullet->start_time);
     MB_TIMEVAL_SET(&unit_tm, 0, 250000);
@@ -373,16 +407,52 @@ static void bullet_hit_chk(const mb_timeval_t *tmo,
     y = bullet->start_map_y + move_adj[dir][1] * move_units;
 
     if(map[y][x] != MUD) {
-	bullet->hit_tmr = NULL;
 	mb_progm_abort(bullet->progm);
-	bullet_go_out_map(NULL, arg);
+	bullet_go_out_map(NULL, tank);
 	bullet_bang(bullet, x, y);
-    } else {
-	MB_TIMEVAL_SET(&next, 0, 100000);
-	MB_TIMEVAL_ADD(&next, now);
-	bullet->hit_tmr = mb_tman_timeout(bullet->tman, &next,
-					  bullet_hit_chk, arg);
+	return;
     }
+
+    /*! \todo Move tanks into a list. */
+    for(i = 0; i < tank_rt->n_enemy; i++) {
+	tank_hitted = tank_rt->tank_enemies[i];
+	if(tank_hitted == tank)
+	    continue;
+	if(tank_hitted->map_x == x &&
+	   tank_hitted->map_y == y) {
+	    mb_progm_abort(bullet->progm);
+	    bullet_go_out_map(NULL, tank);
+	    bullet_bang(bullet, x, y);
+	    return;
+	}
+    }
+
+    if(tank_rt->tank1 != tank) {
+	tank_hitted = tank_rt->tank1;
+	if(tank_hitted->map_x == x &&
+	   tank_hitted->map_y == y) {
+	    mb_progm_abort(bullet->progm);
+	    bullet_go_out_map(NULL, tank);
+	    bullet_bang(bullet, x, y);
+	    return;
+	}
+    }
+
+    if(tank_rt->tank2 != tank) {
+	tank_hitted = tank_rt->tank2;
+	if(tank_hitted->map_x == x &&
+	   tank_hitted->map_y == y) {
+	    mb_progm_abort(bullet->progm);
+	    bullet_go_out_map(NULL, tank);
+	    bullet_bang(bullet, x, y);
+	    return;
+	}
+    }
+
+    MB_TIMEVAL_SET(&next, 0, 100000);
+    MB_TIMEVAL_ADD(&next, now);
+    bullet->hit_tmr = mb_tman_timeout(bullet->tman, &next,
+				      bullet_hit_chk, arg);
 }
 
 static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
@@ -450,6 +520,7 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     act = mb_shift_new(shift_x, shift_y, bullet->coord_pos, word);
     bullet->progm = progm;
     
+    /*! \todo Simplify the procdure of using observer pattern. */
     subject = mb_progm_get_complete(progm);
     factory = rdman_get_ob_factory(rdman);
     subject_add_observer(factory, subject, bullet_go_out_map, tank);
@@ -593,19 +664,19 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
 
     make_elf_coords(rdman, &coord_pos, &coord_rot, &coord_center);
     tank1_o = tank1_new(rdman, coord_center);
-    tank_rt->tank1 = tank_new(coord_pos, coord_rot, 5, 11, mb_rt);
+    tank_rt->tank1 = tank_new(coord_pos, coord_rot, 5, 11, tank_rt);
     tank_rt->tank1_o = tank1_o;
 
     make_elf_coords(rdman, &coord_pos, &coord_rot, &coord_center);
     tank2_o = tank2_new(rdman, coord_center);
-    tank_rt->tank2 = tank_new(coord_pos, coord_rot, 10, 11, mb_rt);
+    tank_rt->tank2 = tank_new(coord_pos, coord_rot, 10, 11, tank_rt);
     tank_rt->tank2_o = tank2_o;
 
     for(i = 0; i < 3; i++) {
 	make_elf_coords(rdman, &coord_pos, &coord_rot, &coord_center);
 	tank_en_o = tank_en_new(rdman, coord_center);
 	tank_rt->tank_enemies[i] = tank_new(coord_pos, coord_rot,
-					    i * 3 + 3, 0, mb_rt);
+					    i * 3 + 3, 0, tank_rt);
 	tank_rt->tank_enemies_o[i] = tank_en_o;
 	tank_rt->tanks[i] = tank_rt->tank_enemies[i];
     }
