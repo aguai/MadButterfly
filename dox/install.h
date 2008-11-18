@@ -1,7 +1,10 @@
 /*! \page install How to Build and Install MadButterfly?
  *
  * Prerequisite
- * - install pmake (pmake is make of FreeBSD)
+ * - autotools
+ *  - autoconf
+ *  - automake
+ *  - libtools
  * - install Cairo
  *
  * Get source
@@ -9,6 +12,7 @@
  *
  * Build and Install
  * - cd MadButtfly
+ * - ./autogen.sh
  * - ./configure
  * - make
  * - make install
