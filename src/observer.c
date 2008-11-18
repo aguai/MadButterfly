@@ -19,13 +19,16 @@ subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
     subject->flags = 0;
     STAILQ_INIT(subject->observers);
 
+    subject->factory = factory;
+
     return subject;
 }
 
 /*!
  * \todo Keep ob_factory following subject objects.
  */
-void subject_free(ob_factory_t *factory, subject_t *subject) {
+void subject_free(subject_t *subject) {
+    ob_factory_t *factory = subject->factory;
     observer_t *observer;
 
     ASSERT(!(subject->flags & SUBF_FREE));
@@ -45,7 +48,8 @@ void subject_free(ob_factory_t *factory, subject_t *subject) {
 }
 
 
-void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
+void subject_notify(subject_t *subject, event_t *evt) {
+    ob_factory_t *factory = subject->factory;
     observer_t *observer;
 
     evt->tgt = subject;
@@ -66,7 +70,7 @@ void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
 
 	subject->flags &= ~SUBF_BUSY;
 	if(subject->flags & SUBF_FREE)
-	    subject_free(factory, subject);
+	    subject_free(subject);
 
 	if(subject->flags & SUBF_STOP_PROPAGATE)
 	    break;
@@ -76,9 +80,9 @@ void subject_notify(ob_factory_t *factory, subject_t *subject, event_t *evt) {
 
 }
 
-observer_t *subject_add_observer(ob_factory_t *factory,
-				 subject_t *subject,
+observer_t *subject_add_observer(subject_t *subject,
 				 evt_handler hdr, void *arg) {
+    ob_factory_t *factory = subject->factory;
     observer_t *observer;
 
     observer = factory->observer_alloc(factory);
@@ -92,9 +96,10 @@ observer_t *subject_add_observer(ob_factory_t *factory,
     return observer;
 }
 
-void subject_remove_observer(ob_factory_t *factory,
-			     subject_t *subject,
+void subject_remove_observer(subject_t *subject,
 			     observer_t *observer) {
+    ob_factory_t *factory = subject->factory;
+
     STAILQ_REMOVE(subject->observers, observer_t, next, observer);
     factory->observer_free(factory, observer);
 }
@@ -154,20 +159,18 @@ void test_observer(void) {
 
     subject = subject_new(&test_factory, NULL, 0);
     subject->flags |= SUBF_STOP_PROPAGATE;
-    observer[0] = subject_add_observer(&test_factory, subject,
-				       handler, &cnt);
-    observer[1] = subject_add_observer(&test_factory, subject,
-				       handler, &cnt);
+    observer[0] = subject_add_observer(subject, handler, &cnt);
+    observer[1] = subject_add_observer(subject, handler, &cnt);
 
     evt.type = EVT_MOUSE_OUT;
     evt.tgt = NULL;
     evt.cur_tgt = NULL;
-    subject_notify(&test_factory, subject, &evt);
+    subject_notify(subject, &evt);
     CU_ASSERT(cnt == 2);
 
-    subject_remove_observer(&test_factory, subject, observer[0]);
-    subject_remove_observer(&test_factory, subject, observer[1]);
-    subject_free(&test_factory, subject);
+    subject_remove_observer(subject, observer[0]);
+    subject_remove_observer(subject, observer[1]);
+    subject_free(subject);
 }
 
 CU_pSuite get_observer_suite(void) {

@@ -445,7 +445,7 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
 	geo_detach_coord(geo, shape->coord);
 	sh_detach_coord(shape);
 	sh_detach_geo(shape);
-	subject_free(&rdman->ob_factory, geo->mouse_event);
+	subject_free(geo->mouse_event);
 	elmpool_elm_free(rdman->geo_pool, geo);
     }
     STAILQ_REMOVE(rdman->shapes, shape_t, sh_next, shape);
@@ -547,60 +547,66 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
     return coord;
 }
 
+static int rdman_coord_free_postponse(redraw_man_t *rdman, coord_t *coord) {
+    int r;
+
+    if(coord->flags & COF_FREE)
+	return ERR;
+    
+    coord->flags |= COF_FREE;
+    coord_hide(coord);
+    if(!(coord->flags & COF_DIRTY)) {
+	r = add_dirty_coord(rdman, coord);
+	if(r != OK)
+	    return ERR;
+    }
+    r = add_free_obj(rdman, coord, (free_func_t)rdman_coord_free);
+    if(r != OK)
+	return ERR;
+    return OK;
+}
+
 /*! \brief Free a coord of a redraw_man_t object.
+ *
+ * All children and members should be freed before parent being freed.
  *
  * \param coord is a coord_t without children and members.
  * \return 0 for successful, -1 for error.
  *
- * \note Removing coords when the rdman is dirty, the removing is postponsed.
+ * \note Free is postponsed if the coord is dirty or it has children
+ *	or members postponsed for free.
  */
 int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     coord_t *parent;
     coord_t *child;
     geo_t *member;
-    int r;
+    int cm_cnt;			/* children & members counter */
 
     parent = coord->parent;
     if(parent == NULL)
 	return ERR;
 
-    if(rdman_is_dirty(rdman)) {
-	if(coord->flags & COF_FREE)
+    cm_cnt = 0;
+    FORCHILDREN(coord, child) {
+	cm_cnt++;
+	if(!(child->flags & COF_FREE))
 	    return ERR;
-
-	FORCHILDREN(coord, child) {
-	    if(!(child->flags & COF_FREE))
-		return ERR;
-	}
-	FORMEMBERS(coord, member) {
-	    if(!(member->flags & GEF_FREE))
-		return ERR;
-	}
-	coord->flags |= COF_FREE;
-	coord_hide(coord);
-	if(!(coord->flags & COF_DIRTY)) {
-	    r = add_dirty_coord(rdman, coord);
-	    if(r != OK)
-		return ERR;
-	}
-	r = add_free_obj(rdman, coord, (free_func_t)rdman_coord_free);
-	if(r != OK)
-	    return ERR;
-	return OK;
     }
-
-    if(FIRST_MEMBER(coord) != NULL)
-	return ERR;
-
-    if(FIRST_CHILD(coord) != NULL)
-	return ERR;
+    FORMEMBERS(coord, member) {
+	cm_cnt++;
+	if(!(member->flags & GEF_FREE))
+	    return ERR;
+    }
+    
+    if(cm_cnt || rdman_is_dirty(rdman))
+	return rdman_coord_free_postponse(rdman, coord);
 
     /* Free canvas (\ref redraw) */
     if(coord->flags & COF_OWN_CANVAS)
 	free_canvas(coord->canvas);
 
     RM_CHILD(parent, coord);
-    subject_free(&rdman->ob_factory, coord->mouse_event);
+    subject_free(coord->mouse_event);
     elmpool_elm_free(rdman->coord_pool, coord);
     rdman->n_coords--;
 
@@ -1118,7 +1124,6 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     int n_dirty_areas;
     area_t **dirty_areas;
     event_t event;
-    ob_factory_t *factory;
     subject_t *redraw;
 
     r = clean_rdman_dirties(rdman);
@@ -1142,11 +1147,10 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     /* Free postponsed removing */
     free_free_objs(rdman);
 
-    factory = rdman_get_ob_factory(rdman);
     redraw = rdman_get_redraw_subject(rdman);
     event.type = EVT_RDMAN_REDRAW;
     event.tgt = event.cur_tgt = redraw;
-    subject_notify(factory, redraw, &event);
+    subject_notify(redraw, &event);
 
     return OK;
 }

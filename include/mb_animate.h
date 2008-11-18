@@ -44,6 +44,7 @@ extern void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 			   mb_timeval_t *now);
 extern void mb_progm_abort(mb_progm_t *progm);
 extern subject_t *mb_progm_get_complete(mb_progm_t *progm);
+extern void mb_progm_free_completed(mb_progm_t *progm);
 
 /*! \defgroup ani_actions Animation Actions
  * @{

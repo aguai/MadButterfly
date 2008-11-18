@@ -80,13 +80,14 @@ static int X_kb_init(X_kb_info_t *kbinfo, Display *display,
     kbinfo->kbevents = subject_new(factory, kbinfo, OBJT_KB);
     if(kbinfo->kbevents == NULL)
 	return ERR;
+    /*! \todo Make sure ob_factory is still need. */
     kbinfo->ob_factory = factory;
 
     return OK;
 }
 
 static void X_kb_destroy(X_kb_info_t *kbinfo) {
-    subject_free(kbinfo->ob_factory, kbinfo->kbevents);
+    subject_free(kbinfo->kbevents);
     XFree(kbinfo->syms);
 }
 
@@ -107,7 +108,7 @@ static void X_kb_handle_event(X_kb_info_t *kbinfo, XKeyEvent *xkey) {
     event.keycode = code;
     event.sym = sym;
 
-    subject_notify(kbinfo->ob_factory, kbinfo->kbevents, &event.event);
+    subject_notify(kbinfo->kbevents, &event.event);
 }
 
 /* @} */
@@ -151,7 +152,6 @@ static void notify_shapes(redraw_man_t *rdman,
 			  unsigned int button) {
     mouse_event_t mouse_event;
     subject_t *subject;
-    ob_factory_t *factory;
 
     mouse_event.event.type = etype;
     mouse_event.x = x;
@@ -160,9 +160,8 @@ static void notify_shapes(redraw_man_t *rdman,
     mouse_event.button = button;
     
     subject = sh_get_mouse_event_subject(shape);
-    factory = rdman_get_ob_factory(rdman);
     
-    subject_notify(factory, subject, (event_t *)&mouse_event);
+    subject_notify(subject, (event_t *)&mouse_event);
 }
 
 /*! \brief Dispatch all X events in the queue.
