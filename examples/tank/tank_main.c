@@ -5,8 +5,13 @@
 #include <mb_tools.h>
 #include "svgs.h"
 
+/*! \defgroup tank Example Tank
+ * @{
+ */
+/*! \brief Tile types in a map. */
 enum { MUD, ROC, BRI, BSH };
 
+/*! \brief Map of the game. */
 static char map[12][16] = {
     { MUD, MUD, MUD, MUD, MUD, MUD, MUD, MUD,
       MUD, MUD, MUD, MUD, MUD, MUD, MUD, MUD},
@@ -36,10 +41,13 @@ static char map[12][16] = {
 
 #define MAP_W 16
 #define MAP_H 12
+/* @} */
 
-/*! \defgroup tank_elf Tank Elf
- * \brief Tank elf module provides control functions of tanks in game.
+/*! \defgroup bullet_elf Bullet Elf
+ * \ingroup tank
  * @{
+ */
+/*! \brief Information about bullet elf
  */
 struct _tank_bullet {
     redraw_man_t *rdman;
@@ -55,8 +63,17 @@ struct _tank_bullet {
     mb_tman_t *tman;
 };
 typedef struct _tank_bullet tank_bullet_t;
+/*! \brief The direction a bullet is going.
+ */
 enum { BU_UP = 0, BU_RIGHT, BU_DOWN, BU_LEFT };
+/* @} */
 
+/*! \defgroup tank_elf Tank Elf
+ * \brief Tank elf module provides control functions of tanks in game.
+ * \ingroup tank
+ * @{
+ */
+/*! \brief Information about a tank elf. */
 struct _tank {
     coord_t *coord_pos;		/*!< \brief coordinate for position */
     coord_t *coord_rot;		/*!< \brief coordinate for rotation */
@@ -76,6 +93,8 @@ enum { TD_UP = 0, TD_RIGHT, TD_DOWN, TD_LEFT };
 
 typedef struct _tank_rt tank_rt_t;
 
+/*! \brief Runtime information for tank, this game/example.
+ */
 struct _tank_rt {
     tank_t *tank1;
     tank1_t *tank1_o;
@@ -256,6 +275,9 @@ static void tank_move(tank_t *tank, int direction,
 
 /* @} */
 
+/*! \ingroup bullet_elf
+ * @{
+ */
 /*! \brief Make coord objects for bullet elfs. */
 static void make_bullet_elf_coords(redraw_man_t *rdman, coord_t **coord_pos,
 				   coord_t **coord_rot,
@@ -376,6 +398,7 @@ static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
     mb_progm_start(progm, tman, &now);
 }
 
+/*! \brief To check if a bullet hits walls or tanks. */
 static void bullet_hit_chk(const mb_timeval_t *tmo,
 			   const mb_timeval_t *now,
 			   void *arg) {
@@ -455,6 +478,7 @@ static void bullet_hit_chk(const mb_timeval_t *tmo,
 				      bullet_hit_chk, arg);
 }
 
+/*! \brief To fire a bullet for a tank. */
 static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     X_MB_runtime_t *xmb_rt;
     redraw_man_t *rdman;
@@ -534,6 +558,11 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     bullet->hit_tmr = mb_tman_timeout(tman, &next, bullet_hit_chk, tank);
 }
 
+/* @} */
+
+/*! \ingroup tank
+ * @{
+ */
 #define CHANGE_POS(g, x, y) do {			\
 	(g)->root_coord->matrix[0] = 1.0;		\
 	(g)->root_coord->matrix[2] = x;			\
@@ -597,7 +626,12 @@ static void init_keyboard(tank_rt_t *tank_rt) {
 	subject_add_observer(factory, kbevents, keyboard_handler, tank_rt);
 }
 
-/*! \brief Make coord objects for elfs (tanks). */
+/*! \brief Make coord objects to decorate elfs (tanks).
+ *
+ * These coords are used to shift (move) and rotate decorated graphic.
+ * The coords can easy work of programmer to manipulate geometry of
+ * decorated graphic.
+ */
 static void make_elf_coords(redraw_man_t *rdman, coord_t **coord_pos,
 			    coord_t **coord_rot, coord_t **coord_center) {
     coord_t *coord_back;
@@ -702,3 +736,5 @@ main(int argc, char *const argv[]) {
 
     X_MB_free(rt);
 }
+
+/* @} */
