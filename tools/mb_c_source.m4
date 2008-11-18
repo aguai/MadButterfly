@@ -86,12 +86,18 @@ define([S_REF_STOPS_LINEAR],[dnl
 
 define([S_ADD_RECT],[[
     obj->$1 = rdman_shape_rect_new(rdman, $2, $3, $4, $5, $6, $7);
+
     rdman_add_shape(rdman, obj->$1, obj->$8);
 ]])
 
 define([S_ADD_PATH],[[
-    obj->$1 = rdman_shape_path_new(rdman, "$2");
-    rdman_add_shape(rdman, obj->$1, obj->$3);
+    {
+        char _cmds[] = "$3";
+        float _args[] = {$4};
+        int _fix_args[] = {$6};
+        obj->$1 = rdman_shape_path_new_from_binary(rdman, _cmds,_args,$5,_fix_args,$7);
+        rdman_add_shape(rdman, obj->$1, obj->$2);
+    }
 ]])
 
 define([S_ADD_COORD],[[
