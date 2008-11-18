@@ -20,7 +20,7 @@ struct _redraw_man;
  * the paint.
  *
  * \todo move member functions to a seperate structure and setup a
- * singleton fro each paint type.
+ * singleton for each paint type.
  */
 struct _paint {
     int flags;
@@ -117,8 +117,6 @@ typedef struct _coord {
 
     int num_members;
     STAILQ(geo_t) members;	/*!< \brief All geo_t members in this coord. */
-
-    STAILQ(shape_t) shapes;	/*!< \brief All shapes managed by the rdman. */
 
     subject_t *mouse_event;
 } coord_t;

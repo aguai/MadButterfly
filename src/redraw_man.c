@@ -649,8 +649,10 @@ int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord) {
 
     add_dirty_coord(rdman, coord);
 
+#if 0
     if(coord->flags & COF_HIDDEN)
 	return OK;
+#endif
 
     /* Make child coords dirty. */
     for(child = preorder_coord_subtree(coord, coord);
@@ -912,6 +914,9 @@ static void stroke_path(redraw_man_t *rdman) {
 static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
     paint_t *fill, *stroke;
 
+    /*! \todo Move operator of shapes into singleton structures that define
+     *	operators for them.
+     */
     if(shape->fill || shape->stroke) {
 	switch(shape->sh_type) {
 	case SHT_PATH:
