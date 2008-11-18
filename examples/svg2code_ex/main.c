@@ -48,7 +48,6 @@ int main(int argc, char * const argv[]) {
     X_MB_runtime_t *rt;
     redraw_man_t *rdman;
     svg2code_ex_t *svg2code;
-    ob_factory_t *factory;
     subject_t *subject;
     ex_rt_t ex_rt;
 
@@ -64,18 +63,14 @@ int main(int argc, char * const argv[]) {
     svg2code = svg2code_ex_new(rdman, rdman->root_coord);
 
     /*
-     * Get observer factory
-     */
-    factory = rdman_get_ob_factory(rdman);
-    /*
      * Register observers to subjects of events for objects.
      */
     subject = coord_get_mouse_event(svg2code->file_button);
     ex_rt.rt = rt;
     ex_rt.code = svg2code;
-    subject_add_observer(factory, subject, file_button_handler, &ex_rt);
+    subject_add_observer(subject, file_button_handler, &ex_rt);
     subject = coord_get_mouse_event(svg2code->file_menu);
-    subject_add_observer(factory, subject, file_menu_handler, &ex_rt);
+    subject_add_observer(subject, file_menu_handler, &ex_rt);
 
     /*
      * Start handle connections, includes one to X server.

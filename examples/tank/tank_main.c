@@ -266,8 +266,7 @@ static void tank_move(tank_t *tank, int direction,
 
     /* Clean program when it is completed. */
     comp_sub = mb_progm_get_complete(progm);
-    subject_add_observer(factory, comp_sub,
-			 clean_tank_progm_handler, tank);
+    subject_add_observer(comp_sub, clean_tank_progm_handler, tank);
 
     get_now(&now);
     mb_progm_start(progm, tman, &now);
@@ -492,7 +491,6 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     mb_action_t *act;
     mb_timeval_t start, playing;
     mb_timeval_t now, next;
-    ob_factory_t *factory;
     mb_tman_t *tman;
     subject_t *subject;
     static int map_xy_adj[][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
@@ -546,8 +544,7 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     
     /*! \todo Simplify the procdure of using observer pattern. */
     subject = mb_progm_get_complete(progm);
-    factory = rdman_get_ob_factory(rdman);
-    subject_add_observer(factory, subject, bullet_go_out_map, tank);
+    subject_add_observer(subject, bullet_go_out_map, tank);
 
     get_now(&now);
     MB_TIMEVAL_CP(&bullet->start_time, &now);
@@ -614,16 +611,14 @@ static void init_keyboard(tank_rt_t *tank_rt) {
     X_MB_runtime_t *mb_rt;
     subject_t *kbevents;
     redraw_man_t *rdman;
-    ob_factory_t *factory;
 
     mb_rt = tank_rt->mb_rt;
     kbevents = X_MB_kbevents(mb_rt);
 
     rdman = X_MB_rdman(mb_rt);
-    factory = rdman_get_ob_factory(rdman);
 
     tank_rt->kb_observer =
-	subject_add_observer(factory, kbevents, keyboard_handler, tank_rt);
+	subject_add_observer(kbevents, keyboard_handler, tank_rt);
 }
 
 /*! \brief Make coord objects to decorate elfs (tanks).

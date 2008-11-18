@@ -140,9 +140,6 @@ void mb_progm_free(mb_progm_t *progm) {
     int n_words;
     mb_word_t *word;
     mb_action_t *cur_act;
-#ifndef UNITTEST
-    ob_factory_t *factory;
-#endif /* UNITTEST */
     int i;
 
     n_words = progm->n_words;
@@ -157,8 +154,7 @@ void mb_progm_free(mb_progm_t *progm) {
     }
 
 #ifndef UNITTEST
-    factory = rdman_get_ob_factory(progm->rdman);
-    subject_free(factory, progm->complete);
+    subject_free(progm->complete);
 #endif /* UNITTEST */
 
     free(progm);
@@ -238,7 +234,6 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 #ifndef UNITTEST
     /*! \todo Leverage aspective programming to prevent problem of unittest.
      */
-    ob_factory_t *factory;
     mb_progm_complete_t comp_evt;
 #endif /* UNITTEST */
     mb_timeval_t next_tmo;
@@ -294,11 +289,10 @@ static void mb_progm_step(const mb_timeval_t *tmo,
     } else {
 	/* Make program to complete. */
 #ifndef UNITTEST
-	factory = rdman_get_ob_factory(progm->rdman);
 	comp_evt.event.type = EVT_PROGM_COMPLETE;
 	comp_evt.event.tgt = comp_evt.event.cur_tgt = progm->complete;
 	comp_evt.progm = progm;
-	subject_notify(factory, progm->complete, &comp_evt.event);
+	subject_notify(progm->complete, &comp_evt.event);
 #endif /* UNITTEST */
 	progm->cur_timer = NULL;
     }
@@ -350,6 +344,20 @@ void mb_progm_abort(mb_progm_t *progm) {
  */
 subject_t *mb_progm_get_complete(mb_progm_t *progm) {
     return progm->complete;
+}
+
+static void _free_completed_hdlr(event_t *event, void *arg) {
+    mb_progm_t *progm = (mb_progm_t *)arg;
+
+    mb_progm_free(progm);
+}
+
+/*! \brief The program should be freed after completed. */
+void mb_progm_free_completed(mb_progm_t *progm) {
+    subject_t *complete;
+
+    complete = mb_progm_get_complete(progm);
+    subject_add_observer(complete, _free_completed_hdlr, progm);
 }
 
 #ifdef UNITTEST

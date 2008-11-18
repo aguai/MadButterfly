@@ -35,6 +35,7 @@ struct _subject {
     int obj_type;		/*!< \brief type of object (a.k.a. OBJT_*). */
     void *obj;			/*!< \brief the object this subject for. */
     int flags;
+    ob_factory_t *factory;
     STAILQ(observer_t) observers;
 };
 /*! \brief Flag that make a subject to propagate events to parents. */
@@ -77,14 +78,11 @@ enum {EVT_MOUSE_OVER, EVT_MOUSE_OUT, EVT_MOUSE_MOVE,
 
 extern subject_t *subject_new(ob_factory_t *factory,
 			      void *obj, int obj_type);
-extern void subject_free(ob_factory_t *factory, subject_t *subject);
-extern void subject_notify(ob_factory_t *factory,
-			   subject_t *subject, event_t *evt);
-extern observer_t *subject_add_observer(ob_factory_t *factory,
-					subject_t *subject,
+extern void subject_free(subject_t *subject);
+extern void subject_notify(subject_t *subject, event_t *evt);
+extern observer_t *subject_add_observer(subject_t *subject,
 					evt_handler hdr, void *arg);
-extern void subject_remove_observer(ob_factory_t *factory,
-				    subject_t *subject,
+extern void subject_remove_observer(subject_t *subject,
 				    observer_t *observer);
 
 

@@ -151,22 +151,18 @@ static void buttons_handler(event_t *evt, void *arg) {
 
 static void setup_observers(calc_data_t *calc_data) {
     calculator_scr_t *calculator_scr;
-    ob_factory_t *factory;
     subject_t *subject;
     coord_t *coord;
-    redraw_man_t *rdman;
     int off;
     int i;
 
     calculator_scr = calc_data->code;
-    rdman = X_MB_rdman(calc_data->rt);
-    factory = rdman_get_ob_factory(rdman);
 
     for(i = 0; i < 16; i++) {
 	off = tgt_list[i].off;
 	coord = OFF2TYPE(calculator_scr, off, coord_t *);
 	subject = coord_get_mouse_event(coord);
-	subject_add_observer(factory, subject, buttons_handler, calc_data);
+	subject_add_observer(subject, buttons_handler, calc_data);
     }
 }
 
