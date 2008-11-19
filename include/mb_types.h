@@ -1,0 +1,187 @@
+#ifndef __MB_TYPES_H_
+#define __MB_TYPES_H_
+
+#include <cairo.h>
+#include "mb_tools.h"
+#include "mb_observer.h"
+
+typedef float co_aix;
+typedef struct _shape shape_t;
+typedef struct _geo geo_t;
+typedef struct _area area_t;
+typedef struct _shnode shnode_t;
+typedef struct _paint paint_t;
+
+struct _redraw_man;
+
+/*! \brief Base of paint types.
+ *
+ * Paints should be freed by users by calling rdman_paint_free() of
+ * the paint.
+ *
+ * \todo move member functions to a seperate structure and setup a
+ * singleton for each paint type.
+ */
+struct _paint {
+    int flags;
+    void (*prepare)(paint_t *paint, cairo_t *cr);
+    void (*free)(struct _redraw_man *rdman, paint_t *paint);
+    STAILQ(shnode_t) members;
+    paint_t *pnt_next;		/*!< \brief Collect all paints of a rdman. */
+};
+
+#define PNTF_FREE 0x1
+
+struct _shnode {
+    shape_t *shape;
+    shnode_t *next;
+};
+
+struct _area {
+    co_aix x, y;
+    co_aix w, h;
+};
+
+/*! \brief Geometry data of a shape or a group of shape.
+ */
+struct _geo {
+#ifdef GEO_ORDER
+    unsigned int order;
+#endif
+    unsigned int flags;
+    shape_t *shape;
+    geo_t *coord_next;		/*!< \brief Link all member geos together. */
+
+    area_t *cur_area, *last_area;
+    area_t areas[2];
+
+    subject_t *mouse_event;
+};
+#define GEF_DIRTY 0x1
+#define GEF_HIDDEN 0x2		/*!< The geo is hidden. */
+#define GEF_FREE 0x4
+
+extern int is_overlay(area_t *r1, area_t *r2);
+extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
+extern void geo_init(geo_t *g);
+extern void geo_from_positions(geo_t *g, int n_pos, co_aix pos[][2]);
+extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
+			     int *n_overlays, geo_t **overlays);
+#define geo_get_shape(g) ((g)->shape)
+#define geo_set_shape(g, sh) do {(g)->shape = sh;} while(0)
+#define _geo_is_in(a, s, w) ((a) >= (s) && (a) < ((s) + (w)))
+#define geo_pos_is_in(g, _x, _y)				\
+    (_geo_is_in(_x, (g)->cur_area->x, (g)->cur_area->w) &&	\
+     _geo_is_in(_y, (g)->cur_area->y, (g)->cur_area->h))
+
+
+/*! \brief A coordination system.
+ *
+ * It have a transform function defined by matrix to transform
+ * coordination from source space to target space.
+ * Source space is where the contained is drawed, and target space
+ * is where the coordination of parent container of the element
+ * represented by this coord object.
+ *
+ * \dot
+ * digraph G {
+ * graph [rankdir=LR];
+ * root -> child00 -> child10 -> child20 [label="children" color="blue"];
+ * child00 -> child01 -> child02 [label="sibling"];
+ * child10 -> child11 [label="sibling"];
+ * }
+ * \enddot
+ */
+typedef struct _coord {
+    unsigned int order;
+    unsigned int flags;
+    co_aix opacity;
+    /*! Own one or inherit from an ancestor.
+     * Setup it when clean coords.
+     * \sa
+     * - \ref COF_OWN_CANVAS
+     * - \ref redraw
+     */
+    cairo_t *canvas;
+    area_t *cur_area, *last_area;
+    area_t areas[2];
+
+    co_aix matrix[6];
+    co_aix aggr_matrix[6];
+
+    struct _coord *parent;
+    STAILQ(struct _coord) children;
+    struct _coord *sibling;
+    unsigned int before_pmem;	/*!< \brief The coord is before nth member
+				 * of parent. */
+
+    int num_members;
+    STAILQ(geo_t) members;	/*!< \brief All geo_t members in this coord. */
+
+    subject_t *mouse_event;
+} coord_t;
+#define COF_DIRTY 0x1
+#define COF_HIDDEN 0x2	        /*!< A coord is hidden. */
+#define COF_OWN_CANVAS 0x4	/*!< A coord owns a canvas or inherit it
+				 * from an ancestor. 
+				 */
+#define COF_SKIP_TRIVAL 0x8	/*!< temporary skip descendants
+				 * when trivaling.
+				 */
+#define COF_FREE 0x10
+
+extern void coord_init(coord_t *co, coord_t *parent);
+extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
+extern co_aix coord_trans_size(coord_t *co, co_aix size);
+extern void compute_aggr_of_coord(coord_t *coord);
+extern void update_aggr_matrix(coord_t *start);
+extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
+extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
+extern void preorder_coord_skip_subtree(coord_t *subroot);
+#define preorder_coord_skip_subtree(sub)		\
+    do { (sub)->flags |= COF_SKIP_TRIVAL; } while(0)
+#define coord_hide(co)		      \
+    do {			      \
+	(co)->flags |= COF_HIDDEN;    \
+    } while(0)
+#define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
+#define coord_get_mouse_event(coord) ((coord)->mouse_event)
+
+
+/*! \brief A grahpic shape.
+ *
+ * \dot
+ * digraph G {
+ * "shape" -> "coord";
+ * "shape" -> "geo";
+ * "geo" -> "shape";
+ * "coord" -> "shape" [label="members"]
+ * "shape" -> "shape" [label="sibling"];
+ * }
+ * \enddot
+ */
+struct _shape {
+    int sh_type;
+    geo_t *geo;
+    coord_t *coord;
+    paint_t *fill, *stroke;
+    co_aix stroke_width;
+    int stroke_linecap:2;
+    int stroke_linejoin:2;
+    struct _shape *sh_next;	/*!< Link all shapes of a rdman together. */
+    void (*free)(shape_t *shape);
+};
+enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
+
+#define sh_get_mouse_event_subject(sh) ((sh)->geo->mouse_event)
+#define sh_hide(sh)			     \
+    do {				     \
+	(sh)->geo->flags |= GEF_HIDDEN;	     \
+    } while(0)
+#define sh_show(sh)					\
+    do {						\
+	(sh)->geo->flags &= ~GEF_HIDDEN;		\
+    } while(0)
+
+
+#endif /* __MB_TYPES_H_ */
