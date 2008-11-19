@@ -392,7 +392,16 @@ static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
     word = mb_progm_next_word(progm, &start, &playing);
     mb_visibility_new(VIS_VISIBLE, bang->root_coord, word);
 
-    /*! \todo Remove bang and program when program stops. */
+    MB_TIMEVAL_SET(&start, 2, 500000);
+    word = mb_progm_next_word(progm, &start, &playing);
+    mb_visibility_new(VIS_HIDDEN, bang->root_coord, word);
+
+    mb_progm_free_completed(progm);
+
+    /*! \todo Remove bang when program is completed.
+     * The graphics are not removed from rdman after progm is completed, now.
+     * They should be freed to release resources.
+     */
     get_now(&now);
     mb_progm_start(progm, tman, &now);
 }
