@@ -613,6 +613,24 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     return OK;
 }
 
+static _rdman_coord_free_members(redraw_man_t *rdman, coord_t *coord) {
+    geo_t *member;
+    shape_t *shape;
+    int r;
+
+    FORMEMBERS(coord, member) {
+	shape = geo_get_shape(member);
+	r = rdman_shape_free(rdman, shape);
+	if(r != OK)
+	    return ERR;
+    }
+    return OK;
+}
+
+/*! \brief Free descendant coords and shapes of a coord.
+ *
+ * The specified coord is also freed.
+ */
 int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree) {
     coord_t *coord, *prev_coord;
     int r;
@@ -625,6 +643,10 @@ int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree) {
 	coord != NULL;
 	coord = postorder_coord_subtree(subtree, coord)) {
 	if(!(prev_coord->flags & COF_FREE)) {
+	    r = _rdman_coord_free_members(rdman, prev_coord);
+	    if(r != OK)
+		return ERR;
+
 	    r = rdman_coord_free(rdman, prev_coord);
 	    if(r != OK)
 		return ERR;
@@ -632,6 +654,10 @@ int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree) {
 	prev_coord = coord;
     }
     if(!(prev_coord->flags & COF_FREE)) {
+	r = _rdman_coord_free_members(rdman, prev_coord);
+	if(r != OK)
+	    return ERR;
+
 	r = rdman_coord_free(rdman, prev_coord);
 	if(r != OK)
 	    return ERR;

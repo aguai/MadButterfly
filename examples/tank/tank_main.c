@@ -396,6 +396,8 @@ static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
     word = mb_progm_next_word(progm, &start, &playing);
     mb_visibility_new(VIS_HIDDEN, bang->root_coord, word);
 
+    mb_subtree_free_new(bang->root_coord, word);
+
     mb_progm_free_completed(progm);
 
     /*! \todo Remove bang when program is completed.

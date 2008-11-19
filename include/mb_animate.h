@@ -56,6 +56,8 @@ extern mb_action_t *mb_chgcolor_new(co_comp_t r, co_comp_t g,
 				    paint_t *paint, mb_word_t *word);
 extern mb_action_t *mb_rotate_new(float angle1, float angle2,
 				  coord_t *coord, mb_word_t *word);
+extern mb_action_t *mb_subtree_free_new(coord_t *coord,
+					mb_word_t *word);
 
 enum { VIS_VISIBLE, VIS_HIDDEN };
 extern mb_action_t *mb_visibility_new(int visib, coord_t *coord,
