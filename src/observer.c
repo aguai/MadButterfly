@@ -51,6 +51,7 @@ void subject_free(subject_t *subject) {
 void subject_notify(subject_t *subject, event_t *evt) {
     ob_factory_t *factory = subject->factory;
     observer_t *observer;
+    subject_t *old_subject;
 
     evt->tgt = subject;
     while(subject) {
@@ -69,15 +70,16 @@ void subject_notify(subject_t *subject, event_t *evt) {
 	}
 
 	subject->flags &= ~SUBF_BUSY;
-	if(subject->flags & SUBF_FREE)
-	    subject_free(subject);
 
-	if(subject->flags & SUBF_STOP_PROPAGATE)
-	    break;
-
+	old_subject = subject;
 	subject = factory->get_parent_subject(factory, subject);
-    }
 
+	if(old_subject->flags & SUBF_FREE)
+	    subject_free(old_subject);
+
+	if(old_subject->flags & SUBF_STOP_PROPAGATE)
+	    break;
+    }
 }
 
 observer_t *subject_add_observer(subject_t *subject,

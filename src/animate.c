@@ -127,6 +127,10 @@ mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
 #ifndef UNITTEST
     factory = rdman_get_ob_factory(rdman);
     progm->complete = subject_new(factory, progm, OBJT_PROGM);
+    if(progm->complete == NULL) {
+	free(progm);
+	return NULL;
+    }
 #endif /* UNITTEST */
 
     progm->n_words = 0;

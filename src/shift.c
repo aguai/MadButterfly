@@ -80,7 +80,7 @@ mb_action_t *mb_shift_new(co_aix x, co_aix y, coord_t *coord,
 
     shift = (mb_shift_t *)malloc(sizeof(mb_shift_t));
     if(shift == NULL)
-	return (mb_action_t *)shift;
+	return NULL;
 
     shift->x = x;
     shift->y = y;
