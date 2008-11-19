@@ -400,10 +400,6 @@ static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
 
     mb_progm_free_completed(progm);
 
-    /*! \todo Remove bang when program is completed.
-     * The graphics are not removed from rdman after progm is completed, now.
-     * They should be freed to release resources.
-     */
     get_now(&now);
     mb_progm_start(progm, tman, &now);
 }
