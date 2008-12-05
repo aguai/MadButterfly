@@ -65,7 +65,8 @@ void subject_notify(subject_t *subject, event_t *evt) {
 	for(observer = STAILQ_HEAD(subject->observers);
 	    observer != NULL;
 	    observer = STAILQ_NEXT(observer_t, next, observer)) {
-	    observer->hdr(evt, observer->arg);
+	    if (observer->type == EVT_ANY || observer->type == evt->type)
+		    observer->hdr(evt, observer->arg);
 	}
 
 	subject->flags &= ~SUBF_BUSY;
@@ -90,6 +91,24 @@ observer_t *subject_add_observer(subject_t *subject,
 	return NULL;
     observer->hdr = hdr;
     observer->arg = arg;
+    observer->type = EVT_ANY;
+
+    STAILQ_INS_TAIL(subject->observers, observer_t, next, observer);
+
+    return observer;
+}
+
+observer_t *subject_add_event_observer(subject_t *subject, int type,
+				 evt_handler hdr, void *arg) {
+    ob_factory_t *factory = subject->factory;
+    observer_t *observer;
+
+    observer = factory->observer_alloc(factory);
+    if(observer == NULL)
+	return NULL;
+    observer->hdr = hdr;
+    observer->arg = arg;
+    observer->type = type;
 
     STAILQ_INS_TAIL(subject->observers, observer_t, next, observer);
 
