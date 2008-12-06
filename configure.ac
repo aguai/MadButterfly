@@ -40,6 +40,7 @@ AC_CONFIG_FILES([Makefile
                  examples/calculator/Makefile
                  examples/svg2code_ex/Makefile
                  examples/tank/Makefile
+                 examples/drag/Makefile
                  src/Makefile
                  include/Makefile
                  tools/Makefile])
