@@ -20,6 +20,7 @@ struct _event {
  * A target for receiving events.
  */
 struct _observer {
+    int type;
     evt_handler hdr;
     void *arg;
     observer_t *next;
@@ -71,7 +72,7 @@ struct _ob_factory {
 				     subject_t *cur_subject);
 };
 
-enum {EVT_MOUSE_OVER, EVT_MOUSE_OUT, EVT_MOUSE_MOVE,
+enum {EVT_ANY,EVT_MOUSE_OVER, EVT_MOUSE_OUT, EVT_MOUSE_MOVE,
       EVT_MOUSE_BUT_PRESS, EVT_MOUSE_BUT_RELEASE,
       EVT_KB_PRESS, EVT_KB_RELEASE, EVT_PROGM_COMPLETE,
       EVT_RDMAN_REDRAW };
