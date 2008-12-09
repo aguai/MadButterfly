@@ -713,6 +713,42 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data) {
     return (shape_t *)path;
 }
 
+shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman, char *commands, co_aix *arg,int  arg_cnt,int *fix_arg,int fix_arg_cnt) {
+    sh_path_t *path;
+    int msz;
+    int cmd_cnt = strlen(commands);
+
+    /*! \todo Use elmpool to manage sh_path_t objects. */
+    path = (sh_path_t *)malloc(sizeof(sh_path_t));
+    /*! \todo Remove this memset()? */
+    memset(&path->shape, 0, sizeof(shape_t));
+    MBO_TYPE(path) = MBO_PATH;
+    path->cmd_len = strlen(commands);
+    path->arg_len = arg_cnt;
+    path->fix_arg_len = fix_arg_cnt;
+    msz = cmd_cnt + sizeof(co_aix) * arg_cnt + sizeof(int) * fix_arg_cnt;
+    path->user_data = (char *)malloc(msz * 2);
+    if(path->user_data == NULL) {
+	free(path);
+	return NULL;
+    }
+
+    path->dev_data = path->user_data + msz;
+    memcpy(path->user_data,commands,cmd_cnt);
+    memcpy(path->user_data+cmd_cnt,arg, sizeof(co_aix)*arg_cnt);
+    memcpy(path->user_data+cmd_cnt+arg_cnt*sizeof(co_aix),fix_arg, sizeof(int)*fix_arg_cnt);
+    memcpy(path->dev_data, path->user_data, msz);
+
+    path->shape.free = sh_path_free;
+
+#ifndef UNITTEST
+    rdman_shape_man(rdman, (shape_t *)path);
+#endif
+
+    return (shape_t *)path;
+}
+
+
 /*! \brief Transform a path from user space to device space.
  *
  */

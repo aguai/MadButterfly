@@ -210,13 +210,82 @@ def translate_shape_transform(shape, coord_id, codefo):
         pass
     return coord_id
 
+# M x y             : Move to (x,y)
+# Z                 : close path
+# L x y             : lineto (x,y)
+# H x               : horizontal line to x
+# V y               : Vertical line to y
+# C x1 y1 x2 y2 x y : Draw a segment of bezier curve
+# S x2 y2 x t       : Draw a segment of bezier curve from the last control point
+# Q x1 y1 x y       : Draw a segment of quadratic curve
+# T x y             : Draw a segment of quadratic curve from the last control pint
+# A x y r f s x y   : Draw an arc
+# translate the path data into two arrays. The first is an integer whose upper 8
+# bits are the command type The second array hold all arguments.
+
+command_length={'M': 2, 'm':2,
+                'Z': 0, 'z':0,
+                'L': 2, 'l':2,
+                'H': 1, 'h':1,
+                'V': 1, 'v':1,
+                'C': 6, 'c':6,
+                'S': 4, 's':4,
+                'Q': 4, 'q':4,
+                'T': 2, 't':2}
+
+
+def translate_path_data(data,codefo):
+    temp = data.split()
+    fields=[]
+    for f in temp:
+        for s in f.split(','):
+            if s != '':
+                fields.append(s)
+    cmd = ''
+    commands=''
+    args=[]
+    fix_args=[]
+    for f in fields:
+        if cmd == 'A' or cmd == 'a':
+            try:
+                d = int(f)
+                fix_args.append(d)
+                if (narg % 7) == 0:
+                    commands = commands + cmd
+                narg = narg + 1
+            except:
+	        pass
+        else:
+            try:
+	        d = float(f)
+            	args.append(d)
+            	if (narg % command_length[cmd]) == 0:
+                    commands = commands + cmd
+            	narg = narg + 1
+            	continue
+            except:
+                pass
+        cmd = f
+        narg=0
+    pass
+    return [commands,args,fix_args]
+
 def translate_path(path, coord_id, codefo, doc):
     coord_id = translate_shape_transform(path, coord_id, codefo)
 
     path_id = path.getAttribute('id')
     d = path.getAttribute('d')
+    (commands,args,fix_args) = translate_path_data(d,codefo)
     print >> codefo, 'dnl'
-    print >> codefo, 'ADD_PATH([%s], [%s], [%s])dnl' % (path_id, d, coord_id)
+    #print >> codefo, 'ADD_PATH([%s], [%s], [%s])dnl' % (path_id, d, coord_id)
+    sarg=''
+    for c in args:
+        sarg = sarg + "%f," % c
+    s_fix_arg=''
+    for c in fix_args:
+        s_fix_arg = s_fix_arg + ("%d," % c)
+
+    print >> codefo, 'ADD_PATH([%s], [%s],[%s],[%s],[%d],[%s],[%d])dnl' % (path_id, coord_id,commands,sarg,len(args),s_fix_arg,len(fix_args))
 
     translate_style(path, coord_id, codefo, doc, 'PATH_')
     pass

@@ -14,34 +14,23 @@ struct _ex_rt {
     svg2code_ex_t *code;
 };
 
+#define COORD_SHOW(group) coord_show(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)
+#define COORD_HIDE(group) coord_hide(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)
+
 static void file_button_handler(event_t *evt, void *arg) {
     ex_rt_t *ex_rt = (ex_rt_t *)arg;
 
-    switch(evt->type) {
-    case EVT_MOUSE_BUT_PRESS:
-	coord_show(ex_rt->code->file_menu);
-	/* Tell redraw manager that a coord (group) is chagned. */
-	rdman_coord_changed(X_MB_rdman(ex_rt->rt), ex_rt->code->file_menu);
-	/* Update changed part to UI. */
-	rdman_redraw_changed(X_MB_rdman(ex_rt->rt));
-	break;
-    }
+    COORD_SHOW(ex_rt->code->file_menu);
+    /* Update changed part to UI. */
+    rdman_redraw_changed(X_MB_rdman(ex_rt->rt));
 }
 
 static void file_menu_handler(event_t *evt, void *arg) {
     ex_rt_t *ex_rt = (ex_rt_t *)arg;
-    redraw_man_t *rdman;
 
-    rdman = X_MB_rdman(ex_rt->rt);
-    switch(evt->type) {
-    case EVT_MOUSE_BUT_PRESS:
-	coord_hide(ex_rt->code->file_menu);
-	/* Tell redraw manager that a coord (group) is chagned. */
-	rdman_coord_changed(rdman, ex_rt->code->file_menu);
-	/* Update changed part to UI. */
-	rdman_redraw_changed(rdman);
-	break;
-    }
+    COORD_HIDE(ex_rt->code->file_menu);
+    /* Update changed part to UI. */
+    rdman_redraw_changed(X_MB_rdman(ex_rt->rt));
 }
 
 int main(int argc, char * const argv[]) {
@@ -68,9 +57,9 @@ int main(int argc, char * const argv[]) {
     subject = coord_get_mouse_event(svg2code->file_button);
     ex_rt.rt = rt;
     ex_rt.code = svg2code;
-    subject_add_observer(subject, file_button_handler, &ex_rt);
+    subject_add_event_observer(subject,  EVT_MOUSE_BUT_PRESS, file_button_handler, &ex_rt);
     subject = coord_get_mouse_event(svg2code->file_menu);
-    subject_add_observer(subject, file_menu_handler, &ex_rt);
+    subject_add_event_observer(subject,  EVT_MOUSE_BUT_PRESS,  file_menu_handler, &ex_rt);
 
     /*
      * Start handle connections, includes one to X server.
