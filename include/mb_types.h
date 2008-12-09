@@ -11,8 +11,26 @@ typedef struct _geo geo_t;
 typedef struct _area area_t;
 typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
+typedef struct _mb_obj mb_obj_t;
 
 struct _redraw_man;
+
+struct _mb_obj {
+    int obj_type;
+};
+
+enum { MBO_DUMMY,
+       MBO_COORD,
+       MBO_SHAPES=0x1000,
+       MBO_PATH,
+       MBO_TEXT,
+       MBO_RECT
+};
+#define MBO_CLASS_MASK 0xf000
+#define MBO_CLASS(x) (((mb_obj_t *)(x))->obj_type & MBO_CLASS_MASK)
+#define MBO_TYPE(x) (((mb_obj_t *)(x))->obj_type)
+#define IS_MBO_SHAPES(obj) (MBO_CLASS(obj) == MBO_SHAPES)
+#define IS_MBO_COORD(obj) (MBO_TYPE(obj) == MB_COORD)
 
 /*! \brief Base of paint types.
  *
@@ -93,6 +111,7 @@ extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
  * \enddot
  */
 typedef struct _coord {
+    mb_obj_t obj;
     unsigned int order;
     unsigned int flags;
     co_aix opacity;
@@ -161,7 +180,7 @@ extern void preorder_coord_skip_subtree(coord_t *subroot);
  * \enddot
  */
 struct _shape {
-    int sh_type;
+    mb_obj_t obj;
     geo_t *geo;
     coord_t *coord;
     paint_t *fill, *stroke;
@@ -171,7 +190,7 @@ struct _shape {
     struct _shape *sh_next;	/*!< Link all shapes of a rdman together. */
     void (*free)(shape_t *shape);
 };
-enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT };
+/* enum { SHT_UNKNOW, SHT_PATH, SHT_TEXT, SHT_RECT }; */
 
 #define sh_get_mouse_event_subject(sh) ((sh)->geo->mouse_event)
 #define sh_hide(sh)			     \

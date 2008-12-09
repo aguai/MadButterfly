@@ -42,7 +42,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 	return NULL;
 
     memset(text, 0, sizeof(sh_text_t));
-    text->shape.sh_type = SHT_TEXT;
+    MBO_TYPE(text) = MBO_TEXT;
     text->data = strdup(txt);
     if(text->data == NULL) {
 	free(text);
