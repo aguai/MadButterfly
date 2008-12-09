@@ -750,14 +750,14 @@ static int is_coord_subtree_hidden(coord_t *coord) {
 }
 
 static void clean_shape(shape_t *shape) {
-    switch(shape->sh_type) {
-    case SHT_PATH:
+    switch(MBO_TYPE(shape)) {
+    case MBO_PATH:
 	sh_path_transform(shape);
 	break;
-    case SHT_TEXT:
+    case MBO_TEXT:
 	sh_text_transform(shape);
 	break;
-    case SHT_RECT:
+    case MBO_RECT:
 	sh_rect_transform(shape);
 	break;
 #ifdef UNITTEST
@@ -950,14 +950,14 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
      *	operators for them.
      */
     if(shape->fill || shape->stroke) {
-	switch(shape->sh_type) {
-	case SHT_PATH:
+	switch(MBO_TYPE(shape)) {
+	case MBO_PATH:
 	    sh_path_draw(shape, cr);
 	    break;
-	case SHT_TEXT:
+	case MBO_TEXT:
 	    sh_text_draw(shape, cr);
 	    break;
-	case SHT_RECT:
+	case MBO_RECT:
 	    sh_rect_draw(shape, cr);
 	    break;
 #ifdef UNITTEST

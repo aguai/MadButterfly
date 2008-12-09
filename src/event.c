@@ -52,14 +52,14 @@ static int collect_shapes_at_point(redraw_man_t *rdman,
 }
 
 static void draw_shape_path(shape_t *shape, cairo_t *cr) {
-    switch(shape->sh_type) {
-    case SHT_PATH:
+    switch(MBO_TYPE(shape)) {
+    case MBO_PATH:
 	sh_path_draw(shape, cr);
 	break;
-    case SHT_TEXT:
+    case MBO_TEXT:
 	sh_text_draw(shape, cr);
 	break;
-    case SHT_RECT:
+    case MBO_RECT:
 	sh_rect_draw(shape, cr);
 	break;
     }
