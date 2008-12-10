@@ -1,0 +1,15 @@
+<inkscape-extension>
+    <name>Convert to Symbol</name>
+    <id>MadButterfly.ConvertSymbol</id>
+	<dependency type="executable" location="extensions">AssignSymbol.py</dependency>
+	<dependency type="executable" location="extensions">inkex.py</dependency>
+    <effect>
+		<object-type>group</object-type>
+		<effects-menu>
+			<submenu _name="MadButterfly"/>
+		</effects-menu>
+    </effect>
+    <script>
+        <command reldir="extensions" interpreter="python">AssignSymbol.py</command>
+    </script>
+</inkscape-extension>
