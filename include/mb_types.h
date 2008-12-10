@@ -12,6 +12,7 @@ typedef struct _area area_t;
 typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
 typedef struct _mb_obj mb_obj_t;
+typedef struct _mb_sprite mb_sprite_t;
 
 struct _redraw_man;
 
@@ -211,5 +212,16 @@ struct _shape {
 	(sh)->geo->flags &= ~GEF_HIDDEN;		\
     } while(0)
 
+
+/*! \brief A sprite is a set of graphics that being an object in animation.
+ *
+ * A sprite include graphics comprise an object.  For example, a tank, in
+ * example tank, is comprised a set of graphics that is represented as a
+ * sprite.
+ */
+struct _mb_sprite {
+    void (*free)(struct _mb_sprite *);
+    mb_obj_t *(*get_obj_with_name)(const char *id);
+};
 
 #endif /* __MB_TYPES_H_ */
