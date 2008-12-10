@@ -15,8 +15,16 @@ typedef struct _mb_obj mb_obj_t;
 
 struct _redraw_man;
 
+/*! \brief MadButterfly object.
+ *
+ * All objects (coord and shapes) should have mb_obj_t as first member
+ * variable.  obj_type is used to identify type of an object.  Please,
+ * use MBO_TYPE() to return this value.  MBO_TYPE() will type-casting the
+ * object to mb_obj_t and return obj_type.  MBO_TYPE() is a left-side
+ * value.
+ */
 struct _mb_obj {
-    int obj_type;
+    int obj_type;		/*!< \brief Type of a MadButterfly object. */
 };
 
 enum { MBO_DUMMY,
@@ -28,6 +36,7 @@ enum { MBO_DUMMY,
 };
 #define MBO_CLASS_MASK 0xf000
 #define MBO_CLASS(x) (((mb_obj_t *)(x))->obj_type & MBO_CLASS_MASK)
+/*! \brief Return type of a MadBufferly object. */
 #define MBO_TYPE(x) (((mb_obj_t *)(x))->obj_type)
 #define IS_MBO_SHAPES(obj) (MBO_CLASS(obj) == MBO_SHAPES)
 #define IS_MBO_COORD(obj) (MBO_TYPE(obj) == MB_COORD)
