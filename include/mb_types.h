@@ -220,8 +220,8 @@ struct _shape {
  * sprite.
  */
 struct _mb_sprite {
-    void (*free)(struct _mb_sprite *);
-    mb_obj_t *(*get_obj_with_name)(const char *id);
+    void (*free)(mb_sprite_t *);
+    mb_obj_t *(*get_obj_with_name)(mb_sprite_t *sprite, const char *id);
 };
 
 #endif /* __MB_TYPES_H_ */
