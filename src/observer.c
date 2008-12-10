@@ -83,6 +83,8 @@ void subject_notify(subject_t *subject, event_t *evt) {
     }
 }
 
+/*! \brief Add an observer for any type of events.
+ */
 observer_t *subject_add_observer(subject_t *subject,
 				 evt_handler hdr, void *arg) {
     ob_factory_t *factory = subject->factory;
@@ -100,6 +102,8 @@ observer_t *subject_add_observer(subject_t *subject,
     return observer;
 }
 
+/*! \brief Add an observer for specified type of events.
+ */
 observer_t *subject_add_event_observer(subject_t *subject, int type,
 				 evt_handler hdr, void *arg) {
     ob_factory_t *factory = subject->factory;

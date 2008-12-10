@@ -83,6 +83,8 @@ extern void subject_free(subject_t *subject);
 extern void subject_notify(subject_t *subject, event_t *evt);
 extern observer_t *subject_add_observer(subject_t *subject,
 					evt_handler hdr, void *arg);
+extern observer_t *subject_add_event_observer(subject_t *subject, int type,
+					      evt_handler hdr, void *arg);
 extern void subject_remove_observer(subject_t *subject,
 				    observer_t *observer);
 
