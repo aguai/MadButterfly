@@ -4,12 +4,12 @@ noinst_PROGRAMS = dynamic
 EXTRA_DIST = menu.svg button.svg
 
 dynamic_SOURCES = main.c
-nodist_dynamic_SOURCES = menu.c menu.h button.c button.h
+nodist_dynamic_SOURCES = menu.c menu.h menu.mb button.c button.h button.mb
 dynamic_CPPFLAGS = @cairo_CFLAGS@ -I$(top_srcdir)
 dynamic_LDFLAGS = @cairo_LIBS@ 
 dynamic_LDADD = $(top_builddir)/src/libmbfly.la
-BUILT_SOURCES = menu.c menu.h menu.mb
-CLEANFILES = menu.c menu.h menu.mb
+BUILT_SOURCES = menu.c menu.h menu.mb button.c button.h button.mb
+CLEANFILES = menu.c menu.h menu.mb button.c button.h button.mb
 
 menu.mb: $(srcdir)/menu.svg
 	$(top_srcdir)/tools/svg2code.py $? $@
