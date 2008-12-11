@@ -224,6 +224,10 @@ struct _mb_sprite {
     mb_obj_t *(*get_obj_with_name)(mb_sprite_t *sprite, const char *id);
 };
 
+#define MB_SPRITE_FREE(sprite) ((mb_sprite_t *)(sprite))->free(sprite)
+#define MB_SPRITE_GET_OBJ(sprite, name)		\
+    ((mb_sprite_t *)(sprite))->get_obj_with_name((sprite), (name))
+
 
 /*! \defgroup mb_sprite_lsym Sprite with linear symbol table.
  * @{
