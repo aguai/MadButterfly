@@ -224,4 +224,27 @@ struct _mb_sprite {
     mb_obj_t *(*get_obj_with_name)(mb_sprite_t *sprite, const char *id);
 };
 
+
+/*! \defgroup mb_sprite_lsym Sprite with linear symbol table.
+ * @{
+ */ 
+struct _mb_sprite_lsym_entry {
+    const char *sym;
+    const int offset;
+};
+typedef struct _mb_sprite_lsym_entry mb_sprite_lsym_entry_t;
+
+/*! \brief A sub-type of mb_sprite_t with linear symbol table.
+ *
+ * This type of sprite search symbols with linear/or binary searching.
+ */
+struct _mb_sprite_lsym {
+    mb_sprite_t sprite;
+    int num_entries;
+    mb_sprite_lsym_entry_t *entries;
+};
+typedef struct _mb_sprite_lsym mb_sprite_lsym_t;
+
+/* @} */
+
 #endif /* __MB_TYPES_H_ */

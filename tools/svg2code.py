@@ -52,7 +52,7 @@ def translate_stops(parent, codefo, parent_id):
     pass
 
 def translate_linearGradient(linear, codefo, doc):
-    linear_id = linear.getAttribute('id')
+    linear_id = _get_id(linear)
     if linear.hasAttribute('x1'):
         x1 = float(linear.getAttribute('x1'))
         y1 = float(linear.getAttribute('y1'))
@@ -74,7 +74,7 @@ def translate_linearGradient(linear, codefo, doc):
     pass
 
 def translate_radialGradient(radial, codefo, doc):
-    radial_id = radial.getAttribute('id')
+    radial_id = _get_id(radial)
     try:
         cx = float(radial.getAttribute('cx'))
         cy = float(radial.getAttribute('cy'))
@@ -270,6 +270,36 @@ def translate_path_data(data,codefo):
     pass
     return [commands,args,fix_args]
 
+_id_sn = 0
+
+def _get_id(obj):
+    global _id_sn
+
+    if obj.hasAttribute('id'):
+        oid = obj.getAttribute('id')
+    else:
+        oid = '_MB_RAND_%s_' % (_id_sn)
+        obj.setAttribute('id', oid)
+        _id_sn = _id_sn + 1
+        pass
+    return oid
+
+##
+# Decorator that check if objects have attribute 'mbname'.
+#
+def check_mbname(func):
+    def deco(obj, coord_id, codefo, doc):
+        if obj.hasAttribute('mbname'):
+            ## \note mbname declare that this node should be in the
+            # symbol table.
+            mbname = obj.getAttribute('mbname')
+            print >> codefo, 'ADD_SYMBOL([%s])dnl' % (mbname)
+            pass
+        func(obj, coord_id, codefo, doc)
+        pass
+    return deco
+
+@check_mbname
 def translate_path(path, coord_id, codefo, doc):
     coord_id = translate_shape_transform(path, coord_id, codefo)
 
@@ -290,10 +320,11 @@ def translate_path(path, coord_id, codefo, doc):
     translate_style(path, coord_id, codefo, doc, 'PATH_')
     pass
 
+@check_mbname
 def translate_rect(rect, coord_id, codefo, doc):
     coord_id = translate_shape_transform(rect, coord_id, codefo)
 
-    rect_id = rect.getAttribute('id')
+    rect_id = _get_id(rect)
     x = float(rect.getAttribute('x'))
     y = float(rect.getAttribute('y'))
     rx = 0.0
@@ -313,7 +344,7 @@ def translate_rect(rect, coord_id, codefo, doc):
     pass
 
 def translate_font_style(text, codefo):
-    text_id = text.getAttribute('id')
+    text_id = _get_id(text)
     style_str = text.getAttribute('style')
     style_map = get_style_map(style_str)
 
@@ -349,7 +380,7 @@ def translate_text(text, coord_id, codefo, doc):
             pass
         pass
     if txt_strs:
-        text_id = text.getAttribute('id')
+        text_id = _get_id(text)
         x = float(text.getAttribute('x'))
         y = float(text.getAttribute('y'))
         print >> codefo, 'dnl'
@@ -392,8 +423,9 @@ def translate_transform(coord_id, transform, codefo, prefix):
         pass
     pass
 
+@check_mbname
 def translate_group(group, parent_id, codefo, doc):
-    group_id = group.getAttribute('id')
+    group_id = _get_id(group)
     print >> codefo, 'dnl'
     print >> codefo, 'ADD_COORD([%s], [%s])dnl' % (group_id, parent_id)
 
