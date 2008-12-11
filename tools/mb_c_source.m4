@@ -50,6 +50,7 @@ define([COORD_TRANSLATE],)
 define([COORD_MATRIX],)
 define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
+define([ADD_SYMBOL],)
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
@@ -205,6 +206,7 @@ SIMPORT([COORD_TRANSLATE])
 SIMPORT([COORD_MATRIX])
 SIMPORT([SHAPE_TRANSLATE])
 SIMPORT([SHAPE_MATRIX])
+define([ADD_SYMBOL],)
 divert[]])
 
 define([F_ADD_LINEAR_PAINT],[[
@@ -262,6 +264,7 @@ define([COORD_TRANSLATE],)
 define([COORD_MATRIX],)
 define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
+define([ADD_SYMBOL],)
 divert[]])
 
 define([REVERSE_VARS],[divert([-1])
@@ -297,6 +300,36 @@ RIMPORT([COORD_TRANSLATE])
 RIMPORT([COORD_MATRIX])
 RIMPORT([SHAPE_TRANSLATE])
 RIMPORT([SHAPE_MATRIX])
+define([ADD_SYMBOL],)
+divert[]dnl
+])
+
+define([Y_ADD_SYMBOL],[[{"$1", MB_SPRITE_OFFSET($1)},]])
+
+define([DECLARE_SYMS], [divert([-1])
+define([YIMPORT],[IMPORT(]QUOTE($[]1)[,[Y_])])
+define([ADD_LINEAR_PAINT])
+define([ADD_RADIAL_PAINT])
+define([COLOR_STOP])
+define([REF_STOPS_RADIAL])
+define([REF_STOPS_LINEAR])
+define([ADD_PATH])
+define([ADD_RECT])
+define([ADD_COORD])
+define([ADD_TEXT],)
+define([FILL_SHAPE])
+define([STROKE_SHAPE])
+define([FILL_SHAPE_WITH_PAINT])
+define([STROKE_SHAPE_WITH_PAINT])
+define([STROKE_WIDTH])
+define([GROUP_HIDE],)
+define([RECT_HIDE],)
+define([PATH_HIDE],)
+define([COORD_TRANSLATE],)
+define([COORD_MATRIX],)
+define([SHAPE_TRANSLATE],)
+define([SHAPE_MATRIX],)
+YIMPORT([ADD_SYMBOL])
 divert[]dnl
 ])
 
@@ -310,6 +343,33 @@ define([MADBUTTERFLY],[dnl
 #include <mb_paint.h>
 #include "$1.h"
 
+#ifdef MB_SPRITE_OFFSET
+#undef MB_SPRITE_OFFSET
+#endif
+#define MB_SPRITE_OFFSET(x) ((int)&((($1_t *)0)->x))
+
+static
+mb_sprite_lsym_entry_t $1_symbols[] = {]DECLARE_SYMS
+$2[
+};
+
+#ifndef MB_LSYM_GET_OBJ_WITH_NAME
+#define MB_LSYM_GET_OBJ_WITH_NAME
+static
+mb_obj_t *mb_lsym_get_obj_with_name(mb_sprite_lsym_t *lsym, const char *sym) {
+    int i;
+
+    for(i = 0; i < lsym->num_entries; i++) {
+	if(strcmp(lsym->entries[i].sym, sym) != 0)
+	    continue;
+	return (mb_obj_t *)(((void *)lsym) + lsym->entries[i].offset);
+    }
+    return NULL;
+}
+#endif /* MB_LSYM_GET_OBJ_WITH_NAME */
+
+void $1_free($1_t *);
+
 $1_t *$1_new(redraw_man_t *rdman, coord_t *parent_coord) {
     $1_t *obj;
     grad_stop_t *stops = NULL;]DECLARE_VARS
@@ -317,9 +377,17 @@ $2[]dnl
 [
     obj = ($1_t *)malloc(sizeof($1_t));
     if(obj == NULL) return NULL;
+
+    obj->lsym.sprite.free = (void (*)(mb_sprite_t))$1_free;
+    obj->lsym.sprite.get_obj_with_name =
+	(mb_obj_t *(*)(mb_sprite_t *, const char *))mb_lsym_get_obj_with_name;
+    obj->lsym.num_entries =
+	sizeof($1_symbols) / sizeof(mb_sprite_lsym_entry_t);
+    obj->lsym.entries = $1_symbols;
+
     obj->rdman = rdman;
-]SETUP_VARS
-    obj->root_coord = rdman_coord_new(rdman, parent_coord);
+]SETUP_VARS[
+    obj->root_coord = rdman_coord_new(rdman, parent_coord);]
 $2
 [    return obj;
 }
