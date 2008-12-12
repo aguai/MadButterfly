@@ -362,7 +362,7 @@ mb_obj_t *mb_lsym_get_obj_with_name(mb_sprite_lsym_t *lsym, const char *sym) {
     for(i = 0; i < lsym->num_entries; i++) {
 	if(strcmp(lsym->entries[i].sym, sym) != 0)
 	    continue;
-	return (mb_obj_t *)(((void *)lsym) + lsym->entries[i].offset);
+	return (mb_obj_t *)*((int*)(((void *)lsym) + lsym->entries[i].offset));
     }
     return NULL;
 }
