@@ -16,6 +16,7 @@ struct _engine {
     int state;
     co_aix orx,ory;
     int start_x,start_y;
+    coord_t *cursor;
 };
 engine_t *engine_init()
 {
@@ -60,8 +61,8 @@ static void cursor_press_handler(event_t *evt, void *arg) {
 
     en->start_x = mev->x;
     en->start_y = mev->y;
-    en->orx = en->menu->cursor->matrix[2];
-    en->ory = en->menu->cursor->matrix[5];
+    en->orx = en->cursor->matrix[2];
+    en->ory = en->cursor->matrix[5];
     printf("pressed %g %g\n",en->orx,en->ory);
     en->state = 1;
 }
@@ -78,8 +79,8 @@ static void cursor_move_handler(event_t *evt, void *arg) {
 
     if (en->state) {
         printf("move to (%d %d)\n", mev->x,mev->y);
-        coord_move(en->menu->cursor,en->orx + (mev->x-en->start_x),en->ory + (mev->y-en->start_y));
-        rdman_coord_changed(en->rdman, en->menu->cursor);
+        coord_move(en->cursor,en->orx + (mev->x-en->start_x),en->ory + (mev->y-en->start_y));
+        rdman_coord_changed(en->rdman, en->cursor);
         /* Update changed part to UI. */
         rdman_redraw_changed(en->rdman);
     }
@@ -91,11 +92,15 @@ int main(int argc, char * const argv[]) {
 
     en = engine_init();
     en->menu = menu_new(en->rdman, en->rdman->root_coord);
+    en->cursor = (coord_t *) MB_SPRITE_GET_OBJ(&en->menu->lsym.sprite, "star");
+    printf("en->cursor=%x star=%x\n",en->cursor,en->menu->star);
+    printf("sprite=%x\n",&en->menu->lsym.sprite);
+    printf("en->menu=%x\n",en->menu);
 
     /*
      * Register observers to subjects of events for objects.
      */
-    subject = coord_get_mouse_event(en->menu->cursor);
+    subject = coord_get_mouse_event(en->cursor);
     subject_add_event_observer(subject,  EVT_MOUSE_BUT_PRESS, cursor_press_handler, en);
     subject_add_event_observer(subject,  EVT_MOUSE_BUT_RELEASE, cursor_release_handler, en);
     subject_add_event_observer(subject,  EVT_MOUSE_MOVE, cursor_move_handler, en);
