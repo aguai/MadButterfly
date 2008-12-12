@@ -355,6 +355,9 @@ $2[
 
 #ifndef MB_LSYM_GET_OBJ_WITH_NAME
 #define MB_LSYM_GET_OBJ_WITH_NAME
+
+#define MB_SPRITE_OFF_2_PTR(x, off) (((void *)(x)) + (off))
+
 static
 mb_obj_t *mb_lsym_get_obj_with_name(mb_sprite_lsym_t *lsym, const char *sym) {
     int i;
@@ -362,7 +365,8 @@ mb_obj_t *mb_lsym_get_obj_with_name(mb_sprite_lsym_t *lsym, const char *sym) {
     for(i = 0; i < lsym->num_entries; i++) {
 	if(strcmp(lsym->entries[i].sym, sym) != 0)
 	    continue;
-	return (mb_obj_t *)*((int*)(((void *)lsym) + lsym->entries[i].offset));
+	return *(mb_obj_t **)MB_SPRITE_OFF_2_PTR(lsym,
+					         lsym->entries[i].offset);
     }
     return NULL;
 }
