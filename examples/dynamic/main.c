@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <mb.h>
+#include <string.h>
 #include "menu.h"
 #include "button.h"
 
@@ -23,6 +24,120 @@ struct _engine {
     shape_t *rect;
     co_aix rx,ry;
 };
+
+
+typedef struct _mb_button {
+    engine_t *en;
+    coord_t *root;
+    coord_t *active;
+    coord_t *normal;
+    coord_t *click;
+    void (*press)();
+    void *arg;
+} mb_button_t;
+
+
+#define COORD_SHOW(group) coord_show(group);rdman_coord_changed(en->rdman, group)
+#define COORD_HIDE(group) coord_hide(group);rdman_coord_changed(en->rdman, group)
+
+#define CMOUSE(e) (coord_get_mouse_event(e))
+
+
+
+static void mb_button_move(event_t *evt, void *arg) 
+{
+    mb_button_t *btn = (mb_button_t *) arg;
+    engine_t *en = btn->en;
+
+    
+    printf("Mouse move\n");
+    COORD_SHOW(btn->active);
+    rdman_coord_changed(btn->en->rdman,btn->root);
+    rdman_redraw_changed(btn->en->rdman);
+}
+static void mb_button_out(event_t *evt, void *arg) 
+{
+    mb_button_t *btn = (mb_button_t *) arg;
+    engine_t *en = btn->en;
+
+    printf("mouse out\n");
+    COORD_HIDE(btn->active);
+    rdman_coord_changed(btn->en->rdman,btn->root);
+    rdman_redraw_changed(btn->en->rdman);
+}
+
+void mb_button_show_active(const mb_timeval_t *tmo, const mb_timeval_t *now, void *arg)
+{
+    mb_button_t *btn = (mb_button_t *) arg;
+    engine_t *en = btn->en;
+
+    COORD_HIDE(btn->click);
+    rdman_coord_changed(btn->en->rdman,btn->root);
+    rdman_redraw_changed(btn->en->rdman);
+}
+
+void mb_button_pressed(event_t *evt, void *arg)
+{
+    mb_button_t *btn = (mb_button_t *) arg;
+    engine_t *en = btn->en;
+    mb_timeval_t now,to;
+
+    printf("Pressed\n");
+    COORD_SHOW(btn->click);
+    rdman_coord_changed(en->rdman,en->button->root_coord);
+    rdman_redraw_changed(en->rdman);
+    get_now(&now);
+    MB_TIMEVAL_SET(&to, 0, 500);
+    MB_TIMEVAL_ADD(&to,&now);
+
+    mb_tman_timeout(X_MB_tman(btn->en->rt), &to, mb_button_show_active, arg);
+}
+mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
+{
+    mb_button_t *btn = (mb_button_t *) malloc(sizeof(mb_button_t));
+    char *buf = (char *) malloc(strlen(name)+5);
+
+    btn->root = (coord_t *) MB_SPRITE_GET_OBJ(sp, name);
+    sprintf(buf, "%s_normal", name);
+    btn->normal = (coord_t *) MB_SPRITE_GET_OBJ(sp, buf);
+    if (btn->normal == NULL) {
+    	printf("Missing normal button, this is not a correct button\n");
+    }
+    sprintf(buf, "%s_active", name);
+    btn->active = (coord_t *) MB_SPRITE_GET_OBJ(sp, buf);
+    if (btn->active == NULL) {
+    	printf("Missing active button, this is not a correct button\n");
+    }
+    sprintf(buf, "%s_click", name);
+    btn->click = (coord_t *) MB_SPRITE_GET_OBJ(sp, buf);
+    if (btn->click == NULL) {
+    	printf("Missing click button, this is not a correct button\n");
+    }
+    btn->press = NULL;
+    // Show only the normal button
+    COORD_HIDE(btn->active);
+    COORD_HIDE(btn->click);
+    // Move to the same position
+    btn->active->matrix[2] = 200;
+    btn->active->matrix[5] = 200;
+    btn->normal->matrix[2] = 200;
+    btn->normal->matrix[5] = 200;
+    btn->click->matrix[2] = 200;
+    btn->click->matrix[5] = 200;
+    btn->en = en;
+    subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_MOVE, mb_button_move,btn);
+    subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_OUT, mb_button_out,btn);
+    subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_BUT_RELEASE, mb_button_pressed,btn);
+    return btn;
+}
+
+
+void mb_button_add_onClick(mb_button_t *b, void (*h)(void *arg), void *arg)
+{
+    b->press = h;
+    b->arg = arg;
+}
+
 engine_t *engine_init()
 {
 
@@ -50,51 +165,7 @@ void engine_close(engine_t *en)
     X_MB_free(en->rt);
     free(en);
 }
-#define COORD_SHOW(group) coord_show(group);rdman_coord_changed(en->rdman, group)
-#define COORD_HIDE(group) coord_hide(group);rdman_coord_changed(en->rdman, group)
 
-#define CMOUSE(e) (coord_get_mouse_event(e))
-
-
-
-static void button_move(event_t *evt, void *arg) 
-{
-    engine_t *en = (engine_t *) arg;
-
-    
-    printf("Mouse move\n");
-    COORD_SHOW(en->button->active);
-    rdman_coord_changed(en->rdman,en->button->root_coord);
-    rdman_redraw_changed(en->rdman);
-}
-static void button_out(event_t *evt, void *arg) 
-{
-    engine_t *en = (engine_t *) arg;
-
-    printf("mouse out\n");
-    COORD_HIDE(en->button->active);
-    rdman_coord_changed(en->rdman,en->button->root_coord);
-    rdman_redraw_changed(en->rdman);
-}
-
-void button_pressed(event_t *evt, void *arg)
-{
-	printf("Pressed\n");
-}
-
-void engine_add_button(engine_t *en, coord_t *normal, coord_t *active, void (*func)())
-{
-    active->matrix[2] = 200;
-    active->matrix[5] = 200;
-    normal->matrix[2] = 200;
-    normal->matrix[5] = 200;
-    COORD_HIDE(en->button->active);
-    rdman_coord_changed(en->rdman,en->button->root_coord);
-    rdman_redraw_changed(en->rdman);
-    subject_add_event_observer(CMOUSE(normal), EVT_MOUSE_MOVE, button_move,en);
-    subject_add_event_observer(CMOUSE(active), EVT_MOUSE_OUT, button_out,en);
-    subject_add_event_observer(CMOUSE(active), EVT_MOUSE_BUT_RELEASE, button_pressed,en);
-}
 
 
 void coord_move(coord_t *c, co_aix x, co_aix y)
@@ -171,17 +242,22 @@ static void add_rect(event_t *evt, void *arg)
 }
 
 
-
+void test(void *a)
+{
+    printf("Button is pressed.....\n");
+}
 
 
 int main(int argc, char * const argv[]) {
     subject_t *subject;
     engine_t *en;
+    mb_button_t *b;
 
     en = engine_init();
     en->menu = menu_new(en->rdman, en->rdman->root_coord);
     en->button = button_new(en->rdman, en->rdman->root_coord);
-    engine_add_button(en, en->button->normal, en->button->active, button_pressed);
+    b = mb_button_new(en, (mb_sprite_t *) en->button, "btn");
+    mb_button_add_onClick(b, test,NULL);
 
     en->rx = 0;
     en->ry = 0;

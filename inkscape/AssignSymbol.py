@@ -18,6 +18,7 @@ class AssignSymbol(inkex.Effect):
 		text = self.text.get_text()
 		if text != self.defaultname:
 			self.node.set("mbname",text)
+			self.node.set("id",text)
 		gtk.main_quit()
 		
 	def confirm(self,msg):
