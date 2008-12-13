@@ -27,6 +27,7 @@ engine_t *engine_init()
 
     en->rt = rt;
     en->rdman =  X_MB_rdman(rt);
+    en->state = 0;
     return en;
 }
 void engine_close(engine_t *en)
