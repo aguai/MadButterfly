@@ -34,10 +34,13 @@ This function will convert a symbol into a button. A button is a symbol with thr
 
 <g id="g1234" mbname="btn">
     <g id="g1235" frame="active">
+    	<original object>
     </g>
     <g id="g1235" frame="normal">
+    	<original object>
     </g>
     <g id="g1236" frame="click">
+    	<original object>
     </g>
 </g>
 
