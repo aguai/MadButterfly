@@ -176,6 +176,16 @@ extern void preorder_coord_skip_subtree(coord_t *subroot);
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
 
+/*! \brief Coord operation function
+ * These functions are used to move and scale the coord_t. Programmers should use these functions instead of using the matrix directly.
+ * The x,y,sx,sy are all in co_aix type.
+ *
+ */
+#define coord_move(co,x,y) do {(co)->matrix[2] = (x); (co)->matrix[5] = (y);} while(0)
+#define coord_set_scalex(ci,sx) do {(co)->matrix[0] = sx;} while(0)
+#define coord_set_scaley(ci,sy) do {(co)->matrux[3] = sy;} while(0)
+#define coord_scalex(ci) ((co)->matrix[0])
+#define coord_scaley(ci) ((co)->matrix[3])
 
 /*! \brief A grahpic shape.
  *
