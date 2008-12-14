@@ -34,6 +34,7 @@ typedef struct _mb_button {
     coord_t *click;
     void (*press)();
     void *arg;
+    observer_t *obs_move,*obs_out,*obs_press;
 } mb_button_t;
 
 
@@ -43,6 +44,8 @@ typedef struct _mb_button {
 #define CMOUSE(e) (coord_get_mouse_event(e))
 
 
+static void mb_button_pressed(event_t *evt, void *arg);
+static void mb_button_out(event_t *evt, void *arg);
 
 static void mb_button_move(event_t *evt, void *arg) 
 {
@@ -52,8 +55,12 @@ static void mb_button_move(event_t *evt, void *arg)
     
     printf("Mouse move\n");
     COORD_SHOW(btn->active);
+    COORD_HIDE(btn->normal);
     rdman_coord_changed(btn->en->rdman,btn->root);
     rdman_redraw_changed(btn->en->rdman);
+    subject_remove_observer(CMOUSE(btn->normal), btn->obs_move);
+    btn->obs_press = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_BUT_PRESS, mb_button_pressed,btn);
+    btn->obs_out = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_OUT, mb_button_out,btn);
 }
 static void mb_button_out(event_t *evt, void *arg) 
 {
@@ -62,18 +69,26 @@ static void mb_button_out(event_t *evt, void *arg)
 
     printf("mouse out\n");
     COORD_HIDE(btn->active);
+    COORD_SHOW(btn->normal);
     rdman_coord_changed(btn->en->rdman,btn->root);
     rdman_redraw_changed(btn->en->rdman);
+    subject_remove_observer(CMOUSE(btn->active), btn->obs_press);
+    subject_remove_observer(CMOUSE(btn->active), btn->obs_out);
+    btn->obs_move = subject_add_event_observer(CMOUSE(btn->normal), EVT_MOUSE_MOVE, mb_button_move,btn);
 }
 
-void mb_button_show_active(const mb_timeval_t *tmo, const mb_timeval_t *now, void *arg)
+void mb_button_show_active(event_t *evt, void *arg)
 {
     mb_button_t *btn = (mb_button_t *) arg;
     engine_t *en = btn->en;
 
     COORD_HIDE(btn->click);
+    COORD_SHOW(btn->active);
     rdman_coord_changed(btn->en->rdman,btn->root);
     rdman_redraw_changed(btn->en->rdman);
+    subject_remove_observer(CMOUSE(btn->click), btn->obs_press);
+    btn->obs_press = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_BUT_PRESS, mb_button_pressed,btn);
+    btn->obs_out = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_OUT, mb_button_out,btn);
 }
 
 void mb_button_pressed(event_t *evt, void *arg)
@@ -84,13 +99,16 @@ void mb_button_pressed(event_t *evt, void *arg)
 
     printf("Pressed\n");
     COORD_SHOW(btn->click);
+    COORD_HIDE(btn->active);
     rdman_coord_changed(en->rdman,en->button->root_coord);
     rdman_redraw_changed(en->rdman);
     get_now(&now);
     MB_TIMEVAL_SET(&to, 0, 500);
     MB_TIMEVAL_ADD(&to,&now);
-
-    mb_tman_timeout(X_MB_tman(btn->en->rt), &to, mb_button_show_active, arg);
+    subject_remove_observer(CMOUSE(btn->active), btn->obs_press);
+    subject_remove_observer(CMOUSE(btn->active), btn->obs_out);
+    btn->obs_press = subject_add_event_observer(CMOUSE(btn->click), EVT_MOUSE_BUT_RELEASE, mb_button_show_active,btn);
+    btn->obs_out = NULL;
 }
 mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
 {
@@ -117,6 +135,7 @@ mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
     // Show only the normal button
     COORD_HIDE(btn->active);
     COORD_HIDE(btn->click);
+    COORD_SHOW(btn->normal);
     // Move to the same position
     btn->active->matrix[2] = 200;
     btn->active->matrix[5] = 200;
@@ -125,9 +144,11 @@ mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
     btn->click->matrix[2] = 200;
     btn->click->matrix[5] = 200;
     btn->en = en;
-    subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_MOVE, mb_button_move,btn);
-    subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_OUT, mb_button_out,btn);
-    subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_BUT_RELEASE, mb_button_pressed,btn);
+    btn->obs_move = subject_add_event_observer(CMOUSE(btn->normal), EVT_MOUSE_MOVE, mb_button_move,btn);
+    btn->obs_out = NULL;
+    btn->obs_press = NULL;
+    rdman_coord_changed(en->rdman,en->button->root_coord);
+    rdman_redraw_changed(en->rdman);
     return btn;
 }
 
@@ -150,7 +171,7 @@ engine_t *engine_init()
     return en;
 }
 
-void engine_close(engine_t *en)
+void engine_mainloop(engine_t *en)
 {
     /*
      * Start handle connections, includes one to X server.
@@ -269,7 +290,7 @@ int main(int argc, char * const argv[]) {
     subject_add_event_observer(subject,  EVT_MOUSE_BUT_RELEASE, add_rect, en);
 
 
-    engine_close(en);
+    engine_mainloop(en);
 
     return 0;
 }
