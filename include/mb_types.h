@@ -186,6 +186,8 @@ extern void preorder_coord_skip_subtree(coord_t *subroot);
 #define coord_set_scaley(ci,sy) do {(co)->matrux[3] = sy;} while(0)
 #define coord_scalex(ci) ((co)->matrix[0])
 #define coord_scaley(ci) ((co)->matrix[3])
+#define coord_x(ci) ((co)->matrix[2])
+#define coord_y(ci) ((co)->matrix[5])
 
 /*! \brief A grahpic shape.
  *
