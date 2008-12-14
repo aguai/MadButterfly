@@ -1,0 +1,18 @@
+<inkscape-extension>
+    <name>Edit Normal button</name>
+    <id>MadButterfly.EditNormalButton</id>
+	<dependency type="executable" location="extensions">MB_EditNormalButton.py</dependency>
+	<dependency type="executable" location="extensions">inkex.py</dependency>
+    <effect>
+		<object-type>any</object-type>
+		<effects-menu>
+			<submenu _name="MadButterfly">
+				<submenu _name="Button"/>
+			</submenu>
+		</effects-menu>
+    </effect>
+    <script>
+        <command reldir="extensions" interpreter="python">MB_EditNormalButton.py</command>
+    </script>
+</inkscape-extension>
+

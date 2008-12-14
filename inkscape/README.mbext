@@ -1,0 +1,53 @@
+# Introduction
+
+This is inkscape extention for the MadButteerfly. It can help users to establish SVG files which is usable for the MadButterfly SVG parser and loader.
+
+# Requirement
+
+The following package must be installed in your system
+ * python 2.5 or above
+ * pygtk
+ * python lxml module
+
+
+# Installation
+
+The installation is simple. Just copy all files to the inkscape extention directory. Usually, it should be /usr/share/inkscape/extentions.
+
+# Usage
+
+## Assign an MadButterfly symbol to an element
+
+This function will give an SVG element, such as path or group, a MadButterfly symbol so that we can access them by symbol in the MadButterfly program.
+
+Steps
+   * Select a single object in the worksapce. If you want to assign multiple elements to one symbol, please group them.
+   * Select the effect/MadButterFly/Convert to symbol
+   * Input the symbol name in the text entry
+   * Press OK
+
+You can check by using the XML editor in the inkscape. A new attribute mbname will be added. The MadButterfly parser willput this object into the symbol table by using the mbname.
+
+## Convert to button(In planned)
+
+This function will convert a symbol into a button. A button is a symbol with three groups inside it. For example,
+
+<g id="g1234" mbname="btn">
+    <g id="g1235" frame="active">
+    	<original object>
+    </g>
+    <g id="g1235" frame="normal">
+    	<original object>
+    </g>
+    <g id="g1236" frame="click">
+    	<original object>
+    </g>
+</g>
+
+
+The content of all three groups will be the same. We can modify each of them seperately. By default, the active and click group will be hidden. We can use the button editor to edit it.
+
+## Button editor(In planned)
+
+This function will invoke another inkscape to edit the selected button. In the new inkscape, all three group will be visible and put in different layer. We can move them and edit them. When we close the inkscape, the MB extention will collect the new content and update the groups in the original SVG file. By this way, we can edit the button in any SVG file.
+
