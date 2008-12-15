@@ -90,7 +90,7 @@ void coord_init(coord_t *co, coord_t *parent) {
 	co->parent = parent;
 	STAILQ_INS_TAIL(parent->children, coord_t, sibling, co);
     }
-    MBO_TYPE(co) = MBO_COORD;
+    mb_obj_init(co, MBO_COORD);
     co->matrix[0] = 1;
     co->matrix[4] = 1;
     co->aggr_matrix[0] = 1;

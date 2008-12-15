@@ -49,13 +49,6 @@ void engine_close(engine_t *en)
 #define COORD_HIDE(group) coord_hide(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)
 
 
-void coord_move(coord_t *c, co_aix x, co_aix y)
-{
-    c->matrix[2] = x;
-    c->matrix[5] = y;
-}
-
-
 static void cursor_press_handler(event_t *evt, void *arg) {
     engine_t *en = (engine_t *) arg;
     mouse_event_t *mev = (mouse_event_t *) evt;

@@ -4,6 +4,7 @@
 #include <cairo.h>
 #include "mb_tools.h"
 #include "mb_observer.h"
+#include "mb_prop.h"
 
 typedef float co_aix;
 typedef struct _shape shape_t;
@@ -16,21 +17,27 @@ typedef struct _mb_sprite mb_sprite_t;
 
 struct _redraw_man;
 
+/* \defgroup mb_obj_grp Object type
+ * @{
+ */
 /*! \brief MadButterfly object.
  *
  * All objects (coord and shapes) should have mb_obj_t as first member
  * variable.  obj_type is used to identify type of an object.  Please,
  * use MBO_TYPE() to return this value.  MBO_TYPE() will type-casting the
- * object to mb_obj_t and return obj_type.  MBO_TYPE() is a left-side
- * value.
+ * object to mb_obj_t and return obj_type.
+ *
+ * mb_obj_t should be initialized with mb_obj_init() and destroied with
+ * mb_obj_destroy().
  */
 struct _mb_obj {
     int obj_type;		/*!< \brief Type of a MadButterfly object. */
+    mb_prop_store_t props;	/*!< Initialized by rdman. */
 };
 
 enum { MBO_DUMMY,
        MBO_COORD,
-       MBO_SHAPES=0x1000,
+       MBO_SHAPES=0x1000,	/*! \note Don't touch this.  */
        MBO_PATH,
        MBO_TEXT,
        MBO_RECT
@@ -40,7 +47,15 @@ enum { MBO_DUMMY,
 /*! \brief Return type of a MadBufferly object. */
 #define MBO_TYPE(x) (((mb_obj_t *)(x))->obj_type)
 #define IS_MBO_SHAPES(obj) (MBO_CLASS(obj) == MBO_SHAPES)
-#define IS_MBO_COORD(obj) (MBO_TYPE(obj) == MB_COORD)
+#define IS_MBO_COORD(obj) (MBO_TYPE(obj) == MBO_COORD)
+#define mb_obj_init(obj, type)					\
+    do {							\
+	((mb_obj_t *)(obj))->obj_type = type;			\
+    } while(0)
+#define mb_obj_destroy(obj)
+#define mb_obj_prop_store(obj) (&(obj)->props)
+
+/* @} */
 
 /*! \brief Base of paint types.
  *

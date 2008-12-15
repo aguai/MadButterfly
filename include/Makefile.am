@@ -8,4 +8,5 @@ include_HEADERS = 	\
 	mb_redraw_man.h	\
 	mb_shapes.h	\
 	mb_tools.h	\
+	mb_prop.h	\
 	mb_X_supp.h
