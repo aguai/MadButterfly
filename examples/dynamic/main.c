@@ -55,12 +55,10 @@ static void mb_button_move(event_t *evt, void *arg)
     
     printf("Mouse move\n");
     COORD_SHOW(btn->active);
-    COORD_HIDE(btn->normal);
+#if 0
     rdman_coord_changed(btn->en->rdman,btn->root);
+#endif
     rdman_redraw_changed(btn->en->rdman);
-    subject_remove_observer(CMOUSE(btn->normal), btn->obs_move);
-    btn->obs_press = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_BUT_PRESS, mb_button_pressed,btn);
-    btn->obs_out = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_OUT, mb_button_out,btn);
 }
 static void mb_button_out(event_t *evt, void *arg) 
 {
@@ -69,12 +67,10 @@ static void mb_button_out(event_t *evt, void *arg)
 
     printf("mouse out\n");
     COORD_HIDE(btn->active);
-    COORD_SHOW(btn->normal);
+#if 0
     rdman_coord_changed(btn->en->rdman,btn->root);
+#endif
     rdman_redraw_changed(btn->en->rdman);
-    subject_remove_observer(CMOUSE(btn->active), btn->obs_press);
-    subject_remove_observer(CMOUSE(btn->active), btn->obs_out);
-    btn->obs_move = subject_add_event_observer(CMOUSE(btn->normal), EVT_MOUSE_MOVE, mb_button_move,btn);
 }
 
 void mb_button_show_active(event_t *evt, void *arg)
@@ -82,33 +78,34 @@ void mb_button_show_active(event_t *evt, void *arg)
     mb_button_t *btn = (mb_button_t *) arg;
     engine_t *en = btn->en;
 
-    COORD_HIDE(btn->click);
     COORD_SHOW(btn->active);
     rdman_coord_changed(btn->en->rdman,btn->root);
     rdman_redraw_changed(btn->en->rdman);
-    subject_remove_observer(CMOUSE(btn->click), btn->obs_press);
-    btn->obs_press = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_BUT_PRESS, mb_button_pressed,btn);
-    btn->obs_out = subject_add_event_observer(CMOUSE(btn->active), EVT_MOUSE_OUT, mb_button_out,btn);
 }
 
 void mb_button_pressed(event_t *evt, void *arg)
 {
     mb_button_t *btn = (mb_button_t *) arg;
     engine_t *en = btn->en;
-    mb_timeval_t now,to;
+    mb_timeval_t start, playing, now;
+    mb_progm_t *progm;
+    mb_word_t *word;
 
     printf("Pressed\n");
     COORD_SHOW(btn->click);
     COORD_HIDE(btn->active);
     rdman_coord_changed(en->rdman,en->button->root_coord);
     rdman_redraw_changed(en->rdman);
+
+    progm = mb_progm_new(1, en->rdman);
+    MB_TIMEVAL_SET(&start, 0, 500000);
+    MB_TIMEVAL_SET(&playing, 0, 0);
+    word = mb_progm_next_word(progm, &start, &playing);
+    mb_visibility_new(VIS_HIDDEN, btn->click, word);
+    mb_visibility_new(VIS_VISIBLE, btn->active, word);
+    mb_progm_free_completed(progm);
     get_now(&now);
-    MB_TIMEVAL_SET(&to, 0, 500);
-    MB_TIMEVAL_ADD(&to,&now);
-    subject_remove_observer(CMOUSE(btn->active), btn->obs_press);
-    subject_remove_observer(CMOUSE(btn->active), btn->obs_out);
-    btn->obs_press = subject_add_event_observer(CMOUSE(btn->click), EVT_MOUSE_BUT_RELEASE, mb_button_show_active,btn);
-    btn->obs_out = NULL;
+    mb_progm_start(progm, X_MB_tman(en->rt), &now);
 }
 mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
 {
@@ -144,10 +141,9 @@ mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
     btn->click->matrix[2] = 200;
     btn->click->matrix[5] = 200;
     btn->en = en;
-    btn->obs_move = subject_add_event_observer(CMOUSE(btn->normal), EVT_MOUSE_MOVE, mb_button_move,btn);
-    btn->obs_out = NULL;
-    btn->obs_press = NULL;
-    rdman_coord_changed(en->rdman,en->button->root_coord);
+    btn->obs_move = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_MOVE, mb_button_move,btn);
+    btn->obs_press = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_BUT_PRESS, mb_button_pressed,btn);
+    btn->obs_out = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_OUT, mb_button_out,btn);
     rdman_redraw_changed(en->rdman);
     return btn;
 }
@@ -186,15 +182,6 @@ void engine_mainloop(engine_t *en)
     X_MB_free(en->rt);
     free(en);
 }
-
-
-
-void coord_move(coord_t *c, co_aix x, co_aix y)
-{
-    c->matrix[2] = x;
-    c->matrix[5] = y;
-}
-
 
 
 static void add_rect_move(event_t *evt, void *arg) 

@@ -682,7 +682,7 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data) {
     path = (sh_path_t *)malloc(sizeof(sh_path_t));
     /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
-    MBO_TYPE(path) = MBO_PATH;
+    mb_obj_init(path, MBO_PATH);
     path->cmd_len = cmd_cnt;
     path->arg_len = arg_cnt;
     path->fix_arg_len = fix_arg_cnt;
@@ -722,7 +722,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman, char *commands, c
     path = (sh_path_t *)malloc(sizeof(sh_path_t));
     /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
-    MBO_TYPE(path) = MBO_PATH;
+    mb_obj_init(path, MBO_PATH);
     path->cmd_len = strlen(commands);
     path->arg_len = arg_cnt;
     path->fix_arg_len = fix_arg_cnt;

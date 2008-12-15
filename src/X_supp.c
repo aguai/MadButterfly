@@ -12,6 +12,8 @@
 #define ERR -1
 #define OK 0
 
+#define ONLY_MOUSE_MOVE_RAW 1
+
 /*! \ingroup xkb
  * @{
  */
@@ -37,8 +39,10 @@ struct _X_MB_runtime {
 
     X_kb_info_t kbinfo;
 
+#ifndef ONLY_MOUSE_MOVE_RAW
     /* States */
     shape_t *last;
+#endif
 };
 
 /*! \defgroup xkb X Keyboard Handling
@@ -145,11 +149,11 @@ static unsigned int get_button(unsigned int button) {
  * with SUBF_STOP_PROPAGATE flag.  The subject of mouse event
  * for a shape is returned by sh_get_mouse_event_subject().
  */
-static void notify_shapes(redraw_man_t *rdman,
-			  shape_t *shape,
-			  co_aix x, co_aix y, int etype,
-			  unsigned int state,
-			  unsigned int button) {
+static void notify_coord_or_shape(redraw_man_t *rdman,
+				   mb_obj_t *obj,
+				   co_aix x, co_aix y, int etype,
+				   unsigned int state,
+				   unsigned int button) {
     mouse_event_t mouse_event;
     subject_t *subject;
 
@@ -159,7 +163,10 @@ static void notify_shapes(redraw_man_t *rdman,
     mouse_event.but_state = state;
     mouse_event.button = button;
     
-    subject = sh_get_mouse_event_subject(shape);
+    if(IS_MBO_SHAPES(obj))
+	subject = sh_get_mouse_event_subject((shape_t *)obj);
+    else
+	subject = coord_get_mouse_event((coord_t *)obj);
     
     subject_notify(subject, (event_t *)&mouse_event);
 }
@@ -180,6 +187,7 @@ static void handle_x_event(X_MB_runtime_t *rt) {
     int ex1=0, ey1=0, ex2=0, ey2=0;
 
     shape_t *shape;
+    coord_t *root;
 
     unsigned int state, button;
     int in_stroke;
@@ -201,8 +209,9 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	    shape = find_shape_at_pos(rdman, x, y,
 				      &in_stroke);
 	    if(shape)
-		notify_shapes(rdman, shape, x, y, EVT_MOUSE_BUT_PRESS,
-			      state, button);
+		notify_coord_or_shape(rdman, (mb_obj_t *)shape,
+				      x, y, EVT_MOUSE_BUT_PRESS,
+				      state, button);
 	    break;
 
 	case ButtonRelease:
@@ -215,7 +224,8 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	    shape = find_shape_at_pos(rdman, x, y,
 				      &in_stroke);
 	    if(shape)
-		notify_shapes(rdman, shape, x, y, EVT_MOUSE_BUT_RELEASE,
+		notify_coord_or_shape(rdman, (mb_obj_t *)shape,
+			      x, y, EVT_MOUSE_BUT_RELEASE,
 			      state, button);
 	    break;
 
@@ -227,24 +237,35 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 
 	    shape = find_shape_at_pos(rdman, x, y,
 				      &in_stroke);
+#ifdef ONLY_MOUSE_MOVE_RAW
+	    if(shape != NULL) {
+		notify_coord_or_shape(rdman, (mb_obj_t *)shape,
+			      x, y, EVT_MOUSE_MOVE_RAW, state, 0);
+	    } else {
+		root = rdman_get_root(rdman);
+		notify_coord_or_shape(rdman, (mb_obj_t *)root,
+			      x, y, EVT_MOUSE_MOVE_RAW, state, 0);
+	    }
+#else
 	    if(shape != NULL) {
 		if(rt->last != shape) {
 		    if(rt->last)
-			notify_shapes(rdman, rt->last, x, y,
+			notify_coord_or_shape(rdman, rt->last, x, y,
 				      EVT_MOUSE_OUT, state, 0);
-		    notify_shapes(rdman, shape, x, y,
+		    notify_coord_or_shape(rdman, shape, x, y,
 				  EVT_MOUSE_OVER, state, 0);
 		    rt->last = shape;
 		} else
-		    notify_shapes(rdman, shape, x, y,
+		    notify_coord_or_shape(rdman, shape, x, y,
 				  EVT_MOUSE_MOVE, state, 0);
 	    } else {
 		if(rt->last) {
-		    notify_shapes(rdman, rt->last, x, y,
+		    notify_coord_or_shape(rdman, rt->last, x, y,
 				  EVT_MOUSE_OUT, state, 0);
 		    rt->last = NULL;
 		}
 	    }
+#endif
 	    break;
 
 	case KeyPress:
@@ -424,7 +445,9 @@ static int X_MB_init(const char *display_name,
 
     xmb_rt->tman = mb_tman_new();
 
+#ifndef ONLY_MOUSE_MOVE_RAW
     xmb_rt->last = NULL;
+#endif
 
     X_kb_init(&xmb_rt->kbinfo, xmb_rt->display, xmb_rt->rdman);
 
