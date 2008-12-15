@@ -50,6 +50,7 @@ struct _redraw_man {
     elmpool_t *observer_pool;
     elmpool_t *subject_pool;
     elmpool_t *paint_color_pool;
+    elmpool_t *pent_pool;
 
     coords_t dirty_coords;
     geos_t dirty_geos;
@@ -68,6 +69,10 @@ struct _redraw_man {
     ob_factory_t ob_factory;
 
     subject_t *redraw;		/*!< \brief Notified after redrawing. */
+    subject_t *addrm_monitor;	/*!< \brief Monitor adding/removing observers
+				 *	    to/from mouse event subjects.
+				 */
+    mb_obj_t *last_mouse_over;
 };
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
@@ -79,8 +84,14 @@ extern int rdman_find_overlaid_shapes(redraw_man_t *rdman,
 extern int rdman_add_shape(redraw_man_t *rdman,
 			   shape_t *shape, coord_t *coord);
 /*! \brief Make a shape been managed by a redraw manager. */
-#define rdman_shape_man(rdman, shape)				\
-    STAILQ_INS_TAIL(rdman->shapes, shape_t, sh_next, shape)
+#define rdman_shape_man(rdman, shape)					\
+    do {								\
+	mb_prop_store_init(&((mb_obj_t *)(shape))->props,		\
+			   (rdman)->pent_pool);				\
+	STAILQ_INS_TAIL(rdman->shapes, shape_t, sh_next, shape);	\
+	if(rdman->last_mouse_over == (mb_obj_t *)(shape))		\
+	    rdman->last_mouse_over = NULL;				\
+    } while(0)
 extern int rdman_shape_free(redraw_man_t *rdman, shape_t *shape);
 
 #define rdman_paint_man(rdman, paint)		\
@@ -155,6 +166,7 @@ extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
 				  co_aix x, co_aix y, int *in_stroke);
 #define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
 #define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
+#define rdman_get_root(rdman) ((rdman)->root_coord)
 
 
 #endif /* __REDRAW_MAN_H_ */

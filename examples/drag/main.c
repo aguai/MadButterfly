@@ -27,6 +27,7 @@ engine_t *engine_init()
 
     en->rt = rt;
     en->rdman =  X_MB_rdman(rt);
+    en->state = 0;
     return en;
 }
 void engine_close(engine_t *en)
@@ -46,13 +47,6 @@ void engine_close(engine_t *en)
 }
 #define COORD_SHOW(group) coord_show(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)
 #define COORD_HIDE(group) coord_hide(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)
-
-
-void coord_move(coord_t *c, co_aix x, co_aix y)
-{
-    c->matrix[2] = x;
-    c->matrix[5] = y;
-}
 
 
 static void cursor_press_handler(event_t *evt, void *arg) {

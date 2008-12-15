@@ -27,7 +27,7 @@ shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
 
     memset(rect, 0, sizeof(sh_rect_t));
 
-    MBO_TYPE(rect) = MBO_RECT;
+    mb_obj_init(rect, MBO_RECT);
     rect->x = x;
     rect->y = y;
     rect->w = w;
