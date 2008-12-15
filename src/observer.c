@@ -17,6 +17,7 @@ subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
     subject->obj = obj;
     subject->obj_type = obj_type;
     subject->flags = 0;
+    subject->monitor_sub = NULL;
     STAILQ_INIT(subject->observers);
 
     subject->factory = factory;
@@ -30,6 +31,7 @@ subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
 void subject_free(subject_t *subject) {
     ob_factory_t *factory = subject->factory;
     observer_t *observer;
+    monitor_event_t mevt;
 
     ASSERT(!(subject->flags & SUBF_FREE));
     if(subject->flags & SUBF_BUSY) {
@@ -39,7 +41,14 @@ void subject_free(subject_t *subject) {
 	subject->flags |= SUBF_FREE;
 	return;
     }
-	
+    
+    if(subject->monitor_sub) {
+	mevt.event.type = EVT_MONITOR_FREE;
+	mevt.subject = subject;
+	mevt.observer = NULL;
+	subject_notify(subject->monitor_sub, (event_t *)&mevt);
+    }
+
     while((observer = STAILQ_HEAD(subject->observers))) {
 	STAILQ_REMOVE(subject->observers, observer_t, next, observer);
 	factory->observer_free(factory, observer);
@@ -52,54 +61,51 @@ void subject_notify(subject_t *subject, event_t *evt) {
     ob_factory_t *factory = subject->factory;
     observer_t *observer;
     subject_t *old_subject;
+    int stop_propagate = 0;
+    int old_busy;
 
     evt->tgt = subject;
+    evt->flags = 0;
     while(subject) {
 	/*!
 	 * \note What is happend when the subject is freed by observer?
 	 *		Postponding the request of free until notification
 	 *		been finished. (\ref SUBF_BUSY / \ref SUBF_FREE)
 	 */
+	old_busy = subject->flags & SUBF_BUSY;
 	subject->flags |= SUBF_BUSY;
 
-	evt->cur_tgt = subject->obj;
+	evt->cur_tgt = subject;
 	for(observer = STAILQ_HEAD(subject->observers);
 	    observer != NULL;
 	    observer = STAILQ_NEXT(observer_t, next, observer)) {
-	    if (observer->type == EVT_ANY || observer->type == evt->type)
-		    observer->hdr(evt, observer->arg);
+	    if (observer->type == EVT_ANY || observer->type == evt->type) {
+		observer->hdr(evt, observer->arg);
+		
+		if(evt->flags & EVTF_STOP_NOTIFY) {
+		    stop_propagate = 1;
+			break;
+		}
+		if(evt->flags & EVTF_STOP_PROPAGATE)
+		    stop_propagate = 1;
+	    }
 	}
 
-	subject->flags &= ~SUBF_BUSY;
+	if(!old_busy)
+	    subject->flags &= ~SUBF_BUSY;
 
 	old_subject = subject;
 	subject = factory->get_parent_subject(factory, subject);
 
+	if(old_subject->flags & SUBF_STOP_PROPAGATE)
+	    stop_propagate = 1;
+
 	if(old_subject->flags & SUBF_FREE)
 	    subject_free(old_subject);
 
-	if(old_subject->flags & SUBF_STOP_PROPAGATE)
+	if(stop_propagate)
 	    break;
     }
-}
-
-/*! \brief Add an observer for any type of events.
- */
-observer_t *subject_add_observer(subject_t *subject,
-				 evt_handler hdr, void *arg) {
-    ob_factory_t *factory = subject->factory;
-    observer_t *observer;
-
-    observer = factory->observer_alloc(factory);
-    if(observer == NULL)
-	return NULL;
-    observer->hdr = hdr;
-    observer->arg = arg;
-    observer->type = EVT_ANY;
-
-    STAILQ_INS_TAIL(subject->observers, observer_t, next, observer);
-
-    return observer;
 }
 
 /*! \brief Add an observer for specified type of events.
@@ -108,6 +114,7 @@ observer_t *subject_add_event_observer(subject_t *subject, int type,
 				 evt_handler hdr, void *arg) {
     ob_factory_t *factory = subject->factory;
     observer_t *observer;
+    monitor_event_t mevt;
 
     observer = factory->observer_alloc(factory);
     if(observer == NULL)
@@ -118,14 +125,57 @@ observer_t *subject_add_event_observer(subject_t *subject, int type,
 
     STAILQ_INS_TAIL(subject->observers, observer_t, next, observer);
 
+    if(subject->monitor_sub) {
+	mevt.event.type = EVT_MONITOR_ADD;
+	mevt.subject = subject;
+	mevt.observer = observer;
+	subject_notify(subject->monitor_sub, (event_t *)&mevt);
+    }
+
+    return observer;
+}
+
+/*! \brief Add an observer for specified type of events at head.
+ */
+observer_t *subject_add_event_observer_head(subject_t *subject, int type,
+					    evt_handler hdr, void *arg) {
+    ob_factory_t *factory = subject->factory;
+    observer_t *observer;
+    monitor_event_t mevt;
+
+    observer = factory->observer_alloc(factory);
+    if(observer == NULL)
+	return NULL;
+    observer->hdr = hdr;
+    observer->arg = arg;
+    observer->type = type;
+
+    STAILQ_INS(subject->observers, observer_t, next, observer);
+
+    if(subject->monitor_sub) {
+	mevt.event.type = EVT_MONITOR_ADD;
+	mevt.subject = subject;
+	mevt.observer = observer;
+	subject_notify(subject->monitor_sub, (event_t *)&mevt);
+    }
+
     return observer;
 }
 
 void subject_remove_observer(subject_t *subject,
 			     observer_t *observer) {
     ob_factory_t *factory = subject->factory;
+    monitor_event_t mevt;
 
     STAILQ_REMOVE(subject->observers, observer_t, next, observer);
+    
+    if(subject->monitor_sub) {
+	mevt.event.type = EVT_MONITOR_REMOVE;
+	mevt.subject = subject;
+	mevt.observer = observer;
+	subject_notify(subject->monitor_sub, (event_t *)&mevt);
+    }
+
     factory->observer_free(factory, observer);
 }
 
@@ -176,7 +226,7 @@ static void handler(event_t *evt, void *arg) {
     (*cnt)++;
 }
 
-void test_observer(void) {
+static void test_observer(void) {
     subject_t *subject;
     observer_t *observer[2];
     event_t evt;
@@ -198,11 +248,41 @@ void test_observer(void) {
     subject_free(subject);
 }
 
+static void monitor_handler(event_t *evt, void *arg) {
+    int *cnt = (int *)arg;
+
+    (*cnt)++;
+}
+
+static void test_monitor(void) {
+    subject_t *subject, *monitor;
+    observer_t *observer[2];
+    int cnt = 0;
+
+    subject = subject_new(&test_factory, NULL, 0);
+    monitor = subject_new(&test_factory, NULL, 0);
+    subject_set_monitor(subject, monitor);
+
+    observer[0] = subject_add_observer(monitor, monitor_handler, &cnt);
+    observer[1] = subject_add_observer(subject, NULL, NULL);
+    CU_ASSERT(cnt == 1);
+
+    subject_remove_observer(subject, observer[1]);
+    CU_ASSERT(cnt == 2);
+
+    subject_free(subject);
+    CU_ASSERT(cnt == 3);
+
+    subject_remove_observer(monitor, observer[0]);
+    subject_free(monitor);
+}
+
 CU_pSuite get_observer_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_observer", NULL, NULL);
     CU_ADD_TEST(suite, test_observer);
+    CU_ADD_TEST(suite, test_monitor);
 
     return suite;
 }

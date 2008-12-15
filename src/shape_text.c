@@ -42,7 +42,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 	return NULL;
 
     memset(text, 0, sizeof(sh_text_t));
-    MBO_TYPE(text) = MBO_TEXT;
+    mb_obj_init(text, MBO_TEXT);
     text->data = strdup(txt);
     if(text->data == NULL) {
 	free(text);

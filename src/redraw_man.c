@@ -7,7 +7,11 @@
 #include "mb_tools.h"
 #include "mb_redraw_man.h"
 #include "mb_observer.h"
+#include "mb_prop.h"
 
+#ifndef ASSERT
+#define ASSERT(x)
+#endif
 
 /* NOTE: bounding box should also consider width of stroke.
  */
@@ -235,55 +239,116 @@ static void geo_detach_coord(geo_t *geo, coord_t *coord) {
     coord->num_members--;
 }
 
+static void mouse_event_root_dummy(event_t *evt, void *arg) {
+}
+
+static void mouse_event_interpreter(event_t *evt, void *arg) {
+    mouse_event_t *mevt = (mouse_event_t *)evt;
+    redraw_man_t *rdman = (redraw_man_t *)arg;
+    mb_obj_t *obj;
+    mouse_event_t new_evt;
+    coord_t *coord;
+    shape_t *shape;
+    
+    ASSERT(evt->type == EVT_MOUSE_MOVE_RAW);
+    
+    obj = (mb_obj_t *)subject_get_object(evt->cur_tgt);
+    if(rdman->last_mouse_over == obj) {
+	evt->type = EVT_MOUSE_MOVE;
+	return;
+    }
+    
+    new_evt.x = mevt->x;
+    new_evt.y = mevt->y;
+    new_evt.but_state = mevt->but_state;
+    new_evt.button = mevt->button;
+    
+    if(rdman->last_mouse_over != NULL) {
+	new_evt.event.type = EVT_MOUSE_OUT;
+	if(IS_MBO_COORD(rdman->last_mouse_over)) {
+	    coord = (coord_t *)rdman->last_mouse_over;
+	    subject_notify(coord->mouse_event, (event_t *)&new_evt);
+	} else if(IS_MBO_SHAPES(rdman->last_mouse_over)) {
+	    shape = (shape_t *)rdman->last_mouse_over;
+	    ASSERT(shape->geo != NULL);
+	    subject_notify(shape->geo->mouse_event, (event_t *)&new_evt); 
+	}
+    }
+
+    new_evt.event.type = EVT_MOUSE_OVER;
+    subject_notify(evt->cur_tgt, (event_t *)&new_evt);
+    rdman->last_mouse_over = obj;
+    
+    evt->flags |= EVTF_STOP_NOTIFY;
+}
+
+static void addrm_monitor_hdlr(event_t *evt, void *arg) {
+    monitor_event_t *mevt;
+    redraw_man_t *rdman;
+    mb_obj_t *obj;
+    mb_prop_store_t *props;
+    observer_t *observer;
+    int cnt = 0;
+    
+    mevt = (monitor_event_t *)evt;
+    rdman = (redraw_man_t *)evt->tgt;
+    obj = (mb_obj_t *)subject_get_object(mevt->subject);
+    props = mb_obj_prop_store(obj);
+
+    switch(evt->type) {
+    case EVT_MONITOR_ADD:
+	if(!mb_prop_has(props, PROP_MEVT_OB_CNT))
+	    cnt = 0;
+	else
+	    cnt = (int)mb_prop_get(props, PROP_MEVT_OB_CNT);
+	
+	cnt++;
+	mb_prop_set(props, PROP_MEVT_OB_CNT, (void *)cnt);
+	if(cnt == 1) {
+	    observer =
+		subject_add_event_observer_head(mevt->subject,
+						EVT_MOUSE_MOVE_RAW,
+						mouse_event_interpreter,
+						rdman);
+	    ASSERT(observer != NULL);
+	    mb_prop_set(props, PROP_MEVT_OBSERVER, observer);
+	}
+	break;
+	
+    case EVT_MONITOR_REMOVE:
+	cnt = (int)mb_prop_get(props, PROP_MEVT_OB_CNT);
+	cnt--;
+	mb_prop_set(props, PROP_MEVT_OB_CNT, (void *)cnt);
+	if(cnt == 1) {
+	    observer = (observer_t *)mb_prop_get(props, PROP_MEVT_OBSERVER);
+	    subject_remove_observer(mevt->subject, observer);
+	    mb_prop_del(props, PROP_MEVT_OBSERVER);
+	}
+	break;
+	
+    case EVT_MONITOR_FREE:
+	break;
+    }
+}
+
 int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
     extern int _paint_color_size;
+    observer_t *addrm_ob;
 
     memset(rdman, 0, sizeof(redraw_man_t));
 
     rdman->geo_pool = elmpool_new(sizeof(geo_t), 128);
-    if(rdman->geo_pool == NULL)
-	return ERR;
-
     rdman->coord_pool = elmpool_new(sizeof(coord_t), 16);
-    if(rdman->coord_pool == NULL) {
-	elmpool_free(rdman->geo_pool);
-	return ERR;
-    }
-
     rdman->shnode_pool = elmpool_new(sizeof(shnode_t), 16);
-    if(rdman->shnode_pool == NULL) {
-	elmpool_free(rdman->geo_pool);
-	elmpool_free(rdman->coord_pool);
-	return ERR;
-    }
-
     rdman->observer_pool = elmpool_new(sizeof(observer_t), 32);
-    if(rdman->observer_pool == NULL) {
-	elmpool_free(rdman->geo_pool);
-	elmpool_free(rdman->coord_pool);
-	elmpool_free(rdman->shnode_pool);
-	return ERR;
-    }
-
     rdman->subject_pool = elmpool_new(sizeof(subject_t), 32);
-    if(rdman->subject_pool == NULL) {
-	elmpool_free(rdman->geo_pool);
-	elmpool_free(rdman->coord_pool);
-	elmpool_free(rdman->shnode_pool);
-	elmpool_free(rdman->observer_pool);
-	return ERR;
-    }
-
     rdman->paint_color_pool = elmpool_new(_paint_color_size, 64);
-    if(rdman->subject_pool == NULL) {
-	elmpool_free(rdman->geo_pool);
-	elmpool_free(rdman->coord_pool);
-	elmpool_free(rdman->shnode_pool);
-	elmpool_free(rdman->observer_pool);
-	elmpool_free(rdman->subject_pool);
-	return ERR;
-    }
+    rdman->pent_pool = elmpool_new(sizeof(mb_prop_entry_t), 128);
+    if(!(rdman->geo_pool && rdman->coord_pool && rdman->shnode_pool &&
+	 rdman->observer_pool && rdman->subject_pool &&
+	 rdman->paint_color_pool))
+	goto err;
 
     rdman->ob_factory.subject_alloc = ob_subject_alloc;
     rdman->ob_factory.subject_free = ob_subject_free;
@@ -293,12 +358,24 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 
     rdman->redraw =
 	subject_new(&rdman->ob_factory, rdman, OBJT_RDMAN);
+    rdman->addrm_monitor =
+	subject_new(&rdman->ob_factory, rdman, OBJT_RDMAN);
+    if(!(rdman->redraw && rdman->addrm_monitor))
+	goto err;
+
+    addrm_ob = subject_add_observer(rdman->addrm_monitor,
+				    addrm_monitor_hdlr, NULL);
+    if(addrm_ob == NULL)
+	goto err;
+
+    rdman->last_mouse_over = NULL;
 
     rdman->root_coord = elmpool_elm_alloc(rdman->coord_pool);
     if(rdman->root_coord == NULL)
 	redraw_man_destroy(rdman);
     rdman->n_coords = 1;
     coord_init(rdman->root_coord, NULL);
+    mb_prop_store_init(&rdman->root_coord->obj.props, rdman->pent_pool);
     rdman->root_coord->mouse_event = subject_new(&rdman->ob_factory,
 						 rdman->root_coord,
 						 OBJT_COORD);
@@ -311,8 +388,33 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
 
     STAILQ_INIT(rdman->shapes);
     STAILQ_INIT(rdman->paints);
+    
+    /* \note To make root coord always have at leat one observer.
+     * It triggers mouse interpreter to be installed on root.
+     */
+    subject_set_monitor(rdman->root_coord->mouse_event,
+			rdman->addrm_monitor);
+    subject_add_observer(rdman->root_coord->mouse_event,
+			 mouse_event_root_dummy, NULL);
 
     return OK;
+
+ err:
+    if(rdman->geo_pool)
+	elmpool_free(rdman->geo_pool);
+    if(rdman->coord_pool)
+	elmpool_free(rdman->coord_pool);
+    if(rdman->shnode_pool)
+	elmpool_free(rdman->shnode_pool);
+    if(rdman->observer_pool)
+	elmpool_free(rdman->observer_pool);
+    if(rdman->subject_pool)
+	elmpool_free(rdman->subject_pool);
+    if(rdman->paint_color_pool)
+	elmpool_free(rdman->paint_color_pool);
+    if(rdman->pent_pool)
+	elmpool_free(rdman->pent_pool);
+    return ERR;
 }
 
 void redraw_man_destroy(redraw_man_t *rdman) {
@@ -332,9 +434,11 @@ void redraw_man_destroy(redraw_man_t *rdman) {
 	}
 	rdman_coord_free(rdman, saved_coord);
     }
+#if 0
     FORMEMBERS(saved_coord, member) {
 	rdman_shape_free(rdman, member->shape);
     }
+#endif
     /* Resources of root_coord is free by elmpool_free() or
      * caller; for canvas
      */
@@ -356,6 +460,7 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->observer_pool);
     elmpool_free(rdman->subject_pool);
     elmpool_free(rdman->paint_color_pool);
+    elmpool_free(rdman->pent_pool);
 
     DARRAY_DESTROY(&rdman->dirty_coords);
     DARRAY_DESTROY(&rdman->dirty_geos);
@@ -397,6 +502,7 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
     
     geo_init(geo);
     geo->mouse_event = subject_new(&rdman->ob_factory, geo, OBJT_GEO);
+    subject_set_monitor(geo->mouse_event, rdman->addrm_monitor);
 
     geo_attach_coord(geo, coord);
 
@@ -442,14 +548,18 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
     }
 
     if(geo != NULL) {
+	subject_free(geo->mouse_event);
 	geo_detach_coord(geo, shape->coord);
 	sh_detach_coord(shape);
 	sh_detach_geo(shape);
-	subject_free(geo->mouse_event);
 	elmpool_elm_free(rdman->geo_pool, geo);
     }
     STAILQ_REMOVE(rdman->shapes, shape_t, sh_next, shape);
     shape->free(shape);
+
+    if(rdman->last_mouse_over == (mb_obj_t *)shape)
+	rdman->last_mouse_over = NULL;
+    
     return OK;
 }
 
@@ -517,9 +627,11 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
 	return NULL;
 
     coord_init(coord, parent);
+    mb_prop_store_init(&coord->obj.props, rdman->pent_pool);
     coord->mouse_event = subject_new(&rdman->ob_factory,
 				     coord,
 				     OBJT_COORD);
+    subject_set_monitor(coord->mouse_event, rdman->addrm_monitor);
     /*! \note default opacity == 1 */
     coord->opacity = 1;
     if(parent)
@@ -613,7 +725,7 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
     return OK;
 }
 
-static _rdman_coord_free_members(redraw_man_t *rdman, coord_t *coord) {
+static int _rdman_coord_free_members(redraw_man_t *rdman, coord_t *coord) {
     geo_t *member;
     shape_t *shape;
     int r;
@@ -1468,7 +1580,7 @@ shape_t *sh_dummy_new(redraw_man_t *rdman,
     dummy->trans_cnt = 0;
     dummy->draw_cnt = 0;
     dummy->shape.free = sh_dummy_free;
-
+    
     rdman_shape_man(rdman, (shape_t *)dummy);
 
     return (shape_t *)dummy;
