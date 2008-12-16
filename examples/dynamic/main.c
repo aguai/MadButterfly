@@ -35,6 +35,7 @@ typedef struct _mb_button {
     void (*press)();
     void *arg;
     observer_t *obs_move,*obs_out,*obs_press;
+    mb_progm_t *progm;
 } mb_button_t;
 
 
@@ -65,10 +66,16 @@ static void mb_button_out(event_t *evt, void *arg)
     mb_button_t *btn = (mb_button_t *) arg;
     engine_t *en = btn->en;
 
+    if (btn->progm) {
+	    mb_progm_abort(btn->progm);
+	    btn->progm = NULL;
+    }
     printf("mouse out\n");
+    COORD_HIDE(btn->click);
     COORD_HIDE(btn->active);
-#if 0
-    rdman_coord_changed(btn->en->rdman,btn->root);
+    COORD_SHOW(btn->normal);
+#if 1
+    rdman_coord_changed(btn->en->rdman,btn->normal);
 #endif
     rdman_redraw_changed(btn->en->rdman);
 }
@@ -92,12 +99,16 @@ void mb_button_pressed(event_t *evt, void *arg)
     mb_word_t *word;
 
     printf("Pressed\n");
+    if (btn->progm) {
+	    mb_progm_abort(btn->progm);
+	    btn->progm = NULL;
+    }
     COORD_SHOW(btn->click);
     COORD_HIDE(btn->active);
     rdman_coord_changed(en->rdman,en->button->root_coord);
     rdman_redraw_changed(en->rdman);
 
-    progm = mb_progm_new(1, en->rdman);
+    btn->progm = progm = mb_progm_new(1, en->rdman);
     MB_TIMEVAL_SET(&start, 0, 500000);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -113,6 +124,7 @@ mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
     char *buf = (char *) malloc(strlen(name)+5);
 
     btn->root = (coord_t *) MB_SPRITE_GET_OBJ(sp, name);
+    printf("btn->root=%x\n",btn->root);
     sprintf(buf, "%s_normal", name);
     btn->normal = (coord_t *) MB_SPRITE_GET_OBJ(sp, buf);
     if (btn->normal == NULL) {
@@ -141,9 +153,11 @@ mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
     btn->click->matrix[2] = 200;
     btn->click->matrix[5] = 200;
     btn->en = en;
+    printf("btn->root=%x\n",CMOUSE(btn->root));
     btn->obs_move = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_MOVE, mb_button_move,btn);
     btn->obs_press = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_BUT_PRESS, mb_button_pressed,btn);
     btn->obs_out = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_OUT, mb_button_out,btn);
+    btn->progm = NULL;
     rdman_redraw_changed(en->rdman);
     return btn;
 }
