@@ -30,7 +30,7 @@
      inkscape:cx="257.06285"
      inkscape:cy="365.06674"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="btn_click"
      showgrid="false"
      inkscape:window-width="1400"
      inkscape:window-height="978"
@@ -41,43 +41,43 @@
     <linearGradient
        id="linearGradient4066">
       <stop
-         id="stop4068"
+         style="stop-color:#000000;stop-opacity:0;"
          offset="0"
-         style="stop-color:#000000;stop-opacity:0;" />
+         id="stop4068" />
       <stop
-         id="stop4070"
+         style="stop-color:#000000;stop-opacity:1"
          offset="1"
-         style="stop-color:#000000;stop-opacity:1" />
+         id="stop4070" />
     </linearGradient>
     <linearGradient
        id="linearGradient4026">
       <stop
-         id="stop4028"
+         style="stop-color:#000000;stop-opacity:1;"
          offset="0"
-         style="stop-color:#000000;stop-opacity:1;" />
+         id="stop4028" />
       <stop
-         id="stop4030"
+         style="stop-color:#ffffff;stop-opacity:0;"
          offset="1"
-         style="stop-color:#ffffff;stop-opacity:0;" />
+         id="stop4030" />
     </linearGradient>
     <linearGradient
        id="linearGradient4018">
       <stop
-         id="stop4020"
+         style="stop-color:#000000;stop-opacity:1;"
          offset="0"
-         style="stop-color:#000000;stop-opacity:1;" />
+         id="stop4020" />
       <stop
-         id="stop4022"
+         style="stop-color:#0000ff;stop-opacity:0;"
          offset="1"
-         style="stop-color:#0000ff;stop-opacity:0;" />
+         id="stop4022" />
     </linearGradient>
     <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="0 : 526.18109 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       id="perspective10"
        inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
-       id="perspective10" />
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <metadata
      id="metadata7">
@@ -91,107 +91,107 @@
     </rdf:RDF>
   </metadata>
   <g
-     style="display:inline"
-     inkscape:label="bg"
+     id="layer1"
      inkscape:groupmode="layer"
-     id="layer1">
+     inkscape:label="bg"
+     style="display:inline">
     <text
-       id="text4380"
-       y="282.36218"
-       x="235.71429"
+       xml:space="preserve"
        style="font-size:30px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-       xml:space="preserve"><tspan
-         y="282.36218"
-         x="235.71429"
+       x="235.71429"
+       y="282.36218"
+       id="text4380"><tspan
+         sodipodi:role="line"
          id="tspan4382"
-         sodipodi:role="line" /></text>
+         x="235.71429"
+         y="282.36218" /></text>
     <g
-       mbname="btn"
+       id="btn"
        transform="translate(148.57143,98.571429)"
-       id="btn">
+       mbname="btn">
       <g
-         style="display:none"
-         mbname="btn_normal"
-         transform="translate(148.57143,98.571429)"
+         frame="normal"
          id="btn_normal"
-         frame="normal">
+         transform="translate(148.57143,98.571429)"
+         mbname="btn_normal"
+         style="display:none">
         <rect
-           style="fill:#0000ff"
+           ry="5.0559778"
+           rx="6.0995407"
+           y="1.4285747"
+           x="-1.4285715"
+           height="47.142857"
+           width="122.85714"
            id="rect2651"
-           width="122.85714"
-           height="47.142857"
-           x="-1.4285715"
-           y="1.4285747"
-           rx="6.0995407"
-           ry="5.0559778" />
+           style="fill:#0000ff" />
         <text
-           xml:space="preserve"
-           style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-           x="10.000002"
+           id="text2653"
            y="32.85714"
-           id="text2653"><tspan
-             sodipodi:role="line"
+           x="10.000002"
+           style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+           xml:space="preserve"><tspan
+             y="32.85714"
+             x="10.000002"
              id="tspan2655"
-             x="10.000002"
-             y="32.85714">Click Me</tspan></text>
+             sodipodi:role="line">Click Me</tspan></text>
       </g>
       <g
-         style=""
-         mbname="btn_active"
-         transform="translate(148.57143,98.571429)"
+         frame="active"
          id="btn_active"
-         frame="active">
+         transform="translate(148.57143,98.571429)"
+         mbname="btn_active"
+         style="display:none">
         <rect
-           style="fill:#00ffff"
-           id="rect2727"
-           width="122.85714"
-           height="47.142857"
-           x="-1.4285715"
-           y="1.4285747"
+           ry="5.0559778"
            rx="6.0995407"
-           ry="5.0559778" />
+           y="1.4285747"
+           x="-1.4285715"
+           height="47.142857"
+           width="122.85714"
+           id="rect2727"
+           style="fill:#00ffff" />
         <text
-           xml:space="preserve"
-           style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-           x="10.000002"
+           id="text2729"
            y="32.85714"
-           id="text2729"><tspan
-             sodipodi:role="line"
-             id="tspan2731"
+           x="10.000002"
+           style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+           xml:space="preserve"><tspan
+             y="32.85714"
              x="10.000002"
-             y="32.85714">Click Me</tspan></text>
+             id="tspan2731"
+             sodipodi:role="line">Click Me</tspan></text>
       </g>
       <g
-         style="display:none"
-         mbname="btn_click"
-         transform="translate(148.57143,98.571429)"
+         frame="click"
          id="btn_click"
-         frame="click">
+         transform="translate(148.57143,98.571429)"
+         mbname="btn_click"
+         style="">
         <rect
-           style="fill:#0000ff"
-           id="rect2734"
-           width="122.85714"
-           height="47.142857"
-           x="-1.4285715"
-           y="1.4285747"
+           ry="5.0559778"
            rx="6.0995407"
-           ry="5.0559778" />
+           y="1.4285747"
+           x="-1.4285715"
+           height="47.142857"
+           width="122.85714"
+           id="rect2734"
+           style="fill:#ff0000" />
         <text
-           xml:space="preserve"
-           style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-           x="10.000002"
+           id="text2736"
            y="32.85714"
-           id="text2736"><tspan
-             sodipodi:role="line"
-             id="tspan2738"
+           x="10.000002"
+           style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+           xml:space="preserve"><tspan
+             y="32.85714"
              x="10.000002"
-             y="32.85714">Click Me</tspan></text>
+             id="tspan2738"
+             sodipodi:role="line">Click Me</tspan></text>
       </g>
     </g>
   </g>
   <g
-     style="display:inline"
-     inkscape:label="text"
+     inkscape:groupmode="layer"
      id="layer2"
-     inkscape:groupmode="layer" />
+     inkscape:label="text"
+     style="display:inline" />
 </svg>
