@@ -118,6 +118,8 @@ void mb_button_pressed(event_t *evt, void *arg)
     mb_progm_free_completed(progm);
     get_now(&now);
     mb_progm_start(progm, X_MB_tman(en->rt), &now);
+    if (btn->press)
+    	btn->press(btn->arg);
 }
 mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
 {

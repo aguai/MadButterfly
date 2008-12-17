@@ -1,6 +1,6 @@
 include $(top_srcdir)/config.mk
 
-noinst_PROGRAMS = dynamic
+noinst_PROGRAMS = dynamic button.so
 EXTRA_DIST = menu.svg button.svg
 
 dynamic_SOURCES = main.c
