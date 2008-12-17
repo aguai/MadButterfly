@@ -10,6 +10,7 @@ dynamic_LDFLAGS = @cairo_LIBS@
 dynamic_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = menu.c menu.h menu.mb button.c button.h button.mb
 CLEANFILES = menu.c menu.h menu.mb button.c button.h button.mb
+INCLUDES= @cairo_CFLAGS@ -I$(top_srcdir)
 
 menu.mb: $(srcdir)/menu.svg
 	$(top_srcdir)/tools/svg2code.py $? $@
@@ -19,6 +20,9 @@ menu.h: menu.mb
 
 menu.c: menu.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
+
+button.so: button.o
+	gcc -shared -o button.so button.o
 
 button.mb: $(srcdir)/button.svg
 	$(top_srcdir)/tools/svg2code.py $? $@

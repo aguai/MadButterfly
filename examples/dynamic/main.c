@@ -16,7 +16,7 @@ struct _engine {
     X_MB_runtime_t *rt;
     redraw_man_t *rdman;
     menu_t *menu;
-    button_t *button;
+    mb_sprite_t *button;
     int state;
     co_aix orx,ory;
     int start_x,start_y;
@@ -106,7 +106,7 @@ void mb_button_pressed(event_t *evt, void *arg)
     }
     COORD_SHOW(btn->click);
     COORD_HIDE(btn->active);
-    rdman_coord_changed(en->rdman,en->button->root_coord);
+    rdman_coord_changed(en->rdman,btn->root);
     rdman_redraw_changed(en->rdman);
 
     btn->progm = progm = mb_progm_new(1, en->rdman);
@@ -278,7 +278,7 @@ int main(int argc, char * const argv[]) {
 
     en = engine_init();
     en->menu = menu_new(en->rdman, en->rdman->root_coord);
-    en->button = button_new(en->rdman, en->rdman->root_coord);
+    en->button = sprite_load("button",en->rdman, en->rdman->root_coord);
     b = mb_button_new(en, (mb_sprite_t *) en->button, "btn");
     mb_button_add_onClick(b, test,NULL);
 
