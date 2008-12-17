@@ -27,6 +27,7 @@ struct _engine {
 
 
 typedef struct _mb_button {
+    mb_obj_t obj;
     engine_t *en;
     coord_t *root;
     coord_t *active;

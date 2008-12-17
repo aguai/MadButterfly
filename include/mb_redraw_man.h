@@ -168,5 +168,17 @@ extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
 #define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
 #define rdman_get_root(rdman) ((rdman)->root_coord)
 
+/*! \brief Load sprite dymanicly from the shared object module. 
+ *  
+ *   The search path can be changed by sprite_set_search_path. The name can have a relative path in the front of it.
+ *   This function will search the object in the current working directory and then search the system search path.
+ *
+ */
+mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman, coord_t *root);
+
+/*! \brief Set the search path of dymanic object loading.
+ *
+ */
+void sprite_set_search_path(char *path);
 
 #endif /* __REDRAW_MAN_H_ */
