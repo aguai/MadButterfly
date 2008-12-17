@@ -7,7 +7,7 @@ noinst_PROGRAMS = X_main
 libmbfly_la_SOURCES = animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
 	shape_rect.c shape_text.c shift.c subtree_free.c timer.c 	\
-	timertool.c tools.c visibility.c X_supp.c prop.c
+	timertool.c tools.c visibility.c X_supp.c prop.c sprite.c
 libmbfly_la_CPPFLAGS = @cairo_CFLAGS@
 libmbfly_la_LDFLAGS = @cairo_LIBS@
 
