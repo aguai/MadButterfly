@@ -7,7 +7,7 @@ svg_sources = brick.c bullet.c bush.c mud.c rock.c \
 tank_SOURCES = tank_main.c
 nodist_tank_SOURCES = svgs.h \
 	$(svg_sources) $(svg_sources:.c=.h) $(svg_sources:.c=.mb)
-tank_CPPFLAGS = @cairo_CFLAGS@ -I$(top_srcdir)
+tank_CPPFLAGS = @cairo_CFLAGS@
 tank_LDFLAGS = @cairo_LIBS@ 
 tank_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = svgs.h \
