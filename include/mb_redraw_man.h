@@ -71,6 +71,7 @@ struct _redraw_man {
     subject_t *redraw;		/*!< \brief Notified after redrawing. */
     subject_t *addrm_monitor;	/*!< \brief Monitor adding/removing observers
 				 *	    to/from mouse event subjects.
+				 *	    \see addrm_monitor_hdlr()
 				 */
     mb_obj_t *last_mouse_over;
 };
