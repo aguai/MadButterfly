@@ -55,6 +55,7 @@ enum { MBO_DUMMY,
 #define mb_obj_destroy(obj)
 #define mb_obj_prop_store(obj) (&(obj)->props)
 
+
 /* @} */
 
 /*! \brief Base of paint types.
@@ -103,6 +104,7 @@ struct _geo {
 #define GEF_DIRTY 0x1
 #define GEF_HIDDEN 0x2		/*!< The geo is hidden. */
 #define GEF_FREE 0x4
+#define GEF_OV_DRAW 0x8		/*!< To flag drawed for a overlay testing. */
 
 extern int is_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
@@ -116,6 +118,7 @@ extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 #define geo_pos_is_in(g, _x, _y)				\
     (_geo_is_in(_x, (g)->cur_area->x, (g)->cur_area->w) &&	\
      _geo_is_in(_y, (g)->cur_area->y, (g)->cur_area->h))
+#define geo_get_area(g) ((g)->cur_area)
 
 
 /*! \brief A coordination system.
@@ -181,7 +184,6 @@ extern void compute_aggr_of_coord(coord_t *coord);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
 extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
-extern void preorder_coord_skip_subtree(coord_t *subroot);
 #define preorder_coord_skip_subtree(sub)		\
     do { (sub)->flags |= COF_SKIP_TRIVAL; } while(0)
 #define coord_hide(co)		      \
@@ -190,6 +192,14 @@ extern void preorder_coord_skip_subtree(coord_t *subroot);
     } while(0)
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
+#define FOR_COORDS_POSTORDER(coord, cur)			\
+    for((cur) = postorder_coord_subtree((coord), NULL);		\
+	(cur) != NULL;						\
+	(cur) = postorder_coord_subtree((coord), (cur)))
+#define FOR_COORDS_PREORDER(coord, cur)			\
+    for((cur) = (coord);				\
+	(cur) != NULL;					\
+	(cur) = preorder_coord_subtree((coord), (cur)))
 
 /*! \brief Coord operation function
  * These functions are used to move and scale the coord_t. Programmers should use these functions instead of using the matrix directly.
@@ -203,6 +213,11 @@ extern void preorder_coord_skip_subtree(coord_t *subroot);
 #define coord_scaley(ci) ((co)->matrix[3])
 #define coord_x(ci) ((co)->matrix[2])
 #define coord_y(ci) ((co)->matrix[5])
+#define FOR_COORD_MEMBERS(coord, geo)			\
+    for(geo = STAILQ_HEAD((coord)->members);		\
+	geo != NULL;					\
+	geo = STAILQ_NEXT(geo_t, coord_next, geo))
+#define coord_get_area(coord) ((coord)->cur_area)
 
 /*! \brief A grahpic shape.
  *
@@ -238,6 +253,7 @@ struct _shape {
     do {						\
 	(sh)->geo->flags &= ~GEF_HIDDEN;		\
     } while(0)
+#define sh_get_geo(sh) ((sh)->geo)
 
 
 /*! \brief A sprite is a set of graphics that being an object in animation.
