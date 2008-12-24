@@ -10,15 +10,17 @@ import random
 # Like the layer, the frames are represented by special groups. All groups directly under a layer will be treated as frames. However, a group may be spanned for more than one
 # frame. For example
 # <g id="layer1">
+#    <g id="g1222">
+#    </g>
 #    <g id="g1234" scene="1">
 #    </g>
-#    <g id="g1235" scene="2-7">
+#    <g id="g1235" scene="2-7" current="3">
 #    </g>
-#    <g id="g1236">
-#    </g>
+#    <g id="g1333"/>
 # </g>
-# This will stand for 7 scenes. Scene 1 and scene 2 are key scenes. 3,4,5,6,7 are filled scenes.In the above example, g1234 and g1236 are in the scene 1. g1235 and g1236 are in
-# scene 2-7
+# This will stand for 7 scenes. Scene 1 and scene 2 are key scenes. 3,4,5,6,7 are filled scenes. The current scene is defined by the 'current' attribute. In the above example, it is 3.
+# All elements without scene attributes are items in the current scene. 
+# Therefore, when we switch scene, we will move all items into the current scene and then move items out from the new scene.
 #
 # In the inkscape extention, we will provide an grid for users to select the current scene or change the scene structure. Users are allowed to
 #     Insert a new key scene
@@ -48,6 +50,7 @@ class Layer:
 	def __init__(self,node):
 		self.scene = []
 		self.node = node
+		self.nodes=[]
 class Scene:
 	def __init__(self, node, start,end):
 		self.node = node
@@ -76,21 +79,53 @@ class MBScene(inkex.Effect):
 		print " " * l * 2,"/>"
 
 	def parseScene(self):
+		"""
+		In this function, we will collect all items for the current scene and then relocate them back to the appropriate scene object.
+		"""
 		self.layer = []
-		for layer in self.document.getroot():
-			if layer.tag == '{http://www.w3.org/2000/svg}g':
+		current_scene = []
+		oldscene = None
+		for node in self.document.getroot():
+			if node.tag == '{http://www.w3.org/2000/svg}g':
 				#print layer.attrib.get("id")
-				lyobj = Layer(layer)
+				lyobj = Layer(node)
 				self.layer.append(lyobj)
-				for scene in layer:
+				for scene in node:
 					if scene.tag == '{http://www.w3.org/2000/svg}g':
-						range = scene.attrib.get("scene").split('-')
+						s = scene.get("scene")
+						if s == None:
+							# group without scene is part of the current scene
+							current_scene.append(scene)
+							continue
+						range = s.split('-')
+
+						cur = scene.get("current")
+						try:
+							self.current_scene = int(cur)
+							del scene.attrib["current"]
+							oldscene = scene
+						except:
+							pass
 						if len(range) == 1:
 							#print "    scene %d" % int(range[0])
 							lyobj.scene.append(Scene(scene,range[0],range[0]))
 						elif len(range) == 2:
 							#print "    scene%d-%d" % (int(range[0]),int(range[1]))
 							lyobj.scene.append(Scene(scene,range[0],range[1]))
+					else:
+						current_scene.append(scene)
+					pass
+				pass
+			pass
+		pass
+
+		if oldscene != None:
+			# Put the objects back to the current scene
+			#print "Add elements back"
+			for o in current_scene:
+				#print o.tag
+				oldscene.append(o)
+
 		self.collectID()
 		#self.dumpID()
 	def collectID(self):
@@ -201,6 +236,15 @@ class MBScene(inkex.Effect):
 			for s in layer.scene:
 				if nth >= s.start and nth <= s.end:
 					s.node.set("style","")
+					s.node.set("current","%d"%nth)
+					#print "Put the elemenets out"
+					layer.nodes = []
+
+					for o in s.node:
+						#print "    ",o.tag
+						layer.nodes.append(o)
+					for o in s.node:
+						s.node.remove(o)
 				else:
 					s.node.set("style","display:none")
 	def generate(self):
@@ -215,6 +259,8 @@ class MBScene(inkex.Effect):
 			lnode = etree.Element("{http://www.w3.org/2000/svg}g")
 			for a,v in l.node.attrib.items():
 				lnode.set(a,v)
+			for n in l.nodes:
+				lnode.append(n)
 			root.append(lnode)
 			for s in l.scene:
 				snode = etree.Element("{http://www.w3.org/2000/svg}g")
