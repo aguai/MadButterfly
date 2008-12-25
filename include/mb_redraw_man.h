@@ -109,6 +109,8 @@ extern int rdman_redraw_all(redraw_man_t *rdman);
 extern int rdman_redraw_area(redraw_man_t *rdman, co_aix x, co_aix y,
 			     co_aix w, co_aix h);
 extern geo_t *rdman_geos(redraw_man_t *rdman, geo_t *last);
+#define rdman_shapes(rdman, last_shape)					\
+    geo_get_shape_safe(rdman_geos(rdman, sh_get_geo_safe(last_shape)))
 extern int rdman_force_clean(redraw_man_t *rdman);
 extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 #define shnode_free(rdman, node) elmpool_elm_free((rdman)->shnode_pool, node)
@@ -172,6 +174,17 @@ extern int mb_objs_is_overlay(redraw_man_t *rdman,
 #define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
 #define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
 #define rdman_get_root(rdman) ((rdman)->root_coord)
+#define rdman_get_cr(rdman) ((rdman)->cr)
+#define rdman_get_gen_geos(rdman) (&(rdman)->gen_geos)
+extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
+#define rdman_get_shape_gl(rdman, idx)			\
+    geo_get_shape(rdman_get_gen_geos(rdman)->ds[idx])
+#define rdman_add_shape_gl(rdman, shape)			\
+    rdman_add_gen_geos(rdman, sh_get_geo(shape))
+#define rdman_shape_gl_len(rdman)		\
+    rdman_get_gen_geos(rdman)->num
+#define rdman_clear_shape_gl(rdman)		\
+    DARRAY_CLEAN(rdman_get_gen_geos(rdman))
 
 /*! \brief Load sprite dymanicly from the shared object module. 
  *  

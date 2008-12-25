@@ -114,6 +114,13 @@ DARRAY_DEFINE(coords, coord_t *);
 DARRAY_DEFINE(geos, geo_t *);
 DARRAY_DEFINE(areas, area_t *);
 
+int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo) {
+    int r;
+
+    r = geos_add(rdman_get_gen_geos(rdman), geo);
+    return r;
+}
+
 /*! Use \brief DARRAY to implement dirty & free lists.
  */
 #define ADD_DATA(sttype, field, v)		\
@@ -1066,7 +1073,7 @@ static int is_geo_in_areas(geo_t *geo,
     int i;
 
     for(i = 0; i < n_areas; i++) {
-	if(is_overlay(geo->cur_area, areas[i]))
+	if(areas_are_overlay(geo->cur_area, areas[i]))
 	    return 1;
     }
     return 0;

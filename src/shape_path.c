@@ -42,6 +42,11 @@ typedef struct _sh_path {
 #define ERR -1
 #define PI 3.1415926
 
+#ifdef UNITTEST
+#undef rdman_shape_man
+#define rdman_shape_man(x, y)
+#endif
+
 /* ============================================================
  * Implement arc in path.
  */
@@ -706,9 +711,7 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data) {
 
     path->shape.free = sh_path_free;
 
-#ifndef UNITTEST
     rdman_shape_man(rdman, (shape_t *)path);
-#endif
 
     return (shape_t *)path;
 }
@@ -741,9 +744,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman, char *commands, c
 
     path->shape.free = sh_path_free;
 
-#ifndef UNITTEST
     rdman_shape_man(rdman, (shape_t *)path);
-#endif
 
     return (shape_t *)path;
 }

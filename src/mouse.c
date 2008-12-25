@@ -28,11 +28,12 @@ static void mouse_event_interpreter(event_t *evt, void *arg) {
 	new_evt.event.type = EVT_MOUSE_OUT;
 	if(IS_MBO_COORD(rdman->last_mouse_over)) {
 	    coord = (coord_t *)rdman->last_mouse_over;
-	    subject_notify(coord->mouse_event, (event_t *)&new_evt);
+	    subject_notify(coord_get_mouse_event(coord), (event_t *)&new_evt);
 	} else if(IS_MBO_SHAPES(rdman->last_mouse_over)) {
 	    shape = (shape_t *)rdman->last_mouse_over;
 	    ASSERT(shape->geo != NULL);
-	    subject_notify(shape->geo->mouse_event, (event_t *)&new_evt); 
+	    subject_notify(sh_get_mouse_event_subject(shape),
+			   (event_t *)&new_evt); 
 	}
     }
 

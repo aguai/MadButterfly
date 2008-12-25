@@ -121,7 +121,8 @@ extern void elmpool_free(elmpool_t *pool);
 	return 0;					\
     }
 #define DARRAY_CLEAN(da) do { (da)->num = 0; } while(0)
-#define DARRAY_INIT(da) do { (da)->num = (da)->max = 0; (da)->ds = NULL; }
+#define DARRAY_INIT(da) \
+    do { (da)->num = (da)->max = 0; (da)->ds = NULL; } while(0)
 #define DARRAY_DESTROY(da) do { if((da)->ds) free((da)->ds); } while(0)
 /* @} */
 

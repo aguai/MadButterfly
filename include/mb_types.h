@@ -106,19 +106,23 @@ struct _geo {
 #define GEF_FREE 0x4
 #define GEF_OV_DRAW 0x8		/*!< To flag drawed for a overlay testing. */
 
-extern int is_overlay(area_t *r1, area_t *r2);
+extern int areas_are_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
 extern void geo_init(geo_t *g);
 extern void geo_from_positions(geo_t *g, int n_pos, co_aix pos[][2]);
 extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 			     int *n_overlays, geo_t **overlays);
 #define geo_get_shape(g) ((g)->shape)
+#define geo_get_shape_safe(g) ((g)? (g)->shape: NULL)
 #define geo_set_shape(g, sh) do {(g)->shape = sh;} while(0)
 #define _geo_is_in(a, s, w) ((a) >= (s) && (a) < ((s) + (w)))
 #define geo_pos_is_in(g, _x, _y)				\
     (_geo_is_in(_x, (g)->cur_area->x, (g)->cur_area->w) &&	\
      _geo_is_in(_y, (g)->cur_area->y, (g)->cur_area->h))
 #define geo_get_area(g) ((g)->cur_area)
+#define geo_get_flags(g, mask) ((g)->flags & (mask))
+#define geo_set_flags(g, mask) do {(g)->flags |= mask;} while(0)
+#define geo_clear_flags(g, mask) do {(g)->flags &= ~(mask);} while(0)
 
 
 /*! \brief A coordination system.
@@ -217,6 +221,11 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
     for(geo = STAILQ_HEAD((coord)->members);		\
 	geo != NULL;					\
 	geo = STAILQ_NEXT(geo_t, coord_next, geo))
+#define FOR_COORD_SHAPES(coord, shape)			\
+    for(shape = geo_get_shape_safe(STAILQ_HEAD((coord)->members));	\
+	shape != NULL;							\
+	shape = geo_get_shape_safe(STAILQ_NEXT(geo_t, coord_next,	\
+					       sh_get_geo(shape))))
 #define coord_get_area(coord) ((coord)->cur_area)
 
 /*! \brief A grahpic shape.
@@ -254,6 +263,12 @@ struct _shape {
 	(sh)->geo->flags &= ~GEF_HIDDEN;		\
     } while(0)
 #define sh_get_geo(sh) ((sh)->geo)
+#define sh_get_geo_safe(sh) ((sh)? (sh)->geo: NULL)
+#define sh_get_flags(sh, mask) geo_get_flags(sh_get_geo(sh), mask)
+#define sh_set_flags(sh, mask) geo_set_flags(sh_get_geo(sh), mask)
+#define sh_clear_flags(sh, mask) geo_clear_flags(sh_get_geo(sh), mask)
+#define sh_pos_is_in(sh, x, y) geo_pos_is_in(sh_get_geo(sh), x, y)
+#define sh_get_area(sh) geo_get_area(sh_get_geo(sh))
 
 
 /*! \brief A sprite is a set of graphics that being an object in animation.
