@@ -53,6 +53,7 @@ class MBScene(inkex.Effect):
 			self.dump(n,l+1)
 		print " " * l * 2,"/>"
 	def parseMetadata(self,node):
+		self.current = 1
 		for n in node:
 			if n.tag == '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes':
 				self.scenemap={}
@@ -219,7 +220,7 @@ class MBScene(inkex.Effect):
 			layer.scene.append(newscene)
 			btn = self.newCell('start.png')
 			btn.nScene = nth
-			btn.layer = layer
+			btn.layer = layer.node.get('id')
 			btn.nLayer = y
 			self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
 
@@ -229,7 +230,7 @@ class MBScene(inkex.Effect):
 	def removeKeyScene(self):
 		nth = self.last_cell.nScene
 		try:
-			layer = self.getLayer(self.last_cell.layer.node.get('id'))
+			layer = self.getLayer(self.last_cell.layer)
 		except:
 			return
 		x = self.last_cell.nScene
@@ -270,14 +271,39 @@ class MBScene(inkex.Effect):
 						
 				return
 
-	def extendScene(self,layer,nth):
-		layer = self.getLayer(layer)
+	def extendScene(self):
+		nth = self.last_cell.nScene
+		try:
+			layer = self.getLayer(self.last_cell.layer)
+		except:
+			return
+		x = self.last_cell.nScene
+		y = self.last_cell.nLayer
 		if layer == None: return
+
+		for i in range(0,len(layer.scene)-1):
+			s = layer.scene[i]
+			if nth >= layer.scene[i].start and nth <= layer.scene[i].end:
+				return
+
 		for i in range(0,len(layer.scene)-1):
 			s = layer.scene[i]
 			if nth >= layer.scene[i].start and nth < layer.scene[i+1].start:
+				for j in range(layer.scene[i].end+1, nth+1):
+					btn = self.newCell('fill.png')
+					btn.nScene = nth
+					btn.nLayer = y
+					btn.layer = self.last_cell.layer
+					self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
 				layer.scene[i].end = nth
-		if len(layer.scene) > 0:
+				return
+		if len(layer.scene) > 0 and nth > layer.scene[len(layer.scene)-1].end:
+			for j in range(layer.scene[len(layer.scene)-1].end+1, nth+1):
+				btn = self.newCell('fill.png')
+				btn.nScene = nth
+				btn.nLayer = y
+				btn.layer = self.last_cell.layer
+				self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
 			layer.scene[len(layer.scene)-1].end = nth
 	def setCurrentScene(self,nth):
 		self.current = nth
@@ -378,7 +404,7 @@ class MBScene(inkex.Effect):
 			self.grid.attach(gtk.Label('%d'% i), i,i+1,0,1,0,0,0,0)
 		for i in range(1,len(self.layer)+1):
 			l = self.layer[i-1]
-			self.grid.attach(gtk.Label(l.node.get('id')), 0, 1, i, i+1,0,0,10,0)
+			self.grid.attach(gtk.Label(l.node.get('{http://www.inkscape.org/namespaces/inkscape}label')), 0, 1, i, i+1,0,0,10,0)
 			for s in l.scene:
 				btn = self.newCell('start.png')
 				btn.nScene = s.start
@@ -425,6 +451,10 @@ class MBScene(inkex.Effect):
 		self.removeKeyScene()
 		self.grid.show_all()
 		self.generate()
+	def doExtendScene(self,w):
+		self.extendScene()
+		self.grid.show_all()
+		self.generate()
 	def addButtons(self,hbox):
 		btn = gtk.Button('Edit')
 		btn.connect('clicked', self.doEditScene)
@@ -434,6 +464,9 @@ class MBScene(inkex.Effect):
 		hbox.pack_start(btn)
 		btn=gtk.Button('Remove Key')
 		btn.connect('clicked', self.doRemoveScene)
+		hbox.pack_start(btn)
+		btn=gtk.Button('Extend scene')
+		btn.connect('clicked', self.doExtendScene)
 		hbox.pack_start(btn)
 	def effect(self):
 		self.parseScene()
