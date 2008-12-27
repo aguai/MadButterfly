@@ -6,32 +6,7 @@ from copy import deepcopy
 from lxml import etree
 import random
 
-# In the inkscape, the top layer group are treated as layer. The Mad butter fly add another structure under the layer as frame. It means that each layer can has multiple frame. 
-# Like the layer, the frames are represented by special groups. All groups directly under a layer will be treated as frames. However, a group may be spanned for more than one
-# frame. For example
-# <g id="layer1">
-#    <g id="g1222">
-#    </g>
-#    <g id="g1234" scene="1">
-#    </g>
-#    <g id="g1235" scene="2-7" current="3">
-#    </g>
-#    <g id="g1333"/>
-# </g>
-# This will stand for 7 scenes. Scene 1 and scene 2 are key scenes. 3,4,5,6,7 are filled scenes. The current scene is defined by the 'current' attribute. In the above example, it is 3.
-# All elements without scene attributes are items in the current scene. 
-# Therefore, when we switch scene, we will move all items into the current scene and then move items out from the new scene.
-#
-# In the inkscape extention, we will provide an grid for users to select the current scene or change the scene structure. Users are allowed to
-#     Insert a new key scene
-#     Delete a key scene
-#     Insert a filled scene
-#     Delete a filled scene
-#     Select a scene for edit.
-#
-# When user select a scene to edit, we will hide all scenes which is not in the selected scene. For example, if we select scene 4, g1234 will be hidden and g1235 and g1236 will 
-# be displayed.
-
+# Please refer to http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention for the designed document.
 
 
 # Algorithm:
@@ -77,54 +52,79 @@ class MBScene(inkex.Effect):
 		for n in node:
 			self.dump(n,l+1)
 		print " " * l * 2,"/>"
+	def parseMetadata(self,node):
+		for n in node:
+			if n.tag == '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes':
+				self.scenemap={}
+				cur = int(n.get("current"))
+				self.current = cur
+
+				for s in n:
+					if s.tag == '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene':
+						try:
+							start = int(s.get("start"))
+						except:
+							continue
+						try:
+							end = s.get("end")
+							if end == None:
+								end = start
+						except:
+							end = start
+						link = s.get("ref")
+						self.scenemap[link] = [int(start),int(end)]
+						if cur >= start and cur <= end:
+							self.currentscene = link
+
+					pass
+				pass
+			pass
+		pass
+						
+						
 
 	def parseScene(self):
 		"""
 		In this function, we will collect all items for the current scene and then relocate them back to the appropriate scene object.
 		"""
 		self.layer = []
-		current_scene = []
-		oldscene = None
 		for node in self.document.getroot():
-			if node.tag == '{http://www.w3.org/2000/svg}g':
+			if node.tag == '{http://www.w3.org/2000/svg}metadata':
+				self.parseMetadata(node)
+			elif node.tag == '{http://www.w3.org/2000/svg}g':
+				oldscene = None
 				#print layer.attrib.get("id")
 				lyobj = Layer(node)
 				self.layer.append(lyobj)
+				lyobj.current_scene = []
 				for scene in node:
 					if scene.tag == '{http://www.w3.org/2000/svg}g':
-						s = scene.get("scene")
-						if s == None:
-							# group without scene is part of the current scene
-							current_scene.append(scene)
-							continue
-						range = s.split('-')
-
-						cur = scene.get("current")
 						try:
-							self.current_scene = int(cur)
-							del scene.attrib["current"]
-							oldscene = scene
+							scmap = self.scenemap[scene.get("id")]
+							if scmap == None:
+								lyobj.current_scene.append(scene)
+								continue
+							if self.current <= scmap[1] and self.current >= scmap[0]:
+								oldscene = scene
 						except:
-							pass
-						if len(range) == 1:
-							#print "    scene %d" % int(range[0])
-							lyobj.scene.append(Scene(scene,range[0],range[0]))
-						elif len(range) == 2:
-							#print "    scene%d-%d" % (int(range[0]),int(range[1]))
-							lyobj.scene.append(Scene(scene,range[0],range[1]))
+							lyobj.current_scene.append(scene)
+							continue
+
+						lyobj.scene.append(Scene(scene,scmap[0],scmap[1]))
 					else:
-						current_scene.append(scene)
+						lyobj.current_scene.append(scene)
+					pass
+				pass
+
+				if oldscene != None:
+					# Put the objects back to the current scene
+					for o in lyobj.current_scene:
+						#print o.tag
+						oldscene.append(o)
 					pass
 				pass
 			pass
 		pass
-
-		if oldscene != None:
-			# Put the objects back to the current scene
-			#print "Add elements back"
-			for o in current_scene:
-				#print o.tag
-				oldscene.append(o)
 
 		self.collectID()
 		#self.dumpID()
@@ -183,43 +183,91 @@ class MBScene(inkex.Effect):
 				self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
 				return
 		if len(layer.scene) > 0:
-			last = layer.scene[len(layer.scene)-1]
-			for x in range(last.end+1, nth):
+			last = nth
+			lastscene = None
+			for s in layer.scene:
+				if s.end < nth and last < s.end:
+					last = s.end
+					lastscene = s
+			for x in range(last+1, nth):
 				btn = self.newCell('fill.png')
 				btn.nScene = x
-				btn.layer = layer
+				btn.layer = layer.node.get('id')
 				btn.nLayer = y
 				self.grid.attach(btn, x, x+1, y , y+1,0,0,0,0)
-			last.end = nth-1
-			newscene = Scene(deepcopy(s.node),nth,nth)
-			newscene.node.set("id",self.newID())
+			if lastscene == None:
+				node = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+				node.set("id", self.newID())
+				newscene = Scene(node,nth,nth)
+			else:
+				lastscene.end = nth-1
+				newscene = Scene(deepcopy(lastscene.node),nth,nth)
+				newscene.node.set("id",self.newID())
 			layer.scene.append(newscene)
 			btn = self.newCell('start.png')
 			x = self.last_cell.nScene
 			y = self.last_cell.nLayer
+			btn.nScene = nth
+			btn.layer = layer.node.get('id')
+			btn.nLayer = y
+			self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
+		else:
+			# This is the first scene in the layer
+			node = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+			node.set("id", self.newID())
+			newscene = Scene(node,nth,nth)
+			layer.scene.append(newscene)
+			btn = self.newCell('start.png')
 			btn.nScene = nth
 			btn.layer = layer
 			btn.nLayer = y
 			self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
 
 
+
+
 	def removeKeyScene(self):
 		nth = self.last_cell.nScene
-		layer = self.getLayer(self.last_cell.layer)
+		try:
+			layer = self.getLayer(self.last_cell.layer.node.get('id'))
+		except:
+			return
 		x = self.last_cell.nScene
 		y = self.last_cell.nLayer
-		# We can not remove the key scene at the first scene
-		if nth == 1: return
 		for i in range(0,len(layer.scene)):
 			s = layer.scene[i]
 			if nth == s.start:
-				layer.scene[i-1].end = s.end
-				layer.scene.remove(s)
-				btn = self.newCell('fill.png')
-				btn.nScene = nth
-				btn.layer = layer
-				btn.nLayer = y
-				self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
+				if i == 0:
+					for j in range(s.start,s.end+1):
+						btn = self.newCell('empty.png')
+						btn.nScene = nth
+						btn.layer = layer
+						btn.nLayer = y
+						self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
+					layer.scene.remove(s)
+				else:
+					if s.start == layer.scene[i-1].end+1:
+						# If the start of the delete scene segment is the end of the last scene segmenet, convert all scenes in the deleted
+						# scene segmenet to the last one
+						layer.scene[i-1].end = s.end
+						layer.scene.remove(s)
+						btn = self.newCell('fill.png')
+
+						btn.nScene = nth
+						btn.layer = layer
+						btn.nLayer = y
+						self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
+					else:
+						# Convert all scenes into empty cell
+						layer.scene.remove(s)
+						for j in range(s.start,s.end+1):
+							btn = self.newCell('empty.png')
+							btn.nScene = nth
+							btn.layer = layer
+							btn.nLayer = y
+							self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
+
+						
 				return
 
 	def extendScene(self,layer,nth):
@@ -232,11 +280,11 @@ class MBScene(inkex.Effect):
 		if len(layer.scene) > 0:
 			layer.scene[len(layer.scene)-1].end = nth
 	def setCurrentScene(self,nth):
+		self.current = nth
 		for layer in self.layer:
 			for s in layer.scene:
 				if nth >= s.start and nth <= s.end:
 					s.node.set("style","")
-					s.node.set("current","%d"%nth)
 					#print "Put the elemenets out"
 					layer.nodes = []
 
@@ -250,7 +298,43 @@ class MBScene(inkex.Effect):
 	def generate(self):
 		newdoc = deepcopy(self.document)
 		root = newdoc.getroot()
+		has_scene = False
 		for n in root:
+			if n.tag == '{http://www.w3.org/2000/svg}metadata':
+				for nn in n:
+					if nn.tag == '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes':
+						nn.clear()
+						nn.set("current", "%d" % self.current)
+						scenes = []
+						for l in self.layer:
+							for s in l.scene:
+								id = s.node.get("id")
+								scene = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+								scene.set("ref", id)
+								if s.start == s.end:
+									scene.set("start", "%d" % s.start)
+								else:
+									scene.set("start", "%d" % s.start)
+									scene.set("end", "%d" % s.end)
+
+								scenes.append(scene)
+						for s in scenes:
+							nn.append(s)
+						has_scene = True
+				if has_scene == False:
+					scenes = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes')
+					scenes.set("current","%d" % self.current)
+					for l in self.layer:
+						for s in l.scene:
+							scene = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+							scene.set("ref", s.node.get("id"))
+							if s.start == s.end:
+								scene.set("start", "%d" % s.start)
+							else:
+								scene.set("start", "%d" % s.start)
+								scene.set("end", "%d" % s.end)
+							scenes.append(scene)
+					n.append(scenes)
 			if n.tag ==  '{http://www.w3.org/2000/svg}g':
 				root.remove(n)
 
@@ -266,10 +350,6 @@ class MBScene(inkex.Effect):
 				snode = etree.Element("{http://www.w3.org/2000/svg}g")
 				for a,v in s.node.attrib.items():
 					snode.set(a,v)
-				if s.start == s.end:
-					snode.set("scene", "%d" % s.start)
-				else:
-					snode.set("scene","%d-%d" % (s.start,s.end))
 				for n in s.node:
 					snode.append(deepcopy(n))
 				lnode.append(snode)
