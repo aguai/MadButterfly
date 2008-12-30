@@ -41,6 +41,7 @@ define([COORD_MATRIX],)
 define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
 define([ADD_SYMBOL],)
+define([SCENE])
 
 define([MADBUTTERFLY],[dnl
 [#ifndef __$1_H_
@@ -51,6 +52,7 @@ typedef struct $1 $1_t;
 struct $1 {
     mb_sprite_lsym_t lsym;
     redraw_man_t *rdman;
+    const int *last_scene;
     coord_t *root_coord;]
 $2[]dnl
 [};

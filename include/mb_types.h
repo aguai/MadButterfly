@@ -280,11 +280,16 @@ struct _shape {
 struct _mb_sprite {
     void (*free)(mb_sprite_t *);
     mb_obj_t *(*get_obj_with_name)(mb_sprite_t *sprite, const char *id);
+    /*! Return non-zero for error. */
+    int (*goto_scene)(mb_sprite_t *sprite, int scene_no);
 };
 
 #define MB_SPRITE_FREE(sprite) ((mb_sprite_t *)(sprite))->free(sprite)
-#define MB_SPRITE_GET_OBJ(sprite, name)		\
-    ((mb_sprite_t *)(sprite))->get_obj_with_name((sprite), (name))
+#define MB_SPRITE_GET_OBJ(sprite, name)					\
+    ((mb_sprite_t *)(sprite))->get_obj_with_name((mb_sprite_t *)(sprite), \
+						 (name))
+#define MB_SPRITE_GOTO_SCENE(sprite, scene_no)				\
+    ((mb_sprite_t *)(sprite))->goto_scene((mb_sprite_t *)(sprite), scene_no)
 
 
 /*! \defgroup mb_sprite_lsym Sprite with linear symbol table.

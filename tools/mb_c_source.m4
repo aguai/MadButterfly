@@ -10,28 +10,10 @@ define([COUNT],[ifelse([$*],[],0,[$#])])
 
 define([IMPORT],[define([$1],[$2$1(]$[]@[)])])
 
-define([D_COLOR_STOP],[
-	{$6,$2,$3,$4,$5}])
-
-define([D_ADD_LINEAR_PAINT],[dnl
-ifelse(COUNT($6),0,,[dnl
-    static const int n_$1_stops = COUNT($6);
-    static const grad_stop_t $1_stops[[]] = {UNQUOTE($6)};
-])dnl
-])
-
-define([D_ADD_RADIAL_PAINT],[dnl
-ifelse(COUNT($5),0,,[dnl
-    static const int n_$1_stops = COUNT($5);
-    static const grad_stop_t $1_stops[[]] = {UNQUOTE($5)};
-])dnl
-])
-
-define([DECLARE_VARS], [divert([-1])
-define([DIMPORT],[IMPORT(]QUOTE($[]1)[,[D_])])
-DIMPORT([ADD_LINEAR_PAINT])
-DIMPORT([ADD_RADIAL_PAINT])
-DIMPORT([COLOR_STOP])
+define([DECLARE_EMPTIES], [
+define([ADD_LINEAR_PAINT])
+define([ADD_RADIAL_PAINT])
+define([COLOR_STOP])
 define([REF_STOPS_RADIAL])
 define([REF_STOPS_LINEAR])
 define([ADD_PATH])
@@ -51,6 +33,32 @@ define([COORD_MATRIX],)
 define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
 define([ADD_SYMBOL],)
+define([SCENE])
+])
+
+define([D_COLOR_STOP],[
+	{$6,$2,$3,$4,$5}])
+
+define([D_ADD_LINEAR_PAINT],[dnl
+ifelse(COUNT($6),0,,[dnl
+    static const int n_$1_stops = COUNT($6);
+    static const grad_stop_t $1_stops[[]] = {UNQUOTE($6)};
+])dnl
+])
+
+define([D_ADD_RADIAL_PAINT],[dnl
+ifelse(COUNT($5),0,,[dnl
+    static const int n_$1_stops = COUNT($5);
+    static const grad_stop_t $1_stops[[]] = {UNQUOTE($5)};
+])dnl
+])
+
+define([DECLARE_VARS], [divert([-1])
+define([DIMPORT],[IMPORT(]QUOTE($[]1)[,[D_])])
+DECLARE_EMPTIES
+DIMPORT([ADD_LINEAR_PAINT])
+DIMPORT([ADD_RADIAL_PAINT])
+DIMPORT([COLOR_STOP])
 divert[]])
 
 define([S_ADD_LINEAR_PAINT],[
@@ -185,6 +193,7 @@ define([S_SHAPE_MATRIX],[dnl
 
 define([SETUP_VARS],[divert([-1])
 define([SIMPORT],[IMPORT(]QUOTE($[]1)[,[S_])])
+DECLARE_EMPTIES
 SIMPORT([ADD_LINEAR_PAINT])
 SIMPORT([ADD_RADIAL_PAINT])
 SIMPORT([COLOR_STOP])
@@ -206,7 +215,6 @@ SIMPORT([COORD_TRANSLATE])
 SIMPORT([COORD_MATRIX])
 SIMPORT([SHAPE_TRANSLATE])
 SIMPORT([SHAPE_MATRIX])
-define([ADD_SYMBOL],)
 divert[]])
 
 define([F_ADD_LINEAR_PAINT],[[
@@ -243,28 +251,14 @@ define([F_STROKE_SHAPE],[[
 
 define([CLEAR_VARS],[divert([-1])
 define([FIMPORT],[IMPORT(]QUOTE($[]1)[,[F_])])
+DECLARE_EMPTIES
 FIMPORT([ADD_LINEAR_PAINT])
 FIMPORT([ADD_RADIAL_PAINT])
-define([COLOR_STOP])
-define([REF_STOPS_RADIAL])
-define([REF_STOPS_LINEAR])
 FIMPORT([ADD_PATH],)
 FIMPORT([ADD_RECT])
-define([ADD_COORD])
 FIMPORT([ADD_TEXT])
 FIMPORT([FILL_SHAPE])
 FIMPORT([STROKE_SHAPE])
-define([FILL_SHAPE_WITH_PAINT])
-define([STROKE_SHAPE_WITH_PAINT])
-define([STROKE_WIDTH])
-define([GROUP_HIDE],)
-define([RECT_HIDE],)
-define([PATH_HIDE],)
-define([COORD_TRANSLATE],)
-define([COORD_MATRIX],)
-define([SHAPE_TRANSLATE],)
-define([SHAPE_MATRIX],)
-define([ADD_SYMBOL],)
 divert[]])
 
 define([REVERSE_VARS],[divert([-1])
@@ -279,6 +273,7 @@ define([RIMPORT], [
 	define(]QUOTE($[]1)[,
 		[PUSH_REV(]]QUOTE(QUOTE($[]1))[[(]QUOTE($[]@)[))])
 ])
+DECLARE_EMPTIES
 RIMPORT([ADD_LINEAR_PAINT])
 RIMPORT([ADD_RADIAL_PAINT])
 RIMPORT([COLOR_STOP])
@@ -300,7 +295,6 @@ RIMPORT([COORD_TRANSLATE])
 RIMPORT([COORD_MATRIX])
 RIMPORT([SHAPE_TRANSLATE])
 RIMPORT([SHAPE_MATRIX])
-define([ADD_SYMBOL],)
 divert[]dnl
 ])
 
@@ -308,28 +302,32 @@ define([Y_ADD_SYMBOL],[[{"$1", MB_SPRITE_OFFSET($1)},]])
 
 define([DECLARE_SYMS], [divert([-1])
 define([YIMPORT],[IMPORT(]QUOTE($[]1)[,[Y_])])
-define([ADD_LINEAR_PAINT])
-define([ADD_RADIAL_PAINT])
-define([COLOR_STOP])
-define([REF_STOPS_RADIAL])
-define([REF_STOPS_LINEAR])
-define([ADD_PATH])
-define([ADD_RECT])
-define([ADD_COORD])
-define([ADD_TEXT],)
-define([FILL_SHAPE])
-define([STROKE_SHAPE])
-define([FILL_SHAPE_WITH_PAINT])
-define([STROKE_SHAPE_WITH_PAINT])
-define([STROKE_WIDTH])
-define([GROUP_HIDE],)
-define([RECT_HIDE],)
-define([PATH_HIDE],)
-define([COORD_TRANSLATE],)
-define([COORD_MATRIX],)
-define([SHAPE_TRANSLATE],)
-define([SHAPE_MATRIX],)
+DECLARE_EMPTIES
 YIMPORT([ADD_SYMBOL])
+divert[]dnl
+])
+
+define([SC_SCENE], [[static const int scene_$1[] = {]
+foreach([GROUP_NAME], ($2), [[	MB_SPRITE_OFFSET(]GROUP_NAME[),
+]])dnl
+[	0
+};
+]])
+
+define([DEFINE_SCENES], [divert([-1])
+define([SCIMPORT],[IMPORT(]QUOTE($[]1)[,[SC_])])
+DECLARE_EMPTIES
+SCIMPORT([SCENE])
+divert[]dnl
+])
+
+define([SCA_SCENE], [[	scene_$1,
+]])
+
+define([DEFINE_SCENES_ARRAY], [divert([-1])
+define([SCAIMPORT],[IMPORT(]QUOTE($[]1)[,[SCA_])])
+DECLARE_EMPTIES
+SCAIMPORT([SCENE])
 divert[]dnl
 ])
 
@@ -347,11 +345,6 @@ define([MADBUTTERFLY],[dnl
 #undef MB_SPRITE_OFFSET
 #endif
 #define MB_SPRITE_OFFSET(x) ((int)&((($1_t *)0)->x))
-
-static
-mb_sprite_lsym_entry_t $1_symbols[] = {]DECLARE_SYMS
-$2[
-};
 
 #ifndef MB_LSYM_GET_OBJ_WITH_NAME
 #define MB_LSYM_GET_OBJ_WITH_NAME
@@ -372,6 +365,59 @@ mb_obj_t *mb_lsym_get_obj_with_name(mb_sprite_lsym_t *lsym, const char *sym) {
 }
 #endif /* MB_LSYM_GET_OBJ_WITH_NAME */
 
+static
+mb_sprite_lsym_entry_t $1_symbols[] = {]DECLARE_SYMS
+$2[
+};
+
+]DEFINE_SCENES
+$2
+DEFINE_SCENES_ARRAY
+static const int *$1_scenes[[]] = {
+$2[]dnl
+	NULL
+};[
+
+#define SCENES_NUM ((sizeof($1_scenes) / sizeof(const int *)) - 1)
+
+static
+int $1_goto_scene($1_t *sprite, int scene_no) {
+    coord_t *coord;
+    const int *p;
+    const int *scene;
+
+    if(scene_no >= SCENES_NUM || scene_no < -1)
+        return 1;
+
+    if(sprite->last_scene) {
+        p = sprite->last_scene;
+    	while(*p != 0) {
+	    coord = (coord_t *)MB_SPRITE_OFF_2_PTR(sprite, *p);
+	    coord_hide(coord);
+	    rdman_coord_changed(sprite->rdman, coord);
+	    p++;
+	}
+    }
+
+    if(scene_no == -1) {
+        sprite->last_scene = NULL;
+	return 0;
+    }
+
+    scene = $1_scenes[scene_no];
+    p = scene;
+    while(*p != 0) {
+	coord = (coord_t *)MB_SPRITE_OFF_2_PTR(sprite, *p);
+	coord_show(coord);
+	rdman_coord_changed(sprite->rdman, coord);
+	p++;
+    }
+
+    sprite->last_scene = scene;
+
+    return 0;
+}
+
 void $1_free($1_t *);
 
 $1_t *$1_new(redraw_man_t *rdman, coord_t *parent_coord) {
@@ -382,7 +428,8 @@ $2[]dnl
     obj = ($1_t *)malloc(sizeof($1_t));
     if(obj == NULL) return NULL;
 
-    obj->lsym.sprite.free = (void (*)(mb_sprite_t))$1_free;
+    obj->lsym.sprite.free = (void (*)(mb_sprite_t *))$1_free;
+    obj->lsym.sprite.goto_scene = (int (*)(mb_sprite_t *, int))$1_goto_scene;
     obj->lsym.sprite.get_obj_with_name =
 	(mb_obj_t *(*)(mb_sprite_t *, const char *))mb_lsym_get_obj_with_name;
     obj->lsym.num_entries =
@@ -390,6 +437,7 @@ $2[]dnl
     obj->lsym.entries = $1_symbols;
 
     obj->rdman = rdman;
+    obj->last_scene = NULL;
 ]SETUP_VARS[
     obj->root_coord = rdman_coord_new(rdman, parent_coord);]
 $2

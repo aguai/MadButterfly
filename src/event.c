@@ -55,6 +55,13 @@ struct _area {
     co_aix x, y;
     co_aix w, h;
 };
+#define range_overlay(as, aw, bs, bw)			\
+    (((bs) - (as)) <= (aw) || ((as) - (bs)) <= (bw))
+#define areas_are_overlay(a1, a2)		\
+    (range_overlay((a1)->x, (a1)->w,		\
+		   (a2)->x, (a2)->w) &&		\
+     range_overlay((a1)->y, (a1)->h,		\
+		   (a2)->y, (a2)->h))
 
 struct mb_obj {
     int obj_type;
@@ -67,6 +74,8 @@ typedef struct mb_obj mb_obj_t;
 struct shape {
     mb_obj_t obj;
     
+    area_t area;
+
     void *fill, *stroke;
     struct shape *sibling;
     int flags;
@@ -95,21 +104,58 @@ static int sh_pos_is_in(shape_t *shape, co_aix x, co_aix y) {
 #define sh_get_flags(shape, mask) ((shape)->flags & mask)
 #define sh_set_flags(shape, mask) do { (shape)->flags |= mask; } while(0)
 #define sh_clear_flags(shape, mask) do { (shape)->flags &= ~(mask); } while(0)
+#define sh_get_area(shape) (&(shape)->area)
 
 typedef struct coord coord_t;
 struct coord {
     mb_obj_t obj;
-    
+  
+    area_t area;
+    int flags;
+    coord_t *parent;
     coord_t *children;
     coord_t *sibling;
     shape_t *shapes;
 };
 
+#define COF_SKIP 0x1
+
+#define coord_get_area(coord) (&(coord)->area)
+#define FOR_COORD_SHAPES(coord, shape)		\
+    for(shape = (coord)->shapes;		\
+	shape != NULL;				\
+	shape = (shape)->sibling)
+#define FOR_COORDS_PREORDER(root, last)			\
+    for(last = root;					\
+	last != NULL;					\
+	last = preorder_coord_subtree(root, last))
+
+static
+coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
+    if(last->children)
+	return last->children;
+    while(last->sibling == NULL)
+	last = last->parent;
+    return last->sibling;
+}
 
 static
 coord_t *postorder_coord_subtree(coord_t *root, coord_t *last) {
-    if(last == NULL)
-	return root;
+    coord_t *cur;
+
+    if(last != NULL) {
+	if(last->sibling == NULL) {
+	    cur = last->parent;
+	    return cur;
+	}
+	cur = last->sibling;
+    }
+
+    cur = last;
+    while(cur->children) {
+	cur = cur->children;
+    }
+    return cur;
 }
 
 #define sh_path_draw(path, cr)
