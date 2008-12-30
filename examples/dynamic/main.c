@@ -8,27 +8,32 @@
 #include <mb.h>
 #include <string.h>
 #include "menu.h"
-#include "button.h"
 
 
-typedef struct _engine engine_t;
-struct _engine {
-    X_MB_runtime_t *rt;
+typedef struct _mbapp MBApp;
+struct _mbapp {
+    void *rt;
     redraw_man_t *rdman;
-    menu_t *menu;
-    mb_sprite_t *button;
-    int state;
+    mb_sprite_t *rootsprite;
+    mb_obj_t *root;
+    void *private;
+};
+
+typedef struct {
+    shape_t *rect;
     co_aix orx,ory;
     int start_x,start_y;
     observer_t *obs1,*obs2;
-    shape_t *rect;
-    co_aix rx,ry;
-};
+}MyAppData;
+
+#define MBAPP_DATA(app,type) ((type *) ((app)->private))
+#define MBAPP_RDMAN(app) (((MBApp *) app)->rdman)
 
 
 typedef struct _mb_button {
     mb_obj_t obj;
-    engine_t *en;
+    MBApp *en;
+    int state;
     coord_t *root;
     coord_t *active;
     coord_t *normal;
@@ -40,8 +45,6 @@ typedef struct _mb_button {
 } mb_button_t;
 
 
-#define COORD_SHOW(group) coord_show(group);rdman_coord_changed(en->rdman, group)
-#define COORD_HIDE(group) coord_hide(group);rdman_coord_changed(en->rdman, group)
 
 #define CMOUSE(e) (coord_get_mouse_event(e))
 
@@ -49,67 +52,69 @@ typedef struct _mb_button {
 static void mb_button_pressed(event_t *evt, void *arg);
 static void mb_button_out(event_t *evt, void *arg);
 
+void mb_button_refresh(mb_button_t *btn)
+{
+    rdman_coord_changed(btn->en->rdman,btn->root);
+    rdman_redraw_changed(btn->en->rdman);
+}
+
 static void mb_button_move(event_t *evt, void *arg) 
 {
     mb_button_t *btn = (mb_button_t *) arg;
-    engine_t *en = btn->en;
+    MBApp *en = btn->en;
 
     
     printf("Mouse move\n");
-    COORD_SHOW(btn->active);
-#if 0
-    rdman_coord_changed(btn->en->rdman,btn->root);
-#endif
-    rdman_redraw_changed(btn->en->rdman);
+    arg = (void *)en;
+    coord_show(btn->active);
+    mb_button_refresh(btn);
 }
 static void mb_button_out(event_t *evt, void *arg) 
 {
     mb_button_t *btn = (mb_button_t *) arg;
-    engine_t *en = btn->en;
+    MBApp *en = btn->en;
+    arg = (void *) en;
 
     if (btn->progm) {
 	    mb_progm_abort(btn->progm);
 	    btn->progm = NULL;
     }
     printf("mouse out\n");
-    COORD_HIDE(btn->click);
-    COORD_HIDE(btn->active);
-    COORD_SHOW(btn->normal);
-#if 1
-    rdman_coord_changed(btn->en->rdman,btn->normal);
-#endif
-    rdman_redraw_changed(btn->en->rdman);
+    coord_hide(btn->click);
+    coord_hide(btn->active);
+    coord_show(btn->normal);
+    mb_button_refresh(btn);
 }
 
 void mb_button_show_active(event_t *evt, void *arg)
 {
     mb_button_t *btn = (mb_button_t *) arg;
-    engine_t *en = btn->en;
+    MBApp *en = btn->en;
 
-    COORD_SHOW(btn->active);
-    rdman_coord_changed(btn->en->rdman,btn->root);
-    rdman_redraw_changed(btn->en->rdman);
+    coord_show(btn->active);
+    mb_button_refresh(btn);
 }
 
 void mb_button_pressed(event_t *evt, void *arg)
 {
     mb_button_t *btn = (mb_button_t *) arg;
-    engine_t *en = btn->en;
+    MBApp *en = btn->en;
     mb_timeval_t start, playing, now;
     mb_progm_t *progm;
     mb_word_t *word;
+    arg = (void *) en;
 
     printf("Pressed\n");
     if (btn->progm) {
 	    mb_progm_abort(btn->progm);
 	    btn->progm = NULL;
     }
-    COORD_SHOW(btn->click);
-    COORD_HIDE(btn->active);
-    rdman_coord_changed(en->rdman,btn->root);
-    rdman_redraw_changed(en->rdman);
+    coord_show(btn->click);
+    coord_hide(btn->active);
+    rdman_coord_changed(MBAPP_RDMAN(arg),btn->root);
+    rdman_redraw_changed(MBAPP_RDMAN(arg));
 
-    btn->progm = progm = mb_progm_new(1, en->rdman);
+    btn->progm = progm = mb_progm_new(1, MBAPP_RDMAN(arg));
     MB_TIMEVAL_SET(&start, 0, 500000);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -121,13 +126,13 @@ void mb_button_pressed(event_t *evt, void *arg)
     if (btn->press)
     	btn->press(btn->arg);
 }
-mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
+mb_button_t *mb_button_new(MBApp *app,mb_sprite_t *sp, char *name)
 {
     mb_button_t *btn = (mb_button_t *) malloc(sizeof(mb_button_t));
     char *buf = (char *) malloc(strlen(name)+5);
+    MBApp *arg = app;
 
     btn->root = (coord_t *) MB_SPRITE_GET_OBJ(sp, name);
-    printf("btn->root=%x\n",btn->root);
     sprintf(buf, "%s_normal", name);
     btn->normal = (coord_t *) MB_SPRITE_GET_OBJ(sp, buf);
     if (btn->normal == NULL) {
@@ -136,18 +141,18 @@ mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
     sprintf(buf, "%s_active", name);
     btn->active = (coord_t *) MB_SPRITE_GET_OBJ(sp, buf);
     if (btn->active == NULL) {
-    	printf("Missing active button, this is not a correct button\n");
+    	printf("Missing click button, this is not a correct button\n");
     }
     sprintf(buf, "%s_click", name);
     btn->click = (coord_t *) MB_SPRITE_GET_OBJ(sp, buf);
-    if (btn->click == NULL) {
+    if (btn->active == NULL) {
     	printf("Missing click button, this is not a correct button\n");
     }
     btn->press = NULL;
     // Show only the normal button
-    COORD_HIDE(btn->active);
-    COORD_HIDE(btn->click);
-    COORD_SHOW(btn->normal);
+    coord_hide(btn->active);
+    coord_hide(btn->click);
+    coord_show(btn->normal);
     // Move to the same position
     btn->active->matrix[2] = 200;
     btn->active->matrix[5] = 200;
@@ -155,13 +160,12 @@ mb_button_t *mb_button_new(engine_t *en,mb_sprite_t *sp, char *name)
     btn->normal->matrix[5] = 200;
     btn->click->matrix[2] = 200;
     btn->click->matrix[5] = 200;
-    btn->en = en;
-    printf("btn->root=%x\n",CMOUSE(btn->root));
+    btn->en = app;
     btn->obs_move = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_MOVE, mb_button_move,btn);
     btn->obs_press = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_BUT_PRESS, mb_button_pressed,btn);
     btn->obs_out = subject_add_event_observer(CMOUSE(btn->root), EVT_MOUSE_OUT, mb_button_out,btn);
     btn->progm = NULL;
-    rdman_redraw_changed(en->rdman);
+    rdman_redraw_changed(MBAPP_RDMAN(arg));
     return btn;
 }
 
@@ -172,19 +176,25 @@ void mb_button_add_onClick(mb_button_t *b, void (*h)(void *arg), void *arg)
     b->arg = arg;
 }
 
-engine_t *engine_init()
+MBApp *MBApp_Init(char *module)
 {
-
+    MBApp *app = (MBApp *) malloc(sizeof(MBApp));
     X_MB_runtime_t *rt;
-    rt = X_MB_new(":0.0", 800, 600);
-    engine_t *en = (engine_t *) malloc(sizeof(engine_t));
 
-    en->rt = rt;
-    en->rdman =  X_MB_rdman(rt);
-    return en;
+    rt = X_MB_new(":0.0", 800, 600);
+
+    app->rt = rt;
+    app->rdman =  X_MB_rdman(rt);
+    app->rootsprite= sprite_load("button",app->rdman, app->rdman->root_coord);
+    return app;
 }
 
-void engine_mainloop(engine_t *en)
+void MBApp_setData(MBApp *app,void *data)
+{
+    app->private = (void *) data;
+}
+
+void MBApp_loop(MBApp *en)
 {
     /*
      * Start handle connections, includes one to X server.
@@ -195,7 +205,6 @@ void engine_mainloop(engine_t *en)
     /*
      * Clean
      */
-    menu_free(en->menu);
     X_MB_free(en->rt);
     free(en);
 }
@@ -203,28 +212,28 @@ void engine_mainloop(engine_t *en)
 
 static void add_rect_move(event_t *evt, void *arg) 
 {
-    engine_t *en = (engine_t *) arg;
+    MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
     mouse_event_t *mev = (mouse_event_t *) evt;
 
     printf("resize rectangle\n");
-    sh_rect_set(en->rect, en->start_x, en->start_y, mev->x - en->start_x, mev->y-en->start_y,en->rx,en->ry);
-    rdman_shape_changed(en->rdman,en->rect);
-    rdman_redraw_changed(en->rdman);
+    sh_rect_set(en->rect, en->start_x, en->start_y, mev->x - en->start_x, mev->y-en->start_y,0,0);
+    rdman_shape_changed(MBAPP_RDMAN(arg),en->rect);
+    rdman_redraw_changed(MBAPP_RDMAN(arg));
 }
 
 static void add_rect_release(event_t *evt, void *arg) 
 {
-    engine_t *en = (engine_t *) arg;
+    MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
     mouse_event_t *mev = (mouse_event_t *) evt;
 
     printf("rectangle done\n");
-    subject_remove_observer(CMOUSE(en->rdman->root_coord), en->obs1);
-    subject_remove_observer(CMOUSE(en->rdman->root_coord), en->obs2);
+    subject_remove_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), en->obs1);
+    subject_remove_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), en->obs2);
 }
 
 static void add_rect_2(event_t *evt, void *arg) 
 {
-    engine_t *en = (engine_t *) arg;
+    MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
     mouse_event_t *mev = (mouse_event_t *) evt;
     paint_t *color;
 
@@ -233,37 +242,41 @@ static void add_rect_2(event_t *evt, void *arg)
 
     en->start_x = mev->x;
     en->start_y = mev->y;
-    subject_remove_observer(CMOUSE(en->rdman->root_coord), en->obs1);
-    subject_remove_observer(CMOUSE(en->rdman->root_coord), en->obs2);
-    en->obs1 = subject_add_event_observer(CMOUSE(en->rdman->root_coord), EVT_MOUSE_MOVE, add_rect_move, en);
-    en->obs2 = subject_add_event_observer(CMOUSE(en->rdman->root_coord), EVT_MOUSE_BUT_RELEASE, add_rect_release, en);
+    subject_remove_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), en->obs1);
+    subject_remove_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), en->obs2);
+    en->obs1 = subject_add_event_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), EVT_MOUSE_MOVE, add_rect_move, en);
+    en->obs2 = subject_add_event_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), EVT_MOUSE_BUT_RELEASE, add_rect_release, en);
 }
 
 static void add_rect_2_move(event_t *evt, void *arg) 
 {
-    engine_t *en = (engine_t *) arg;
+    MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
     mouse_event_t *mev = (mouse_event_t *) evt;
 
-    sh_rect_set(en->rect, mev->x, mev->y, 50,50,en->rx,en->ry);
-    rdman_shape_changed(en->rdman,en->rect);
-    rdman_redraw_changed(en->rdman);
+    sh_rect_set(en->rect, mev->x, mev->y, 50,50,0,0);
+    rdman_shape_changed(MBAPP_RDMAN(arg),en->rect);
+    rdman_redraw_changed(MBAPP_RDMAN(arg));
 }
 
 static void add_rect(event_t *evt, void *arg) 
 {
-    engine_t *en = (engine_t *) arg;
+    MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
     mouse_event_t *mev = (mouse_event_t *) evt;
     paint_t *color;
 
     printf("menut selected\n");
-    en->obs1 = subject_add_event_observer(CMOUSE(en->rdman->root_coord), EVT_MOUSE_BUT_PRESS, add_rect_2, en);
-    en->obs2 = subject_add_event_observer(CMOUSE(en->rdman->root_coord), EVT_MOUSE_MOVE, add_rect_2_move, en);
-    en->rect = rdman_shape_rect_new(en->rdman, mev->x, mev->y, 50 , 50, en->rx, en->ry);
+    en->obs1 = subject_add_event_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), EVT_MOUSE_BUT_PRESS, add_rect_2, en);
+    en->obs2 = subject_add_event_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), EVT_MOUSE_MOVE, add_rect_2_move, en);
+    en->rect = rdman_shape_rect_new(MBAPP_RDMAN(arg), mev->x, mev->y, 50 , 50, 0,0);
     // Paint it with color
-    color = rdman_paint_color_new(en->rdman, 0.800000, 0.800000, 0.400000, 1.000000);
-    rdman_paint_fill(en->rdman, color, en->rect);
+    en->obs1 = subject_add_event_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), EVT_MOUSE_BUT_PRESS, add_rect_2, en);
+    en->obs2 = subject_add_event_observer(CMOUSE(MBAPP_RDMAN(arg)->root_coord), EVT_MOUSE_MOVE, add_rect_2_move, en);
+    en->rect = rdman_shape_rect_new(MBAPP_RDMAN(arg), mev->x, mev->y, 50 , 50, 0,0);
+    // Paint it with color
+    color = rdman_paint_color_new(MBAPP_RDMAN(arg), 0.800000, 0.800000, 0.400000, 1.000000);
+    rdman_paint_fill(MBAPP_RDMAN(arg), color, en->rect);
     // Add to the stage
-    rdman_add_shape(en->rdman, en->rect, en->menu->root_coord);
+    //rdman_add_shape(MBAPP_RDMAN(arg), en->rect, en->menu->root_coord);
 }
 
 
@@ -272,29 +285,20 @@ void test(void *a)
     printf("Button is pressed.....\n");
 }
 
+MBApp *myApp;
 
 int main(int argc, char * const argv[]) {
     subject_t *subject;
-    engine_t *en;
     mb_button_t *b;
+    mb_obj_t *button;
+    MyAppData data;
 
-    en = engine_init();
-    en->menu = menu_new(en->rdman, en->rdman->root_coord);
-    en->button = sprite_load("button",en->rdman, en->rdman->root_coord);
-    b = mb_button_new(en, (mb_sprite_t *) en->button, "btn");
+    myApp = MBApp_Init("button");
+    MBApp_setData(myApp,&data);
+    b = mb_button_new(myApp, myApp->rootsprite, "btn");
     mb_button_add_onClick(b, test,NULL);
 
-    en->rx = 0;
-    en->ry = 0;
-
-    /*
-     * Register observers to subjects of events for objects.
-     */
-    subject = coord_get_mouse_event(en->menu->rect);
-    subject_add_event_observer(subject,  EVT_MOUSE_BUT_RELEASE, add_rect, en);
-
-
-    engine_mainloop(en);
+    MBApp_loop(myApp);
 
     return 0;
 }
