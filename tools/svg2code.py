@@ -216,12 +216,14 @@ def translate_shape_transform(shape, coord_id, codefo):
 # H x               : horizontal line to x
 # V y               : Vertical line to y
 # C x1 y1 x2 y2 x y : Draw a segment of bezier curve
-# S x2 y2 x t       : Draw a segment of bezier curve from the last control point
+# S x2 y2 x t       : Draw a segment of bezier curve from the last
+#                     control point
 # Q x1 y1 x y       : Draw a segment of quadratic curve
-# T x y             : Draw a segment of quadratic curve from the last control pint
+# T x y             : Draw a segment of quadratic curve from the last
+#                     control pint
 # A x y r f s x y   : Draw an arc
-# translate the path data into two arrays. The first is an integer whose upper 8
-# bits are the command type The second array hold all arguments.
+# translate the path data into two arrays. The first is an integer whose
+# upper 8 bits are the command type The second array hold all arguments.
 
 command_length={'M': 2, 'm':2,
                 'Z': 0, 'z':0,
@@ -450,6 +452,44 @@ def translate_group(group, parent_id, codefo, doc):
         pass
     pass
 
+## \brief Translate "scenes" tag in "metadata" tag.
+#
+def translate_scenes(scenes_node, codefo, doc):
+    scenes = []
+    for scene in scenes_node.childNodes:
+        if scene.localName != 'scene' or \
+                not scene.hasAttribute('ref') or \
+                not scene.hasAttribute('start'):
+            continue
+        
+        start_str = scene.getAttribute('start')
+        start = end = int(start_str)
+        if scene.hasAttribute('end'):
+            end_str = scene.getAttribute('end')
+            end = int(end_str)
+            pass
+        ref = scene.getAttribute('ref')
+        
+        while len(scenes) <= end:
+            scenes.append([])
+            pass
+        
+        for i in range(start, end + 1):
+            scenes[i].append(ref)
+            pass
+        pass
+
+    for scene_idx, groups_in_scene in enumerate(scenes):
+        if groups_in_scene:
+            groups_str = '[' + '],['.join(groups_in_scene) + ']'
+        else:
+            groups_str = ''
+            pass
+        print >> codefo, \
+            'SCENE(%d, [%s])dnl' % (scene_idx, groups_str)
+        pass
+    pass
+
 def svg_2_code(dom, codefo):
     for node in dom.childNodes:
         if node.localName == 'svg' and node.namespaceURI == svgns:
@@ -462,6 +502,12 @@ def svg_2_code(dom, codefo):
     for node in svg.childNodes:
         if node.localName == 'defs' and node.namespaceURI == svgns:
             translate_defs(node, codefo, dom)
+        elif node.localName == 'metadata' and node.namespaceURI == svgns:
+            for meta_node in node.childNodes:
+                if meta_node.localName == 'scenes':
+                    translate_scenes(meta_node, codefo, dom)
+                    pass
+                pass
             pass
         elif node.localName == 'g' and node.namespaceURI == svgns:
             translate_group(node, 'root_coord', codefo, dom)
@@ -479,6 +525,7 @@ if __name__ == '__main__':
         codefn = 'out.mb'
     else:
         print >> sys.stderr, '%s <SVG file> [<output>]' % (sys.argv[0])
+        sys.exit(1)
         pass
     
     struct_name = path.basename(codefn).split('.')[0]
