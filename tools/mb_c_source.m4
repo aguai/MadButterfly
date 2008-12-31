@@ -392,7 +392,7 @@ int $1_goto_scene($1_t *sprite, int scene_no) {
     if(sprite->last_scene) {
         p = sprite->last_scene;
     	while(*p != 0) {
-	    coord = (coord_t *)MB_SPRITE_OFF_2_PTR(sprite, *p);
+	    coord = *(coord_t **)MB_SPRITE_OFF_2_PTR(sprite, *p);
 	    coord_hide(coord);
 	    rdman_coord_changed(sprite->rdman, coord);
 	    p++;
@@ -407,7 +407,7 @@ int $1_goto_scene($1_t *sprite, int scene_no) {
     scene = $1_scenes[scene_no];
     p = scene;
     while(*p != 0) {
-	coord = (coord_t *)MB_SPRITE_OFF_2_PTR(sprite, *p);
+	coord = *(coord_t **)MB_SPRITE_OFF_2_PTR(sprite, *p);
 	coord_show(coord);
 	rdman_coord_changed(sprite->rdman, coord);
 	p++;
