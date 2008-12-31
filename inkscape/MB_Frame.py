@@ -487,7 +487,9 @@ class MBScene(inkex.Effect):
 
 		
 
+import os
 
+os.chdir('/usr/share/inkscape/extensions')
 
 A = MBScene()
 A.affect()

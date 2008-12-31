@@ -20,7 +20,7 @@ menu.h: menu.mb
 menu.c: menu.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
-button.so: button.o
+button.so: button.o button.h
 	gcc -shared -o button.so button.o
 
 button.mb: $(srcdir)/button.svg
@@ -30,4 +30,16 @@ button.h: button.mb
 	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
 
 button.c: button.mb
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
+
+scene.so: scene.o scene.h
+	gcc -shared -o scene.so scene.o
+
+scene.mb: $(srcdir)/scene.svg
+	$(top_srcdir)/tools/svg2code.py $? $@
+
+scene.h: scene.mb
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
+
+scene.c: scene.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@

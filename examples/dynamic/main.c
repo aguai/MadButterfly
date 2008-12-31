@@ -24,6 +24,7 @@ typedef struct {
     co_aix orx,ory;
     int start_x,start_y;
     observer_t *obs1,*obs2;
+    int currentscene;
 }MyAppData;
 
 #define MBAPP_DATA(app,type) ((type *) ((app)->private))
@@ -185,13 +186,18 @@ MBApp *MBApp_Init(char *module)
 
     app->rt = rt;
     app->rdman =  X_MB_rdman(rt);
-    app->rootsprite= sprite_load("button",app->rdman, app->rdman->root_coord);
+    app->rootsprite= sprite_load(module,app->rdman, app->rdman->root_coord);
     return app;
 }
 
 void MBApp_setData(MBApp *app,void *data)
 {
     app->private = (void *) data;
+}
+
+mb_tman_t *MBApp_getTimer(MBApp *app)
+{
+    return X_MB_tman(app->rt);
 }
 
 void MBApp_loop(MBApp *en)
@@ -287,16 +293,41 @@ void test(void *a)
 
 MBApp *myApp;
 
+void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
+{
+    MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
+    mb_timeval_t timer,interval;
+
+    
+    get_now(&timer);
+    MB_TIMEVAL_SET(&interval, 1 ,0);
+    MB_TIMEVAL_ADD(&timer, &interval);
+    mb_tman_timeout( MBApp_getTimer(myApp), &timer, switch_scene, myApp);
+
+    en->currentscene = (en->currentscene+1) %2;
+    printf("switch to scene %d\n", en->currentscene);
+    MB_SPRITE_GOTO_SCENE(myApp->rootsprite,en->currentscene);
+}
+
 int main(int argc, char * const argv[]) {
     subject_t *subject;
     mb_button_t *b;
     mb_obj_t *button;
     MyAppData data;
+    mb_timeval_t tmo,interval;
 
-    myApp = MBApp_Init("button");
+    if (argc > 1) 
+	    myApp = MBApp_Init(argv[1]);
+    else
+	    myApp = MBApp_Init("scene");
+    data.currentscene=0;
     MBApp_setData(myApp,&data);
-    b = mb_button_new(myApp, myApp->rootsprite, "btn");
-    mb_button_add_onClick(b, test,NULL);
+    //b = mb_button_new(myApp, myApp->rootsprite, "btn");
+    //mb_button_add_onClick(b, test,NULL);
+    get_now(&tmo);
+    MB_TIMEVAL_SET(&interval, 1 ,0);
+    mb_tman_timeout( MBApp_getTimer(myApp), &tmo, switch_scene, myApp);
+    
 
     MBApp_loop(myApp);
 
