@@ -307,7 +307,6 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
     en->currentscene = (en->currentscene + 1) % 2;
     printf("switch to scene %d\n", en->currentscene + 1);
     MB_SPRITE_GOTO_SCENE(myApp->rootsprite,en->currentscene + 1);
-    rdman_redraw_all(myApp->rdman);
 }
 
 int main(int argc, char * const argv[]) {
