@@ -1,15 +1,20 @@
 include $(top_srcdir)/config.mk
 
-noinst_PROGRAMS = dynamic button.so scene.so
+noinst_PROGRAMS = dynamic hello button.so scene.so
 EXTRA_DIST = menu.svg button.svg
 
-dynamic_SOURCES = main.c
+dynamic_SOURCES = main.c mbapp.c mbapp.h mbbutton.c mbbutton.h
 nodist_dynamic_SOURCES = menu.c menu.h menu.mb
 CPPFLAGS = @cairo_CFLAGS@ $(INCLUDES)
 dynamic_LDFLAGS = @cairo_LIBS@ 
 dynamic_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = menu.c menu.h menu.mb button.c button.h button.mb
 CLEANFILES = menu.c menu.h menu.mb button.c button.h button.mb
+
+
+hello_SOURCES = hello.c mbapp.c mbapp.h
+hello_LDFLAGS = @cairo_LIBS@ 
+hello_LDADD = $(top_builddir)/src/libmbfly.la
 
 menu.mb: $(srcdir)/menu.svg
 	$(top_srcdir)/tools/svg2code.py $? $@
