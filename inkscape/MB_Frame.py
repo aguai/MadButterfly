@@ -83,12 +83,12 @@ class MBScene(inkex.Effect):
 		pass
 						
 						
-
 	def parseScene(self):
 		"""
 		In this function, we will collect all items for the current scene and then relocate them back to the appropriate scene object.
 		"""
 		self.layer = []
+		self.scenemap = None
 		for node in self.document.getroot():
 			if node.tag == '{http://www.w3.org/2000/svg}metadata':
 				self.parseMetadata(node)
@@ -468,20 +468,53 @@ class MBScene(inkex.Effect):
 		btn=gtk.Button('Extend scene')
 		btn.connect('clicked', self.doExtendScene)
 		hbox.pack_start(btn)
+	def onQuit(self, event):
+		self.OK = False
+		gtk.main_quit()
+	def onOK(self,event):
+		self.OK = True
+		gtk.main_quit()
+
+	def onConfirmDelete(self):
+		if self.scenemap == None:
+			vbox = gtk.VBox()
+			vbox.pack_start(gtk.Label('Convert the SVG into a MadButterfly SVG file. All current element will be delted'))
+			hbox = gtk.HBox()
+			self.button = gtk.Button('OK')
+			hbox.pack_start(self.button)
+			self.button.connect('clicked', self.onOK)
+			self.button = gtk.Button('Cancel')
+			hbox.pack_start(self.button)
+			self.button.connect("clicked", self.onQuit)
+			vbox.pack_start(hbox)
+			self.window.add(vbox)
+			self.window.show_all()
+			gtk.main()
+			self.window.remove(vbox)
+
+
 	def effect(self):
+		self.OK = False
 		self.parseScene()
 		self.showGrid()
 		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		self.window.connect("destroy", gtk.main_quit)
 		self.window.set_position(gtk.WIN_POS_MOUSE)
-		vbox = gtk.VBox()
-		self.window.add(vbox)
-		vbox.add(self.scrollwin)
-		self.vbox = vbox
-		hbox=gtk.HBox()
-		self.addButtons(hbox)
-		vbox.add(hbox)
+		if self.scenemap == None:
+			self.onConfirmDelete()
+		if self.OK:
+			vbox = gtk.VBox()
+			self.window.add(vbox)
+			vbox.add(self.scrollwin)
+			self.vbox = vbox
+			hbox=gtk.HBox()
+			self.addButtons(hbox)
+			vbox.add(hbox)
+		else:
+			return
+
 		self.window.set_size_request(600,200)
+
 		self.window.show_all()
 		gtk.main()
 
