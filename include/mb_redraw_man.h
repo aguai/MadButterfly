@@ -173,8 +173,8 @@ extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
 				  co_aix x, co_aix y, int *in_stroke);
 extern int mb_obj_pos_is_in(redraw_man_t *rdman, mb_obj_t *obj,
 			    co_aix x, co_aix y, int *in_stroke);
-extern int mb_objs_is_overlay(redraw_man_t *rdman,
-			      mb_obj_t *obj1, mb_obj_t *obj2);
+extern int mb_objs_are_overlay(redraw_man_t *rdman,
+			       mb_obj_t *obj1, mb_obj_t *obj2);
 #define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
 #define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
 #define rdman_get_root(rdman) ((rdman)->root_coord)
