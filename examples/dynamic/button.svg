@@ -30,7 +30,7 @@
      inkscape:cx="257.06285"
      inkscape:cy="365.06674"
      inkscape:document-units="px"
-     inkscape:current-layer="btn_click"
+     inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1400"
      inkscape:window-height="978"
@@ -106,6 +106,7 @@
          x="235.71429"
          y="282.36218" /></text>
     <g
+       mbtype="button"
        id="btn"
        transform="translate(148.57143,98.571429)"
        mbname="btn">
@@ -114,7 +115,7 @@
          id="btn_normal"
          transform="translate(148.57143,98.571429)"
          mbname="btn_normal"
-         style="display:none">
+         style="">
         <rect
            ry="5.0559778"
            rx="6.0995407"
@@ -134,6 +135,15 @@
              x="10.000002"
              id="tspan2655"
              sodipodi:role="line">Click Me</tspan></text>
+        <rect
+           ry="5.0559778"
+           rx="6.0995407"
+           y="38.600159"
+           x="105.64253"
+           height="42.66333"
+           width="34.536983"
+           id="rect2385"
+           style="fill:#f136ff;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
       </g>
       <g
          frame="active"
@@ -162,11 +172,11 @@
              sodipodi:role="line">Click Me</tspan></text>
       </g>
       <g
+         style="display:none"
          frame="click"
          id="btn_click"
          transform="translate(148.57143,98.571429)"
-         mbname="btn_click"
-         style="">
+         mbname="btn_click">
         <rect
            ry="5.0559778"
            rx="6.0995407"

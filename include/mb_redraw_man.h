@@ -74,6 +74,10 @@ struct _redraw_man {
 				 *	    \see addrm_monitor_hdlr()
 				 */
     mb_obj_t *last_mouse_over;
+    void *rt;                  /*!< \brief This is a pointer to the current 
+                                *          graphic backend. 
+				*          \see rdman_attach_backend()
+				*/
 };
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
@@ -186,6 +190,10 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
 #define rdman_clear_shape_gl(rdman)		\
     DARRAY_CLEAN(rdman_get_gen_geos(rdman))
 
+/*! \brief Attach backend to the redraw manager so that we can hide the backend from the users.
+ *
+ */
+#define rdman_attach_backend(rdman,backend) (((rdman)->rt)=(backend))
 /*! \brief Load sprite dymanicly from the shared object module. 
  *  
  *   The search path can be changed by sprite_set_search_path. The name can have a relative path in the front of it.
@@ -198,6 +206,5 @@ mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman, coord_t *root);
  *
  */
 void sprite_set_search_path(char *path);
-
 
 #endif /* __REDRAW_MAN_H_ */
