@@ -474,6 +474,7 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
 	elmpool_elm_free(rdman->geo_pool, geo);
     }
     STAILQ_REMOVE(rdman->shapes, shape_t, sh_next, shape);
+    mb_prop_store_destroy(&shape->obj.props);
     shape->free(shape);
 
     if(rdman->last_mouse_over == (mb_obj_t *)shape)
@@ -638,6 +639,7 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
 
     RM_CHILD(parent, coord);
     subject_free(coord->mouse_event);
+    mb_prop_store_destroy(&coord->obj.props);
     elmpool_elm_free(rdman->coord_pool, coord);
     rdman->n_coords--;
 

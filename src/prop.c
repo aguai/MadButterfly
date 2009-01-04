@@ -24,7 +24,7 @@ void mb_prop_store_destroy(mb_prop_store_t *prop_store) {
     if(last == NULL)
 	return;
 
-    for(entry = STAILQ_NEXT(mb_prop_entry_t, next, entry);
+    for(entry = STAILQ_NEXT(mb_prop_entry_t, next, last);
 	entry != NULL;
 	entry = STAILQ_NEXT(mb_prop_entry_t, next, entry)) {
 	STAILQ_REMOVE(prop_store->entries, mb_prop_entry_t, next, last);

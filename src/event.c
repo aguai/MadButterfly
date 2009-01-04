@@ -724,6 +724,7 @@ int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
     } else {
 	coord = (coord_t *)obj;
 	area = coord_get_area(coord);
+	shape = NULL;
     }
 	
     if(IS_MBO_SHAPES(others_root)) {
