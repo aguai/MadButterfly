@@ -46,6 +46,9 @@ class AssignSymbol(inkex.Effect):
 			return
 		for id,node in self.selected.iteritems():
 			#self.dump(node)
+			if node.tag != '{http://www.w3.org/2000/svg}g':
+				self.confirm('Only group element can be converted into a symbol')
+				return
 			self.node = node
 			vbox = gtk.VBox()
 			vbox.pack_start(gtk.Label('Please input the symbol name'))

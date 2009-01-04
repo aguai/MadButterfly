@@ -442,6 +442,10 @@ static int X_MB_init(const char *display_name,
 
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
+    // FIXME: This is a wired loopback reference. This is inly required when we need 
+    //        to get the xmb_rt->tman for the animation. We should relocate the tman
+    //	      to the redraw_man_t instead.
+    xmb_rt->rdman->rt = xmb_rt;
 
     xmb_rt->tman = mb_tman_new();
 

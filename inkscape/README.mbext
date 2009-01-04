@@ -51,3 +51,9 @@ The content of all three groups will be the same. We can modify each of them sep
 
 This function will invoke another inkscape to edit the selected button. In the new inkscape, all three group will be visible and put in different layer. We can move them and edit them. When we close the inkscape, the MB extention will collect the new content and update the groups in the original SVG file. By this way, we can edit the button in any SVG file.
 
+Button 
+   +--- Convert to button
+   +--- Edit Button
+       +---- Normal Frame
+       +---- Active Frame
+       +---- Click Frame
