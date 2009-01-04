@@ -2,7 +2,7 @@
 #define __MBBUTTON_H
 typedef struct _mb_button {
     mb_obj_t obj;
-    MBApp *en;
+    redraw_man_t *rdman;
     int state;
     coord_t *root;
     coord_t *active;
@@ -13,7 +13,7 @@ typedef struct _mb_button {
     observer_t *obs_move,*obs_out,*obs_press;
     mb_progm_t *progm;
 } mb_button_t;
-mb_button_t *mb_button_new(MBApp *app,mb_sprite_t *sp, char *name);
+mb_button_t *mb_button_new(redraw_man_t *rdman,mb_sprite_t *sp, char *name);
 void mb_button_add_onClick(mb_button_t *b, void (*h)(void *arg), void *arg);
 #endif
 

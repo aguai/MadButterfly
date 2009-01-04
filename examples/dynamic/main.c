@@ -116,9 +116,18 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
     MB_SPRITE_GOTO_SCENE(myApp->rootsprite,en->currentscene + 1);
 }
 
+MyApp_InitContent()
+{
+    mb_button_t *b;
+    mb_sprite_t *sprite;
+
+    sprite = sprite_load("button", myApp->rdman, myApp->rdman->root_coord);
+    b = mb_button_new(myApp->rdman, sprite, "btn");
+    mb_button_add_onClick(b, test,NULL);
+}
+
 int main(int argc, char * const argv[]) {
     subject_t *subject;
-    mb_button_t *b;
     mb_obj_t *button;
     MyAppData data;
     mb_timeval_t tmo,interval;
@@ -129,8 +138,7 @@ int main(int argc, char * const argv[]) {
 	    myApp = MBApp_Init("scene");
     data.currentscene=0;
     MBApp_setData(myApp,&data);
-    //b = mb_button_new(myApp, myApp->rootsprite, "btn");
-    //mb_button_add_onClick(b, test,NULL);
+    MyApp_InitContent();
     get_now(&tmo);
     MB_TIMEVAL_SET(&interval, 1 ,0);
     mb_tman_timeout( MBApp_getTimer(myApp), &tmo, switch_scene, myApp);
