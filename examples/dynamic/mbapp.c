@@ -10,6 +10,7 @@ MBApp *MBApp_Init(char *module)
     app->rt = rt;
     app->rdman =  X_MB_rdman(rt);
     app->rootsprite= sprite_load(module,app->rdman, app->rdman->root_coord);
+    rdman_attach_backend(app->rdman, rt);
     return app;
 }
 
