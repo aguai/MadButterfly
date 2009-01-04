@@ -108,6 +108,10 @@ struct _geo {
 
 extern int areas_are_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
+#define _in_range(a, s, w) ((a) >= (s) && (a) < ((s) + (w)))
+#define area_pos_is_in(area, _x, _y)		\
+    (_in_range(_x, (area)->x, (area)->w) &&	\
+     _in_range(_y, (area)->y, (area)->h))
 extern void geo_init(geo_t *g);
 extern void geo_from_positions(geo_t *g, int n_pos, co_aix pos[][2]);
 extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
@@ -115,10 +119,7 @@ extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 #define geo_get_shape(g) ((g)->shape)
 #define geo_get_shape_safe(g) ((g)? (g)->shape: NULL)
 #define geo_set_shape(g, sh) do {(g)->shape = sh;} while(0)
-#define _geo_is_in(a, s, w) ((a) >= (s) && (a) < ((s) + (w)))
-#define geo_pos_is_in(g, _x, _y)				\
-    (_geo_is_in(_x, (g)->cur_area->x, (g)->cur_area->w) &&	\
-     _geo_is_in(_y, (g)->cur_area->y, (g)->cur_area->h))
+#define geo_pos_is_in(g, _x, _y) area_pos_is_in((g)->cur_area, _x, _y)
 #define geo_get_area(g) ((g)->cur_area)
 #define geo_get_flags(g, mask) ((g)->flags & (mask))
 #define geo_set_flags(g, mask) do {(g)->flags |= mask;} while(0)
