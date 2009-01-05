@@ -25,7 +25,7 @@ menu.h: menu.mb
 menu.c: menu.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
-button.so: button.o button.h
+button.so: button.o
 	gcc -shared -o button.so button.o
 
 button.mb: $(srcdir)/button.svg
@@ -37,7 +37,9 @@ button.h: button.mb
 button.c: button.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
-scene.so: scene.o scene.h
+button.o: button.h
+
+scene.so: scene.o
 	gcc -shared -o scene.so scene.o
 
 scene.mb: $(srcdir)/scene.svg
@@ -48,3 +50,5 @@ scene.h: scene.mb
 
 scene.c: scene.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
+
+scene.o: scene.h
