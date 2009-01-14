@@ -1,7 +1,7 @@
 include $(top_srcdir)/config.mk
 
 noinst_PROGRAMS = tank
-EXTRA_DIST = calculator_scr.svg
+#EXTRA_DIST = 
 svg_sources = brick.c bullet.c bush.c mud.c rock.c \
 	tank1.c tank2.c tank_en.c bang.c
 tank_SOURCES = tank_main.c

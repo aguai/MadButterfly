@@ -44,5 +44,6 @@ AC_CONFIG_FILES([Makefile
                  examples/dynamic/Makefile
                  src/Makefile
                  include/Makefile
+                 inkscape/Makefile
                  tools/Makefile])
 AC_OUTPUT
