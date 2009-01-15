@@ -316,6 +316,7 @@ int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
     subject_add_observer(rdman->root_coord->mouse_event,
 			 mouse_event_root_dummy, NULL);
 
+    mb_prop_store_init(&rdman->props, rdman->pent_pool);
     return OK;
 
  err:
@@ -340,6 +341,8 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     coord_t *coord, *saved_coord;
     shape_t *shape, *saved_shape;
     geo_t *member;
+
+    mb_prop_store_destroy(&rdman->props);
 
     free_free_objs(rdman);
     free_objs_destroy(rdman);

@@ -20,6 +20,9 @@ define([ADD_COORD],[
 define([ADD_TEXT],[
 [    shape_t *$1;
 ]])
+define([ADD_IMAGE],[
+[    shape_t *$1;
+]])
 define([COLOR_STOP],[ ])
 
 define([REF_STOPS_RADIAL],)

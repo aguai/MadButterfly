@@ -11,6 +11,10 @@
  * to keep property values.  Every property is identified by a ID; an
  * integer.  Programmer can use a ID to set/get value to/from a property
  * store.  The ID should be unique in a property store.
+ *
+ * \todo Add a free function pointer on entries to release resources when
+ *	the store is destroy. (See: \ref mouse.c)
+ *
  * @{
  */
 
