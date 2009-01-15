@@ -1,10 +1,13 @@
 include $(top_srcdir)/config.mk
 
 noinst_PROGRAMS = dynamic hello button.so scene.so
-EXTRA_DIST = menu.svg button.svg scene.svg scene.c scene.h scene.mb
+EXTRA_DIST = menu.svg button.svg scene.svg
 
 dynamic_SOURCES = main.c mbapp.c mbapp.h mbbutton.c mbbutton.h
-nodist_dynamic_SOURCES = menu.c menu.h menu.mb 
+nodist_dynamic_SOURCES = \
+	menu.c menu.h menu.mb \
+	button.c button.h button.mb \
+	scene.c scene.h scene.mb
 CPPFLAGS = @cairo_CFLAGS@ $(INCLUDES)
 dynamic_LDFLAGS = @cairo_LIBS@ 
 dynamic_LDADD = $(top_builddir)/src/libmbfly.la
