@@ -23,7 +23,7 @@ $(svg_sources:.c=.h): %.h: %.mb
 
 $(svg_sources:.c=.mb): %.mb: $(srcdir)/%.svg
 	$(top_srcdir)/tools/svg2code.py $? $@
-	
+
 svgs.h: $(svg_sources:.c=.h)
 	echo "#ifndef __SVGS_H_" > $@
 	echo "#define __SVGS_H_" >> $@
