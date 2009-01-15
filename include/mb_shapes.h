@@ -10,6 +10,7 @@
 #include <cairo.h>
 #include "mb_types.h"
 #include "mb_redraw_man.h"
+#include "mb_img_ldr.h"
 
 /*! \page define_shape How to Define Shapes
  *
@@ -29,6 +30,14 @@
  * - event.c::draw_shape_path()
  * - redraw_man.c::clean_shape()
  * - redraw_man.c::draw_shape()
+ *
+ * \section shape_transform Shape Transform
+ *
+ * All shape types must have a shape transform function.  It is invoked by
+ * redraw_man.c::clean_shape().  It's task is to update \ref geo_t of the
+ * shape object.  In most situtation, it call geo_from_positions() to
+ * update geo_t.
+ * 
  */
 
 /*! \defgroup shapes Shapes
@@ -67,6 +76,19 @@ extern void sh_rect_transform(shape_t *shape);
 extern void sh_rect_draw(shape_t *shape, cairo_t *cr);
 extern void sh_rect_set(shape_t *shape, co_aix x, co_aix y,
 			co_aix w, co_aix h, co_aix rx, co_aix ry);
+/* @} */
+
+/*! \defgroup shape_image Shape of Image
+ * @{
+ */
+extern shape_t *rdman_shape_image_new(redraw_man_t *rdman,
+				      mb_img_data_t *img_data,
+				      co_aix x, co_aix y,
+				      co_aix w, co_aix h);
+extern void sh_image_transform(shape_t *shape);
+extern void sh_image_draw(shape_t *shape, cairo_t *cr);
+extern void sh_image_set(shape_t *shape, co_aix x, co_aix y,
+			 co_aix w, co_aix h);
 /* @} */
 /* @} */
 

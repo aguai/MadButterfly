@@ -78,6 +78,7 @@ struct _redraw_man {
                                 *          graphic backend. 
 				*          \see rdman_attach_backend()
 				*/
+    mb_prop_store_t props;
 };
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,

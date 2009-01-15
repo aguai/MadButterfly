@@ -40,7 +40,8 @@ enum { MBO_DUMMY,
        MBO_SHAPES=0x1000,	/*! \note Don't touch this.  */
        MBO_PATH,
        MBO_TEXT,
-       MBO_RECT
+       MBO_RECT,
+       MBO_IMAGE
 };
 #define MBO_CLASS_MASK 0xf000
 #define MBO_CLASS(x) (((mb_obj_t *)(x))->obj_type & MBO_CLASS_MASK)
@@ -197,6 +198,7 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
     } while(0)
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
+#define coord_get_aggr_matrix(coord) ((coord)->aggr_matrix)
 #define FOR_COORDS_POSTORDER(coord, cur)			\
     for((cur) = postorder_coord_subtree((coord), NULL);		\
 	(cur) != NULL;						\
@@ -270,6 +272,7 @@ struct _shape {
 #define sh_clear_flags(sh, mask) geo_clear_flags(sh_get_geo(sh), mask)
 #define sh_pos_is_in(sh, x, y) geo_pos_is_in(sh_get_geo(sh), x, y)
 #define sh_get_area(sh) geo_get_area(sh_get_geo(sh))
+#define sh_get_coord(sh) ((sh)->coord)
 
 
 /*! \brief A sprite is a set of graphics that being an object in animation.
