@@ -5,6 +5,7 @@
 #include "mb_types.h"
 #include "mb_timer.h"
 #include "mb_redraw_man.h"
+#include "mb_img_ldr.h"
 
 /*! \ingroup xkb
  * @{
@@ -30,5 +31,6 @@ extern subject_t *X_MB_kbevents(X_MB_runtime_t *xmb_rt);
 extern redraw_man_t *X_MB_rdman(X_MB_runtime_t *xmb_rt);
 extern mb_tman_t *X_MB_tman(X_MB_runtime_t *xmb_rt);
 extern ob_factory_t *X_MB_ob_factory(X_MB_runtime_t *xmb_rt);
+extern mb_img_ldr_t *X_MB_img_ldr(X_MB_runtime_t *xmb_rt);
 
 #endif
