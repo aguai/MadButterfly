@@ -35,6 +35,7 @@ struct _X_MB_runtime {
     cairo_t *cr, *backend_cr;
     redraw_man_t *rdman;
     mb_tman_t *tman;
+    mb_img_ldr_t *img_ldr;
     int w, h;
 
     X_kb_info_t kbinfo;
@@ -449,6 +450,8 @@ static int X_MB_init(const char *display_name,
 
     xmb_rt->tman = mb_tman_new();
 
+    xmb_rt->img_ldr = simple_mb_img_ldr_new("./");
+
 #ifndef ONLY_MOUSE_MOVE_RAW
     xmb_rt->last = NULL;
 #endif
@@ -466,6 +469,9 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 
     if(xmb_rt->tman)
 	mb_tman_free(xmb_rt->tman);
+
+    if(xmb_rt->img_ldr)
+	MB_IMG_LDR_FREE(xmb_rt->img_ldr);
 
     if(xmb_rt->cr)
 	cairo_destroy(xmb_rt->cr);
@@ -520,4 +526,12 @@ ob_factory_t *X_MB_ob_factory(X_MB_runtime_t *xmb_rt) {
 
     factory = rdman_get_ob_factory(xmb_rt->rdman);
     return factory;
+}
+
+mb_img_ldr_t *X_MB_img_ldr(X_MB_runtime_t *xmb_rt) {
+    X_MB_runtime_t *img_ldr;
+
+    img_ldr = xmb_rt->img_ldr;
+
+    return img_ldr;
 }
