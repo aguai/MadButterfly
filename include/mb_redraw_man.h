@@ -5,6 +5,7 @@
 #include "mb_tools.h"
 #include "mb_types.h"
 #include "mb_observer.h"
+#include "mb_img_ldr.h"
 
 typedef struct _redraw_man redraw_man_t;
 
@@ -79,6 +80,9 @@ struct _redraw_man {
 				*          \see rdman_attach_backend()
 				*/
     mb_prop_store_t props;
+    mb_img_ldr_t *img_ldr;	/*!< \brief Image Loader.
+				 *	This is initialized by backend.
+				 */
 };
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
@@ -190,6 +194,8 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
     rdman_get_gen_geos(rdman)->num
 #define rdman_clear_shape_gl(rdman)		\
     DARRAY_CLEAN(rdman_get_gen_geos(rdman))
+#define rdman_prop_store(rdman) ((rdman)->props)
+#define rdman_img_ldr(rdman) ((rdman)->img_ldr)
 
 /*! \brief Attach backend to the redraw manager so that we can hide the backend from the users.
  *
@@ -197,9 +203,10 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
 #define rdman_attach_backend(rdman,backend) (((rdman)->rt)=(backend))
 /*! \brief Load sprite dymanicly from the shared object module. 
  *  
- *   The search path can be changed by sprite_set_search_path. The name can have a relative path in the front of it.
- *   This function will search the object in the current working directory and then search the system search path.
- *
+ * The search path can be changed by sprite_set_search_path. The name
+ * can have a relative path in the front of it.
+ * This function will search the object in the current working directory
+ * and then search the system search path.
  */
 mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman, coord_t *root);
 

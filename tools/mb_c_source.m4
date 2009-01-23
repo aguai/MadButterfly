@@ -120,6 +120,13 @@ define([S_ADD_TEXT],[[
     rdman_add_shape(rdman, obj->$1, obj->$6);
 ]])
 
+define([S_ADD_IMAGE],[[
+    obj->$1_img_data = MB_IMG_LDR_LOAD(img_ldr, "$2");
+    obj->$1 = rdman_shape_image_new(rdman, obj->$1_img_data,
+				    $3, $4, $5, $6);
+    rdman_add_shape(rdman, obj->$1, obj->$7);
+]])
+
 define([S_FILL_SHAPE_WITH_PAINT],[dnl
 [    rdman_paint_fill(rdman, obj->$2, obj->$1);
 ]])
@@ -204,6 +211,7 @@ SIMPORT([ADD_PATH],)
 SIMPORT([ADD_RECT])
 SIMPORT([ADD_COORD])
 SIMPORT([ADD_TEXT])
+SIMPORT([ADD_IMAGE])
 SIMPORT([FILL_SHAPE])
 SIMPORT([STROKE_SHAPE])
 SIMPORT([FILL_SHAPE_WITH_PAINT])
@@ -240,6 +248,11 @@ define([F_ADD_RECT],[[
 
 define([F_ADD_TEXT],[[
     rdman_shape_free(rdman, obj->$1);
+]])
+
+define([F_ADD_IMAGE],[[
+    rdman_shape_free(rdman, obj->$1);
+    MB_IMAGE_DATA_FREE(obj->$1_img_data);
 ]])
 
 define([F_FILL_SHAPE],[[
@@ -423,9 +436,12 @@ void $1_free($1_t *);
 
 $1_t *$1_new(redraw_man_t *rdman, coord_t *parent_coord) {
     $1_t *obj;
-    grad_stop_t *stops = NULL;]DECLARE_VARS
+    grad_stop_t *stops = NULL;
+    mb_img_ldr_t *img_ldr = NULL;]DECLARE_VARS
 $2[]dnl
 [
+    img_ldr = rdman_img_ldr(rdman);
+    
     obj = ($1_t *)malloc(sizeof($1_t));
     if(obj == NULL) return NULL;
 
