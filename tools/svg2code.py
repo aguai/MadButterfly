@@ -371,6 +371,8 @@ def translate_font_style(text, codefo):
 
 @check_mbname
 def translate_text(text, coord_id, codefo, doc):
+    coord_id = translate_shape_transform(text, coord_id, codefo)
+    
     translate_font_style(text, codefo)
 
     txt_strs = []
@@ -397,38 +399,40 @@ def translate_text(text, coord_id, codefo, doc):
 
 @check_mbname
 def translate_image(image, coord_id, codefo, doc):
+    coord_id = translate_shape_transform(image, coord_id, codefo)
+    
     image_id = _get_id(image)
-    if not image.hasAttribute('href'):
+    if not image.hasAttributeNS(xlinkns, 'href'):
         raise ValueError, 'image %s must has a href attribute.' % (image_id)
-    href = image.getAttribute('href')
+    href = image.getAttributeNS(xlinkns, 'href')
     if image.hasAttribute('x'):
         x_str = image.getAttribute('x')
-        x = int(x_str)
+        x = float(x_str)
     else:
         x = 0
         pass
     if image.hasAttribute('y'):
         y_str = image.getAttribute('y')
-        y = int(y_str)
+        y = float(y_str)
     else:
         y = 0
         pass
     if image.hasAttribute('width'):
         width_str = image.getAttribute('width')
-        width = int(width_str)
+        width = float(width_str)
     else:
         width = -1
         pass
     if image.hasAttribute('height'):
         height_str = image.getAttribute('height')
-        height = int(height_str)
+        height = float(height_str)
     else:
         height = -1
         pass
     print >> codefo, 'dnl'
     print >> codefo, \
-        'ADD_IMAGE([%s], [%s], %f, %f, %f, %f)dnl' % (
-        image_id, href, x, y, width, height)
+        'ADD_IMAGE([%s], [%s], %f, %f, %f, %f, [%s])dnl' % (
+        image_id, href, x, y, width, height, coord_id)
     pass
 
 reo_func = re.compile('([a-zA-Z]+)\\([^\\)]*\\)')

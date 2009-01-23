@@ -23,6 +23,7 @@ static void paint_color_prepare(paint_t *paint, cairo_t *cr) {
 
 static void paint_color_free(redraw_man_t *rdman, paint_t *paint) {
     shnode_list_free(rdman, paint->members);
+    paint_destroy(paint);
     elmpool_elm_free(rdman->paint_color_pool, paint);
 }
 
@@ -108,6 +109,7 @@ static void paint_linear_free(redraw_man_t *rdman, paint_t *paint) {
 
     if(linear->ptn)
 	cairo_pattern_destroy(linear->ptn);
+    paint_destroy(paint);
     free(paint);
 }
 
@@ -198,6 +200,7 @@ static void paint_radial_free(redraw_man_t *rdman, paint_t *paint) {
 
     if(radial->ptn)
 	cairo_pattern_destroy(radial->ptn);
+    paint_destroy(paint);
     free(paint);
 }
 
@@ -241,3 +244,94 @@ grad_stop_t *paint_radial_stops(paint_t *paint,
     return old_stops;
 }
 
+
+typedef struct _paint_image {
+    paint_t paint;
+    mb_img_data_t *img;
+    cairo_surface_t *surf;
+    cairo_pattern_t *ptn;
+} paint_image_t;
+
+static
+void paint_image_prepare(paint_t *paint, cairo_t *cr) {
+    paint_image_t *paint_img = (paint_image_t *)paint;
+    mb_img_data_t *img_data;
+
+    img_data = paint_img->img;
+    cairo_set_source(cr, paint_img->ptn);
+}
+
+static
+void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
+    paint_image_t *paint_img = (paint_image_t *)paint;
+    mb_img_data_t *img_data;
+    
+    cairo_surface_destroy(paint_img->surf);
+    img_data = paint_img->img;
+    MB_IMG_DATA_FREE(img_data);
+    paint_destroy(&paint_img->paint);
+    free(paint);
+}
+
+paint_t *rdman_paint_image_new(redraw_man_t *rdman,
+			       mb_img_data_t *img) {
+    paint_image_t *paint;
+    int fmt;
+
+    switch(img->fmt) {
+    case MB_IFMT_ARGB32:
+	fmt = CAIRO_FORMAT_ARGB32;
+	break;
+    case MB_IFMT_RGB24:
+	fmt = CAIRO_FORMAT_RGB24;
+	break;
+    case MB_IFMT_A8:
+	fmt = CAIRO_FORMAT_A8;
+	break;
+    case MB_IFMT_A1:
+	fmt = CAIRO_FORMAT_A1;
+	break;
+    default:
+	return NULL;
+    }
+    
+    paint = O_ALLOC(paint_image_t);
+    if(paint == NULL)
+	return NULL;
+    
+    paint_init(&paint->paint, paint_image_prepare, paint_image_free);
+    paint->img = img;
+    paint->surf = cairo_image_surface_create_for_data(img->content,
+						      fmt,
+						      img->width,
+						      img->height,
+						      img->stride);
+    if(paint->surf == NULL) {
+	paint_destroy(&paint->paint);
+	free(paint);
+	return NULL;
+    }
+    
+    paint->ptn = cairo_pattern_create_for_surface(paint->surf);
+    if(paint->ptn == NULL) {
+	paint_destroy(&paint->paint);
+	cairo_surface_destroy(paint->surf);
+	free(paint);
+	return NULL;
+    }
+
+    return (paint_t *)paint;
+}
+
+void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
+    paint_image_t *img_paint = (paint_image_t *)paint;
+    cairo_matrix_t cmatrix;
+    
+    cmatrix.xx = matrix[0];
+    cmatrix.xy = matrix[1];
+    cmatrix.x0 = matrix[2];
+    cmatrix.yx = matrix[3];
+    cmatrix.yy = matrix[4];
+    cmatrix.y0 = matrix[5];
+    cairo_pattern_set_matrix(img_paint->ptn, &cmatrix);
+}

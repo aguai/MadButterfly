@@ -451,7 +451,8 @@ static int X_MB_init(const char *display_name,
     xmb_rt->tman = mb_tman_new();
 
     xmb_rt->img_ldr = simple_mb_img_ldr_new("./");
-
+    xmb_rt->rdman->img_ldr = xmb_rt->img_ldr;
+    
 #ifndef ONLY_MOUSE_MOVE_RAW
     xmb_rt->last = NULL;
 #endif

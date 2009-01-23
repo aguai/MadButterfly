@@ -309,6 +309,13 @@
        fx="175.7256"
        fy="143.89952"
        r="125.56596" />
+    <inkscape:perspective
+       id="perspective2495"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -322,7 +329,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.63166667"
      inkscape:cx="400"
-     inkscape:cy="176.10388"
+     inkscape:cy="306.21386"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      width="800px"
@@ -330,8 +337,8 @@
      showgrid="true"
      inkscape:window-width="822"
      inkscape:window-height="695"
-     inkscape:window-x="130"
-     inkscape:window-y="120" />
+     inkscape:window-x="200"
+     inkscape:window-y="0" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -459,5 +466,13 @@
        sodipodi:end="9.4037459"
        sodipodi:open="true"
        transform="translate(0,-17.414248)" />
+    <image
+       y="87.316605"
+       x="605.409"
+       id="image2497"
+       height="66"
+       width="100"
+       sodipodi:absref="/usr/home/thinker/progm/MadButterfly/examples/svg2code_ex/dsc_3241.png"
+       xlink:href="dsc_3241.png" />
   </g>
 </svg>

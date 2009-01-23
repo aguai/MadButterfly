@@ -24,6 +24,8 @@
  *   - assigned to \ref shape_t::free.
  * - *_transform()
  * - *_draw()
+ *   - *_draw() is responsive to define shape.  How the shape is filled
+ *     or stroked is defined by paint.
  * - first member variable of a shape type must be a shape_t.
  * 
  * Must modify

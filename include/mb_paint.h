@@ -24,7 +24,8 @@ extern void paint_color_get(paint_t *paint,
 	 (_paint)->free = _free;		\
 	 STAILQ_INIT((_paint)->members);	\
 	 (_paint)->pnt_next = NULL;		\
-     } while(0)					\
+     } while(0)
+#define paint_destroy(_paint)
 
 
 typedef struct _grad_stop {
@@ -53,5 +54,12 @@ extern grad_stop_t *paint_radial_stops(paint_t *paint,
 	(stop)->a = _a;					\
     } while(0)
 
+/*! \brief A paint that fill or stroke shape with an image.
+ */
+extern paint_t *rdman_paint_image_new(redraw_man_t *rdman,
+				      mb_img_data_t *img);
+/*! \brief Set a matrix to transform image.
+ */
+extern void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]);
 
 #endif /* __PAINT_H_ */

@@ -796,6 +796,9 @@ static void clean_shape(shape_t *shape) {
     case MBO_RECT:
 	sh_rect_transform(shape);
 	break;
+    case MBO_IMAGE:
+	sh_image_transform(shape);
+	break;
 #ifdef UNITTEST
     default:
 	sh_dummy_transform(shape);
@@ -995,6 +998,9 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
 	    break;
 	case MBO_RECT:
 	    sh_rect_draw(shape, cr);
+	    break;
+	case MBO_IMAGE:
+	    sh_image_draw(shape, cr);
 	    break;
 #ifdef UNITTEST
 	default:

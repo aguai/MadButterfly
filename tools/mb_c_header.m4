@@ -20,8 +20,9 @@ define([ADD_COORD],[
 define([ADD_TEXT],[
 [    shape_t *$1;
 ]])
-define([ADD_IMAGE],[
-[    shape_t *$1;
+define([ADD_IMAGE],[[
+    mb_img_data_t *$1_img_data;
+    shape_t *$1;
 ]])
 define([COLOR_STOP],[ ])
 

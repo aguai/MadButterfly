@@ -64,6 +64,9 @@ enum { MBO_DUMMY,
  * Paints should be freed by users by calling rdman_paint_free() of
  * the paint.
  *
+ * To define a foo paint, it should define a rdman_paint_foo_new()
+ * function.  It return a paint object.
+ *
  * \todo move member functions to a seperate structure and setup a
  * singleton for each paint type.
  */
@@ -273,6 +276,8 @@ struct _shape {
 #define sh_pos_is_in(sh, x, y) geo_pos_is_in(sh_get_geo(sh), x, y)
 #define sh_get_area(sh) geo_get_area(sh_get_geo(sh))
 #define sh_get_coord(sh) ((sh)->coord)
+#define sh_get_fill(sh) ((sh)->fill)
+#define sh_get_stroke(sh) ((sh)->stroke)
 
 
 /*! \brief A sprite is a set of graphics that being an object in animation.

@@ -46,6 +46,7 @@ struct _mb_img_ldr {
     void (*free)(mb_img_ldr_t *ldr);
 };
 #define MB_IMG_LDR_FREE(ldr) (ldr)->free(ldr)
+#define MB_IMG_LDR_LOAD(ldr, img_id) (ldr)->load(ldr, img_id)
 
 /*! \brief Create a simple image loader.
  *

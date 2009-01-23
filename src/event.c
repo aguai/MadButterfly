@@ -534,6 +534,9 @@ static void draw_shape_path(shape_t *shape, cairo_t *cr) {
     case MBO_RECT:
 	sh_rect_draw(shape, cr);
 	break;
+    case MBO_IMAGE:
+	sh_image_draw(shape, cr);
+	break;
     }
 }
 
