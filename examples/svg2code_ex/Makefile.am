@@ -1,7 +1,7 @@
 include $(top_srcdir)/config.mk
 
 noinst_PROGRAMS = ex1
-EXTRA_DIST = svg2code_ex.svg
+EXTRA_DIST = svg2code_ex.svg dsc_3241.png
 
 ex1_SOURCES = main.c
 nodist_ex1_SOURCES = svg2code_ex.c svg2code_ex.h
