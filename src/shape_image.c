@@ -108,11 +108,15 @@ void sh_image_free(shape_t *shape) {
 
 void sh_image_transform(shape_t *shape) {
     sh_image_t *img = (sh_image_t *)shape;
+    mb_img_data_t *img_data;
     co_aix (*poses)[2];
     co_aix img_matrix[6];
+    co_aix x_factor, y_factor;
     cairo_matrix_t cmatrix;
     int i;
-
+    
+    img_data = img->img_data;
+    
     poses = img->poses;
     poses[0][0] = img->x;
     poses[0][1] = img->y;
@@ -132,6 +136,18 @@ void sh_image_transform(shape_t *shape) {
     img_matrix[3] = (poses[3][0] - poses[0][0]) / img->h;
     img_matrix[4] = (poses[3][1] - poses[0][1]) / img->h;
     img_matrix[5] = -poses[0][1];
+    if(img->w != img_data->w ||
+       img->h != img_data->h) {
+	/* Resize image */
+	x_factor = img_data->w / img->w;
+	img_matrix[0] *= x_factor;
+	img_matrix[1] *= x_factor;
+	img_matrix[2] *= x_factor;
+	y_factor = img_data->h / img->h;
+	img_matrix[3] *= y_factor;
+	img_matrix[4] *= y_factor;
+	img_matrix[5] *= y_factor;
+    }
     paint_image_set_matrix(sh_get_fill(shape), img_matrix);
     
     geo_from_positions(sh_get_geo(shape), 4, poses);

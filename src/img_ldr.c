@@ -46,8 +46,8 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
 	return NULL;
     }
     img->img.content = cairo_image_surface_get_data(surf);
-    img->img.width = cairo_image_surface_get_width(surf);
-    img->img.height = cairo_image_surface_get_height(surf);
+    img->img.w = cairo_image_surface_get_width(surf);
+    img->img.h = cairo_image_surface_get_height(surf);
     img->img.stride = cairo_image_surface_get_stride(surf);
     fmt = cairo_image_surface_get_format(surf);
     switch(fmt) {

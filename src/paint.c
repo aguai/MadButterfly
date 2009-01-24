@@ -311,8 +311,8 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
     paint->img = img;
     paint->surf = cairo_image_surface_create_for_data(img->content,
 						      fmt,
-						      img->width,
-						      img->height,
+						      img->w,
+						      img->h,
 						      img->stride);
     if(paint->surf == NULL) {
 	paint_destroy(&paint->paint);
