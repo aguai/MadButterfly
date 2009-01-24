@@ -53,11 +53,16 @@ typedef struct _sh_path {
 #include <math.h>
 /*! \brief Calculate center of the ellipse of an arc.
  *
+ * Origin of our coordination is left-top corner, and y-axis are grown
+ * to down-side.
+ *
+ * Space of the arc is transformed to space that correspondent
+ * ellipse containing the arc is mapped into an unit circle.
  * - ux0 = x0 / rx
  * - uy0 = y0 / ry
  * - ux = x / rx
- * - uy = y / rx
- * ux0, uy0, ux, yu are got by transforming (x0, y0) and (x, y) into points
+ * - uy = y / ry
+ * ux0, uy0, ux, uy are got by transforming (x0, y0) and (x, y) into points
  * on the unit circle. The center of unit circle are (ucx, ucy):
  * - umx = (ux0 + ux) / 2
  * - umy = (uy0 + uy) / 2
@@ -68,7 +73,9 @@ typedef struct _sh_path {
  *
  * - udx * udcx + udy * udcy = 0
  *
- * - udl2 = udx ** 2 + udy ** 2;
+ * - udl2 = udx ** 2 + udy ** 2
+ *
+ * For drawing small arc in clockwise
  * - udx * udcy - udy * udcx = sqrt((1 - udl2) * udl2)
  *
  * - udcy = -udcx * udx / udy
@@ -118,9 +125,11 @@ static int calc_center_and_x_aix(co_aix x0, co_aix y0,
     udl2 = udx2 + udy2;
 
     if(udy != 0) {
+	/* center is at left-side of arc */
 	udcx = -sqrtf((1 - udl2) * udl2) / (udy + udx2 / udy);
 	udcy = -udcx * udx / udy;
     } else {
+	/* center is at down-side of arc */
 	udcx = 0;
 	udcy = sqrtf((1 - udl2) * udl2) / udx;
     }
