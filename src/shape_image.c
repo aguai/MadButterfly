@@ -42,7 +42,7 @@
  * image loader assigned for a rdman by calling rdman_img_ldr().
  *
  * \image html image_n_ldr.png
- *
+ * \image latex image_n_ldr.eps "Relationship of image and loader" width=10cm
  */
 
 #define ASSERT(x)
