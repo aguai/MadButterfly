@@ -245,6 +245,10 @@ grad_stop_t *paint_radial_stops(paint_t *paint,
 }
 
 
+/*! \brief Using an image as a paint.
+ *
+ * This type of paints fill/stroke shapes with an image.
+ */
 typedef struct _paint_image {
     paint_t paint;
     mb_img_data_t *img;
@@ -273,6 +277,10 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     free(paint);
 }
 
+/*! \brief Create an image painter.
+ *
+ * Create a painter that fill/stroke shapes with an image.
+ */
 paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 			       mb_img_data_t *img) {
     paint_image_t *paint;
@@ -323,6 +331,12 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
     return (paint_t *)paint;
 }
 
+/*! \brief Setting transformation from user space to image space.
+ *
+ * This transformation matrix maps points drawed in user space to
+ * corresponding points in image space.  It is used to resample
+ * the image to generate pixels of result image.
+ */
 void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     paint_image_t *img_paint = (paint_image_t *)paint;
     cairo_matrix_t cmatrix;
