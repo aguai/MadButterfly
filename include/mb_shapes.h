@@ -89,8 +89,8 @@ extern shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 				      co_aix w, co_aix h);
 extern void sh_image_transform(shape_t *shape);
 extern void sh_image_draw(shape_t *shape, cairo_t *cr);
-extern void sh_image_set(shape_t *shape, co_aix x, co_aix y,
-			 co_aix w, co_aix h);
+extern void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
+				  co_aix w, co_aix h);
 /* @} */
 /* @} */
 

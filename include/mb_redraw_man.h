@@ -196,6 +196,8 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
     DARRAY_CLEAN(rdman_get_gen_geos(rdman))
 #define rdman_prop_store(rdman) ((rdman)->props)
 #define rdman_img_ldr(rdman) ((rdman)->img_ldr)
+#define rdman_set_img_ldr(rdman, ldr)		\
+    do { (rdman)->img_ldr = ldr; } while(0)
 
 /*! \brief Attach backend to the redraw manager so that we can hide the backend from the users.
  *

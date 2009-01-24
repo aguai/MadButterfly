@@ -420,6 +420,8 @@ static int X_init_connection(const char *display_name,
  */
 static int X_MB_init(const char *display_name,
 	      int w, int h, X_MB_runtime_t *xmb_rt) {
+    mb_img_ldr_t *img_ldr;
+    
     memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
 
     xmb_rt->w = w;
@@ -450,8 +452,9 @@ static int X_MB_init(const char *display_name,
 
     xmb_rt->tman = mb_tman_new();
 
-    xmb_rt->img_ldr = simple_mb_img_ldr_new("./");
-    xmb_rt->rdman->img_ldr = xmb_rt->img_ldr;
+    img_ldr = simple_mb_img_ldr_new("./");
+    xmb_rt->img_ldr = img_ldr;
+    rdman_set_img_ldr(xmb_rt->rdman, img_ldr);
     
 #ifndef ONLY_MOUSE_MOVE_RAW
     xmb_rt->last = NULL;

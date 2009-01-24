@@ -6,10 +6,51 @@
 #include "mb_img_ldr.h"
 #include "mb_tools.h"
 
+/*! \page sh_image_n_image_ldr Image and Image Loader
+ *
+ * Image (\ref sh_image_t) is a shape to show an image on the output
+ * device.  Programmers manipulate object of an image shape to show it
+ * at specified position with specified size.  To create a new instance
+ * of sh_iamge_t, an image should be specified.  Programmers must have
+ * a way to load image from files.  The solution proposed by MadButterfly
+ * is image loader (\ref mb_img_ldr_t).
+ *
+ * Image loader is a repository of image files, programmers give him an
+ * ID and get an image returned the loader.  Image loader decodes image
+ * files specified IDs and return them in an internal representation.
+ * The internal representation of an array of pixels.  Pixels are in
+ * order of columns (X-axis) and then row by row (Y-axis).  An pixel
+ * can be 32bits, for ARGB, 24bits, for RGB, 8bits, for 8bits Alpha or
+ * 256-grey-levels, and 1bits, for bitmap.
+ *
+ * Every row is padded to round to byte boundary, a rounded row is a stride.
+ * Bytes a stride occupied is stride size.  The internal rpresentation
+ * is a series of strides.  The data returned by image loader is
+ * \ref mb_img_data_t type.  mb_img_data_t::content is data in internal
+ * representation.
+ *
+ * \ref simple_mb_img_ldr_t is a simple implementation of image loader.
+ * It is a repository of image files in a directory and sub-directories.
+ * ID of an image is mapped to a file in the directory and sub-directories.
+ * ID it-self is a relative path relate to root directory of the repository.
+ * \ref simple_mb_img_ldr_t handle PNG files only, now.
+ *
+ * \section get_img_ldr Get an Image Loader for Program
+ * redraw_man_t::img_ldr is an image loader assigned by backend.
+ * X backend, now, create an instance of simple_mb_img_ldr_t and assigns
+ * the instance to redraw_man_t::img_ldr.  Programmers should get
+ * image loader assigned for a rdman by calling rdman_img_ldr().
+ *
+ * \image html image_n_ldr.png
+ *
+ */
+
 #define ASSERT(x)
 #define OK 0
 #define ERR -1
 
+/*! \brief Image shape.
+ */
 typedef struct _sh_image {
     shape_t shape;
     
@@ -84,6 +125,7 @@ void sh_image_transform(shape_t *shape) {
     for(i = 0; i < 4; i++)
 	coord_trans_pos(img->shape.coord, &poses[i][0], &poses[i][1]);
 
+    /* Transformation from user space to image space */
     img_matrix[0] = (poses[1][0] - poses[0][0]) / img->w;
     img_matrix[1] = (poses[1][1] - poses[0][1]) / img->w;
     img_matrix[2] = -poses[0][0];
@@ -112,8 +154,12 @@ void sh_image_draw(shape_t *shape, cairo_t *cr) {
     cairo_close_path(cr);
 }
 
-void sh_image_set(shape_t *shape, co_aix x, co_aix y,
-		  co_aix w, co_aix h) {
+/*! \brief Change geometry of an image.
+ *
+ * Set position and size of an image.
+ */
+void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
+			   co_aix w, co_aix h) {
     sh_image_t *img = (sh_image_t *)shape;
 
     img->x = x;
