@@ -210,6 +210,63 @@ def translate_shape_transform(shape, coord_id, codefo):
         pass
     return coord_id
 
+## \brief Calculate geometry of ellipse where the arc is on.
+#
+# This function calculate the ellipse with information from SVG path data.
+#
+# \see calc_center_and_x_aix()
+def _calc_ellipse_of_arc(x0, y0, rx, ry, x_rotate, large, sweep, x, y):
+    import math
+    
+    _sin = math.sin(x_rotate)
+    _cos = math.cos(x_rotate)
+    
+    nrx = x * _cos + y * _sin
+    nry = x * -_sin + y * _cos
+    nrx0 = x0 * _cos + y0 * _sin
+    nry0 = x0 * -_sin + y0 * _cos
+    
+    udx = (nrx - nrx0) / 2 / rx # ux - umx
+    udy = (nry - nry0) / 2 / ry # uy - umy
+    umx = (nrx + nrx0) / 2 / rx
+    umy = (nry + nry0) / 2 / ry
+
+    udx2 = udx * udx
+    udy2 = udy * udy
+    udl2 = udx2 + udy2
+
+    if udy != 0:
+	# center is at left-side of arc
+	udcx = -math.sqrt((1 - udl2) * udl2) / (udy + udx2 / udy)
+	udcy = -udcx * udx / udy
+    else:
+	# center is at down-side of arc
+	udcx = 0
+	udcy = math.sqrt((1 - udl2) * udl2) / udx
+        pass
+
+    reflect = 0
+    if large:
+	reflect ^= 1
+        pass
+    if sweep != 1:
+	reflect ^= 1
+        pass
+    if reflect:
+	udcx = -udcx
+	udcy = -udcy
+        pass
+
+    nrcx = rx * (udcx + umx)
+    nrcy = ry * (udcy + umy)
+    
+    cx = nrcx * _cos - nrcy * _sin
+    cy = nrcx * _sin + nrcy * _cos
+    
+    xx = rx * _cos + cx
+    xy = rx * _sin + cy
+    return cx, cy, xx, xy
+
 # M x y             : Move to (x,y)
 # Z                 : close path
 # L x y             : lineto (x,y)
@@ -233,8 +290,8 @@ command_length={'M': 2, 'm':2,
                 'C': 6, 'c':6,
                 'S': 4, 's':4,
                 'Q': 4, 'q':4,
-                'T': 2, 't':2}
-
+                'T': 2, 't':2,
+                'A': 7, 'a':7}
 
 def translate_path_data(data,codefo):
     temp = data.split()
@@ -244,33 +301,41 @@ def translate_path_data(data,codefo):
             if s != '':
                 fields.append(s)
     cmd = ''
+    cmd_args = 0
     commands=''
     args=[]
+    narg = 0
     fix_args=[]
     for f in fields:
-        if cmd == 'A' or cmd == 'a':
-            try:
-                d = int(f)
-                fix_args.append(d)
-                if (narg % 7) == 0:
-                    commands = commands + cmd
-                narg = narg + 1
-            except:
-	        pass
-        else:
-            try:
-	        d = float(f)
-            	args.append(d)
-            	if (narg % command_length[cmd]) == 0:
-                    commands = commands + cmd
-            	narg = narg + 1
-            	continue
-            except:
-                pass
-        cmd = f
-        narg=0
-    pass
-    return [commands,args,fix_args]
+        if f in command_length:
+            if cmd_args != 0 and (narg % cmd_args) != 0:
+                raise ValueError, 'invalid path data %s' % (repr(fields))
+            cmd = f
+            cmd_args = command_length[f]
+            narg = 0
+            continue
+
+        if (narg % cmd_args) == 0:
+            commands = commands + cmd
+            pass
+        arg = float(f)
+        args.append(arg)
+        narg = narg + 1
+        
+        if (narg % cmd_args) == 0 and (cmd in 'Aa'):
+            x0, y0, rx, ry, x_rotate, large, sweep, x, y = \
+                tuple(args[-9:])
+            x_rotate = int(x_rotate)
+            large = int(large)
+            sweep = int(sweep)
+            cx, cy, xx, xy = _calc_ellipse_of_arc(x0, y0, rx, ry,
+                                                  x_rotate, large,
+                                                  sweep, x, y)
+            args[-7:] = [cx, cy, xx, xy, x, y]
+            fix_args.append(sweep)
+            pass
+        pass
+    return commands, args, fix_args
 
 _id_sn = 0
 
@@ -307,7 +372,7 @@ def translate_path(path, coord_id, codefo, doc):
 
     path_id = path.getAttribute('id')
     d = path.getAttribute('d')
-    (commands,args,fix_args) = translate_path_data(d,codefo)
+    commands, args, fix_args = translate_path_data(d,codefo)
     print >> codefo, 'dnl'
     #print >> codefo, 'ADD_PATH([%s], [%s], [%s])dnl' % (path_id, d, coord_id)
     sarg=''
@@ -536,7 +601,7 @@ def translate_scenes(scenes_node, codefo, doc):
 def svg_2_code(dom, codefo):
     for node in dom.childNodes:
         if node.localName == 'svg' and node.namespaceURI == svgns:
-            break;
+            break
         pass
     else:
         raise ValueErr, 'no any svg tag node.'
