@@ -22,7 +22,7 @@ typedef enum _mb_img_fmt {
 struct _mb_img_data {
     /*! \brief Content of the image. */
     void *content;
-    int width, height;
+    int w, h;
     int stride;			/*!< \brief Number of bytes a row */
     mb_img_fmt_t fmt;
     /*! \brief Release the image that was loaded by the loader. */
