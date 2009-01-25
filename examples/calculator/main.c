@@ -144,7 +144,7 @@ static void buttons_handler(event_t *evt, void *arg) {
 
     switch(evt->type) {
     case EVT_MOUSE_BUT_PRESS:
-	compute(calc_data, (coord_t *)evt->cur_tgt);
+	compute(calc_data, (coord_t *)evt->cur_tgt->obj);
 	break;
     }
 }
