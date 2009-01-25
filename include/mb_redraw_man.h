@@ -83,6 +83,9 @@ struct _redraw_man {
     mb_img_ldr_t *img_ldr;	/*!< \brief Image Loader.
 				 *	This is initialized by backend.
 				 */
+    co_aix w, h;		/*!< \brief Size of viewport
+				 *	This is initialized by backend.
+				 */
 };
 
 extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,

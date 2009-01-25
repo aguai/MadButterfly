@@ -1028,13 +1028,22 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
 }
 
 #ifndef UNITTEST
-static void clean_canvas(cairo_t *cr) {
+static void clean_canvas(cairo_t *cr, co_aix w, co_aix h) {
     /*! \todo clean to background color. */
     cairo_set_source_rgb(cr, 1, 1, 1);
+#if 1
+    /* For some unknown reasons, cairo_paint() can not erease
+     * painted graphic cleanly.  So, cairo_fill() are used to
+     * replace it.
+     */
+    cairo_rectangle(cr, 0, 0, w, h);
+    cairo_fill(cr);
+#else
     cairo_paint(cr);
+#endif
 }
 
-static void clean_canvas_black(cairo_t *cr) {
+static void clean_canvas_black(cairo_t *cr, co_aix w, co_aix h) {
     /*! \todo clean to background color. */
     cairo_set_source_rgba(cr, 0, 0, 0, 0);
     cairo_paint(cr);
@@ -1064,10 +1073,10 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
     cairo_paint(rdman->backend);
 }
 #else /* UNITTEST */
-static void clean_canvas(cairo_t *cr) {
+static void clean_canvas(cairo_t *cr, co_aix w, co_aix h) {
 }
 
-static void clean_canvas_black(cairo_t *cr) {
+static void clean_canvas_black(cairo_t *cr, co_aix w, co_aix h) {
 }
 
 static void reset_clip(redraw_man_t *rdman) {
@@ -1142,7 +1151,7 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
 
     if(dirty && coord->flags & COF_OWN_CANVAS) {
 	update_canvas_2_parent(rdman, coord);
-	clean_canvas_black(coord->canvas);
+	clean_canvas_black(coord->canvas, rdman->w, rdman->h);
     }
 
     return dirty;
@@ -1204,7 +1213,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	/*! \brief Draw shapes in preorder of coord tree and support opacity
 	 * rules.
 	 */
-	clean_canvas(rdman->cr);
+	clean_canvas(rdman->cr, rdman->w, rdman->h);
 	draw_shapes_in_areas(rdman, n_dirty_areas, dirty_areas);
 	copy_cr_2_backend(rdman, rdman->dirty_areas.num,
 			  rdman->dirty_areas.ds);
