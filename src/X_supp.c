@@ -449,6 +449,8 @@ static int X_MB_init(const char *display_name,
     //        to get the xmb_rt->tman for the animation. We should relocate the tman
     //	      to the redraw_man_t instead.
     xmb_rt->rdman->rt = xmb_rt;
+    xmb_rt->rdman->w = w;
+    xmb_rt->rdman->h = h;
 
     xmb_rt->tman = mb_tman_new();
 

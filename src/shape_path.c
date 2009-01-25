@@ -788,10 +788,10 @@ void sh_path_transform(shape_t *shape) {
 	poses = (co_aix (*)[2])(path->dev_data + path->cmd_len);
 	geo_from_positions(path->shape.geo, arg_len / 2, poses);
 	area = shape->geo->cur_area;
-	area->x -= shape->stroke_width/2 + 1;
-	area->y -= shape->stroke_width/2 + 1;
-	area->w += shape->stroke_width + 2;
-	area->h += shape->stroke_width + 2;
+	area->x -= shape->stroke_width / 2 + 0.5;
+	area->y -= shape->stroke_width / 2 + 0.5;
+	area->w += shape->stroke_width + 1;
+	area->h += shape->stroke_width + 1;
     }
 }
 

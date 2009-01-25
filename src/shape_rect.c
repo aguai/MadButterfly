@@ -122,10 +122,10 @@ void sh_rect_transform(shape_t *shape) {
     if(shape->stroke) {
 	area = shape->geo->cur_area;
 	width = shape->stroke_width;
-	area->x -= width / 2 + 1;
-	area->y -= width / 2 + 1;
-	area->w += width + 2;
-	area->h += width + 2;
+	area->x -= width / 2 + 0.5;
+	area->y -= width / 2 + 0.5;
+	area->w += width + 1;
+	area->h += width + 1;
     }
 }
 
