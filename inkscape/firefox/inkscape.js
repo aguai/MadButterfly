@@ -217,6 +217,8 @@ function onButtonClick(obj)
 		ExtendScene(currentScene);
 	} else if (id == 'DeleteScene') {
 		DeleteScene(currentScene);
+	} else {
+		alert(id+' has not been implemented yet');
 	}
 }
 
