@@ -25,7 +25,7 @@ var SOAPClient = {
 	Namespace: function(name, uri) {
 		return {"name":name, "uri":uri};
 	},
-	SendRequest: function(soapReq, callback) {		
+	SendRequest: function(soapReq, callback,arg) {		
 		if(!!SOAPClient.Proxy) {
 			SOAPClient.ResponseText = "";
 			SOAPClient.ResponseXML = null;
@@ -40,7 +40,7 @@ var SOAPClient = {
 					SOAPClient.ResponseText = xData.responseText;
 					SOAPClient.ResponseXML = xData.responseXML;
 					var jsOut = $.xmlToJSON(xData.responseXML);
-					callback(jsOut);
+					callback(jsOut,arg);
 				}
 			}
 			$.ajax({

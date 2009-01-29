@@ -1,7 +1,7 @@
 var isInProgress=0;
 
 var MAX_DUMP_DEPTH = 10;
-var mbsvg;
+var inkscape;
 
       
 
@@ -57,12 +57,157 @@ function dumpObjItem(obj, name, indent, depth) {
              return obj;
       }
 }
-
-function inkscape_load(file) 
+/**
+ *   Inkscape class
+ *
+ */
+function Inkscape(file) 
 {
-	var inkscape = document.getElementById('inkscape');
-	inkscape.innerHTML = "<embed src="+file+" width=1000 height=800 />";
+	var ink = document.getElementById('inkscape');
+	ink.innerHTML = "<embed src="+file+" width=1000 height=800 />";
+	this.isInProgress = 0;
+
+	setTimeout("inkscape.fetchDocument()",4000);
 }
+
+Inkscape.prototype.gotoScene = function (n)
+{
+	nextScene = n;
+	var soapBody = new SOAPObject("START");
+	var sr = new SOAPRequest("START", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.gotoScene1(resp);},this);
+	this.isInProgress++;
+}
+Inkscape.prototype.gotoScene1 = function (resp,n)
+{
+	var soapBody = new SOAPObject("SCENE");
+	var v1 = new SOAPObject("v1");
+	v1.val(nextScene);
+	soapBody.appendChild(v1);
+	var sr = new SOAPRequest("SCENE", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.gotoScene2(resp);},this);
+}	
+Inkscape.prototype.gotoScene2 = function (resp)
+{
+	var soapBody = new SOAPObject("PUBLISH");
+	var sr = new SOAPRequest("PUBLISH", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.gotoScene3(resp);},this);
+}
+
+Inkscape.prototype.gotoScene3 = function (resp)
+{
+	this.isInProgress--;
+}
+Inkscape.prototype.publishDocument= function(resp)
+{
+	mbsvg = new MBSVGString(resp.Body[0].GETDOCResponse[0].Result[0].Text);
+	mbsvg.renderUI();
+
+	var soapBody = new SOAPObject("PUBLISH");
+	var sr = new SOAPRequest("PUBLISH", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function(resp,arg) {arg.operationDone(resp);},this);
+}
+
+Inkscape.prototype.refreshDocument = function(resp)
+{
+	var soapBody = new SOAPObject("GETDOC");
+	var sr = new SOAPRequest("GETDOC", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function(resp,arg) { arg.publishDocument(resp);},this);
+}	
+
+Inkscape.prototype.operationDone = function (res)
+{
+	this.isInProgress--;
+}
+Inkscape.prototype.insertKey= function(n)
+{
+	nextScene = n;
+	var soapBody = new SOAPObject("START");
+	var sr = new SOAPRequest("START", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.insertKey1(resp);},this);
+	this.isInProgress++;
+}
+Inkscape.prototype.insertKey1 = function(resp)
+{
+	var soapBody = new SOAPObject("INSERTKEY");
+	var v1 = new SOAPObject("v1");
+	v1.attr('type','string');
+	v1.val(currentLayer);
+	soapBody.appendChild(v1);
+	var v2 = new SOAPObject("v2");
+	v2.val(nextScene);
+	soapBody.appendChild(v2);
+	var sr = new SOAPRequest("INSERTKEY", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.refreshDocument(resp);},this);
+}
+
+Inkscape.prototype.extendScene=function()
+{
+	var soapBody = new SOAPObject("START");
+	var sr = new SOAPRequest("START", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.extendScene1(resp);},this);
+	this.isInProgress++;
+}
+
+
+Inkscape.prototype.extendScene1 = function(resp)
+{
+	var soapBody = new SOAPObject("EXTENDSCENE");
+	var v1 = new SOAPObject("v1");
+	v1.attr('type','string');
+	v1.val(currentLayer);
+	soapBody.appendChild(v1);
+	var v2 = new SOAPObject("v2");
+	v2.val(currentScene);
+	soapBody.appendChild(v2);
+	var sr = new SOAPRequest("EXTENDSCENE", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.refreshDocument(resp);},this);
+}	
+
+
+Inkscape.prototype.deleteScene=function()
+{
+	var soapBody = new SOAPObject("START");
+	var sr = new SOAPRequest("START", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.deleteScene1(resp);},this);
+	this.isInProgress++;
+}
+
+Inkscape.prototype.deleteScene1=function(resp)
+{
+	var soapBody = new SOAPObject("DELETESCENE");
+	var v1 = new SOAPObject("v1");
+	v1.attr('type','string');
+	v1.val(currentLayer);
+	soapBody.appendChild(v1);
+	var v2 = new SOAPObject("v2");
+	v2.val(currentScene);
+	soapBody.appendChild(v2);
+	var sr = new SOAPRequest("EXTENDSCENE", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.refreshDocument(resp);},this);
+}	
+
+Inkscape.prototype.fetchDocument = function()
+{	
+	var soapBody = new SOAPObject("START");
+	var sr = new SOAPRequest("START", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr,function(resp,arg) {arg.refreshDocument(resp);},this);
+	this.isInProgress++;
+}
+
+
 
 function MBSVG(file)
 {
@@ -135,11 +280,12 @@ function MBSVG_loadFromDoc(self,xmlDoc)
 	self.maxframe = max;
 }
 
-function renderUI(mbsvg)
+MBSVGString.prototype=MBSVG.prototype;
+MBSVG.prototype.renderUI=function()
 {
-	var layers = mbsvg.layers;
-	var scenes = mbsvg.scenes;
-	var max = mbsvg.maxframe;
+	var layers = this.layers;
+	var scenes = this.scenes;
+	var max = this.maxframe;
 	var cmd = "<table border=1>\n";
 	cmd = cmd + "<tr><td></td>";
 	for(var j=1;j<=max;j++) 
@@ -178,6 +324,12 @@ function renderUI(mbsvg)
 	frame.innerHTML=cmd;
 }
 
+
+
+/**
+ *    UI for madbuilder.html to build the scene editor
+ */
+
 function selectCell(obj)
 {
 	var id = obj.getAttribute('id');
@@ -206,17 +358,17 @@ function selectCell(obj)
 
 function onButtonClick(obj)
 {
-	if (isInProgress != 0) return;
+	if (inkscape.isInProgress != 0) return;
 	var id = obj.getAttribute('id');
 	if (id == 'Jump') {
 		if (currentScene != 0)
-			gotoScene(currentScene);
+			inkscape.gotoScene(currentScene);
 	} else if (id == 'InsertKey') {
-		InsertKey(currentScene);
+		inkscape.insertKey(currentScene);
 	} else if (id == 'ExtendScene') {
-		ExtendScene(currentScene);
+		inkscape.extendScene(currentScene);
 	} else if (id == 'DeleteScene') {
-		DeleteScene(currentScene);
+		inkscape.deleteScene(currentScene);
 	} else {
 		alert(id+' has not been implemented yet');
 	}
@@ -229,154 +381,12 @@ function gotoScene_cb(resObj)
 var nextScene;
 var currentScene = 0;
 var currentLayer = '';
-function gotoScene(n)
-{
-	nextScene = n;
-	var soapBody = new SOAPObject("START");
-	var sr = new SOAPRequest("START", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, gotoScene1);
-	isInProgress++;
-}
-function gotoScene1(resp,n)
-{
-	var soapBody = new SOAPObject("SCENE");
-	var v1 = new SOAPObject("v1");
-	v1.val(nextScene);
-	soapBody.appendChild(v1);
-	var sr = new SOAPRequest("SCENE", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, gotoScene2);
-}
-function gotoScene2(resp)
-{
-	var soapBody = new SOAPObject("PUBLISH");
-	var sr = new SOAPRequest("PUBLISH", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, gotoScene3);
-}
-
-function gotoScene3(resp)
-{
-	isInProgress--;
-}
-
-
-
-function InsertKey(n)
-{
-	nextScene = n;
-	var soapBody = new SOAPObject("START");
-	var sr = new SOAPRequest("START", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, InsertKey1);
-	isInProgress++;
-}
-function InsertKey1(resp)
-{
-	var soapBody = new SOAPObject("INSERTKEY");
-	var v1 = new SOAPObject("v1");
-	v1.attr('type','string');
-	v1.val(currentLayer);
-	soapBody.appendChild(v1);
-	var v2 = new SOAPObject("v2");
-	v2.val(nextScene);
-	soapBody.appendChild(v2);
-	var sr = new SOAPRequest("INSERTKEY", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, RefreshDocument);
-}
-function PublishDocument(resp)
-{
-	mbsvg = new MBSVGString(resp.Body[0].GETDOCResponse[0].Result[0].Text);
-	renderUI(mbsvg);
-
-	var soapBody = new SOAPObject("PUBLISH");
-	var sr = new SOAPRequest("PUBLISH", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, OperationDone);
-}
-
-function RefreshDocument(resp)
-{
-	var soapBody = new SOAPObject("GETDOC");
-	var sr = new SOAPRequest("GETDOC", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, PublishDocument);
-}
-
-function OperationDone(res)
-{
-	isInProgress--;
-}
-
-
-function ExtendScene()
-{
-	var soapBody = new SOAPObject("START");
-	var sr = new SOAPRequest("START", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr,ExtendScene1);
-	isInProgress++;
-}
-
-
-function ExtendScene1(resp)
-{
-	var soapBody = new SOAPObject("EXTENDSCENE");
-	var v1 = new SOAPObject("v1");
-	v1.attr('type','string');
-	v1.val(currentLayer);
-	soapBody.appendChild(v1);
-	var v2 = new SOAPObject("v2");
-	v2.val(currentScene);
-	soapBody.appendChild(v2);
-	var sr = new SOAPRequest("EXTENDSCENE", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, RefreshDocument);
-}
-
-
-function DeleteScene()
-{
-	var soapBody = new SOAPObject("START");
-	var sr = new SOAPRequest("START", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr,DeleteScene1);
-	isInProgress++;
-}
-
-function DeleteScene1(resp)
-{
-	var soapBody = new SOAPObject("DELETESCENE");
-	var v1 = new SOAPObject("v1");
-	v1.attr('type','string');
-	v1.val(currentLayer);
-	soapBody.appendChild(v1);
-	var v2 = new SOAPObject("v2");
-	v2.val(currentScene);
-	soapBody.appendChild(v2);
-	var sr = new SOAPRequest("EXTENDSCENE", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr, RefreshDocument);
-
-}
-
-function FetchDocument()
-{
-	var soapBody = new SOAPObject("START");
-	var sr = new SOAPRequest("START", soapBody);
-	SOAPClient.Proxy = "http://localhost:19192/";
-	SOAPClient.SendRequest(sr,RefreshDocument);
-	isInProgress++;
-}
 
 var last_select = null;
-inkscape_load("scene.mbsvg");
-setTimeout("FetchDocument()",4000);
+inkscape = new Inkscape("scene.mbsvg");
 
 $('a.button').mouseover(function () {
-			if (isInProgress==0)
+			if (inkscape.isInProgress==0)
 				this.style.MozOpacity = 0.1;
 		}).mouseout(function () {
 			this.style.MozOpacity= 1;
