@@ -6,6 +6,7 @@ from copy import deepcopy
 from lxml import etree
 from twisted.web import server, resource,soap
 from twisted.internet import reactor
+import traceback
 
 import random
 
@@ -159,18 +160,16 @@ class MBScene(inkex.Effect):
 		return None
 		
 	
-	def insertKeyScene(self):
+	def insertKeyScene(self,layer,nth):
 		"""
 		Insert a new key scene into the stage. If the nth is always a key scene, we will return without changing anything. 
 		If the nth is a filled scene, we will break the original scene into two parts. If the nth is out of any scene, we will
 		append a new scene.
 
 		"""
-		nth = self.last_cell.nScene
-		layer = self.getLayer(self.last_cell.layer)
-		x = self.last_cell.nScene
-		y = self.last_cell.nLayer
 		if layer == None: return
+
+		# Check if the nth is in the middle of any scene
 		for i in range(0,len(layer.scene)):
 			s = layer.scene[i]
 			if nth >= s.start and nth <= s.end:
@@ -179,26 +178,16 @@ class MBScene(inkex.Effect):
 				newscene.node.set("id", self.newID())
 				layer.scene.insert(i+1,newscene)
 				layer.scene[i].end = nth-1
-				btn = self.newCell('start.png')
-				btn.nScene = nth
-				btn.layer = layer
-				btn.nLayer = y
-				self.grid.remove(self.last_cell)
-				self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
 				return
 		if len(layer.scene) > 0:
+			# extend the last scene befor eit automatically
 			last = nth
 			lastscene = None
+			# Find the last scene before it
 			for s in layer.scene:
 				if s.end < nth and last < s.end:
 					last = s.end
 					lastscene = s
-			for x in range(last+1, nth):
-				btn = self.newCell('fill.png')
-				btn.nScene = x
-				btn.layer = layer.node.get('id')
-				btn.nLayer = y
-				self.grid.attach(btn, x, x+1, y , y+1,0,0,0,0)
 			if lastscene == None:
 				node = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
 				node.set("id", self.newID())
@@ -208,46 +197,19 @@ class MBScene(inkex.Effect):
 				newscene = Scene(deepcopy(lastscene.node),nth,nth)
 				newscene.node.set("id",self.newID())
 			layer.scene.append(newscene)
-			btn = self.newCell('start.png')
-			x = self.last_cell.nScene
-			y = self.last_cell.nLayer
-			btn.nScene = nth
-			btn.layer = layer.node.get('id')
-			btn.nLayer = y
-			self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
 		else:
 			# This is the first scene in the layer
 			node = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
 			node.set("id", self.newID())
 			newscene = Scene(node,nth,nth)
 			layer.scene.append(newscene)
-			btn = self.newCell('start.png')
-			btn.nScene = nth
-			btn.layer = layer.node.get('id')
-			btn.nLayer = y
-			self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
 
 
-
-
-	def removeKeyScene(self):
-		nth = self.last_cell.nScene
-		try:
-			layer = self.getLayer(self.last_cell.layer)
-		except:
-			return
-		x = self.last_cell.nScene
-		y = self.last_cell.nLayer
+	def deleteScene(self,layer,nth):
 		for i in range(0,len(layer.scene)):
 			s = layer.scene[i]
 			if nth == s.start:
 				if i == 0:
-					for j in range(s.start,s.end+1):
-						btn = self.newCell('empty.png')
-						btn.nScene = nth
-						btn.layer = layer
-						btn.nLayer = y
-						self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
 					layer.scene.remove(s)
 				else:
 					if s.start == layer.scene[i-1].end+1:
@@ -255,33 +217,16 @@ class MBScene(inkex.Effect):
 						# scene segmenet to the last one
 						layer.scene[i-1].end = s.end
 						layer.scene.remove(s)
-						btn = self.newCell('fill.png')
-
-						btn.nScene = nth
-						btn.layer = layer
-						btn.nLayer = y
-						self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
 					else:
 						# Convert all scenes into empty cell
 						layer.scene.remove(s)
-						for j in range(s.start,s.end+1):
-							btn = self.newCell('empty.png')
-							btn.nScene = nth
-							btn.layer = layer
-							btn.nLayer = y
-							self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
-
 						
 				return
+			pass
+		pass
 
-	def extendScene(self):
-		nth = self.last_cell.nScene
-		try:
-			layer = self.getLayer(self.last_cell.layer)
-		except:
-			return
-		x = self.last_cell.nScene
-		y = self.last_cell.nLayer
+
+	def extendScene(self,layer,nth):
 		if layer == None: return
 
 		for i in range(0,len(layer.scene)-1):
@@ -292,22 +237,11 @@ class MBScene(inkex.Effect):
 		for i in range(0,len(layer.scene)-1):
 			s = layer.scene[i]
 			if nth >= layer.scene[i].start and nth < layer.scene[i+1].start:
-				for j in range(layer.scene[i].end+1, nth+1):
-					btn = self.newCell('fill.png')
-					btn.nScene = nth
-					btn.nLayer = y
-					btn.layer = self.last_cell.layer
-					self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
 				layer.scene[i].end = nth
 				return
 		if len(layer.scene) > 0 and nth > layer.scene[len(layer.scene)-1].end:
-			for j in range(layer.scene[len(layer.scene)-1].end+1, nth+1):
-				btn = self.newCell('fill.png')
-				btn.nScene = nth
-				btn.nLayer = y
-				btn.layer = self.last_cell.layer
-				self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
 			layer.scene[len(layer.scene)-1].end = nth
+
 	def setCurrentScene(self,nth):
 		self.current = nth
 		for layer in self.layer:
@@ -445,17 +379,9 @@ class MBScene(inkex.Effect):
 		self.setCurrentScene(self.last_cell.nScene)
 		self.generate()
 		gtk.main_quit()
-	def doInsertKeyScene(self,w):
-		self.insertKeyScene()
-		self.grid.show_all()
-		self.generate()
 
 	def doRemoveScene(self,w):
 		self.removeKeyScene()
-		self.grid.show_all()
-		self.generate()
-	def doExtendScene(self,w):
-		self.extendScene()
 		self.grid.show_all()
 		self.generate()
 	def addButtons(self,hbox):
@@ -522,13 +448,34 @@ class MB(soap.SOAPPublisher):
 	def soap_SCENE(self,n):
 		self.target.setCurrentScene(int(n))
 		return "OK"
-
-
-
-		
-
+	def soap_INSERTKEY(self,layer,n):
+		try:
+			layer = self.target.getLayer(layer)
+			self.target.insertKeyScene(layer,int(n))
+			return "OK"
+		except:
+			return traceback.format_exc()
+	def soap_EXTENDSCENE(self,layer,n):
+		try:
+			layer = self.target.getLayer(layer)
+			self.target.extendScene(layer,int(n))
+			return "OK"
+		except:
+			return traceback.format_exc()
+	def soap_DELETESCENE(self,layer,n):
+		try:
+			layer = self.target.getLayer(layer)
+			self.target.deleteScene(layer,int(n))
+			return "OK"
+		except:
+			return traceback.format_exc()
+	def soap_GETDOC(self):
+		try:
+			self.target.generate()
+			return etree.tostring(self.target.document)
+		except:
+			return traceback.format_exc()
 import os
-
 os.chdir('/usr/share/inkscape/extensions')
 
 A = MBScene()
