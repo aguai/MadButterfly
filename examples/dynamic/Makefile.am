@@ -9,7 +9,7 @@ SUFFIXES=.svg .mbso
 	make $(<:.svg=.o)
 	gcc -shared -o $@ $(<:.svg=.o)
 
-noinst_PROGRAMS = dynamic hello list button.so scene.so
+noinst_PROGRAMS = dynamic hello
 EXTRA_DIST = menu.svg button.svg
 
 dynamic_SOURCES = main.c mbapp.c mbapp.h mbbutton.c mbbutton.h
@@ -17,7 +17,7 @@ nodist_dynamic_SOURCES =
 CPPFLAGS = @cairo_CFLAGS@ $(INCLUDES)
 dynamic_LDFLAGS = @cairo_LIBS@ 
 dynamic_LDADD = $(top_builddir)/src/libmbfly.la
-BUILT_SOURCES = menu.c menu.h menu.mb button.c button.h button.mb
+BUILT_SOURCES = 
 CLEANFILES = menu.c menu.h menu.mb button.c button.h button.mb
 
 
@@ -25,8 +25,5 @@ hello_SOURCES = hello.c mbapp.c mbapp.h
 hello_LDFLAGS = @cairo_LIBS@ 
 hello_LDADD = $(top_builddir)/src/libmbfly.la
 
-list_SOURCES = list.c mbapp.c mbapp.h
-list_LDFLAGS = @cairo_LIBS@ 
-list_LDADD = $(top_builddir)/src/libmbfly.la
 
 
