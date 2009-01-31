@@ -81,6 +81,47 @@ extern void sh_text_set_text(shape_t *shape, const char *txt) {
     text->data = buf;
 }
 
+void sh_text_set_color(shape_t *shape, unsigned int color)
+{
+    PangoAttribute *attr = pango_attr_color_new(color);
+    sh_text_t *text = (sh_text_t *)shape;
+    attr->begin_index = 0;
+    attr->end_index = -1;
+    pango_attr_list_change(text->attrs, attr);
+}
+void sh_text_set_bold(shape_t *shape,int bold)
+{
+    PangoAttribute *attr = pango_attr_weight_new(bold? PANGO_WEIGHT_BOLD:PANGO_WEIGHT_NORMAL);
+    sh_text_t *text = (sh_text_t *)shape;
+    attr->begin_index = 0;
+    attr->end_index = -1;
+    pango_attr_list_change(text->attrs, attr);
+}
+void sh_text_set_italic(shape_t *shape,int italic)
+{
+    PangoAttribute *attr = pango_attr_style_new(italic? PANGO_STYLE_ITALIC:PANGO_STYLE_NORMAL);
+    sh_text_t *text = (sh_text_t *)shape;
+    attr->begin_index = 0;
+    attr->end_index = -1;
+    pango_attr_list_change(text->attrs, attr);
+}
+void sh_text_set_underline(shape_t *shape,int underline)
+{
+    PangoAttribute *attr = pango_attr_underline_new(underline? PANGO_UNDERLINE_SINGLE:PANGO_UNDERLINE_NONE);
+    sh_text_t *text = (sh_text_t *)shape;
+    attr->begin_index = 0;
+    attr->end_index = -1;
+    pango_attr_list_change(text->attrs, attr);
+}
+void sh_text_set_font(shape_t *shape,char *family)
+{
+    PangoAttribute *attr = pango_attr_family_new(family);
+    sh_text_t *text = (sh_text_t *)shape;
+    attr->begin_index = 0;
+    attr->end_index = -1;
+    pango_attr_list_change(text->attrs, attr);
+}
+
 void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format)
 {
     PangoAttribute *attr;
