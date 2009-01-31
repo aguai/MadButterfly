@@ -444,7 +444,7 @@ def translate_tspan(tspan, text,coord_id, codefo, doc,txt_strs,attrs):
         if node.localName == None:
             txt_strs = txt_strs + node.data
         elif node.localName == 'tspan':
-	    txt_strs = translate_tspan(node,coord_id, codefo, doc,txt_strs,attrs)
+	    txt_strs = translate_tspan(node,tspan,coord_id, codefo, doc,txt_strs,attrs)
             pass
         pass
     attr[1] = len(txt_strs.encode('utf8'))
