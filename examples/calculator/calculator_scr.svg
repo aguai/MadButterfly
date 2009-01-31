@@ -509,9 +509,9 @@
        style="font-size:28px;font-style:normal;font-weight:normal;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
        x="36.939316"
        y="61.546173"
-       id="screen_text_u"><tspan
+       id="screen_text"><tspan
          sodipodi:role="line"
-         id="screen_text"
+         id="screen_text_u"
          x="36.939316"
          y="61.546173">0</tspan></text>
     <text
@@ -519,7 +519,7 @@
        style="font-size:14px;font-style:normal;font-weight:normal;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans Mono"
        x="71.767807"
        y="78.100266"
-       id="text2238"><tspan
+       id="2222"><tspan
          sodipodi:role="line"
          id="saved_text"
          x="71.767807"
