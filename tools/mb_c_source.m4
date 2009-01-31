@@ -20,6 +20,12 @@ define([ADD_PATH])
 define([ADD_RECT])
 define([ADD_COORD])
 define([ADD_TEXT],)
+define([PANGO_BEGIN_TEXT],)
+define([PANGO_END_TEXT],)
+define([PANGO_SIZE],)
+define([PANGO_STYLE],)
+define([PANGO_WEIGHT],)
+define([PANGO_FAMILY],)
 define([FILL_SHAPE])
 define([STROKE_SHAPE])
 define([FILL_SHAPE_WITH_PAINT])
@@ -118,6 +124,42 @@ define([S_ADD_TEXT],[[
     	      				  cairo_get_font_face(rdman->cr));
     rdman_add_shape(rdman, obj->$1, obj->$6);
 ]])
+define([S_PANGO_BEGIN_TEXT],[[
+    { 
+	PangoAttribute *attr;
+        PangoAttrList *attrs = pango_attr_list_new();
+
+]])
+define([S_PANGO_END_TEXT],[[
+        obj->$1 = rdman_shape_text_new(rdman, "$2", $3, $4, $5,
+    	      				  cairo_get_font_face(rdman->cr),attrs);
+        rdman_add_shape(rdman, obj->$1, obj->$6);
+    }
+]])
+define([S_PANGO_SIZE],[[
+        attr = pango_attr_size_new($1);
+	attr->start_index = $2;
+	attr->end_index = $3;
+	pango_attr_list_insert(attrs,attr);
+]])
+define([S_PANGO_WEIGHT],[[
+        attr = pango_attr_weight_new($1);
+	attr->start_index = $2;
+	attr->end_index = $3;
+	pango_attr_list_insert(attrs,attr);
+]])
+define([S_PANGO_FAMILY],[[
+        attr = pango_attr_family_new("$1");
+	attr->start_index = $2;
+	attr->end_index = $3;
+	pango_attr_list_insert(attrs,attr);
+]])
+define([S_PANGO_STYLE],[[
+        attr = pango_attr_style_new($1);
+	attr->start_index = $2;
+	attr->end_index = $3;
+	pango_attr_list_insert(attrs,attr);
+]])
 
 define([S_FILL_SHAPE_WITH_PAINT],[dnl
 [    rdman_paint_fill(rdman, obj->$2, obj->$1);
@@ -203,6 +245,12 @@ SIMPORT([ADD_PATH],)
 SIMPORT([ADD_RECT])
 SIMPORT([ADD_COORD])
 SIMPORT([ADD_TEXT])
+SIMPORT([PANGO_BEGIN_TEXT])
+SIMPORT([PANGO_END_TEXT])
+SIMPORT([PANGO_SIZE])
+SIMPORT([PANGO_WEIGHT])
+SIMPORT([PANGO_FAMILY])
+SIMPORT([PANGO_STYLE])
 SIMPORT([FILL_SHAPE])
 SIMPORT([STROKE_SHAPE])
 SIMPORT([FILL_SHAPE_WITH_PAINT])
@@ -240,6 +288,15 @@ define([F_ADD_RECT],[[
 define([F_ADD_TEXT],[[
     rdman_shape_free(rdman, obj->$1);
 ]])
+define([F_PANGO_BEGIN_TEXT],[[
+    rdman_shape_free(rdman, obj->$1);
+]])
+define([F_PANGO_SIZE],[[
+]])
+define([F_PANGO_STYLE],[[
+]])
+define([F_PANGO_WEIGHT],[[
+]])
 
 define([F_FILL_SHAPE],[[
     rdman_paint_free(rdman, obj->$1_fill);
@@ -257,6 +314,7 @@ FIMPORT([ADD_RADIAL_PAINT])
 FIMPORT([ADD_PATH],)
 FIMPORT([ADD_RECT])
 FIMPORT([ADD_TEXT])
+FIMPORT([PANGO_BEGIN_TEXT])
 FIMPORT([FILL_SHAPE])
 FIMPORT([STROKE_SHAPE])
 divert[]])
@@ -283,6 +341,7 @@ RIMPORT([ADD_PATH])
 RIMPORT([ADD_RECT])
 RIMPORT([ADD_COORD])
 RIMPORT([ADD_TEXT])
+RIMPORT([PANGO_BEGIN_TEXT])
 RIMPORT([FILL_SHAPE])
 RIMPORT([STROKE_SHAPE])
 RIMPORT([FILL_SHAPE_WITH_PAINT])

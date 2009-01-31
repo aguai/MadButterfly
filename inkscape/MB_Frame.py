@@ -494,7 +494,7 @@ class MBScene(inkex.Effect):
 
 
 	def effect(self):
-		self.OK = False
+		self.OK = True
 		self.parseScene()
 		self.showGrid()
 		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)

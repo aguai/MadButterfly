@@ -10,6 +10,7 @@
 #include <cairo.h>
 #include "mb_types.h"
 #include "mb_redraw_man.h"
+#include <pango/pangocairo.h>
 
 /*! \page define_shape How to Define Shapes
  *
@@ -50,10 +51,95 @@ extern void sh_path_draw(shape_t *shape, cairo_t *cr);
 extern shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 				     const char *txt, co_aix x, co_aix y,
 				     co_aix font_size,
-				     cairo_font_face_t *face);
+				     cairo_font_face_t *face,PangoAttrList *attrs);
 extern void sh_text_set_text(shape_t *shape, const char *txt);
 extern void sh_text_transform(shape_t *shape);
 extern void sh_text_draw(shape_t *shape, cairo_t *cr);
+/* @} */
+
+/*! \defgroup mb_text_t Shape of Text
+ * @{
+ */
+#define TEXTSTYLE_BOLD        1
+#define TEXTSTYLE_ITALIC      2
+#define TEXTSTYLE_UNDERLINE   4
+#define TEXTSTYLE_COLOR       8
+#define TEXTSTYLE_FONT        0x10
+#define TEXTSTYLE_ALIGN       0x20
+
+typedef struct {
+    int property;
+    unsigned int color;
+    unsigned int align;
+    char *font;
+} mb_textstyle_t;
+
+typedef struct _textsegment {
+    int x;
+    int y;
+    mb_textstyle_t style;
+    int size;
+    char *buf;
+    struct _textsegment *next;
+} mb_text_segment_t;
+
+#define MBTEXT_DIRTY 1
+
+typedef struct {
+    int nseg;
+    mb_text_segment_t *segs;
+    int flag;
+    cairo_surface_t *surface;
+} mb_text_t;
+
+extern void mb_textstyle_init(mb_textstyle_t *style);
+extern void mb_textstyle_set_font(mb_textstyle_t *style, char *font);
+static inline char *mb_textstyle_get_font(mb_textstyle_t *style)
+{
+    if (style->property & TEXTSTYLE_FONT)
+        return style->font;
+    else
+        return NULL;
+}
+extern void mb_textstyle_set_bold(mb_textstyle_t *style, int bold);
+static inline int mb_textstyle_get_bold(mb_textstyle_t *style) 
+{
+    return style->property & TEXTSTYLE_BOLD;
+}
+extern void mb_textstyle_set_italic(mb_textstyle_t *style, int italic);
+static inline int mb_textstyle_get_italic(mb_textstyle_t *style)
+{
+    return style->property & TEXTSTYLE_ITALIC;
+}
+extern void mb_textstyle_set_underline(mb_textstyle_t *style, int underline);
+static inline int mb_textstyle_get_undeline(mb_textstyle_t *style)
+{
+    return style->property & TEXTSTYLE_UNDERLINE;
+}
+extern void mb_textstyle_set_color(mb_textstyle_t *style, unsigned int color);
+static inline unsigned int mb_textstyle_get_color(mb_textstyle_t *style)
+{
+    if (style->property & TEXTSTYLE_COLOR)
+        return style->color;
+    else
+        return 0;
+}
+
+static inline int mb_textstyle_has_color(mb_textstyle_t *style)
+{
+    return style->property & TEXTSTYLE_COLOR;
+}
+extern void mb_textstyle_set_alignment(mb_textstyle_t *style, int alignment);
+extern int mb_textstyle_get_alignment(mb_textstyle_t *style);
+
+
+
+extern void mb_text_set_style(mb_text_t *text, int begin,int end,mb_textstyle_t *style);
+extern void mb_text_get_style(mb_text_t *text, int n,mb_textstyle_t *style);
+extern void mb_text_set_text(mb_text_t *text, char *string,int begin,int end);
+extern void mb_text_get_text(mb_text_t *text, int begin,int end, char *string);
+
+
 /* @} */
 
 /*! \defgroup shape_rect Shape of Rectangle

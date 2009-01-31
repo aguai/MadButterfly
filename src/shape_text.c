@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <cairo.h>
+#include <pango/pangocairo.h>
 #include "mb_types.h"
 #include "mb_shapes.h"
 
@@ -20,6 +21,8 @@ typedef struct _sh_text {
     cairo_font_face_t *face;
     cairo_scaled_font_t *scaled_font;
     int flags;
+    PangoLayout *layout;
+    PangoAttrList *attrs;
 } sh_text_t;
 
 #define TXF_SCALE_DIRTY 0x1
@@ -34,12 +37,13 @@ static void sh_text_free(shape_t *shape) {
 
 shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 			      const char *txt, co_aix x, co_aix y,
-			      co_aix font_size, cairo_font_face_t *face) {
+			      co_aix font_size, cairo_font_face_t *face,PangoAttrList *attrs) {
     sh_text_t *text;
 
     text = (sh_text_t *)malloc(sizeof(sh_text_t));
     if(text == NULL)
 	return NULL;
+
 
     memset(text, 0, sizeof(sh_text_t));
     mb_obj_init(text, MBO_TEXT);
@@ -56,6 +60,8 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     text->flags |= TXF_SCALE_DIRTY;
 
     text->shape.free = sh_text_free;
+    text->layout = NULL;
+    text->attrs = attrs;
 
     rdman_shape_man(rdman, (shape_t *)text);
 
@@ -126,7 +132,7 @@ void sh_text_transform(shape_t *shape) {
     ASSERT(r == OK);
 
     text->d_x = x;
-    text->d_y = y;
+    text->d_y = y-text->font_size;
     shw = shape->stroke_width / 2;
     /* FIXME: It is unreasonable that a font exceed it's bbox.
      * We add 5 pixels in get right bbox.  But, it is unreasonable.
@@ -139,11 +145,29 @@ void sh_text_transform(shape_t *shape) {
     /*! \todo Support ratation for shape_text. */
 }
 
+static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
+{
+    PangoAttribute *attr;
+    PangoAttrList *attrlist;
+    PangoFontDescription *desc;
 
+    if (text->layout) {
+        g_object_unref(text->layout);
+    }
+    text->layout = pango_cairo_create_layout(cr);
+    desc = pango_font_description_from_string("Sans Bold");
+    pango_layout_set_font_description (text->layout, desc);
+    pango_cairo_update_layout(cr,text->layout);
+    pango_layout_set_text(text->layout,text->data,-1);
+    pango_layout_set_attributes(text->layout, text->attrs);
+
+}
 static void draw_text(sh_text_t *text, cairo_t *cr) {
-    cairo_set_scaled_font(cr, text->scaled_font);
+    if (text->layout==NULL) {
+        sh_text_P_generate_layout(text,cr);
+    }
     cairo_move_to(cr, text->d_x, text->d_y);
-    cairo_text_path(cr, text->data);
+    pango_cairo_show_layout(cr,text->layout);
 }
 
 

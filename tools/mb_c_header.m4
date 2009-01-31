@@ -20,6 +20,15 @@ define([ADD_COORD],[
 define([ADD_TEXT],[
 [    shape_t *$1;
 ]])
+define([PANGO_BEGIN_TEXT],[
+[    shape_t *$1;
+]])
+define([PANGO_END_TEXT],[
+])
+define([PANGO_SIZE],[])
+define([PANGO_STYLE],[])
+define([PANGO_WEIGHT],[])
+define([PANGO_FAMILY],[])
 define([COLOR_STOP],[ ])
 
 define([REF_STOPS_RADIAL],)
