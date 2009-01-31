@@ -1,0 +1,61 @@
+<html>
+<head>
+	<script language="javascript" src="jquery-1.3.1.js"></script>
+	<script language="javascript" src="jqXMLUtils.js"></script>
+	<script language="javascript" src="jqSOAPClient.js"></script>
+	<style type="text/css"> 
+		.normal {
+			background-color:write
+			}
+		.active {
+			background-color: yellow
+			}
+		a.button {
+			background:#0ff ;
+			color : # 444 ;
+			display : block ; 
+			float : left ; 
+			font : normal 12px arial, sans-serif ;
+			height : 24px; 
+			margin-right : 6px;
+		        padding-right : 18px;
+			text-decoration : none ;
+			}
+		a.button span {
+			background : transparent url ( 'bg_button_div.gif' ) no-repeat ;
+			display : block ;
+			line- height : 14px; line- height : 14px;
+			padding : 5px 0 5px 18px; padding : 5px 0 5px 18px;
+			}
+		a.button :active {
+			background-position : bottom right ;
+			color : # 000 ;
+			outline : none ;
+			}
+		a.button :active span {
+			background-position : bottom left ;
+			padding : 6px 0 4px 18px;
+			}
+	</style> 
+	</style>
+</head>
+<body>
+<div id='frame' width=800 height=200>
+</div>
+
+<div id='btns'>
+	<a class='button' href='#'> <span id='Jump'       onClick='onButtonClick(this)'>Jump</span></a>
+	<a class='button' href='#'> <span id='InsertKey' onClick='onButtonClick(this)'>Insert</span></a>
+	<a class='button' href='#'> <span id='ExtendScene' onClick='onButtonClick(this)'>Extend</span></a>
+	<a class='button' href='#'> <span id='DeleteScene' onClick='onButtonClick(this)'>Delete</span></a>
+	<a class='button' href='#'> <span id='MakeSymbol' onClick='onButtonClick(this)'>Make Symbol</span></a>
+	<a class='button' href='#'> <span id='MakeButton' onClick='onButtonClick(this)'>make Button</span></a>
+	<br/>
+	<br/>
+</div>
+<div id='inkscape' width=1000 height=700>
+</div>
+<script type="text/javascript" src="inkscape.js" >
+</script>
+</body>
+</html>
