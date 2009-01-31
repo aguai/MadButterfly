@@ -126,6 +126,11 @@ MyApp_InitContent()
     mb_button_add_onClick(b, test,NULL);
 }
 
+void draw_text()
+{
+    
+}
+
 int main(int argc, char * const argv[]) {
     subject_t *subject;
     mb_obj_t *button;
@@ -137,6 +142,7 @@ int main(int argc, char * const argv[]) {
     else
 	    myApp = MBApp_Init("scene");
     data.currentscene=0;
+    draw_text();
     MBApp_setData(myApp,&data);
     MyApp_InitContent();
     get_now(&tmo);

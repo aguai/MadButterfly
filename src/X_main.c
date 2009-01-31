@@ -6,6 +6,7 @@
 #include <X11/Xutil.h>
 #include <cairo.h>
 #include <cairo-xlib.h>
+#include <pango/pangocairo.h>
 
 #include <string.h>
 #include "mb_shapes.h"
@@ -138,6 +139,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     mb_progm_t *progm;
     mb_word_t *word;
     mb_action_t *act;
+    PangoAttrList *attrs = pango_attr_list_new();
 
     tmpsuf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     tmpcr = cairo_create(tmpsuf);
@@ -155,7 +157,7 @@ void draw_path(cairo_t *cr, int w, int h) {
 
     face = cairo_get_font_face(tmpcr);
     text = rdman_shape_text_new(&rdman, "hello \xe6\xbc\xa2\xe5\xad\x97",
-				10, h / 4, 36.0, face);
+				10, h / 4, 36.0, face, attrs);
     text_fill = rdman_paint_radial_new(&rdman, 100, h / 4, 70);
     grad_stop_init(text_stops, 0, 0.2, 0.9, 0.2, 1);
     grad_stop_init(text_stops + 1, 1, 0.9, 0.2, 0.2, 0.1);

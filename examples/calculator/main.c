@@ -66,8 +66,8 @@ static void show_text(calc_data_t *calc_data, int num, int saved, int op,
     rdman = X_MB_rdman(calc_data->rt);
 
     sprintf(buf, "%d%s", num, suffix);
-    sh_text_set_text(calc_data->code->screen_text, buf);
-    rdman_shape_changed(rdman, calc_data->code->screen_text);
+    sh_text_set_text(calc_data->code->screen_text_u, buf);
+    rdman_shape_changed(rdman, calc_data->code->screen_text_u);
 
     if(op == 'n')
 	sprintf(buf, "None");

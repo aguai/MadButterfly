@@ -125,8 +125,11 @@ def get_style_map(style_str):
 
 def translate_style(node, coord_id, codefo, doc, prefix):
     node_id = node.getAttribute('id')
-    style_str = node.getAttribute('style')
-    prop_map = get_style_map(style_str)
+    try:
+	prop_map = node.style_map
+    except:
+        style_str = node.getAttribute('style')
+        prop_map = get_style_map(style_str)
 
     try:
         opacity = float(node.getAttribute('opacity'))
@@ -301,10 +304,9 @@ def translate_path_data(data,codefo):
             if s != '':
                 fields.append(s)
     cmd = ''
-    cmd_args = 0
+    cmd_args=0
     commands=''
     args=[]
-    narg = 0
     fix_args=[]
     for f in fields:
         if f in command_length:
@@ -372,7 +374,7 @@ def translate_path(path, coord_id, codefo, doc):
 
     path_id = path.getAttribute('id')
     d = path.getAttribute('d')
-    commands, args, fix_args = translate_path_data(d,codefo)
+    (commands,args,fix_args) = translate_path_data(d,codefo)
     print >> codefo, 'dnl'
     #print >> codefo, 'ADD_PATH([%s], [%s], [%s])dnl' % (path_id, d, coord_id)
     sarg=''
@@ -415,89 +417,158 @@ def translate_font_style(text, codefo):
     style_str = text.getAttribute('style')
     style_map = get_style_map(style_str)
 
-    font_sz = 10.0
-    if style_map.has_key('font-size'):
-        if style_map['font-size'].endswith('px'):
-            font_sz = float(style_map['font-size'][:-2])
-            print >> codefo, 'define([MB_FONT_SZ], %f)dnl' % (font_sz)
+    return style_map
+
+def merge_style(tspan,text):
+    newmap = tspan.style_map
+    map = text.style_map
+    for k,v in text.style_map.items():
+	    if not newmap.has_key(k):
+	        newmap[k] = v
+def translate_tspan(tspan, text,coord_id, codefo, doc,txt_strs,attrs):
+    try:
+   	map = tspan.style_map
+    except:
+        map = translate_font_style(tspan, codefo)
+        tspan.style_map = map
+    if tspan.hasAttribute('x'):
+	    # Render the tspan as an independent text if the x attribute is defined. All elements inside 
+	    # the tspan will be ignore by the outter text or tspan elements.
+	    # FIXME: We need to apply the style map recursively.
+	    merge_style(tspan,text)
+	    translate_text(tspan,coord_id,codefo,doc)
+	    return ''
+    attr = [len(txt_strs.encode('utf8'))-1,0, tspan]
+    attrs.append(attr)
+    for node in tspan.childNodes:
+        if node.localName == None:
+            txt_strs = txt_strs + node.data
+        elif node.localName == 'tspan':
+	    txt_strs = translate_tspan(node,coord_id, codefo, doc,txt_strs,attrs)
             pass
         pass
+    attr[1] = len(txt_strs.encode('utf8'))
+    return txt_strs
 
-    font_style = 'normal'
-    if style_map.has_key('font-style'):
-        font_style = style_map['font-style'].lower()
+    
+
+def generate_font_attributes(attrs,coord_id, codefo,doc):
+    for a in attrs:
+	start = a[0]
+	end   = a[1]
+	node  = a[2]
+	#print "generate attributes from %d to %d" %(start,end)
+	style_map = node.style_map
+	#print [style_map]
+    	if style_map.has_key('font-size'):
+    	    # FIXME: Implement all units here
+            if style_map['font-size'].endswith('px'):
+                font_sz = float(style_map['font-size'][:-2])
+                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz*1024,start,end)
+	    else:
+                font_sz = float(style_map['font-size'])
+                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz*1024,start,end)
+            pass
+
+        if style_map.has_key('font-style'):
+            font_style = style_map['font-style'].lower()
+	    if font_style == 'normal':
+                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_NORMAL,%d,%d)' % (start,end)
+	    elif font_style == 'italic':
+                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_ITALIC,%d,%d)' % (start,end)
+	    elif font_style == 'oblique':
+                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_OBLIQUE,%d,%d)' % (start,end)
         pass
 
-    font_family = 'Roman'
-    if style_map.has_key('font-family'):
-        font_family = style_map['font-family'].lower()
+        if style_map.has_key('font-family'):
+            font_family = style_map['font-family'].lower()
+            print >> codefo, 'PANGO_FAMILY(%s,%d,%d)' % (font_family,start,end)
+        pass
+        if style_map.has_key('text-anchor'):
+            text_anchor = style_map['text-anchor'].lower()
+	    # FIXME: We need to implement a mb_text_set_aligment to implement SVG-styled alignment.
+	    print "The text-anchor is not implemented yet"
+        pass
+        if style_map.has_key('font-variant'):
+            font_variant = style_map['font-variant'].lower()
+	    print "The font-variant is not implemented yet"
+        pass
+        if style_map.has_key('font-weight'):
+            font_weight = style_map['font-weight'].lower()
+	    if font_weight == 'normal':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)' % (start,end)
+	    elif font_weight == 'bold':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_BOLD,%d,%d)' % (start,end)
+	    elif font_weight == 'bolder':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_HEAVY,%d,%d)' % (start,end)
+	    elif font_weight == 'lighter':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)' % (start,end)
+	    elif font_weight == '100':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)' % (start,end)
+	    elif font_weight == '200':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)' % (start,end)
+	    elif font_weight == '300':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_LIGHT,%d,%d)' % (start,end)
+	    elif font_weight == '400':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)' % (start,end)
+	    elif font_weight == '500':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)' % (start,end)
+	    elif font_weight == '600':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_SEMIBOLD,%d,%d)' % (start,end)
+	    elif font_weight == '700':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_BOLD,%d,%d)' % (start,end)
+	    elif font_weight == '800':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRABOLD,%d,%d)' % (start,end)
+	    elif font_weight == '900':
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_HEAVY,%d,%d)' % (start,end)
+	    else:
+		print "The font-weight %s is not supported" % font_weight
+        pass
+        if style_map.has_key('direction'):
+            direction = style_map['direction'].lower()
+	    print "The direction is not implemented yet"
+        pass
+        if style_map.has_key('unicode-bidi'):
+            bidi = style_map['unicode-bidi'].lower()
+	    print "The bidi is not implemented yet"
         pass
     pass
-
-@check_mbname
+	    
 def translate_text(text, coord_id, codefo, doc):
-    coord_id = translate_shape_transform(text, coord_id, codefo)
-    
-    translate_font_style(text, codefo)
+    try:
+        map = text.style_map
+    except:	
+        map = translate_font_style(text, codefo)
+        text.style_map = map
+    attrs = []
+    attr = [0,0, text]
+    attrs.append(attr)
 
-    txt_strs = []
+    txt_strs = ''
     for node in text.childNodes:
         if node.localName == None:
-            txt_strs.append(node.data)
+            txt_strs = txt_strs + node.data
         elif node.localName == 'tspan':
-            node.setAttribute('style', text.getAttribute('style'))
-            translate_text(node, coord_id, codefo, doc)
+	    txt_strs = translate_tspan(node,text,coord_id, codefo, doc,txt_strs,attrs)
             pass
         pass
+    attr[1] = len(txt_strs.encode('utf8'))
     if txt_strs:
         text_id = _get_id(text)
         x = float(text.getAttribute('x'))
         y = float(text.getAttribute('y'))
         print >> codefo, 'dnl'
         print >> codefo, \
-            'ADD_TEXT([%s], [%s], %f, %f, MB_FONT_SZ, [%s])dnl' % (
+            'PANGO_BEGIN_TEXT([%s], [%s], %f, %f, 16, [%s])dnl' % (
             text_id.encode('utf8'), u''.join(txt_strs).encode('utf8'),
             x, y, coord_id.encode('utf8'))
-        translate_style(text, coord_id, codefo, doc, 'TEXT_')
+        generate_font_attributes(attrs, coord_id, codefo, doc)
+        print >> codefo, \
+            'PANGO_END_TEXT([%s], [%s], %f, %f, 16, [%s])dnl' % (
+            text_id.encode('utf8'), u''.join(txt_strs).encode('utf8'),
+            x, y, coord_id.encode('utf8'))
+	translate_style(text, coord_id, codefo, doc, 'TEXT_')
         pass
-    pass
-
-@check_mbname
-def translate_image(image, coord_id, codefo, doc):
-    coord_id = translate_shape_transform(image, coord_id, codefo)
-    
-    image_id = _get_id(image)
-    if not image.hasAttributeNS(xlinkns, 'href'):
-        raise ValueError, 'image %s must has a href attribute.' % (image_id)
-    href = image.getAttributeNS(xlinkns, 'href')
-    if image.hasAttribute('x'):
-        x_str = image.getAttribute('x')
-        x = float(x_str)
-    else:
-        x = 0
-        pass
-    if image.hasAttribute('y'):
-        y_str = image.getAttribute('y')
-        y = float(y_str)
-    else:
-        y = 0
-        pass
-    if image.hasAttribute('width'):
-        width_str = image.getAttribute('width')
-        width = float(width_str)
-    else:
-        width = -1
-        pass
-    if image.hasAttribute('height'):
-        height_str = image.getAttribute('height')
-        height = float(height_str)
-    else:
-        height = -1
-        pass
-    print >> codefo, 'dnl'
-    print >> codefo, \
-        'ADD_IMAGE([%s], [%s], %f, %f, %f, %f, [%s])dnl' % (
-        image_id, href, x, y, width, height, coord_id)
     pass
 
 reo_func = re.compile('([a-zA-Z]+)\\([^\\)]*\\)')
@@ -554,8 +625,9 @@ def translate_group(group, parent_id, codefo, doc):
             translate_rect(node, group_id, codefo, doc)
         elif node.localName == 'text':
             translate_text(node, group_id, codefo, doc)
-        elif node.localName == 'image':
-            translate_image(node, group_id, codefo, doc)
+            pass
+        elif node.localName == 'textarea':
+            translate_textarea(node, group_id, codefo, doc)
             pass
         pass
     pass
@@ -601,7 +673,7 @@ def translate_scenes(scenes_node, codefo, doc):
 def svg_2_code(dom, codefo):
     for node in dom.childNodes:
         if node.localName == 'svg' and node.namespaceURI == svgns:
-            break
+            break;
         pass
     else:
         raise ValueErr, 'no any svg tag node.'
