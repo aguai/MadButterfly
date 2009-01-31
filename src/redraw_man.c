@@ -1024,7 +1024,7 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
 	    set_shape_stroke_param(shape, cr);
 	    stroke_path(rdman);
 	}
-    }
+    } 
 }
 
 #ifndef UNITTEST
@@ -1152,7 +1152,8 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
     if(dirty && coord->flags & COF_OWN_CANVAS) {
 	update_canvas_2_parent(rdman, coord);
 	clean_canvas_black(coord->canvas, rdman->w, rdman->h);
-    }
+	printf("update\n");
+    } 
 
     return dirty;
 }

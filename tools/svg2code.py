@@ -134,7 +134,7 @@ def translate_style(node, coord_id, codefo, doc, prefix):
     try:
         opacity = float(node.getAttribute('opacity'))
     except:
-        opacity = 1.0
+        opacity = 0.5
         pass
 
     if prop_map.has_key('fill'):
@@ -568,6 +568,11 @@ def translate_text(text, coord_id, codefo, doc):
             text_id.encode('utf8'), u''.join(txt_strs).encode('utf8'),
             x, y, coord_id.encode('utf8'))
 	translate_style(text, coord_id, codefo, doc, 'TEXT_')
+        if text.hasAttribute('mbname'):
+	     ## \note mbname declare that this node should be in the
+	     # symbol table.
+	     mbname = text.getAttribute('mbname')
+	     print >> codefo, 'ADD_SYMBOL([%s])dnl' % (mbname)
         pass
     pass
 
