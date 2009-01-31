@@ -6,20 +6,20 @@ button.so:button.svg
 	$(top_srcdir)/tools/svg2code.py $< $<.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
 	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
-	make $(<:.svg=.o)
+	$(MAKE) $(<:.svg=.o)
 	$(CC) -shared -o $@ $(<:.svg=.o)
 
 mytext.so:mytext.svg
 	$(top_srcdir)/tools/svg2code.py $< $<.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
 	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
-	make $(<:.svg=.o)
+	$(MAKE) $(<:.svg=.o)
 	$(CC) -shared -o $@ $(<:.svg=.o)
 scene.so:scene.svg
 	$(top_srcdir)/tools/svg2code.py $< $<.mb
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
 	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
-	make $(<:.svg=.o)
+	$(MAKE) $(<:.svg=.o)
 	$(CC) -shared -o $@ $(<:.svg=.o)
 
 noinst_PROGRAMS = dynamic hello text button.so mytext.so scene.so
