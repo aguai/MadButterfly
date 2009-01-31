@@ -117,8 +117,8 @@ void sh_text_transform(shape_t *shape) {
      * We add 5 pixels in get right bbox.  But, it is unreasonable.
      */
 
-    poses[0][0] = x + extents.x - shw;
-    poses[0][1] = y + extents.y - shw;
+    poses[0][0] = text->d_x + extents.x - shw;
+    poses[0][1] = text->d_y + extents.y - shw;
     poses[1][0] = poses[0][0] + extents.width +  shape->stroke_width;
     poses[1][1] = poses[0][1] + extents.height +  shape->stroke_width;
     geo_from_positions(shape->geo, 2, poses);

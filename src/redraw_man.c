@@ -1152,7 +1152,6 @@ static int draw_coord_shapes_in_areas(redraw_man_t *rdman,
     if(dirty && coord->flags & COF_OWN_CANVAS) {
 	update_canvas_2_parent(rdman, coord);
 	clean_canvas_black(coord->canvas, rdman->w, rdman->h);
-	printf("update\n");
     } 
 
     return dirty;

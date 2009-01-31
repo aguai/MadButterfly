@@ -42,7 +42,12 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
         sh_text_set_text(text,"This is 1");
     }
     rdman_shape_changed(MBAPP_RDMAN(myApp), text);
+#if 0
+    /* Removed!
+     * X_MB_handle_connection() will invoke it automatically.
+     */
     rdman_redraw_changed(MBAPP_RDMAN(myApp));
+#endif
 }
 
 int main(int argc, char * const argv[]) {
