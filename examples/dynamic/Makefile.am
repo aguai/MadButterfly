@@ -1,6 +1,6 @@
 include $(top_srcdir)/config.mk
 
-SUFFIXES=.svg .so
+SUFFIXES=.svg .mbso
 
 %.so:%.svg
 	$(top_srcdir)/tools/svg2code.py $< $<.mb
@@ -9,7 +9,7 @@ SUFFIXES=.svg .so
 	make $(<:.svg=.o)
 	gcc -shared -o $@ $(<:.svg=.o)
 
-noinst_PROGRAMS = dynamic hello list
+noinst_PROGRAMS = dynamic hello
 EXTRA_DIST = menu.svg button.svg
 
 dynamic_SOURCES = main.c mbapp.c mbapp.h mbbutton.c mbbutton.h
@@ -17,15 +17,13 @@ nodist_dynamic_SOURCES =
 CPPFLAGS = @pangocairo_CFLAGS@ $(INCLUDES)
 dynamic_LDFLAGS = @pangocairo_LIBS@ 
 dynamic_LDADD = $(top_builddir)/src/libmbfly.la
-CLEANFILES = menu.c menu.h menu.mb button.c button.o button.mb button.so
+BUILT_SOURCES = 
+CLEANFILES = menu.c menu.h menu.mb button.c button.h button.mb
 
 
 hello_SOURCES = hello.c mbapp.c mbapp.h
 hello_LDFLAGS = @pangocairo_LIBS@ 
 hello_LDADD = $(top_builddir)/src/libmbfly.la
 
-list_SOURCES = list.c mbapp.c mbapp.h
-list_LDFLAGS = @pangocairo_LIBS@ 
-list_LDADD = $(top_builddir)/src/libmbfly.la
 
 
