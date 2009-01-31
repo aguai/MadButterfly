@@ -125,10 +125,12 @@ def get_style_map(style_str):
 
 def translate_style(node, coord_id, codefo, doc, prefix):
     node_id = node.getAttribute('id')
-    style_str = node.getAttribute('style')
-    prop_map = get_style_map(style_str)
+    try:
+	prop_map = node.style_map
+    except:
+        style_str = node.getAttribute('style')
+        prop_map = get_style_map(style_str)
 
-    print node_id,style_str
     try:
         opacity = float(node.getAttribute('opacity'))
     except:
@@ -353,11 +355,26 @@ def translate_font_style(text, codefo):
 
     return style_map
 
-
-def translate_tspan(tspan, coord_id, codefo, doc,txt_strs,attrs):
-    map = translate_font_style(tspan, codefo)
-    tspan.style_map = map
-    attr = [len(txt_strs),0, tspan]
+def merge_style(tspan,text):
+    newmap = tspan.style_map
+    map = text.style_map
+    for k,v in text.style_map.items():
+	    if not newmap.has_key(k):
+	        newmap[k] = v
+def translate_tspan(tspan, text,coord_id, codefo, doc,txt_strs,attrs):
+    try:
+   	map = tspan.style_map
+    except:
+        map = translate_font_style(tspan, codefo)
+        tspan.style_map = map
+    if tspan.hasAttribute('x'):
+	    # Render the tspan as an independent text if the x attribute is defined. All elements inside 
+	    # the tspan will be ignore by the outter text or tspan elements.
+	    # FIXME: We need to apply the style map recursively.
+	    merge_style(tspan,text)
+	    translate_text(tspan,coord_id,codefo,doc)
+	    return ''
+    attr = [len(txt_strs.encode('utf8'))-1,0, tspan]
     attrs.append(attr)
     for node in tspan.childNodes:
         if node.localName == None:
@@ -366,7 +383,7 @@ def translate_tspan(tspan, coord_id, codefo, doc,txt_strs,attrs):
 	    txt_strs = translate_tspan(node,coord_id, codefo, doc,txt_strs,attrs)
             pass
         pass
-    attr[1] = len(txt_strs)-1
+    attr[1] = len(txt_strs.encode('utf8'))
     return txt_strs
 
     
@@ -383,10 +400,10 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
     	    # FIXME: Implement all units here
             if style_map['font-size'].endswith('px'):
                 font_sz = float(style_map['font-size'][:-2])
-                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz,start,end)
+                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz*1024,start,end)
 	    else:
                 font_sz = float(style_map['font-size'])
-                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz,start,end)
+                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz*1024,start,end)
             pass
 
         if style_map.has_key('font-style'):
@@ -454,9 +471,12 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
     pass
 	    
 def translate_text(text, coord_id, codefo, doc):
-    map = translate_font_style(text, codefo)
+    try:
+        map = text.style_map
+    except:	
+        map = translate_font_style(text, codefo)
+        text.style_map = map
     attrs = []
-    text.style_map = map
     attr = [0,0, text]
     attrs.append(attr)
 
@@ -465,10 +485,10 @@ def translate_text(text, coord_id, codefo, doc):
         if node.localName == None:
             txt_strs = txt_strs + node.data
         elif node.localName == 'tspan':
-	    txt_strs = translate_tspan(node,coord_id, codefo, doc,txt_strs,attrs)
+	    txt_strs = translate_tspan(node,text,coord_id, codefo, doc,txt_strs,attrs)
             pass
         pass
-    attr[1] = len(txt_strs)-1
+    attr[1] = len(txt_strs.encode('utf8'))
     if txt_strs:
         text_id = _get_id(text)
         x = float(text.getAttribute('x'))
