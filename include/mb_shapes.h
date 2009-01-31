@@ -78,6 +78,11 @@ extern void sh_text_draw(shape_t *shape, cairo_t *cr);
 #define TEXTSTYLE_FONT        0x10
 #define TEXTSTYLE_ALIGN       0x20
 
+
+#define TEXTALIGN_START       1
+#define TEXTALIGN_MIDDLE      2
+#define TEXTALIGN_END         3
+
 typedef struct {
     int property;
     unsigned int color;
@@ -103,7 +108,11 @@ typedef struct {
     cairo_surface_t *surface;
 } mb_text_t;
 
-extern void mb_textstyle_init(mb_textstyle_t *style);
+extern void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format);
+static inline void mb_textstyle_init(mb_textstyle_t *style)
+{
+    style->property = 0;
+}
 extern void mb_textstyle_set_font(mb_textstyle_t *style, char *font);
 static inline char *mb_textstyle_get_font(mb_textstyle_t *style)
 {
@@ -127,7 +136,15 @@ static inline int mb_textstyle_get_undeline(mb_textstyle_t *style)
 {
     return style->property & TEXTSTYLE_UNDERLINE;
 }
-extern void mb_textstyle_set_color(mb_textstyle_t *style, unsigned int color);
+#define TEXTCOLOR_RED(c) (((c)&0xff0000)>>16)
+#define TEXTCOLOR_GREEN(c) (((c)&0xff00)>>8)
+#define TEXTCOLOR_BLUE(c) (((c)&0xff))
+#define TEXTCOLOR_RGB(r,g,b) (((r)<<16)|((g)<<8)|(b))
+static inline void mb_textstyle_set_color(mb_textstyle_t *style, unsigned int color)
+{
+    style->property |= TEXTSTYLE_COLOR;
+    style->color = color;
+}
 static inline unsigned int mb_textstyle_get_color(mb_textstyle_t *style)
 {
     if (style->property & TEXTSTYLE_COLOR)
