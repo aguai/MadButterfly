@@ -22,6 +22,7 @@ typedef struct _sh_text {
     cairo_scaled_font_t *scaled_font;
     int flags;
     PangoLayout *layout;
+    int align;
     PangoAttrList *attrs;
 } sh_text_t;
 
@@ -63,6 +64,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     text->shape.free = sh_text_free;
     text->layout = NULL;
     text->attrs = attrs;
+    text->align = TEXTALIGN_START;
     sh_text_P_generate_layout(text, rdman->cr);
 
     rdman_shape_man(rdman, (shape_t *)text);
@@ -77,6 +79,57 @@ extern void sh_text_set_text(shape_t *shape, const char *txt) {
     buf = strdup(txt);
     if(text->data) free(text->data);
     text->data = buf;
+}
+
+void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format)
+{
+    PangoAttribute *attr;
+    sh_text_t *text = (sh_text_t *)shape;
+
+    if (end == -1) {
+	end = strlen(text->data);
+    } else
+	end++;
+    if (format->property & TEXTSTYLE_BOLD) {
+	attr = pango_attr_weight_new(PANGO_WEIGHT_BOLD);
+	attr->start_index = begin;
+	attr->end_index = end;
+	pango_attr_list_change(text->attrs,attr);
+    }
+    if (format->property & TEXTSTYLE_ITALIC) {
+	attr = pango_attr_style_new(PANGO_STYLE_ITALIC);
+	attr->start_index = begin;
+	attr->end_index = end;
+	pango_attr_list_change(text->attrs,attr);
+    }
+    if (format->property & TEXTSTYLE_UNDERLINE) {
+	attr = pango_attr_underline_new(PANGO_UNDERLINE_SINGLE);
+	attr->start_index = begin;
+	attr->end_index = end;
+	pango_attr_list_change(text->attrs,attr);
+    }
+    if (format->property & TEXTSTYLE_COLOR) {
+	printf("color=%x\n", format->color);
+	printf("red = %x\n",TEXTCOLOR_RED(format->color));
+	printf("green = %x\n",TEXTCOLOR_GREEN(format->color));
+	printf("blue = %x\n",TEXTCOLOR_BLUE(format->color));
+	attr = pango_attr_foreground_new(TEXTCOLOR_RED(format->color)<<8,TEXTCOLOR_GREEN(format->color)<<8,TEXTCOLOR_BLUE(format->color)<<8);
+	attr->start_index = begin;
+	attr->end_index = end;
+	pango_attr_list_change(text->attrs,attr);
+    }
+    if (format->property & TEXTSTYLE_FONT) {
+	attr = pango_attr_family_new(format->font);
+	attr->start_index = begin;
+	attr->end_index = end;
+	pango_attr_list_change(text->attrs,attr);
+    }
+    if (format->property & TEXTSTYLE_ALIGN) {
+	// We can have one align style for the whole text only
+	if (begin != 0 || (end != strlen(text->data)-1))
+	    return;
+	text->align = format->align;
+    }
 }
 
 static int get_extents(sh_text_t *text, PangoRectangle *extents) {
@@ -141,6 +194,7 @@ static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
     pango_layout_set_text(text->layout,text->data,strlen(text->data));
     pango_layout_set_attributes(text->layout, text->attrs);
     pango_cairo_update_layout(cr,text->layout);
+    printf("text=%s\n",text->data);
 }
 static void draw_text(sh_text_t *text, cairo_t *cr) {
     sh_text_P_generate_layout(text, cr);

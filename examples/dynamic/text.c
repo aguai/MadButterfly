@@ -27,6 +27,9 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
     MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
     mb_timeval_t timer,interval;
     shape_t *text = (shape_t *) MB_SPRITE_GET_OBJ(myApp->rootsprite,"mytext");
+    mb_textstyle_t style;
+
+    mb_textstyle_init(&style);
 
     
     get_now(&timer);
@@ -38,8 +41,12 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
     printf("xxx\n");
     if (en->currentscene == 0) {
         sh_text_set_text(text,"This is 0");
+	mb_textstyle_set_color(&style, TEXTCOLOR_RGB(255,0,0));
+	sh_text_set_style(text,0,5,&style);
     } else {
         sh_text_set_text(text,"This is 1");
+	mb_textstyle_set_color(&style, TEXTCOLOR_RGB(0,255,0));
+	sh_text_set_style(text,0,5,&style);
     }
     rdman_shape_changed(MBAPP_RDMAN(myApp), text);
 #if 0
