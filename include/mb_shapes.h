@@ -109,6 +109,11 @@ typedef struct {
 } mb_text_t;
 
 extern void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format);
+extern void sh_text_set_color(shape_t *shape, unsigned color);
+extern void sh_text_set_bold(shape_t *shape, int bold);
+extern void sh_text_set_italic(shape_t *shape, int italic);
+extern void sh_text_set_underline(shape_t *shape, int underline);
+extern void sh_text_set_font(shape_t *shape, char *family);
 static inline void mb_textstyle_init(mb_textstyle_t *style)
 {
     style->property = 0;
