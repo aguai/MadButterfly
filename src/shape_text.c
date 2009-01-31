@@ -110,17 +110,17 @@ void sh_text_transform(shape_t *shape) {
     //printf("x=%f y=%f text=%s ascent=%d,descent=%d,width=%d height=%d\n", x,y,text->data,PANGO_ASCENT(extents), PANGO_DESCENT(extents), extents.width, extents.height);
     ASSERT(r == OK);
 
-    text->d_x = x;
-    text->d_y = y-text->font_size;
+    text->d_x = x-5;
+    text->d_y = y-PANGO_DESCENT(extents)+5;
     shw = shape->stroke_width / 2;
     /* FIXME: It is unreasonable that a font exceed it's bbox.
      * We add 5 pixels in get right bbox.  But, it is unreasonable.
      */
 
-    poses[0][0] = x + extents.x - 5 - shw;
-    poses[0][1] = y + extents.y - 5 - shw;
-    poses[1][0] = poses[0][0] + extents.width + 10 + shape->stroke_width;
-    poses[1][1] = poses[0][1] + extents.height + 10 + shape->stroke_width;
+    poses[0][0] = x + extents.x - shw;
+    poses[0][1] = y + extents.y - shw;
+    poses[1][0] = poses[0][0] + extents.width +  shape->stroke_width;
+    poses[1][1] = poses[0][1] + extents.height +  shape->stroke_width;
     geo_from_positions(shape->geo, 2, poses);
     /*! \todo Support ratation for shape_text. */
 }
@@ -136,10 +136,11 @@ static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
     }
     text->layout = pango_cairo_create_layout(cr);
     desc = pango_font_description_from_string("Sans Bold");
+    cairo_set_source_rgb (cr, 0, 0, 0);
     pango_layout_set_font_description (text->layout, desc);
-    pango_cairo_update_layout(cr,text->layout);
     pango_layout_set_text(text->layout,text->data,strlen(text->data));
     pango_layout_set_attributes(text->layout, text->attrs);
+    pango_cairo_update_layout(cr,text->layout);
 }
 static void draw_text(sh_text_t *text, cairo_t *cr) {
     sh_text_P_generate_layout(text, cr);

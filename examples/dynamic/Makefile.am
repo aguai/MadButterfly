@@ -9,7 +9,7 @@ SUFFIXES=.svg .mbso
 	make $(<:.svg=.o)
 	gcc -shared -o $@ $(<:.svg=.o)
 
-noinst_PROGRAMS = dynamic hello
+noinst_PROGRAMS = dynamic hello text
 EXTRA_DIST = menu.svg button.svg
 
 dynamic_SOURCES = main.c mbapp.c mbapp.h mbbutton.c mbbutton.h
@@ -26,4 +26,7 @@ hello_LDFLAGS = @pangocairo_LIBS@
 hello_LDADD = $(top_builddir)/src/libmbfly.la
 
 
+text_SOURCES = text.c mbapp.c mbapp.h
+text_LDFLAGS = @pangocairo_LIBS@ 
+text_LDADD = $(top_builddir)/src/libmbfly.la
 

@@ -36,12 +36,12 @@
   <defs
      id="defs2385">
     <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="0 : 240 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="640 : 240 : 1"
+       id="perspective2391"
        inkscape:persp3d-origin="320 : 160 : 1"
-       id="perspective2391" />
+       inkscape:vp_z="640 : 240 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 240 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <metadata
      id="metadata2388">
@@ -67,39 +67,58 @@
     </ns0:scenes>
   </metadata>
   <g
-     id="layer1"
+     inkscape:groupmode="layer"
      inkscape:label="Layer 1"
-     inkscape:groupmode="layer">
+     id="layer1">
     <g
-       id="s7737"
-       style="display:none">
-      <text
-         id="text2554"
-         y="189.57446"
-         x="188.4539"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         xml:space="preserve"><tspan
-           y="189.57446"
-           x="188.4539"
-           id="tspan2556"
-           sodipodi:role="line">This is scene 1</tspan></text>
-    </g>
-    <g
-       id="s4405"
-       style="display:none">
+       style="display:none"
+       opacity="0.5"
+       id="s7737">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="196.19858"
-         y="199.90071"
-         id="text2576"><tspan
+         x="188.4539"
+         y="189.57446"
+         id="text2554"><tspan
            sodipodi:role="line"
-           id="tspan2578"
-           x="196.19858"
-           y="199.90071">This is scene 2</tspan></text>
+           id="tspan2556"
+           x="188.4539"
+           y="189.57446">This is scene 1</tspan></text>
+      <rect
+         style="fill:#00d300;fill-opacity:1;stroke:#00d300;stroke-opacity:1"
+         id="rect2410"
+         width="233.63121"
+         height="24.524822"
+         x="158.76596"
+         y="131.48936"
+         rx="4.0216751"
+         ry="5.0559778" />
     </g>
     <g
-       style=""
-       id="s4702" />
+       style="display:none"
+       id="s4405">
+      <text
+         id="text2576"
+         y="199.90071"
+         x="196.19858"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:0.5;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="199.90071"
+           x="196.19858"
+           id="tspan2578"
+           sodipodi:role="line">This is scene 2aaaaaaaa</tspan></text>
+      <rect
+         ry="5.0559778"
+         rx="4.0216751"
+         y="127.61702"
+         x="157.47517"
+         height="24.524822"
+         width="289.13477"
+         id="rect2387"
+         style="fill:#0068d3;fill-opacity:1;stroke:#00d300;stroke-opacity:1" />
+    </g>
+    <g
+       id="s4702"
+       style="" />
   </g>
 </svg>
