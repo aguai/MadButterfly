@@ -1,1 +1,1 @@
-SUBDIRS = calculator svg2code_ex tank dynamic drag
+SUBDIRS = calculator svg2code_ex tank dynamic drag menu

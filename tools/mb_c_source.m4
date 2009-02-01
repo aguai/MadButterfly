@@ -371,7 +371,7 @@ RIMPORT([SHAPE_MATRIX])
 divert[]dnl
 ])
 
-define([Y_ADD_SYMBOL],[[{"$1", MB_SPRITE_OFFSET($1)},]])
+define([Y_ADD_SYMBOL],[[{"$2", MB_SPRITE_OFFSET($1)},]])
 
 define([DECLARE_SYMS], [divert([-1])
 define([YIMPORT],[IMPORT(]QUOTE($[]1)[,[Y_])])
