@@ -25,7 +25,7 @@ scene.so:scene.svg
 noinst_PROGRAMS = dynamic hello text button.so mytext.so scene.so
 EXTRA_DIST = menu.svg button.svg
 
-dynamic_SOURCES = main.c mbapp.c mbapp.h mbbutton.c mbbutton.h
+dynamic_SOURCES = main.c
 nodist_dynamic_SOURCES = 
 CPPFLAGS = @pangocairo_CFLAGS@ $(INCLUDES)
 dynamic_LDFLAGS = @pangocairo_LIBS@ 
@@ -34,12 +34,12 @@ BUILT_SOURCES =
 CLEANFILES = menu.c menu.h menu.mb  button.mb
 
 
-hello_SOURCES = hello.c mbapp.c mbapp.h
+hello_SOURCES = hello.c 
 hello_LDFLAGS = @pangocairo_LIBS@ 
 hello_LDADD = $(top_builddir)/src/libmbfly.la
 
 
-text_SOURCES = text.c mbapp.c mbapp.h
+text_SOURCES = text.c 
 text_LDFLAGS = @pangocairo_LIBS@ 
 text_LDADD = $(top_builddir)/src/libmbfly.la
 

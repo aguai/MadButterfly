@@ -6,6 +6,7 @@ struct _mbapp {
     redraw_man_t *rdman;
     mb_sprite_t *rootsprite;
     mb_obj_t *root;
+    subject_t *kbevents;
     void *private;
 };
 MBApp *MBApp_Init(char *module);
@@ -14,6 +15,7 @@ mb_tman_t *MBApp_getTimer(MBApp *app);
 void MBApp_loop(MBApp *en);
 #define MBAPP_DATA(app,type) ((type *) ((app)->private))
 #define MBAPP_RDMAN(app) (((MBApp *) app)->rdman)
+#define MBAPP_keySubject(app) ((app)->kbevents)
 
 #include "mbbutton.h"
 #endif

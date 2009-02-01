@@ -362,7 +362,8 @@ def check_mbname(func):
             ## \note mbname declare that this node should be in the
             # symbol table.
             mbname = obj.getAttribute('mbname')
-            print >> codefo, 'ADD_SYMBOL([%s])dnl' % (mbname)
+            id = obj.getAttribute('id')
+            print >> codefo, 'ADD_SYMBOL([%s],[%s])dnl' % (id,mbname)
             pass
         func(obj, coord_id, codefo, doc)
         pass
@@ -572,7 +573,8 @@ def translate_text(text, coord_id, codefo, doc):
 	     ## \note mbname declare that this node should be in the
 	     # symbol table.
 	     mbname = text.getAttribute('mbname')
-	     print >> codefo, 'ADD_SYMBOL([%s])dnl' % (mbname)
+	     id = text.getAttribute('id')
+	     print >> codefo, 'ADD_SYMBOL([%s],[%s])dnl' % (id,mbname)
         pass
     pass
 
