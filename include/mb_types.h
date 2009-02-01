@@ -217,12 +217,12 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
  *
  */
 #define coord_move(co,x,y) do {(co)->matrix[2] = (x); (co)->matrix[5] = (y);} while(0)
-#define coord_set_scalex(ci,sx) do {(co)->matrix[0] = sx;} while(0)
-#define coord_set_scaley(ci,sy) do {(co)->matrux[3] = sy;} while(0)
-#define coord_scalex(ci) ((co)->matrix[0])
-#define coord_scaley(ci) ((co)->matrix[3])
-#define coord_x(ci) ((co)->matrix[2])
-#define coord_y(ci) ((co)->matrix[5])
+#define coord_set_scalex(co,sx) do {(co)->matrix[0] = sx;} while(0)
+#define coord_set_scaley(co,sy) do {(co)->matrux[3] = sy;} while(0)
+#define coord_scalex(co) ((co)->matrix[0])
+#define coord_scaley(co) ((co)->matrix[3])
+#define coord_x(co) ((co)->matrix[2])
+#define coord_y(co) ((co)->matrix[5])
 #define FOR_COORD_MEMBERS(coord, geo)			\
     for(geo = STAILQ_HEAD((coord)->members);		\
 	geo != NULL;					\
