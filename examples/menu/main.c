@@ -39,7 +39,7 @@ char *menus[] = {
 
 int menus_y[10];
 int items[10];
-
+#define SPEED 600000
 
 typedef struct {
     int top;
@@ -110,7 +110,7 @@ static void fillMenuContentUp()
 
     progm = mb_progm_new(2, MBAPP_RDMAN(myApp));
     MB_TIMEVAL_SET(&start, 0, 0);
-    MB_TIMEVAL_SET(&playing, 0, 300000);
+    MB_TIMEVAL_SET(&playing, 0, SPEED);
     word = mb_progm_next_word(progm, &start, &playing);
     get_now(&now);
 
@@ -138,7 +138,7 @@ static void fillMenuContentUp()
     lightbar = (coord_t *) MB_SPRITE_GET_OBJ(sprite, "lightbar");
     mb_shift_new(0,menus_y[data->cur]-coord_y(lightbar),lightbar,word);
     
-    MB_TIMEVAL_SET(&start, 0, 300000);
+    MB_TIMEVAL_SET(&start, 0, SPEED);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
     snprintf(name, sizeof(name),"item%d", items[8]);
@@ -177,7 +177,7 @@ static void fillMenuContentDown()
 
     progm = mb_progm_new(2, MBAPP_RDMAN(myApp));
     MB_TIMEVAL_SET(&start, 0, 0);
-    MB_TIMEVAL_SET(&playing, 0, 300000);
+    MB_TIMEVAL_SET(&playing, 0, SPEED);
     word = mb_progm_next_word(progm, &start, &playing);
     get_now(&now);
 
@@ -202,7 +202,7 @@ static void fillMenuContentDown()
     lightbar = (coord_t *) MB_SPRITE_GET_OBJ(sprite, "lightbar");
     mb_shift_new(0,menus_y[data->cur]-coord_y(lightbar),lightbar,word);
 
-    MB_TIMEVAL_SET(&start, 0, 300001);
+    MB_TIMEVAL_SET(&start, 0, SPEED);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
     snprintf(name, sizeof(name),"item%d", items[0]);
