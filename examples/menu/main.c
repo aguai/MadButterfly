@@ -124,7 +124,6 @@ static void fillMenuContentUp()
     snprintf(name, sizeof(name),"item%d", items[7]);
     textgroup = (coord_t *) MB_SPRITE_GET_OBJ(sprite,name);
     mb_shift_new(0,100, textgroup,word);
-    mb_visibility_new(VIS_HIDDEN, textgroup,word);
 
     // fade in the item[8]
     snprintf(name, sizeof(name),"item%d", items[8]);
@@ -141,9 +140,9 @@ static void fillMenuContentUp()
     MB_TIMEVAL_SET(&start, 0, SPEED);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
-    snprintf(name, sizeof(name),"item%d", items[8]);
+    snprintf(name, sizeof(name),"item%d", items[7]);
     textgroup = (coord_t *) MB_SPRITE_GET_OBJ(sprite,name);
-    mb_visibility_new(VIS_VISIBLE, textgroup,word);
+    mb_visibility_new(VIS_HIDDEN, textgroup,word);
 
     mb_progm_free_completed(progm);
     mb_progm_start(progm, X_MB_tman(MBAPP_RDMAN(myApp)->rt), &now);

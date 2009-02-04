@@ -28,7 +28,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="375"
+     inkscape:cx="188.57143"
      inkscape:cy="177.14286"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -66,7 +66,8 @@
      id="layer1">
     <g
        mbname="item1"
-       id="item1">
+       id="item1"
+       transform="translate(147.14286,-2.85715)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -82,7 +83,7 @@
     <g
        mbname="item2"
        id="item2"
-       transform="translate(-0.4896719,34.661551)">
+       transform="translate(146.65319,39.689836)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -98,7 +99,7 @@
     <g
        mbname="item3"
        id="item3"
-       transform="translate(1.1837399,71.616487)">
+       transform="translate(148.3266,82.236798)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -114,7 +115,7 @@
     <g
        mbname="item4"
        id="item4"
-       transform="translate(0.6940599,106.27804)">
+       transform="translate(147.83692,124.7838)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -130,7 +131,7 @@
     <g
        mbname="item5"
        id="item5"
-       transform="translate(-0.8367057,141.52253)">
+       transform="translate(146.30615,167.33077)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -146,7 +147,7 @@
     <g
        mbname="item6"
        id="item6"
-       transform="translate(-1.3263777,176.18408)">
+       transform="translate(145.81648,209.87776)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -162,7 +163,7 @@
     <g
        mbname="item7"
        id="item7"
-       transform="translate(0.3470343,213.13901)">
+       transform="translate(147.48989,252.42474)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -178,7 +179,7 @@
     <g
        mbname="item8"
        id="item8"
-       transform="translate(-0.1426457,247.80057)">
+       transform="translate(147.00021,294.97172)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -193,7 +194,7 @@
     </g>
     <g
        id="lightbar"
-       transform="translate(0,157)"
+       transform="translate(147.14286,175.57143)"
        mbname="lightbar">
       <rect
          y="22.784119"
@@ -206,7 +207,7 @@
     <g
        mbname="item9"
        id="item9"
-       transform="translate(2.3674709,278.94727)">
+       transform="translate(143.79604,337.5187)">
       <text
          xml:space="preserve"
          style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
