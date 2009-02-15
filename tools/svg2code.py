@@ -134,8 +134,15 @@ def translate_style(node, coord_id, codefo, doc, prefix):
     try:
         opacity = float(node.getAttribute('opacity'))
     except:
-        opacity = 0.5
+        opacity = 1.0
         pass
+
+    try:
+	opacity = float(prop_map['opacity'])
+    except:
+	pass
+
+    print "# opacity of %s is %g" % (node_id, opacity)
 
     if prop_map.has_key('fill'):
         fill = prop_map['fill'].strip()
