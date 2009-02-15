@@ -72,7 +72,28 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     return (shape_t *)text;
 }
 
-extern void sh_text_set_text(shape_t *shape, const char *txt) {
+void sh_text_set_pos(shape_t *shape, co_aix x, co_aix y)
+{
+    sh_text_t *text = (sh_text_t *)shape;
+    text->x = x;
+    text->y = y;
+}
+
+
+void sh_text_get_pos(shape_t *shape, co_aix *x, co_aix *y)
+{
+    sh_text_t *text = (sh_text_t *)shape;
+    *x = text->x;
+    *y = text->y;
+}
+
+void sh_text_get_text(shape_t *shape, char *text,int size)
+{
+    sh_text_t *t = (sh_text_t *)shape;
+    strncpy(text,t->data, size);
+}
+
+void sh_text_set_text(shape_t *shape, const char *txt) {
     sh_text_t *text = (sh_text_t *)shape;
     char *buf;
 
@@ -230,7 +251,7 @@ static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
     }
     text->layout = pango_cairo_create_layout(cr);
     desc = pango_font_description_from_string("Sans Bold");
-    cairo_set_source_rgb (cr, 0, 0, 0);
+    //cairo_set_source_rgb (cr, 0, 0, 0);
     pango_layout_set_font_description (text->layout, desc);
     pango_layout_set_text(text->layout,text->data,strlen(text->data));
     pango_layout_set_attributes(text->layout, text->attrs);

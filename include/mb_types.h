@@ -29,6 +29,11 @@ struct _redraw_man;
  *
  * mb_obj_t should be initialized with mb_obj_init() and destroied with
  * mb_obj_destroy().
+ *
+ * We have defined a set of convienent API which will wrap the coord_t or shape_t API accoridng to its type.
+ * Please refer to http://www.assembla.com/wiki/show/dFrSMOtDer3BZUab7jnrAJ/MBAF_Object for the details. This
+ * API is designed for regular programmers which can be used to change some common properties of objects without
+ * checking its type.
  */
 struct _mb_obj {
     int obj_type;		/*!< \brief Type of a MadButterfly object. */
@@ -218,7 +223,7 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
  */
 #define coord_move(co,x,y) do {(co)->matrix[2] = (x); (co)->matrix[5] = (y);} while(0)
 #define coord_set_scalex(co,sx) do {(co)->matrix[0] = sx;} while(0)
-#define coord_set_scaley(co,sy) do {(co)->matrux[3] = sy;} while(0)
+#define coord_set_scaley(co,sy) do {(co)->matrix[3] = sy;} while(0)
 #define coord_scalex(co) ((co)->matrix[0])
 #define coord_scaley(co) ((co)->matrix[3])
 #define coord_x(co) ((co)->matrix[2])
