@@ -7,6 +7,7 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="720"
@@ -27,9 +28,9 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.7"
-     inkscape:cx="188.57143"
-     inkscape:cy="177.14286"
+     inkscape:zoom="1.0347223"
+     inkscape:cx="255.43399"
+     inkscape:cy="240.5"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -39,13 +40,33 @@
      inkscape:window-y="90" />
   <defs
      id="defs4">
+    <linearGradient
+       id="linearGradient3183">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3185" />
+      <stop
+         style="stop-color:#505050;stop-opacity:1;"
+         offset="1"
+         id="stop3187" />
+    </linearGradient>
     <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="0 : 526.18109 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       id="perspective10"
        inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
-       id="perspective10" />
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3183"
+       id="linearGradient3189"
+       x1="0"
+       y1="239.5"
+       x2="719.99998"
+       y2="239.5"
+       gradientUnits="userSpaceOnUse" />
   </defs>
   <metadata
      id="metadata7">
@@ -61,165 +82,217 @@
        current="1" />
   </metadata>
   <g
-     inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer2"
+     inkscape:label="Background"
+     sodipodi:insensitive="true">
+    <rect
+       style="opacity:1;fill:url(#linearGradient3189);fill-opacity:1;stroke:#000000;stroke-width:0.9993065;stroke-opacity:1"
+       id="rect3181"
+       width="719.00067"
+       height="480.0007"
+       x="0.49965325"
+       y="-0.50034672" />
+  </g>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
     <g
-       mbname="item1"
+       transform="translate(147.14286,-2.85715)"
        id="item1"
-       transform="translate(147.14286,-2.85715)">
+       mbname="item1"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="text2395"
          y="60"
-         id="text2395"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item1text"
+           y="60"
+           x="157.14285"
            id="tspan2397"
-           x="157.14285"
-           y="60"
-           mbname="item1text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       mbname="item2"
+       transform="translate(146.65319,39.689836)"
        id="item2"
-       transform="translate(146.65319,39.689836)">
+       mbname="item2"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="text2421"
          y="60"
-         id="text2421"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item2text"
+           y="60"
+           x="157.14285"
            id="tspan2423"
-           x="157.14285"
-           y="60"
-           mbname="item2text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       mbname="item3"
+       transform="translate(148.3266,82.236798)"
        id="item3"
-       transform="translate(148.3266,82.236798)">
+       mbname="item3"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="item3text"
          y="60"
-         id="item3text"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item3text"
+           y="60"
+           x="157.14285"
            id="tspan2429"
-           x="157.14285"
-           y="60"
-           mbname="item3text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       mbname="item4"
+       transform="translate(147.83692,124.7838)"
        id="item4"
-       transform="translate(147.83692,124.7838)">
+       mbname="item4"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="item4text"
          y="60"
-         id="item4text"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item4text"
+           y="60"
+           x="157.14285"
            id="tspan2435"
-           x="157.14285"
-           y="60"
-           mbname="item4text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       mbname="item5"
+       transform="translate(146.30615,167.33077)"
        id="item5"
-       transform="translate(146.30615,167.33077)">
+       mbname="item5"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="item5text"
          y="60"
-         id="item5text"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item5text"
+           y="60"
+           x="157.14285"
            id="tspan2441"
-           x="157.14285"
-           y="60"
-           mbname="item5text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       mbname="item6"
+       transform="translate(145.81648,209.87776)"
        id="item6"
-       transform="translate(145.81648,209.87776)">
+       mbname="item6"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="item6text"
          y="60"
-         id="item6text"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item6text"
+           y="60"
+           x="157.14285"
            id="tspan2447"
-           x="157.14285"
-           y="60"
-           mbname="item6text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       mbname="item7"
+       transform="translate(147.48989,252.42474)"
        id="item7"
-       transform="translate(147.48989,252.42474)">
+       mbname="item7"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="item7text"
          y="60"
-         id="item7text"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item7text"
+           y="60"
+           x="157.14285"
            id="tspan2453"
-           x="157.14285"
-           y="60"
-           mbname="item7text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       mbname="item8"
+       transform="translate(147.00021,294.97172)"
        id="item8"
-       transform="translate(147.00021,294.97172)">
+       mbname="item8"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
+         id="item8text"
          y="60"
-         id="item8text"><tspan
-           sodipodi:role="line"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item8text"
+           y="60"
+           x="157.14285"
            id="tspan2459"
-           x="157.14285"
-           y="60"
-           mbname="item8text">item1</tspan></text>
+           sodipodi:role="line">item1</tspan></text>
     </g>
     <g
-       id="lightbar"
-       transform="translate(147.14286,175.57143)"
-       mbname="lightbar">
-      <rect
-         y="22.784119"
-         x="-0.93016708"
-         height="44.003193"
-         width="442.86035"
-         id="rect2405"
-         style="opacity:0.3669725;fill:#0068d3;fill-opacity:1;stroke:#00d300;stroke-width:0.99680871;stroke-opacity:1" />
-    </g>
-    <g
-       mbname="item9"
+       transform="translate(143.79604,337.5187)"
        id="item9"
-       transform="translate(143.79604,337.5187)">
+       mbname="item9"
+       style="fill-opacity:1">
       <text
-         xml:space="preserve"
-         style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
-         x="157.14285"
-         y="60"
+         mbname=""
          id="text2407"
-         mbname=""><tspan
-           sodipodi:role="line"
-           id="tspan2409"
-           x="157.14285"
+         y="60"
+         x="157.14285"
+         style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           mbname="item9text"
            y="60"
-           mbname="item9text">item1</tspan></text>
+           x="157.14285"
+           id="tspan2409"
+           sodipodi:role="line">item1</tspan></text>
+    </g>
+    <text
+       id="text2416"
+       y="44.383541"
+       x="24.177626"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         mbname="item1text"
+         y="44.383541"
+         x="24.177626"
+         id="tspan2418"
+         sodipodi:role="line">Menu test</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="lightbar">
+    <g
+       mbname="item_lightbar"
+       transform="matrix(0.9148913,0,0,1,167.44763,131.37537)"
+       id="item_lightbar"
+       style="stroke:none">
+      <rect
+         style="opacity:0.36697249999999998;fill:#001f41;fill-opacity:1;stroke:none;stroke-width:0.99680871000000004;stroke-opacity:1"
+         id="rect3191"
+         width="442.8623"
+         height="29.190758"
+         x="0.19951171"
+         y="31.140766"
+         transform="matrix(0.9999958,-2.895334e-3,0,1,0,0)"
+         rx="10.000001"
+         ry="10" />
+      <rect
+         style="opacity:0.3669725;fill:#eafbf3;fill-opacity:1;stroke:none;stroke-width:0.99680871;stroke-opacity:1"
+         id="rect2405"
+         width="442.86224"
+         height="29.190758"
+         x="-4.099226"
+         y="27.920256"
+         transform="matrix(0.9999958,-2.8953343e-3,0,1,0,0)"
+         rx="10"
+         ry="10" />
     </g>
   </g>
 </svg>
