@@ -54,7 +54,7 @@ char *menus[] = {
 
 int menus_y[10];
 int items[10];
-#define SPEED 600000
+#define SPEED 300000
 
 typedef struct {
 	mb_animated_menu_t *m;
@@ -108,11 +108,12 @@ static void mb_animated_menu_fillMenuContent(mb_animated_menu_t *m)
     rdman_redraw_changed(MBAPP_RDMAN(m->app));
 }
 
-static void mb_animated_menu_complete(void *arg)
+static void mb_animated_menu_complete(event_t *ev,void *arg)
 {
     mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
 
     m->ready++;
+    printf("animated done ready=%d\n", m->ready);
 }
 
 static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
@@ -240,14 +241,15 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
 
     progm = mb_progm_new(1, MBAPP_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
-    MB_TIMEVAL_SET(&playing, 0, 200000);
+    MB_TIMEVAL_SET(&playing, 0, SPEED);
     word = mb_progm_next_word(progm, &start, &playing);
     get_now(&now);
 
     lightbar = (coord_t *) m->lightbar;
-    group = (coord_t *) m->objects[m->cur];
-    mb_shift_new(coord_x(group)-coord_x(lightbar),coord_y(group)-coord_y(lightbar),lightbar,word);
+    mb_shift_new(0,m->menus_y[m->cur]-coord_y(lightbar),lightbar,word);
     mb_progm_free_completed(progm);
+    m->ready--;
+    subject_add_observer(mb_progm_get_complete(progm), mb_animated_menu_complete,m);
     mb_progm_start(progm, X_MB_tman(MBAPP_RDMAN(m->app)->rt), &now);
     rdman_redraw_changed(MBAPP_RDMAN(m->app));
 }
@@ -272,7 +274,7 @@ void mb_animated_menu_up(mb_animated_menu_t *m)
 void mb_animated_menu_down(mb_animated_menu_t *m)
 {
 
-    if (m->cur < 4) {
+    if (m->cur < 5) {
 	if (m->top+m->cur <= m->max) {
 	    m->cur++;
             mb_animated_menu_moveLightBar(m);
@@ -301,6 +303,8 @@ void mb_animated_menu_keyHandler(event_t *ev, void *arg)
     if(xkey->event.type != EVT_KB_PRESS) {
         return;
     }
+    printf("read=%d\n",m->ready);
+    if (m->ready<=0) return;
     switch(xkey->sym) {
     case 0xff51:		/* left */
 	break;
@@ -364,7 +368,7 @@ mb_animated_menu_t *mb_animated_menu_new(MBApp *app,mb_sprite_t *sp,char *objnam
     m->titles = menus;
     snprintf(name,sizeof(name), "%s_lightbar", objnames);
     m->lightbar = (mb_obj_t *) MB_SPRITE_GET_OBJ(sp,name);
-    if (m->lightbar)
+    if (m->lightbar==NULL)
 	    fprintf(stderr,"Can not find object %s\n",name);
     mb_animated_menu_fillMenuContent(m);
     subject_add_observer(MBAPP_keySubject(myApp), mb_animated_menu_keyHandler,m);
