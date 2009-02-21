@@ -489,7 +489,7 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
         pass
 
         if style_map.has_key('font-family'):
-            font_family = style_map['font-family'].lower()
+            font_family = style_map['font-family']
             print >> codefo, 'PANGO_FAMILY(%s,%d,%d)' % (font_family,start,end)
         pass
         if style_map.has_key('text-anchor'):
