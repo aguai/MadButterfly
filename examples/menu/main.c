@@ -244,15 +244,6 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
     get_now(&now);
 
     lightbar = (coord_t *) m->lightbar;
-#if 1
-    // The redraw algorithm has bugs so that the items is not redrawed correctly. We redraw the items under the lightbar to work around it.
-    // Comment these lines if the algprothm is fixed.
-    rdman_coord_changed(MBAPP_RDMAN(m->app),m->objects[m->cur]);
-    if (m->cur != 0)
-    	mb_shift_new(0,0,m->objects[m->cur-1],word);
-    if (m->cur != 7)
-    	mb_shift_new(0,0,m->objects[m->cur+1],word);
-#endif
     mb_shift_new(0,m->menus_y[m->cur]-coord_y(lightbar),lightbar,word);
     mb_progm_free_completed(progm);
     m->ready--;
@@ -287,11 +278,11 @@ void mb_animated_menu_down(mb_animated_menu_t *m)
             mb_animated_menu_moveLightBar(m);
 	}
     } else  {
-        if ((m->top+8) < m->max) {
+        if ((m->top+8) < m->max-1) {
 	    m->top++;
             mb_animated_menu_fillMenuContentDown(m);
         } else {
-   	    if (m->cur+m->top < m->max-1) {
+   	    if (m->cur+m->top < m->max-2) {
 	        m->cur++;
                 mb_animated_menu_moveLightBar(m);
 	    } else
