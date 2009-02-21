@@ -17,7 +17,7 @@
 #include "mbapp.h"
 
 
-typedef struct {
+typedef struct _mb_animated_menu {
 	char **titles;
 	int *menus_y;
 	int *items;
@@ -25,10 +25,12 @@ typedef struct {
 	int cur;
 	int max;
 	int ready;
+	int speed;
 	MBApp *app;
 	mb_sprite_t *sprite;
 	mb_obj_t **objects;
 	mb_obj_t *lightbar;
+	void (*callback)(struct _mb_animated_menu *m, int sel);
 } mb_animated_menu_t;
 
 char *menus[] = {
@@ -51,10 +53,6 @@ char *menus[] = {
 	"Item 17",
 	"Item 18",
 };
-
-int menus_y[10];
-int items[10];
-#define SPEED 300000
 
 typedef struct {
 	mb_animated_menu_t *m;
@@ -135,7 +133,7 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
 
     progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
-    MB_TIMEVAL_SET(&playing, 0, SPEED);
+    MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
     get_now(&now);
 
@@ -158,7 +156,7 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
     lightbar = (coord_t *) m->lightbar;
     mb_shift_new(0,m->menus_y[m->cur]-coord_y(lightbar),lightbar,word);
     
-    MB_TIMEVAL_SET(&start, 0, SPEED);
+    MB_TIMEVAL_SET(&start, 0, m->speed);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
     textgroup = (coord_t *) m->objects[m->items[7]];
@@ -196,7 +194,7 @@ static void mb_animated_menu_fillMenuContentDown(mb_animated_menu_t *m)
 
     progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
-    MB_TIMEVAL_SET(&playing, 0, SPEED);
+    MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
     get_now(&now);
 
@@ -214,7 +212,7 @@ static void mb_animated_menu_fillMenuContentDown(mb_animated_menu_t *m)
 
     mb_shift_new(0,m->menus_y[m->cur]-coord_y((coord_t *)m->lightbar),((coord_t *)(m->lightbar)),word);
 
-    MB_TIMEVAL_SET(&start, 0, SPEED);
+    MB_TIMEVAL_SET(&start, 0, m->speed);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
     mb_visibility_new(VIS_VISIBLE, (coord_t *) m->objects[m->items[0]],word);
@@ -241,11 +239,20 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
 
     progm = mb_progm_new(1, MBAPP_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
-    MB_TIMEVAL_SET(&playing, 0, SPEED);
+    MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
     get_now(&now);
 
     lightbar = (coord_t *) m->lightbar;
+#if 1
+    // The redraw algorithm has bugs so that the items is not redrawed correctly. We redraw the items under the lightbar to work around it.
+    // Comment these lines if the algprothm is fixed.
+    rdman_coord_changed(MBAPP_RDMAN(m->app),m->objects[m->cur]);
+    if (m->cur != 0)
+    	mb_shift_new(0,0,m->objects[m->cur-1],word);
+    if (m->cur != 7)
+    	mb_shift_new(0,0,m->objects[m->cur+1],word);
+#endif
     mb_shift_new(0,m->menus_y[m->cur]-coord_y(lightbar),lightbar,word);
     mb_progm_free_completed(progm);
     m->ready--;
@@ -292,8 +299,15 @@ void mb_animated_menu_down(mb_animated_menu_t *m)
 	}
     }
 }
+
+void mb_animated_menu_set_callback(mb_animated_menu_t *m, void (*f)(mb_animated_menu_t *m, int sel))
+{
+   m->callback = f;
+}
 void mb_animated_menu_select(mb_animated_menu_t *m)
 {
+   if (m->callback)
+	   m->callback(m,m->top+m->cur);
 }
 
 void mb_animated_menu_keyHandler(event_t *ev, void *arg)
@@ -355,6 +369,8 @@ mb_animated_menu_t *mb_animated_menu_new(MBApp *app,mb_sprite_t *sp,char *objnam
     m->items = (int *) (m+1);
     m->menus_y = (int *) (m->items+len);
     m->objects = (mb_obj_t **) (m->menus_y+len);
+    m->callback = NULL;
+    m->speed = 300000;
     for(i=0;i<9;i++) {
         m->items[i] = i;
 	snprintf(name,sizeof(name),"%s%d", objnames, i+1);
@@ -375,6 +391,23 @@ mb_animated_menu_t *mb_animated_menu_new(MBApp *app,mb_sprite_t *sp,char *objnam
     return m;
 }
 
+
+void mb_animated_menu_set_speed(mb_animated_menu_t *m,int speed)
+{
+    m->speed = speed*1000;
+}
+
+int mb_animated_menu_get_speed(mb_animated_menu_t *m)
+{
+    return m->speed/1000;
+}
+
+void myselect(mb_animated_menu_t *m, int select)
+{
+    printf("menu %d is selected\n", select);
+}
+
+
 MyApp_InitContent()
 {
     MyAppData *data = MBAPP_DATA(myApp,MyAppData);
@@ -385,6 +418,7 @@ MyApp_InitContent()
     mb_sprite_t *sprite=myApp->rootsprite;
     
     data->m = mb_animated_menu_new(myApp,myApp->rootsprite,"item",menus);
+    mb_animated_menu_set_callback(data->m, myselect);
 }
 
 int main(int argc, char * const argv[]) {
