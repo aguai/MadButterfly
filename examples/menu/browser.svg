@@ -29,15 +29,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.0347223"
-     inkscape:cx="132.69574"
-     inkscape:cy="228.90269"
+     inkscape:cx="352.90812"
+     inkscape:cy="240.5"
      inkscape:document-units="px"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer4"
      showgrid="false"
      inkscape:window-width="1124"
      inkscape:window-height="867"
-     inkscape:window-x="212"
-     inkscape:window-y="90" />
+     inkscape:window-x="152"
+     inkscape:window-y="56" />
   <defs
      id="defs4">
     <linearGradient
@@ -67,6 +67,27 @@
        x2="719.99998"
        y2="239.5"
        gradientUnits="userSpaceOnUse" />
+    <inkscape:perspective
+       id="perspective2495"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2496"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2498"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <metadata
      id="metadata7">
@@ -84,7 +105,8 @@
   <g
      inkscape:groupmode="layer"
      id="layer2"
-     inkscape:label="Background">
+     inkscape:label="Background"
+     sodipodi:insensitive="true">
     <rect
        style="opacity:1;fill:url(#linearGradient3189);fill-opacity:1;stroke:#000000;stroke-width:0.9993065;stroke-opacity:1"
        id="rect3181"
@@ -346,5 +368,13 @@
          rx="10"
          ry="10" />
     </g>
+    <image
+       y="98.114113"
+       x="514.40265"
+       id="image2500"
+       height="66"
+       width="100"
+       sodipodi:absref="/home/wycc/devel/test/main/MadButterfly/examples/svg2code_ex/dsc_3241.png"
+       xlink:href="/home/wycc/devel/test/main/MadButterfly/examples/svg2code_ex/dsc_3241.png" />
   </g>
 </svg>
