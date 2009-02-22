@@ -495,9 +495,11 @@ void $1_free($1_t *);
 
 $1_t *$1_new(redraw_man_t *rdman, coord_t *parent_coord) {
     $1_t *obj;
+    mb_img_ldr_t *img_ldr = NULL;
     grad_stop_t *stops = NULL;]DECLARE_VARS
 $2[]dnl
 [
+    img_ldr = rdman_img_ldr(rdman);
     obj = ($1_t *)malloc(sizeof($1_t));
     if(obj == NULL) return NULL;
 
