@@ -130,11 +130,14 @@ def translate_style(node, coord_id, codefo, doc, prefix):
     except:
         style_str = node.getAttribute('style')
         prop_map = get_style_map(style_str)
-
-    try:
+        pass
+    
+    if node.hasAttribute('fill-opacity'):
+        opacity = float(node.getAttribute('fill-opacity'))
+    elif node.hasAttribute('opacity'):
         opacity = float(node.getAttribute('opacity'))
-    except:
-        opacity = 1.0
+    else:
+        opacity = 1
         pass
 
     try:
@@ -160,9 +163,11 @@ def translate_style(node, coord_id, codefo, doc, prefix):
             raise ValueError, '\'%s\' is an invalid value for fill.' % (fill)
         pass
 
-    try:
+    if node.hasAttribute('stroke-opacity'):
         stroke_opacity = float(node.getAttribute('stroke-opacity'))
-    except:
+    elif node.hasAttribute('opacity'):
+        stroke_opacity = float(node.getAttribute('opacity'))
+    else:
         stroke_opacity = 1.0
         pass
 
