@@ -63,7 +63,7 @@ void addrm_monitor_hdlr(event_t *evt, void *arg) {
     int cnt = 0;
     
     mevt = (monitor_event_t *)evt;
-    rdman = (redraw_man_t *)evt->tgt;
+    rdman = (redraw_man_t *)arg;
     obj = (mb_obj_t *)subject_get_object(mevt->subject);
     props = mb_obj_prop_store(obj);
 
