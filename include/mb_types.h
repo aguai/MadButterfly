@@ -14,6 +14,8 @@ typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
 typedef struct _mb_obj mb_obj_t;
 typedef struct _mb_sprite mb_sprite_t;
+/*! \todo Replace cairo_t with canvas_t. */
+typedef cairo_t canvas_t;
 
 struct _redraw_man;
 
@@ -133,7 +135,26 @@ extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
 #define geo_get_flags(g, mask) ((g)->flags & (mask))
 #define geo_set_flags(g, mask) do {(g)->flags |= mask;} while(0)
 #define geo_clear_flags(g, mask) do {(g)->flags &= ~(mask);} while(0)
+#define geo_get_coord(g) sh_get_coord(geo_get_shape(g))
 
+/*! \defgroup coord Coordination
+ * @{
+ */
+typedef struct _coord coord_t;
+
+DARRAY(areas, area_t *);
+
+/*! \brief Canvas information for a coord.
+ */
+typedef struct _coord_canvas_info {
+    coord_t *owner;		/*!< Cached one or opacity == 1 */
+    canvas_t *canvas;
+    areas_t dirty_areas;	/*!< \brief Areas should be updated
+				 * in canvas.
+				 */
+    area_t aggr_dirty_areas[2];	/*!< Used to aggregate updates to parent. */
+    area_t cached_dirty_area;	/*!< Used to dirty an area in cached space. */
+} coord_canvas_info_t;
 
 /*! \brief A coordination system.
  *
@@ -152,10 +173,10 @@ extern void geo_mark_overlay(geo_t *g, int n_others, geo_t **others,
  * }
  * \enddot
  */
-typedef struct _coord {
+struct _coord {
     mb_obj_t obj;
     unsigned int order;
-    unsigned int flags;
+    unsigned int flags;		/*!< \sa \ref coord_flags */
     co_aix opacity;
     /*! Own one or inherit from an ancestor.
      * Setup it when clean coords.
@@ -163,7 +184,7 @@ typedef struct _coord {
      * - \ref COF_OWN_CANVAS
      * - \ref redraw
      */
-    cairo_t *canvas;
+    coord_canvas_info_t *canvas_info;
     area_t *cur_area, *last_area;
     area_t areas[2];
 
@@ -180,7 +201,10 @@ typedef struct _coord {
     STAILQ(geo_t) members;	/*!< \brief All geo_t members in this coord. */
 
     subject_t *mouse_event;
-} coord_t;
+};
+/*! \defgroup coord_flags Coord Flags
+ * @{
+ */
 #define COF_DIRTY 0x1
 #define COF_HIDDEN 0x2	        /*!< A coord is hidden. */
 #define COF_OWN_CANVAS 0x4	/*!< A coord owns a canvas or inherit it
@@ -190,11 +214,33 @@ typedef struct _coord {
 				 * when trivaling.
 				 */
 #define COF_FREE 0x10
+#define COF_FAST_CACHE 0x20	/*!< \brief Cache raster image in fast way.
+				 * \sa \ref img_cache
+				 */
+#define COF_PRECISE_CACHE 0x40	/*!< \brief Cache raster image in
+				 * precise way.
+				 * \sa \ref img_cache
+				 */
+#define COF_CACHE_MASK 0x60
+#define COF_ANCESTOR_CACHE 0x80	/*!< \brief One ancestor is cached.
+				 * \sa \ref img_cache
+				 */
+#define COF_MUST_ZEROING 0x100	/*!< \sa \ref cache_imp */
+#define COF_JUST_CLEAN 0x200	/*!< \brief This coord is just cleaned by
+				 *    last clean.
+				 */
+#define COF_TEMP_MARK 0x400	/*!< \brief Temporary mark a coord. */
+/* @} */
+
+extern void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst);
+extern void matrix_trans_pos(co_aix *matrix, co_aix *x, co_aix *y);
 
 extern void coord_init(coord_t *co, coord_t *parent);
 extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
 extern co_aix coord_trans_size(coord_t *co, co_aix size);
 extern void compute_aggr_of_coord(coord_t *coord);
+extern void compute_aggr_of_cached_coord(coord_t *coord);
+extern void compute_reverse(co_aix *orig, co_aix *reverse);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
 extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
@@ -205,6 +251,34 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	(co)->flags |= COF_HIDDEN;    \
     } while(0)
 #define coord_show(co) do { co->flags &= ~COF_HIDDEN; } while(0)
+#define coord_fast_cache(co)					\
+    do {							\
+	(co)->flags =						\
+	    ((co)->flags & ~COF_CACHE_MASK) | COF_FAST_CACHE;	\
+    } while(0)
+#define coord_precise_cache(co)						\
+    do {								\
+	(co)->flags =							\
+	    ((co)->flags & ~COF_CACHE_MASK) | COF_PRECISE_CACHE;	\
+    } while(0)
+#define coord_nocache(co)					\
+    do {							\
+	(co)->flags &= ~COF_CACHE_MASK;				\
+    } while(0)
+#define coord_is_root(co) ((co)->parent == NULL)
+#define coord_is_cached(co) ((co)->flags & COF_CACHE_MASK)
+#define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
+#define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
+#define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
+#define coord_set_zeroing(co) \
+    do { (co)->flags |= COF_MUST_ZEROING; } while(0)
+#define coord_clear_zeroing(co) \
+    do { (co)->flags &= ~COF_MUST_ZEROING; } while(0)
+#define coord_set_flags(co, _flags)		\
+    do { (co)->flags |= (_flags); } while(0)
+#define coord_get_flags(co, _flags) ((co)->flags & (_flags))
+#define coord_clear_flags(co, _flags)		\
+    do { (co)->flags &= ~(_flags); } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
 #define coord_get_aggr_matrix(coord) ((coord)->aggr_matrix)
 #define FOR_COORDS_POSTORDER(coord, cur)			\
@@ -238,6 +312,14 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	shape = geo_get_shape_safe(STAILQ_NEXT(geo_t, coord_next,	\
 					       sh_get_geo(shape))))
 #define coord_get_area(coord) ((coord)->cur_area)
+#define _coord_get_canvas(coord) ((coord)->canvas_info->canvas)
+#define _coord_set_canvas(coord, _canvas)		\
+    do {						\
+	(coord)->canvas_info->canvas = _canvas;		\
+    } while(0)
+#define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
+
+/* @} */
 
 /*! \brief A grahpic shape.
  *

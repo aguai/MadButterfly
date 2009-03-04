@@ -23,7 +23,6 @@ typedef struct _free_objs free_objs_t;
 
 DARRAY(coords, coord_t *);
 DARRAY(geos, geo_t *);
-DARRAY(areas, area_t *);
 
 /*! \brief Manage redrawing of shapes (graphic elements).
  *
@@ -52,12 +51,14 @@ struct _redraw_man {
     elmpool_t *subject_pool;
     elmpool_t *paint_color_pool;
     elmpool_t *pent_pool;
+    elmpool_t *coord_canvas_pool;
 
     coords_t dirty_coords;
     geos_t dirty_geos;
-    areas_t dirty_areas;
+    int n_dirty_areas;		/*!< \brief Number of all dirty areas. */
 
     geos_t gen_geos;
+    coords_t zeroing_coords;
 
     STAILQ(shape_t) shapes;	/*!< \brief All managed shapes.  */
     STAILQ(paint_t) paints;	/*!< \brief All managed paints. */
