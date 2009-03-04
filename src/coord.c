@@ -25,7 +25,39 @@ static void mul_matrix(co_aix *m1, co_aix *m2, co_aix *dst) {
     dst[5] = ADD(ADD(MUL(m1[3], m2[2]), MUL(m1[4], m2[5])), m1[5]);
 }
 
-/*! \brief Compute agrregated transform function.
+void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst) {
+    co_aix *_dst = dst;
+    co_aix fake_dst[6];
+    
+    if(m1 == dst || m2 == dst)
+	_dst = fake_dst;
+    
+    mul_matrix(m1, m2, _dst);
+
+    if(m1 == dst || m2 == dst) {
+	dst[0] = fake_dst[0];
+	dst[1] = fake_dst[1];
+	dst[2] = fake_dst[2];
+	dst[3] = fake_dst[3];
+	dst[4] = fake_dst[4];
+	dst[5] = fake_dst[5];
+    }
+}
+
+void matrix_trans_pos(co_aix *matrix, co_aix *x, co_aix *y) {
+    co_aix nx, ny;
+
+    nx = ADD(ADD(MUL(matrix[0], *x),
+		 MUL(matrix[1], *y)),
+	     matrix[2]);
+    ny = ADD(ADD(MUL(matrix[3], *x),
+		 MUL(matrix[4], *y)),
+	     matrix[5]);
+    *x = nx;
+    *y = ny;
+}
+
+/*! \brief Compute aggregated transform matrix.
  *
  * Base on parent's aggregated matrix if it is existed, or use transform
  * matrix as aggregated matrix. 
@@ -42,10 +74,83 @@ void compute_aggr_of_coord(coord_t *coord) {
     compute_transform_function(coord);
 }
 
+/*! \brief Compute aggregated transform matrix for cached coord.
+ *
+ * \sa \ref img_cache
+ */
+static void compute_transform_function_cached(coord_t *visit) {
+    co_aix *p_matrix;
+    co_aix cache_p_matrix[6];
+    co_aix cache_scale_x, cache_scale_y;
+    
+    if(visit->parent) {
+	p_matrix = coord_get_aggr_matrix(visit->parent);
+	cache_scale_x =
+	    sqrtf(p_matrix[0] * p_matrix[0] + p_matrix[3] * p_matrix[3]);
+	cache_scale_y =
+	    sqrtf(p_matrix[1] * p_matrix[1] + p_matrix[4] * p_matrix[4]);
+	cache_p_matrix[0] = cache_scale_x;
+	cache_p_matrix[1] = 0;
+	cache_p_matrix[2] = 0;
+	cache_p_matrix[3] = 0;
+	cache_p_matrix[4] = cache_scale_y;
+	cache_p_matrix[5] = 0;
+	mul_matrix(cache_p_matrix, visit->matrix, visit->aggr_matrix);
+    } else {
+	memcpy(visit->aggr_matrix, visit->matrix, sizeof(visit->matrix));
+    }
+}
+
+void compute_aggr_of_cached_coord(coord_t *coord) {
+    compute_transform_function_cached(coord);
+}
+
+void compute_reverse(co_aix *orig, co_aix *reverse) {
+    co_aix working[6];
+    co_aix factor;
+    
+#define VEC_MAC(src, factor, dst)		\
+    do {					\
+	(dst)[0] += (src)[0] * (factor);	\
+	(dst)[1] += (src)[1] * (factor);	\
+	(dst)[2] += (src)[2] * (factor);	\
+    } while(0)
+
+    reverse[0] = 1;
+    reverse[1] = 0;
+    reverse[2] = 0;
+    reverse[3] = 0;
+    reverse[4] = 1;
+    reverse[5] = 0;
+    
+    memcpy(working, orig, sizeof(co_aix) * 6);
+
+    factor = -working[3] / working[0];
+    VEC_MAC(working, factor, working + 3);
+    VEC_MAC(reverse, factor, reverse + 3);
+
+    factor = -working[1] / working[4];
+    VEC_MAC(working + 3, factor, working);
+    VEC_MAC(reverse + 3, factor, reverse);
+
+    reverse[2] = -working[2];
+    reverse[5] = -working[5];
+
+    reverse[0] /= working[0];
+    reverse[1] /= working[0];
+    reverse[2] /= working[0];
+    reverse[3] /= working[4];
+    reverse[4] /= working[4];
+    reverse[5] /= working[4];
+}
+
 /*! \brief Update aggregate matrices of elements under a sub-tree.
  *
  * A subtree is specified by the root of it.  All elements in the subtree
  * are effected by that changes of matrix of the subtree root.
+ *
+ * \todo Remove update_aggr_matrix() since it is out of date and
+ *	no one use it.
  */
 void update_aggr_matrix(coord_t *start) {
     coord_t *visit, *child, *next;

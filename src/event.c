@@ -257,6 +257,9 @@ static
 coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
     if(STAILQ_HEAD(last->children) && !(last->flags & COF_SKIP))
 	return STAILQ_HEAD(last->children);
+    
+    last->flags &= ~COF_SKIP;
+    
     if(last == root)
 	return NULL;
     while(STAILQ_NEXT(coord_t, sibling, last) == NULL) {
@@ -269,7 +272,7 @@ coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
 
 static
 void preorder_coord_skip_subtree(coord_t *coord) {
-    coord->flags &= ~COF_SKIP;
+    coord->flags |= COF_SKIP;
 }
 
 static
