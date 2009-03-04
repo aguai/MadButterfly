@@ -1517,15 +1517,10 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
 static void clear_canvas(canvas_t *canvas) {
     cairo_operator_t old_op;
 
-#if 1
     old_op = cairo_get_operator(canvas);
     cairo_set_operator(canvas, CAIRO_OPERATOR_CLEAR);
     cairo_paint(canvas);
     cairo_set_operator(canvas, old_op);
-#else
-    cairo_set_source_rgba(canvas, 0, 0, 0, 0);
-    cairo_paint(canvas);
-#endif
 }
 
 static void clean_canvas(cairo_t *cr, co_aix w, co_aix h) {
@@ -1560,6 +1555,7 @@ static void make_clip(cairo_t *cr, int n_dirty_areas,
     int i;
     area_t *area;
 
+    cairo_new_path(cr);
     for(i = 0; i < n_dirty_areas; i++) {
 	area = dirty_areas[i];
 	cairo_rectangle(cr, area->x, area->y, area->w, area->h);
