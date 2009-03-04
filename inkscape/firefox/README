@@ -1,0 +1,18 @@
+How to execute the unit test
+======================================
+
+(1) Execute the proxy damon
+
+First of all, we need to execute the MadButterfly helper. This help will start the inkscape and then execute a SOAP proxy to wait for the commands from the web client.
+
+# python helper_mb.py
+
+
+(2) Use testsoap.py to send command to helper.
+
+# python testsoap.py START
+# python testsoap.py SCENE 1
+# python testsoap.py PUBLISH
+
+
+
