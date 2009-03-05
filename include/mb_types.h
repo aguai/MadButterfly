@@ -154,6 +154,9 @@ typedef struct _coord_canvas_info {
 				 */
     area_t aggr_dirty_areas[2];	/*!< Used to aggregate updates to parent. */
     area_t cached_dirty_area;	/*!< Used to dirty an area in cached space. */
+    area_t owner_mems_area;	/*!< \brief The area is covered by members
+				 * of owner.
+				 */
 } coord_canvas_info_t;
 
 /*! \brief A coordination system.
@@ -228,6 +231,7 @@ struct _coord {
 #define COF_MUST_ZEROING 0x100	/*!< \sa \ref cache_imp */
 #define COF_JUST_CLEAN 0x200	/*!< \brief This coord is just cleaned by
 				 *    last clean.
+				 * It is used by clean_rdman_dirties().
 				 */
 #define COF_TEMP_MARK 0x400	/*!< \brief Temporary mark a coord. */
 /* @} */

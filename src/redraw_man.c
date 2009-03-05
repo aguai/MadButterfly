@@ -971,13 +971,15 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     /*
      * Compute minimum overing area of sub-graphic
      */
-    area = coord_get_area(coord);
+    area = &coord->canvas_info->owner_mems_area;
     min_x = area->x;
     min_y = area->y;
     max_x = min_x + area->w;
     max_y = min_y + area->h;
 
-    FOR_COORDS_PREORDER(coord, cur) {
+    for(cur = preorder_coord_subtree(coord, coord);
+	cur != NULL;
+	cur = preorder_coord_subtree(coord, cur)) {
 	area = coord_get_area(cur);
 	if(area->x < min_x)
 	    min_x = area->x;
@@ -1081,6 +1083,11 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
     else
 	compute_aggr_of_coord(coord);
 
+    /* Areas of cached coords are computed in two phase.
+     * Phase 1 works like other normal ones.  Phase 2, is collect
+     * all areas of descendants to compute a minimum covering area.
+     * Phase 2 is performed by zeroing_coord().
+     */
     r = coord_clean_members_n_compute_area(coord);
     if(r != OK)
 	return ERR;
@@ -1342,7 +1349,9 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
     matrix_trans_pos(canvas2pdev_matrix, poses1[1], poses1[1] + 1);
     area_init(area1, 2, poses1);
     if(area1->w != 0 || area1->h != 0)
-	add_dirty_area(rdman, pcached_coord, area1);
+	if(area0->x != area1->x || area0->y != area1->y ||
+	   area0->w != area1->w || area0->h != area1->h)
+	    add_dirty_area(rdman, pcached_coord, area1);
 
     if(coord_get_flags(coord, COF_JUST_CLEAN) &&
        !coord_get_flags(pcached_coord, COF_JUST_CLEAN))
@@ -1387,14 +1396,26 @@ static int add_rdman_cached_dirty_areas(redraw_man_t *rdman) {
 static int clean_rdman_dirties(redraw_man_t *rdman) {
     int r;
     int i;
-    coord_t **coords;
+    coord_t **coords, *coord;
     geo_t **geos;
 
+    /* coord_t::cur_area of coords are temporary pointed to
+     * coord_canvas_info_t::owner_mems_area for store area
+     * by clean_coor().
+     */
     coords = rdman->dirty_coords.ds;
-    for(i = 0; i < rdman->dirty_coords.num; i++)
-	if(coords[i]->flags & COF_DIRTY)
-	    SWAP(coords[i]->cur_area, coords[i]->last_area, area_t *);
-
+    for(i = 0; i < rdman->dirty_coords.num; i++) {
+	coord = coords[i];
+	if(coord->flags & COF_DIRTY) {
+	    if(!coord_get_flags(coord, COF_OWN_CANVAS))
+		SWAP(coord->cur_area, coord->last_area, area_t *);
+	    else {
+		coord->last_area = coord->cur_area;
+		coord->cur_area = &coord->canvas_info->owner_mems_area;
+	    }
+	}
+    }
+    
     geos = rdman->dirty_geos.ds;
     for(i = 0; i < rdman->dirty_geos.num; i++)
 	if(geos[i]->flags & GEF_DIRTY)
@@ -1404,8 +1425,14 @@ static int clean_rdman_dirties(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
     
-    for(i = 0; i < rdman->dirty_coords.num; i++)
-	coord_set_flags(rdman->dirty_coords.ds[i], COF_JUST_CLEAN);
+    coords = rdman->dirty_coords.ds;
+    for(i = 0; i < rdman->dirty_coords.num; i++) {
+	coord = coords[i];
+	coord_set_flags(coord, COF_JUST_CLEAN);
+	coord->cur_area =
+	    (coord->last_area == coord->areas)?
+	    coord->areas + 1: coord->areas;
+    }
 
     r = clean_rdman_geos(rdman);
     if(r != OK)
@@ -1427,8 +1454,9 @@ static int clean_rdman_dirties(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
 
+    coords = rdman->dirty_coords.ds;
     for(i = 0; i < rdman->dirty_coords.num; i++)
-	coord_clear_flags(rdman->dirty_coords.ds[i], COF_JUST_CLEAN);
+	coord_clear_flags(coords[i], COF_JUST_CLEAN);
     
     return OK;
 }
@@ -1523,33 +1551,6 @@ static void clear_canvas(canvas_t *canvas) {
     cairo_set_operator(canvas, old_op);
 }
 
-static void clean_canvas(cairo_t *cr, co_aix w, co_aix h) {
-    cairo_operator_t saved_op;
-    
-    saved_op = cairo_get_operator(cr);
-    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-    
-    /*! \todo clean to background color. */
-    cairo_set_source_rgba(cr, 1, 1, 1, 1);
-    
-    /* For some unknown reasons, cairo_paint() can not erease
-     * painted graphic cleanly.  So, cairo_fill() are used to
-     * replace it.
-     */
-    cairo_rectangle(cr, 0, 0, w, h);
-    cairo_fill(cr);
-
-    cairo_set_operator(cr, saved_op);
-}
-
-static void clean_canvas_black(cairo_t *cr, co_aix w, co_aix h) {
-    clear_canvas(cr);
-    
-    /*! \todo clean to background color. */
-    cairo_set_source_rgba(cr, 0, 0, 0, 0);
-    cairo_paint(cr);
-}
-
 static void make_clip(cairo_t *cr, int n_dirty_areas,
 		      area_t **dirty_areas) {
     int i;
@@ -1580,10 +1581,7 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
     cairo_set_operator(rdman->backend, saved_op);
 }
 #else /* UNITTEST */
-static void clean_canvas(cairo_t *cr, co_aix w, co_aix h) {
-}
-
-static void clean_canvas_black(cairo_t *cr, co_aix w, co_aix h) {
+static void clear_canvas(canvas_t *canvas) {
 }
 
 static void reset_clip(canvas_t *cr) {
@@ -2179,19 +2177,6 @@ int rdman_force_clean(redraw_man_t *rdman) {
  */
 
 /*
- * When redraw an area, the affected elements may also extend to
- * outside of the area.  Since the order of drawing will change
- * the result, it will infect more and more elements to keep
- * drawing order althrough they are overlaid directly with
- * specified area.
- *
- * To fix the problem, we don't extend the set of redrawing to
- * elements they are not overliad directly.  The redrawing is
- * performed on a temporary surface, clipped to fit the area, and
- * update only specified area on the destinate surface.
- */
-
-/*
  * To accelerate speed of transformation, when a matrix changed,
  * transformation should be aggregated and computed in a loop.
  * It can get intereset of higher hit rate of cache.
@@ -2201,13 +2186,11 @@ int rdman_force_clean(redraw_man_t *rdman) {
  * - shapes should be called to give them a chance to update geometries.
  */
 
-/*
- * functions:
- * - redraw all
- * - redraw changed
- */
 
-/* Implment factory and strategy functions for observers and subjects.
+/* \defgroup rdman_observer Observer memory management
+ *
+ * Implment factory and strategy functions for observers and subjects.
+ * @{
  */
 static subject_t *ob_subject_alloc(ob_factory_t *factory) {
     redraw_man_t *rdman;
@@ -2273,6 +2256,8 @@ static subject_t *ob_get_parent_subject(ob_factory_t *factory,
 
     return parent;
 }
+
+/* @} */
 
 #ifdef UNITTEST
 /* Test cases */
