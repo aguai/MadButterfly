@@ -15,23 +15,9 @@
 #include <string.h>
 #include "menu.h"
 #include "mbapp.h"
+#include "animated_menu.h"
 
 
-typedef struct _mb_animated_menu {
-	char **titles;
-	int *menus_y;
-	int *items;
-	int top;
-	int cur;
-	int max;
-	int ready;
-	int speed;
-	MBApp *app;
-	mb_sprite_t *sprite;
-	mb_obj_t **objects;
-	mb_obj_t *lightbar;
-	void (*callback)(struct _mb_animated_menu *m, int sel);
-} mb_animated_menu_t;
 
 char *menus[] = {
 	"Item 1",
