@@ -119,6 +119,7 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
 	m->items[i] = m->items[i-1];
     }
     m->items[0] = tmp;
+    printf("fill menu\n");
 }
 
 
