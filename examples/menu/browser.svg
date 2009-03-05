@@ -374,7 +374,7 @@
        id="image2500"
        height="66"
        width="100"
-       sodipodi:absref="/home/wycc/devel/test/main/MadButterfly/examples/svg2code_ex/dsc_3241.png"
-       xlink:href="/home/wycc/devel/test/main/MadButterfly/examples/svg2code_ex/dsc_3241.png" />
+       sodipodi:absref="../svg2code_ex/dsc_3241.png"
+       xlink:href="../svg2code_ex/dsc_3241.png" />
   </g>
 </svg>
