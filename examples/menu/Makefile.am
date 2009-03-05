@@ -4,29 +4,29 @@ include $(top_srcdir)/config.mk
 
 list.so:list.c list.h
 	$(MAKE) $(<:.svg=.o)
-	$(CC) -shared -o $@ $(<:.svg=.o)
+	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $(<:.svg=.o)
 
-list.mb: $(srcdir)/list.svg
+list.svg.mb: $(srcdir)/list.svg
 	$(top_srcdir)/tools/svg2code.py $< $<.mb
 
-list.c: list.mb list.h
-	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
+list.c: list.svg.mb list.h
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $(<:.svg.mb=.c)
 
-list.h: list.mb
-	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
+list.h: list.svg.mb
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $(<:.svg.mb=.h)
 
 browser.so: browser.c browser.h
 	$(MAKE) $(<:.svg=.o)
-	$(CC) -shared -o $@ $(<:.svg=.o)
+	$(CC) $(CFLAGS) -I../../include  -I ../../include -shared -o $@ $(<:.svg=.o)
 
 browser.h: browser.mb
-	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $(<:.svg=.mb) > $(<:.mb=.h)
 
 browser.c: browser.mb browser.h
-	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $(<:.svg=.mb) > $(<:.mb=.c)
 
 browser.mb: $(srcdir)/browser.svg
-	$(top_srcdir)/tools/svg2code.py $< $<.mb
+	$(top_srcdir)/tools/svg2code.py $< $(<:.svg=.mb)
 
 noinst_PROGRAMS = menu filebrowser list.so browser.so
 EXTRA_DIST = 
