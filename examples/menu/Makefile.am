@@ -2,31 +2,32 @@ include $(top_srcdir)/config.mk
 
 #SUFFIXES=.svg .so
 
-list.so:list.c list.h
-	$(MAKE) $(<:.svg=.o)
-	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $(<:.svg=.o)
+list.so: list.o
+	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
 
-list.svg.mb: $(srcdir)/list.svg
-	$(top_srcdir)/tools/svg2code.py $< $<.mb
+list.o: list.h
 
-list.c: list.svg.mb list.h
-	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $(<:.svg.mb=.c)
+list.mb: $(srcdir)/list.svg
+	$(top_srcdir)/tools/svg2code.py $< $@
 
-list.h: list.svg.mb
-	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $(<:.svg.mb=.h)
+list.c: list.mb
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
-browser.so: browser.c browser.h
-	$(MAKE) $(<:.svg=.o)
-	$(CC) $(CFLAGS) -I../../include  -I ../../include -shared -o $@ $(<:.svg=.o)
+list.h: list.mb
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
+
+browser.so: browser.o
+	$(CC) $(CFLAGS) -I../../include  -I ../../include -shared -o $@ $<
+
+browser.o: browser.h
 
 browser.h: browser.mb
-	m4 -I $(top_srcdir)/tools mb_c_header.m4 $(<:.svg=.mb) > $(<:.mb=.h)
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
 
-browser.c: browser.mb browser.h
-	m4 -I $(top_srcdir)/tools mb_c_source.m4 $(<:.svg=.mb) > $(<:.mb=.c)
-
+browser.c: browser.mb
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 browser.mb: $(srcdir)/browser.svg
-	$(top_srcdir)/tools/svg2code.py $< $(<:.svg=.mb)
+	$(top_srcdir)/tools/svg2code.py $< $@
 
 noinst_PROGRAMS = menu filebrowser list.so browser.so
 EXTRA_DIST = 
