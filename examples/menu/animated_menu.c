@@ -343,6 +343,7 @@ void mb_animated_menu_set_titles(mb_animated_menu_t *m, char *menus[])
     m->cur = 0;
     m->titles = menus;
     mb_animated_menu_fillMenuContent(m);
+    mb_animated_menu_moveLightBar(m);
 }
 
 

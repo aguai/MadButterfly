@@ -93,15 +93,16 @@ MyApp_fillDirInfo(MBApp *app,char *curdir)
     struct fileinfo *f;
     int i;
 
-    if (data->curDir)
-	    free(data->curDir);
-    data->curDir = strdup(curdir);
     dir = opendir(curdir);
     if (dir == NULL) {
 	    printf("We can not open the direftory %s\n", curdir);
 	    return;
     }
 
+    if (data->curDir)
+	    free(data->curDir);
+    data->curDir = strdup(curdir);
+    
     if (data->files) {
 	    for(i=0;i<data->nFiles;i++) {
 		    fileinfo_free(data->files[i]);
