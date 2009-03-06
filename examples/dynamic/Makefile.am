@@ -2,26 +2,6 @@ include $(top_srcdir)/config.mk
 
 #SUFFIXES=.svg .mbso
 
-button.so:button.svg
-	$(top_srcdir)/tools/svg2code.py $< $<.mb
-	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
-	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
-	$(MAKE) $(<:.svg=.o)
-	$(CC) -shared -o $@ $(<:.svg=.o)
-
-mytext.so:mytext.svg
-	$(top_srcdir)/tools/svg2code.py $< $<.mb
-	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
-	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
-	$(MAKE) $(<:.svg=.o)
-	$(CC) -shared -o $@ $(<:.svg=.o)
-scene.so:scene.svg
-	$(top_srcdir)/tools/svg2code.py $< $<.mb
-	m4 -I $(top_srcdir)/tools mb_c_source.m4 $<.mb > $(<:.svg=.c)
-	m4 -I $(top_srcdir)/tools mb_c_header.m4 $<.mb > $(<:.svg=.h)
-	$(MAKE) $(<:.svg=.o)
-	$(CC) -shared -o $@ $(<:.svg=.o)
-
 noinst_PROGRAMS = dynamic hello text button.so mytext.so scene.so
 EXTRA_DIST = menu.svg button.svg
 
@@ -42,4 +22,46 @@ hello_LDADD = $(top_builddir)/src/libmbfly.la
 text_SOURCES = text.c 
 text_LDFLAGS = @pangocairo_LIBS@ 
 text_LDADD = $(top_builddir)/src/libmbfly.la
+
+button.so: button.o
+	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
+
+button.o: button.c button.h
+
+button.c: button.mb
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
+
+button.h: button.mb
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
+
+button.mb: button.svg
+	$(top_srcdir)/tools/svg2code.py $< $@
+
+mytext.so: mytext.o
+	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
+
+mytext.o: mytext.c mytext.h
+
+mytext.c: mytext.mb
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
+
+mytext.h: mytext.mb
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
+
+mytext.mb: mytext.svg
+	$(top_srcdir)/tools/svg2code.py $< $@
+
+scene.so: scene.o
+	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
+
+scene.o: scene.c scene.h
+
+scene.c: scene.mb
+	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
+
+scene.h: scene.mb
+	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
+
+scene.mb: scene.svg
+	$(top_srcdir)/tools/svg2code.py $< $@
 
