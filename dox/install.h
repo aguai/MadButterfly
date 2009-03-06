@@ -6,6 +6,7 @@
  *  - automake
  *  - libtools
  * - install Cairo
+ * - install Pango
  *
  * Get source
  * - hg clone http://hg.assembla.com/MadButterfly MadButterfly
