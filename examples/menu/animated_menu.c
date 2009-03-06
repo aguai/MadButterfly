@@ -47,7 +47,6 @@ static void mb_animated_menu_fillMenuContent(mb_animated_menu_t *m)
 
     lightbar = (coord_t *) m->lightbar;
     group = (coord_t *) m->objects[m->cur];
-    coord_x(lightbar) = coord_x(group);
     coord_y(lightbar) = coord_y(group);
     rdman_coord_changed(MBAPP_RDMAN(m->app),lightbar);
     rdman_redraw_changed(MBAPP_RDMAN(m->app));
