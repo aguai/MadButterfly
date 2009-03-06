@@ -10,6 +10,287 @@
 #include "mb_observer.h"
 #include "mb_prop.h"
 
+/*! \page dirty Dirty geo, coord, and area.
+ *
+ * \section dirty_of_ego Dirty of geo
+ * A geo is dirty when any of the shape, size or positions is changed.
+ * It's geo and positions should be recomputed before drawing.  So,
+ * dirty geos are marked as dirty and put into redraw_man_t::dirty_geos list.
+ * geos in the list are cleaned to compute information as a reaction for
+ * dirty.  It recomputes size, position and other data of
+ * repective shapes.
+ *
+ * \section dirty_of_coord Dirty of coord
+ * A coord is dirty when it's transformation matrix being changed.
+ * Dirty coords are marked as dirty and put into dirty_coords list.
+ * Once a coord is dirty, every member geos of it are also dirty.
+ * Because, their shape, size and positions will be changed.  But,
+ * they are not marked as dirty and put into dirty_geos list, since
+ * all these member geos will be recomputed for computing new current
+ * area of the coord.  The changes of a coord also affect child
+ * coords.  Once parent is dirty, all children are also dirty for
+ * their aggregate matrix out of date.  Dirty coords should be
+ * clean in preorder of tree traversal.  The redraw_man_t::dirty_coords
+ * list are sorted to keep ordering before cleaning.
+ * Whenever a coord is marked dirty and put into redraw_man_t::dirty_coords
+ * list, all it's children should also be marked.
+ *
+ * The procedure of clean coords comprises recomputing aggregate
+ * transform matrix and area where members spreading in.  The aggregated
+ * transform matrix can reduce number of matrix mul to transform
+ * positions from space of a coord to the closest cached ancestor coord.
+ *
+ * The list is inspected before drawing to recompute new shape, size,
+ * and positions of member geos of coords in the list.  The drity
+ * flag of member geos will be clean.
+ *
+ * Clean coords should be performed before clean geos, since clean
+ * coords will also clean member geos.
+ *
+ * \section dirty_of_area Dirty of area
+ * When an area is dirty, it is added to coord_canvas_info_t::dirty_areas
+ * of it's closest cached coord.  Areas are created when a shape is cleaned
+ * for dirty.  The areas where a cleaned shape occupied before and after
+ * cleaning should be redrawed.  Areas are added to dirty area list to
+ * mark areas where should be redrawed.  So, all shapes covered by
+ * dirty area list should be redrawed to update these areas.  So, areas
+ * are added to dirty lists after cleaning geos due to changes of
+ * shapes.
+ *
+ * For example, when a shape is moved from location A to location B,
+ * areas where the shape occupied for A and B are changed for moving.
+ * Bothe areas are added into dirty list to mark these areas should
+ * be redrawed.
+ */
+
+/*! \page redraw How to Redraw Shapes?
+ *
+ * Coords are corresponding objects for group tags of SVG files.
+ * In conceptional, every SVG group has a canvas, graphics of child shapes
+ * are drawed into the canvas, applied filters of group, and blended into
+ * canvas of parent of the group.
+ *
+ * But, we don't need to create actually a surface/canvas for every coord.
+ * We only create surface for coords their opacity value are not 1 or they
+ * apply filters on background.  Child shapes of coords without canvas
+ * are drawed on canvas of nearest ancestor which have canvas.  It said
+ * a coord owns a canvas or inherits from an ancestor. (\ref COF_OWN_CANVAS,
+ * clean_coord()) Except, root_coord always owns a canvas.
+ *
+ * \note Default opacity of a coord is 1.
+ *
+ * \sa
+ * - rdman_redraw_all()
+ * - rdman_redraw_changed()
+ * - draw_shapes_in_areas()
+ *
+ * \section img_cache Image Cache
+ * It costs time to redraw every component in a complete graphic.
+ * Image cache try to cache result of prviously rendering, and reusing it
+ * to avoid wasting CPU time on repeatitive and redundant rendering.
+ *
+ * \ref COF_FAST_CACHE and \ref COF_PRECISE_CACHE are used to tag a
+ * coord that it's
+ * rendering result is cached in fast way or precise way.  With fast cache,
+ * MB renders descendants of a coord in once, and reuse the result until it
+ * being dirty.  With precise cache, it alike fast cache, but it also
+ * performs rendering when an ancester of the coord transform it to larger
+ * size, in width or height.
+ *
+ * coord_t::aggr_matrix of a cached coord is computed from aggr_matrix of
+ * parent.  But, it does not use one from parent directly.  parent one is
+ * transformed as
+ * \code
+ * cache_scale_x = sqrt(p_matrix[0]**2 + p_matrix[3]**2);
+ * cache_scale_y = sqrt(p_matrix[1]**2 + p_matrix[4]**2);
+ * cache_p_matrix[0] = cache_scale_x;
+ * cache_p_matrix[1] = 0;
+ * cache_p_matrix[2] = range_shift_x;
+ * cache_p_matrix[3] = 0;
+ * cache_p_matrix[4] = cache_scale_y;
+ * cache_p_matrix[5] = range_shift_y;
+ * \endcode
+ * where p_matrix is parent one, and cache_p_matrix is one derived from
+ * parent one.  coord_t::aggr_matrix of a cached coord is
+ * \code
+ * aggr_matrix = cache_p_matrix * matrix
+ * \endcode
+ * where matrix is the transform being installed on the cached coord.
+ * range_shift_x and range_shift_y are defined above.
+ *
+ * cache_p_matrix rescales sub-graphic to an appropriately size
+ * (cache_scale_x, cache_scale_y) and aligns left-top of the minimum
+ * rectangle (range_shift_x, range_shift_y) that cover the area occupied
+ * by sub-graphic with origin of the space.
+ *
+ * The sub-graphic should be rendered on space defined by cache_p_matrix of
+ * cached one.  But rendering result are transformed to the space defined
+ * by parent with following matrix.
+ * \code
+ * draw_matrix = reverse(p_matrix * reverse(cache_p_matrix))
+ * \endcode
+ * With Cairo, draw_matrix is applied on source surface (canvas)
+ * to draw image to parent's surface (canvas).  draw_matrix is a function
+ * map points from parent space to the space of cached one.
+ *
+ * Cached coords are marked for changing transformation of ancestors only if
+ * following condition is true.
+ * \code
+ * cache_scale_x < sqrt(p_matrix[0]**2 + p_matrix[3]**2) ||
+ * cache_scale_y < sqrt(p_matrix[1]**2 + p_matrix[4]**2)
+ * \endcode
+ * where p_matrix is latest aggr_matrix of parent after changing
+ * transformation, and where cache_scale_* are ones mention above and computed
+ * before changing transformation of ancestors.
+ *
+ * Cache_scale_* can be recovered by following instructions.
+ * \code
+ * cache_scale_x = aggr_matrix[0] / matrix[0];
+ * cache_scale_y = aggr_matrix[4] / matrix[4];
+ * \endcode
+ *
+ * \section cache_area Area of cached coord
+ * - *_transform of shapes works as normal
+ *   - areas of descendants of cached coord are in space defined
+ *     by aggr_matrix of cached coord.
+ *   - descendants are marked with \ref COF_ANCESTOR_CACHE
+ * 
+ * Since *_transform of shapes compute area with aggr_matrix that is
+ * derived from aggr_matrix of a cached ancestor, area of
+ * \ref COF_ANCESTOR_CACHE ones should be transformed to device space in
+ * find_shape_at_pos() with following statement.
+ * \code
+ * area_matrix = p_matrix * reverse(cache_p_matrix)
+ * \endcode
+ * where cache_p_matrix and p_matrix are corresponding matrix of
+ * cached ancestor.  We can also perform transforming in reversed
+ * direction to transform point to space defined by aggr_matrix of cached
+ * coord.
+ *
+ * Since it is costly to transform area of \ref COF_ANCESTOR_CACHE ones to
+ * device space if more than one ancestor are cached, no ancestor of
+ * cached coord can be set to cached.
+ *
+ * \section cached_bounding Bounding box of cached coord and descendants
+ * Bounding box of a cached coord and it's descendants is the range that
+ * cached coord and descendants are rendered on canvas.  It is also called
+ * cached-bounding.
+ *
+ * range_shift_x and range_shift_y are computed by initailizing cache_p_matrix
+ * with range_shift_x == range_shift_y == 0 at first.  cache_p_matrix is
+ * used to compute aggr_matrix and cached-bounding in turn.  Then,
+ * range_shift_x and range_shift_y are initialized to negative of
+ * x-axis and y-axis, repectively, of left-top of cached-bounding.  Then,
+ * aggr_matrix of cached coord and descendants are updated by
+ * following statements.
+ * \code
+ * aggr_matrix[2] += range_shift_x;
+ * aggr_matrix[5] += range_shift_y;
+ * \endcode
+ * The statements shift the spaces to make cached-bounding
+ * aligned to origin of coordinate system.
+ * The purpose of range_shift_* is to reduce size of canvas used to cache
+ * rendering result.  The canvas are shrink to size the same as bounding
+ * box.
+ *
+ * \section cache_redraw How cache and redraw work together?
+ * When a coord and descedants are cached, the coord is flaged with
+ * COF_FAST_CACHE or COF_PRECISE_CACHE.  When a coord is marked dirty, all
+ * descendants are also marked dirty by rdman except descendants of cached
+ * ones.  But, cached ones are also marked dirty as normal ones.  The
+ * reason to mark cached ones is giving them a chance to update their
+ * area.
+ *
+ * For precise cached descendants, above rule has an exception.  They should
+ * also be marked dirty if cached coord should be rendered in a larger
+ * resize factor to get better output.
+ *
+ * coord_t::aggr_matrix and cached-bounding of cached coord must be computed
+ * in the way described in \ref cached_bounding.  Propagating range_shift_*
+ * to descendants must skip cached ones and their descendants.
+ * Range_shift_* are computed after updating descendants.  So, procedure
+ * of clean descendants of a cached one must performed in two phases.
+ * One for computing areas of descendants and one for propagating
+ * range_shift_*.
+ *
+ * A cached coord or/and descendants are dirty only for cached coord or
+ * descendants being marked dirty by application.  Once a cached coord or
+ * descendant is marked dirty, all descendants of marked one are also
+ * marked.  redraw_man_t::dirty_areas collects areas, in device space,
+ * that should be updated.  All shapes overlaid with any area in
+ * redraw_man_t::dirty_areas should be redraw.  Since descendants of cached
+ * coord compute their areas in spaces other than device space.
+ * Separated lists should be maintained for each cached coord and it's
+ * descendants.
+ *
+ * \section cache_imp Implementation of Cache
+ * Both cached coords and coords that opacity != 1 need a canvas to
+ * draw descendants on.  Both cases are traded in the same way.
+ * Every of them own a canvas_info to describe canvas and related
+ * information.  aggr_matrix of descendants must be adjusted to make
+ * left-top of range just at origin of canvas.  It can save space by setting
+ * just large enough to hold rendering result of descendants.  The process
+ * of adjusting is zeroing.
+ *
+ * Following is rules.
+ * - zeroing on a cached coord is performed by adjust coord_t::aggr_matrix 
+ *   of the cached coord and descendnats.
+ * - Clean coords works just like before without change.
+ *   - in preorder
+ * - never perform zeroing on root_coord.
+ * - zeroing on cached coords marked with \ref COF_MUST_ZEROING.
+ *   - when clean a descendant that moves out-side of it's canvas,
+ *     respective cached coord is marked with \ref COF_MUST_ZEROING.
+ *   - zeroing is performed immediately after clean coords.
+ *   - zeroing will not propagate acrossing boundary of cached coord.
+ *     - It will be stopped at descendants which are cached coords.
+ *     - coord_t::cur_area and coord_t::aggr_matrix of cached coords
+ *       must be ajdusted.
+ * - the area of a cached coord is defined in parent space.
+ *   - areas of descendants are defined in space defined by aggr_matrix of
+ *     cached coord.
+ *   - parent know the area in where cached coord and descendnats will
+ *     be draw.
+ * - cached coords keep their private dirty area list.
+ *   - private dirty areas of a cached coord are transformed and added to
+ *     parent cached coord.
+ *   - aggregates areas before adding to parent.
+ * - canvas of a cached coord is updated if
+ *   - descendants are dirty, or
+ *   - it-self is dirty.
+ * - change of a canvas must copy to canvas of parent space.
+ *   - a cached is updated if canvas of descendant cached coord is updated.
+ * - updating canvas is performed by redraw dirty areas.
+ *   - since dirty areas of cached ones would be aggregated and added to
+ *     parent, parent cached coord would copy it from cache of descedants.
+ * - descendant cached coords must be updated before ancestor cached coords.
+ *   - add dirty areas to parent immediately after updating canvas.
+ * - Making dirty coords is not propagated through cached ones.
+ *   - cached ones are also made dirty, but stop after that.
+ *
+ * Steps:
+ * - SWAP coord_t::cur_area of dirty coords.
+ * - SWAP geo_t::cur_area of dirty geos.
+ * - clean coords
+ *   - coord_t::aggr_matrix of cached coord is not the same as non-cached.
+ *   - see \ref img_cache
+ * - clean geos
+ * - Add canvas owner of dirty geos to redraw_man_t::zeroing_coords
+ *   - Cached ancestors of redraw_man_t::dirty_geos
+ *   - Cached ancestors of redraw_man_t::dirty_coords
+ *   - Cached ancestors of zeroed ones should also be zeroed.
+ * - zeroing
+ *   - Add more dirty areas if canvas should be fully redrawed.
+ *   - From leaf to root.
+ * - add aggregated dirty areas from descendant cached coords to ancestors.
+ *   - Must include old area of cached coords if it is just clean and
+ *     parent cached one is not just clean.
+ *   - Just clean is a coord cleaned in last time of cleaning coords.
+ * - draw dirty areas
+ *   - areas are rounded to N at first.
+ *   - from leaf to root.
+ */
+
 #ifndef ASSERT
 #define ASSERT(x)
 #endif
@@ -129,6 +410,33 @@ int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo) {
     return r == 0? OK: ERR;
 
 
+static int is_area_in_areas(area_t *area,
+			     int n_areas,
+			     area_t **areas) {
+    int i;
+
+    for(i = 0; i < n_areas; i++) {
+	if(areas_are_overlay(area, areas[i]))
+	    return 1;
+    }
+    return 0;
+}
+
+static int is_geo_in_areas(geo_t *geo,
+			     int n_areas,
+			     area_t **areas) {
+    return is_area_in_areas(geo->cur_area, n_areas, areas);
+}
+
+static void area_to_positions(area_t *area, co_aix (*poses)[2]) {
+    poses[0][0] = area->x;
+    poses[0][1] = area->y;
+    poses[1][0] = area->x + area->w;
+    poses[1][1] = area->y + area->h;;
+}
+
+/* Maintain Lists */
+
 static int add_dirty_coord(redraw_man_t *rdman, coord_t *coord) {
     coord->flags |= COF_DIRTY;
     ADD_DATA(coords, dirty_coords, coord);
@@ -193,12 +501,7 @@ static void free_objs_destroy(redraw_man_t *rdman) {
 	free(rdman->free_objs.objs);
 }
 
-static void area_to_positions(area_t *area, co_aix (*poses)[2]) {
-    poses[0][0] = area->x;
-    poses[0][1] = area->y;
-    poses[1][0] = area->x + area->w;
-    poses[1][1] = area->y + area->h;;
-}
+
 
 static cairo_t *canvas_new(int w, int h) {
 #ifndef UNITTEST
@@ -840,6 +1143,7 @@ int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint) {
     return OK;
 }
 
+
 /* Clean dirties */
 
 static int is_coord_subtree_hidden(coord_t *coord) {
@@ -940,6 +1244,87 @@ static int coord_clean_members_n_compute_area(coord_t *coord) {
 
     area_init(coord->cur_area, pos_cnt, poses);
     
+    return OK;
+}
+
+/*! \brief Clean dirty coords.
+ *
+ * \note coords their opacity != 1 are also traded as cached ones.
+ */
+static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
+    int r;
+    
+    setup_canvas_info(rdman, coord);
+
+    if(coord->flags & COF_OWN_CANVAS)
+	compute_aggr_of_cached_coord(coord);
+    else
+	compute_aggr_of_coord(coord);
+
+    /* Areas of cached coords are computed in two phase.
+     * Phase 1 works like other normal ones.  Phase 2, is collect
+     * all areas of descendants to compute a minimum covering area.
+     * Phase 2 is performed by zeroing_coord().
+     */
+    r = coord_clean_members_n_compute_area(coord);
+    if(r != OK)
+	return ERR;
+
+    coord->flags &= ~COF_DIRTY;
+
+    return OK;
+}
+
+/*! \brief Clean coord_t objects.
+ */
+static int clean_rdman_coords(redraw_man_t *rdman) {
+    coord_t *coord;
+    coord_t **dirty_coords;
+    int n_dirty_coords;
+    int i, r;
+
+    n_dirty_coords = rdman->dirty_coords.num;
+    if(n_dirty_coords > 0) {
+	dirty_coords = rdman->dirty_coords.ds;
+	_insert_sort((void **)dirty_coords, n_dirty_coords,
+		     OFFSET(coord_t, order));
+	for(i = 0; i < n_dirty_coords; i++) {
+	    coord = dirty_coords[i];
+	    if(!(coord->flags & COF_DIRTY))
+		continue;
+	    r = clean_coord(rdman, coord);
+	    if(r != OK)
+		return ERR;
+	    /* These two steps can be avoided for drawing all. */
+	    add_dirty_area(rdman, coord, &coord->areas[0]);
+	    add_dirty_area(rdman, coord, &coord->areas[1]);
+	}
+    }
+    return OK;
+}
+
+static int clean_rdman_geos(redraw_man_t *rdman) {
+    int i;
+    int n_dirty_geos;
+    geo_t **dirty_geos;
+    geo_t *visit_geo;
+    coord_t *coord;
+
+    n_dirty_geos = rdman->dirty_geos.num;
+    if(n_dirty_geos > 0) {
+	dirty_geos = rdman->dirty_geos.ds;
+	for(i = 0; i < n_dirty_geos; i++) {
+	    visit_geo = dirty_geos[i];
+	    if(!(visit_geo->flags & GEF_DIRTY))
+		continue;
+
+	    clean_shape(visit_geo->shape);
+	    coord = geo_get_coord(visit_geo);
+	    add_dirty_area(rdman, coord, visit_geo->cur_area);
+	    add_dirty_area(rdman, coord, visit_geo->last_area);
+	}
+    }    
+
     return OK;
 }
 
@@ -1067,87 +1452,6 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     area->h = h;
     DARRAY_CLEAN(_coord_get_dirty_areas(coord));
     add_dirty_area(rdman, coord, area);
-}
-
-/*! \brief Clean dirty coords.
- *
- * \note coords their opacity != 1 are also traded as cached ones.
- */
-static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
-    int r;
-    
-    setup_canvas_info(rdman, coord);
-
-    if(coord->flags & COF_OWN_CANVAS)
-	compute_aggr_of_cached_coord(coord);
-    else
-	compute_aggr_of_coord(coord);
-
-    /* Areas of cached coords are computed in two phase.
-     * Phase 1 works like other normal ones.  Phase 2, is collect
-     * all areas of descendants to compute a minimum covering area.
-     * Phase 2 is performed by zeroing_coord().
-     */
-    r = coord_clean_members_n_compute_area(coord);
-    if(r != OK)
-	return ERR;
-
-    coord->flags &= ~COF_DIRTY;
-
-    return OK;
-}
-
-/*! \brief Clean coord_t objects.
- */
-static int clean_rdman_coords(redraw_man_t *rdman) {
-    coord_t *coord;
-    coord_t **dirty_coords;
-    int n_dirty_coords;
-    int i, r;
-
-    n_dirty_coords = rdman->dirty_coords.num;
-    if(n_dirty_coords > 0) {
-	dirty_coords = rdman->dirty_coords.ds;
-	_insert_sort((void **)dirty_coords, n_dirty_coords,
-		     OFFSET(coord_t, order));
-	for(i = 0; i < n_dirty_coords; i++) {
-	    coord = dirty_coords[i];
-	    if(!(coord->flags & COF_DIRTY))
-		continue;
-	    r = clean_coord(rdman, coord);
-	    if(r != OK)
-		return ERR;
-	    /* These two steps can be avoided for drawing all. */
-	    add_dirty_area(rdman, coord, &coord->areas[0]);
-	    add_dirty_area(rdman, coord, &coord->areas[1]);
-	}
-    }
-    return OK;
-}
-
-static int clean_rdman_geos(redraw_man_t *rdman) {
-    int i;
-    int n_dirty_geos;
-    geo_t **dirty_geos;
-    geo_t *visit_geo;
-    coord_t *coord;
-
-    n_dirty_geos = rdman->dirty_geos.num;
-    if(n_dirty_geos > 0) {
-	dirty_geos = rdman->dirty_geos.ds;
-	for(i = 0; i < n_dirty_geos; i++) {
-	    visit_geo = dirty_geos[i];
-	    if(!(visit_geo->flags & GEF_DIRTY))
-		continue;
-
-	    clean_shape(visit_geo->shape);
-	    coord = geo_get_coord(visit_geo);
-	    add_dirty_area(rdman, coord, visit_geo->cur_area);
-	    add_dirty_area(rdman, coord, visit_geo->last_area);
-	}
-    }    
-
-    return OK;
 }
 
 /*! \brief Add canvas owner of dirty geos to coord_t::zeroing_coords.
@@ -1592,24 +1896,6 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 }
 #endif /* UNITTEST */
 
-static int is_area_in_areas(area_t *area,
-			     int n_areas,
-			     area_t **areas) {
-    int i;
-
-    for(i = 0; i < n_areas; i++) {
-	if(areas_are_overlay(area, areas[i]))
-	    return 1;
-    }
-    return 0;
-}
-
-static int is_geo_in_areas(geo_t *geo,
-			     int n_areas,
-			     area_t **areas) {
-    return is_area_in_areas(geo->cur_area, n_areas, areas);
-}
-
 static void update_cached_canvas_2_parent(redraw_man_t *rdman,
 					  coord_t *coord) {
     cairo_t *pcanvas, *canvas;
@@ -1816,234 +2102,6 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
  * NOTE: After redrawing, the content must be copied to the backend surface.
  */
 
-/*! \page redraw How to Redraw Shapes?
- *
- * Coords are corresponding objects for group tags of SVG files.
- * In conceptional, every SVG group has a canvas, graphics of child shapes
- * are drawed into the canvas, applied filters of group, and blended into
- * canvas of parent of the group.
- *
- * But, we don't need to create actually a surface/canvas for every coord.
- * We only create surface for coords their opacity value are not 1 or they
- * apply filters on background.  Child shapes of coords without canvas
- * are drawed on canvas of nearest ancestor which have canvas.  It said
- * a coord owns a canvas or inherits from an ancestor. (\ref COF_OWN_CANVAS,
- * clean_coord()) Except, root_coord always owns a canvas.
- *
- * \note Default opacity of a coord is 1.
- *
- * \sa
- * - rdman_redraw_all()
- * - rdman_redraw_changed()
- * - draw_shapes_in_areas()
- *
- * \section img_cache Image Cache
- * It costs time to redraw every component in a complete graphic.
- * Image cache try to cache result of prviously rendering, and reusing it
- * to avoid wasting CPU time on repeatitive and redundant rendering.
- *
- * \ref COF_FAST_CACHE and \ref COF_PRECISE_CACHE are used to tag a
- * coord that it's
- * rendering result is cached in fast way or precise way.  With fast cache,
- * MB renders descendants of a coord in once, and reuse the result until it
- * being dirty.  With precise cache, it alike fast cache, but it also
- * performs rendering when an ancester of the coord transform it to larger
- * size, in width or height.
- *
- * coord_t::aggr_matrix of a cached coord is computed from aggr_matrix of
- * parent.  But, it does not use one from parent directly.  parent one is
- * transformed as
- * \code
- * cache_scale_x = sqrt(p_matrix[0]**2 + p_matrix[3]**2);
- * cache_scale_y = sqrt(p_matrix[1]**2 + p_matrix[4]**2);
- * cache_p_matrix[0] = cache_scale_x;
- * cache_p_matrix[1] = 0;
- * cache_p_matrix[2] = range_shift_x;
- * cache_p_matrix[3] = 0;
- * cache_p_matrix[4] = cache_scale_y;
- * cache_p_matrix[5] = range_shift_y;
- * \endcode
- * where p_matrix is parent one, and cache_p_matrix is one derived from
- * parent one.  coord_t::aggr_matrix of a cached coord is
- * \code
- * aggr_matrix = cache_p_matrix * matrix
- * \endcode
- * where matrix is the transform being installed on the cached coord.
- * range_shift_x and range_shift_y are defined above.
- *
- * cache_p_matrix rescales sub-graphic to an appropriately size
- * (cache_scale_x, cache_scale_y) and aligns left-top of the minimum
- * rectangle (range_shift_x, range_shift_y) that cover the area occupied
- * by sub-graphic with origin of the space.
- *
- * The sub-graphic should be rendered on space defined by cache_p_matrix of
- * cached one.  But rendering result are transformed to the space defined
- * by parent with following matrix.
- * \code
- * draw_matrix = reverse(p_matrix * reverse(cache_p_matrix))
- * \endcode
- * With Cairo, draw_matrix is applied on source surface (canvas)
- * to draw image to parent's surface (canvas).  draw_matrix is a function
- * map points from parent space to the space of cached one.
- *
- * Cached coords are marked for changing transformation of ancestors only if
- * following condition is true.
- * \code
- * cache_scale_x < sqrt(p_matrix[0]**2 + p_matrix[3]**2) ||
- * cache_scale_y < sqrt(p_matrix[1]**2 + p_matrix[4]**2)
- * \endcode
- * where p_matrix is latest aggr_matrix of parent after changing
- * transformation, and where cache_scale_* are ones mention above and computed
- * before changing transformation of ancestors.
- *
- * Cache_scale_* can be recovered by following instructions.
- * \code
- * cache_scale_x = aggr_matrix[0] / matrix[0];
- * cache_scale_y = aggr_matrix[4] / matrix[4];
- * \endcode
- *
- * \section cache_area Area of cached coord
- * - *_transform of shapes works as normal
- *   - areas of descendants of cached coord are in space defined
- *     by aggr_matrix of cached coord.
- *   - descendants are marked with \ref COF_ANCESTOR_CACHE
- * 
- * Since *_transform of shapes compute area with aggr_matrix that is
- * derived from aggr_matrix of a cached ancestor, area of
- * \ref COF_ANCESTOR_CACHE ones should be transformed to device space in
- * find_shape_at_pos() with following statement.
- * \code
- * area_matrix = p_matrix * reverse(cache_p_matrix)
- * \endcode
- * where cache_p_matrix and p_matrix are corresponding matrix of
- * cached ancestor.  We can also perform transforming in reversed
- * direction to transform point to space defined by aggr_matrix of cached
- * coord.
- *
- * Since it is costly to transform area of \ref COF_ANCESTOR_CACHE ones to
- * device space if more than one ancestor are cached, no ancestor of
- * cached coord can be set to cached.
- *
- * \section cached_bounding Bounding box of cached coord and descendants
- * Bounding box of a cached coord and it's descendants is the range that
- * cached coord and descendants are rendered on canvas.  It is also called
- * cached-bounding.
- *
- * range_shift_x and range_shift_y are computed by initailizing cache_p_matrix
- * with range_shift_x == range_shift_y == 0 at first.  cache_p_matrix is
- * used to compute aggr_matrix and cached-bounding in turn.  Then,
- * range_shift_x and range_shift_y are initialized to negative of
- * x-axis and y-axis, repectively, of left-top of cached-bounding.  Then,
- * aggr_matrix of cached coord and descendants are updated by
- * following statements.
- * \code
- * aggr_matrix[2] += range_shift_x;
- * aggr_matrix[5] += range_shift_y;
- * \endcode
- * The statements shift the spaces to make cached-bounding
- * aligned to origin of coordinate system.
- * The purpose of range_shift_* is to reduce size of canvas used to cache
- * rendering result.  The canvas are shrink to size the same as bounding
- * box.
- *
- * \section cache_redraw How cache and redraw work together?
- * When a coord and descedants are cached, the coord is flaged with
- * COF_FAST_CACHE or COF_PRECISE_CACHE.  When a coord is marked dirty, all
- * descendants are also marked dirty by rdman except descendants of cached
- * ones.  But, cached ones are also marked dirty as normal ones.  The
- * reason to mark cached ones is giving them a chance to update their
- * area.
- *
- * For precise cached descendants, above rule has an exception.  They should
- * also be marked dirty if cached coord should be rendered in a larger
- * resize factor to get better output.
- *
- * coord_t::aggr_matrix and cached-bounding of cached coord must be computed
- * in the way described in \ref cached_bounding.  Propagating range_shift_*
- * to descendants must skip cached ones and their descendants.
- * Range_shift_* are computed after updating descendants.  So, procedure
- * of clean descendants of a cached one must performed in two phases.
- * One for computing areas of descendants and one for propagating
- * range_shift_*.
- *
- * A cached coord or/and descendants are dirty only for cached coord or
- * descendants being marked dirty by application.  Once a cached coord or
- * descendant is marked dirty, all descendants of marked one are also
- * marked.  redraw_man_t::dirty_areas collects areas, in device space,
- * that should be updated.  All shapes overlaid with any area in
- * redraw_man_t::dirty_areas should be redraw.  Since descendants of cached
- * coord compute their areas in spaces other than device space.
- * Separated lists should be maintained for each cached coord and it's
- * descendants.
- *
- * \section cache_imp Implementation of Cache
- * Both cached coords and coords that opacity != 1 need a canvas to
- * draw descendants on.  Both cases are traded in the same way.
- * Every of them own a canvas_info to describe canvas and related
- * information.  aggr_matrix of descendants must be adjusted to make
- * left-top of range just at origin of canvas.  It can save space by setting
- * just large enough to hold rendering result of descendants.  The process
- * of adjusting is zeroing.
- *
- * Following is rules.
- * - zeroing on a cached coord is performed by adjust coord_t::aggr_matrix 
- *   of the cached coord and descendnats.
- * - Clean coords works just like before without change.
- *   - in preorder
- * - never perform zeroing on root_coord.
- * - zeroing on cached coords marked with \ref COF_MUST_ZEROING.
- *   - when clean a descendant that moves out-side of it's canvas,
- *     respective cached coord is marked with \ref COF_MUST_ZEROING.
- *   - zeroing is performed immediately after clean coords.
- *   - zeroing will not propagate acrossing boundary of cached coord.
- *     - It will be stopped at descendants which are cached coords.
- *     - coord_t::cur_area and coord_t::aggr_matrix of cached coords
- *       must be ajdusted.
- * - the area of a cached coord is defined in parent space.
- *   - areas of descendants are defined in space defined by aggr_matrix of
- *     cached coord.
- *   - parent know the area in where cached coord and descendnats will
- *     be draw.
- * - cached coords keep their private dirty area list.
- *   - private dirty areas of a cached coord are transformed and added to
- *     parent cached coord.
- *   - aggregates areas before adding to parent.
- * - canvas of a cached coord is updated if
- *   - descendants are dirty, or
- *   - it-self is dirty.
- * - change of a canvas must copy to canvas of parent space.
- *   - a cached is updated if canvas of descendant cached coord is updated.
- * - updating canvas is performed by redraw dirty areas.
- *   - since dirty areas of cached ones would be aggregated and added to
- *     parent, parent cached coord would copy it from cache of descedants.
- * - descendant cached coords must be updated before ancestor cached coords.
- *   - add dirty areas to parent immediately after updating canvas.
- * - Making dirty coords is not propagated through cached ones.
- *   - cached ones are also made dirty, but stop after that.
- *
- * Steps:
- * - SWAP coord_t::cur_area of dirty coords.
- * - SWAP geo_t::cur_area of dirty geos.
- * - clean coords
- *   - coord_t::aggr_matrix of cached coord is not the same as non-cached.
- *   - see \ref img_cache
- * - clean geos
- * - Add canvas owner of dirty geos to redraw_man_t::zeroing_coords
- *   - Cached ancestors of redraw_man_t::dirty_geos
- *   - Cached ancestors of redraw_man_t::dirty_coords
- *   - Cached ancestors of zeroed ones should also be zeroed.
- * - zeroing
- *   - Add more dirty areas if canvas should be fully redrawed.
- *   - From leaf to root.
- * - add aggregated dirty areas from descendant cached coords to ancestors.
- *   - Must include old area of cached coords if it is just clean and
- *     parent cached one is not just clean.
- *   - Just clean is a coord cleaned in last time of cleaning coords.
- * - draw dirty areas
- *   - areas are rounded to N at first.
- *   - from leaf to root.
- */
-
 int rdman_redraw_all(redraw_man_t *rdman) {
     area_t area;
 #ifndef UNITTEST
@@ -2119,41 +2177,6 @@ int rdman_force_clean(redraw_man_t *rdman) {
     return r;
 }
 
-/*! \page dirty Dirty geo, coord, and area.
- *
- * \section dirty_of_ego Dirty of geo
- * A geo is dirty when any of the shape, size or positions is changed.
- * It's geo and positions should be recomputed before drawing.  So,
- * dirty geos are marked as dirty and put into dirty_geos list.
- * The list is inspected before drawing to make sure the right shape,
- * size, and positions.
- *
- * \section dirty_of_coord Dirty of coord
- * A coord is dirty when it's transformation matrix being changed.
- * Dirty coords are marked as dirty and put into dirty_coords list.
- * Once a coord is dirty, every member geos of it are also dirty.
- * Because, their shape, size and positions will be changed.  But,
- * they are not marked as dirty and put into dirty_geos list, since
- * all these member geos will be recomputed for computing new current
- * area of the coord.  The changes of a coord also affect child
- * coords.  Once parent is dirty, all children are also dirty for
- * their aggregate matrix out of date.  Dirty coords should be
- * clean in preorder of tree traversal.  The dirty_coords list
- * are sorted to keep the order before cleaning.
- * Whenever a coord is marked dirty and put into dirty_coords list,
- * all it's children should also be marked and put.
- *
- * The procedure of clean coords comprises recomputing aggregate
- * tranform matrix and area where members spreading in.
- *
- * The list is inspected before drawing to recompute new shape, size,
- * and positions of member geos of coords in the list.  The drity
- * flag of member geos will be clean.
- *
- * Clean coords should be performed before clean geos, since clean
- * coords will also clean member geos.
- */
-
 /*! \page man_obj Manage Objects.
  *
  * Shapes and paints should also be managed by redraw manager.  Redraw
@@ -2175,17 +2198,6 @@ int rdman_force_clean(redraw_man_t *rdman) {
  * - rdman_shape_*_new()
  * - rdman_shape_free()
  */
-
-/*
- * To accelerate speed of transformation, when a matrix changed,
- * transformation should be aggregated and computed in a loop.
- * It can get intereset of higher hit rate of cache.
- * - shapes prvoide list of positions needed to be transformed.
- * - redraw_man transforms positions from shapes.
- * - shapes drawing with result of transforms.
- * - shapes should be called to give them a chance to update geometries.
- */
-
 
 /* \defgroup rdman_observer Observer memory management
  *
