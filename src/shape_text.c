@@ -261,7 +261,7 @@ static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
 static void draw_text(sh_text_t *text, cairo_t *cr) {
     sh_text_P_generate_layout(text, cr);
     cairo_move_to(cr, text->d_x, text->d_y);
-    pango_cairo_show_layout(cr,text->layout);
+    pango_cairo_layout_path(cr,text->layout);
 }
 
 
