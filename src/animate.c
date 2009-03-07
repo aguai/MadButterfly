@@ -336,6 +336,13 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
     progm->cur_timer = timer;
 }
 
+void mb_progm_finish(mb_progm_t *progm) {
+    mb_timeval_t infi;
+
+    mb_progm_abort(progm);
+    MB_TIMEVAL_SET(&infi, 0x7fffffff,0);
+    mb_progm_step(&progm->start_time, &infi,progm);
+}
 void mb_progm_abort(mb_progm_t *progm) {
     /*! \todo Make sure abort release resources. */
     if(progm->cur_timer) {

@@ -14,6 +14,8 @@ typedef struct _mb_animated_menu {
 	mb_obj_t **objects;
 	mb_obj_t *lightbar;
 	void (*callback)(struct _mb_animated_menu *m, int sel);
+	mb_progm_t *progm;
+	X_kb_event_t pending_key;
 } mb_animated_menu_t;
 /** \brief Create an instace of animated menu. 
  *
