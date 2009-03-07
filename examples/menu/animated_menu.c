@@ -77,7 +77,7 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
     group = (coord_t *) m->objects[m->items[8]];
     set_text(group, m->titles[m->top]);
 
-    progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
+    m->progm = progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
     MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -139,7 +139,7 @@ static void mb_animated_menu_fillMenuContentDown(mb_animated_menu_t *m)
     // fill new item
     set_text((coord_t *)m->objects[m->items[8]], m->titles[m->top+7]);
 
-    progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
+    m->progm = progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
     MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -184,7 +184,7 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
     coord_t *group;
     coord_t *lightbar;
 
-    progm = mb_progm_new(1, MBAPP_RDMAN(m->app));
+    m->progm = progm = mb_progm_new(1, MBAPP_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
     MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -248,6 +248,15 @@ static void mb_animated_menu_select(mb_animated_menu_t *m)
 	   m->callback(m,m->top+m->cur);
 }
 
+// Send the pending key in the animation progm complete callback
+static void mb_animated_menu_keyHandler(event_t *ev, void *arg);
+static void mb_animated_menu_send_pending_key(event_t *ev,void *arg)
+{
+    mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
+
+    if (m->ready<=0) 
+	    mb_animated_menu_keyHandler((event_t *) &m->pending_key,m);
+}
 static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
 {
     mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
@@ -256,7 +265,12 @@ static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
         return;
     }
     printf("read=%d\n",m->ready);
-    if (m->ready<=0) return;
+    if (m->ready<=0) {
+    	    subject_add_observer(mb_progm_get_complete(m->progm), mb_animated_menu_send_pending_key,m);
+	    mb_progm_finish(m->progm);
+	    m->pending_key = *xkey;
+	    return;
+    }
     switch(xkey->sym) {
     case 0xff51:		/* left */
 	break;
