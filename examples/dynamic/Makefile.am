@@ -11,7 +11,9 @@ CPPFLAGS = @pangocairo_CFLAGS@ $(INCLUDES)
 dynamic_LDFLAGS = @pangocairo_LIBS@ 
 dynamic_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = 
-CLEANFILES = menu.c menu.h menu.mb  button.mb
+CLEANFILES = menu.c menu.h menu.mb \
+	button.c button.h button.mb \
+	scene.c scene.h scene.mb
 
 
 hello_SOURCES = hello.c 
