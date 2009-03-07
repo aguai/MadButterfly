@@ -56,6 +56,14 @@ static void mb_button_show_active(event_t *evt, void *arg)
     mb_button_refresh(btn);
 }
 
+static void mb_button_end_animated_cb(event_t *evt, void *arg)
+{
+    mb_button_t *btn = (mb_button_t *) arg;
+
+    btn->progm = NULL;
+    
+}
+
 static void mb_button_pressed(event_t *evt, void *arg)
 {
     mb_button_t *btn = (mb_button_t *) arg;
@@ -80,6 +88,7 @@ static void mb_button_pressed(event_t *evt, void *arg)
     mb_visibility_new(VIS_HIDDEN, btn->click, word);
     mb_visibility_new(VIS_VISIBLE, btn->active, word);
     mb_progm_free_completed(progm);
+    subject_add_observer(mb_progm_get_complete(btn->progm), mb_button_end_animated_cb,btn);
     get_now(&now);
     printf("rt = %x\n", btn->rdman->rt);
     mb_progm_start(progm, X_MB_tman(btn->rdman->rt), &now);
