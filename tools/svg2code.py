@@ -477,25 +477,25 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
     	    # FIXME: Implement all units here
             if style_map['font-size'].endswith('px'):
                 font_sz = float(style_map['font-size'][:-2])
-                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz*1024,start,end)
+                print >> codefo, 'PANGO_SIZE(%d,%d,%d)dnl' % (font_sz*1024,start,end)
 	    else:
                 font_sz = float(style_map['font-size'])
-                print >> codefo, 'PANGO_SIZE(%d,%d,%d)' % (font_sz*1024,start,end)
+                print >> codefo, 'PANGO_SIZE(%d,%d,%d)dnl' % (font_sz*1024,start,end)
             pass
 
         if style_map.has_key('font-style'):
             font_style = style_map['font-style'].lower()
 	    if font_style == 'normal':
-                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_NORMAL,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_NORMAL,%d,%d)dnl' % (start,end)
 	    elif font_style == 'italic':
-                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_ITALIC,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_ITALIC,%d,%d)dnl' % (start,end)
 	    elif font_style == 'oblique':
-                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_OBLIQUE,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_STYLE_OBLIQUE,%d,%d)dnl' % (start,end)
         pass
 
         if style_map.has_key('font-family'):
             font_family = style_map['font-family']
-            print >> codefo, 'PANGO_FAMILY(%s,%d,%d)' % (font_family,start,end)
+            print >> codefo, 'PANGO_FAMILY(%s,%d,%d)dnl' % (font_family,start,end)
         pass
         if style_map.has_key('text-anchor'):
             text_anchor = style_map['text-anchor'].lower()
@@ -509,31 +509,31 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
         if style_map.has_key('font-weight'):
             font_weight = style_map['font-weight'].lower()
 	    if font_weight == 'normal':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)dnl' % (start,end)
 	    elif font_weight == 'bold':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_BOLD,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_BOLD,%d,%d)dnl' % (start,end)
 	    elif font_weight == 'bolder':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_HEAVY,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_HEAVY,%d,%d)dnl' % (start,end)
 	    elif font_weight == 'lighter':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)dnl' % (start,end)
 	    elif font_weight == '100':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)dnl' % (start,end)
 	    elif font_weight == '200':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRALIGHT,%d,%d)dnl' % (start,end)
 	    elif font_weight == '300':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_LIGHT,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_LIGHT,%d,%d)dnl' % (start,end)
 	    elif font_weight == '400':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)dnl' % (start,end)
 	    elif font_weight == '500':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_NORMAL,%d,%d)dnl' % (start,end)
 	    elif font_weight == '600':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_SEMIBOLD,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_SEMIBOLD,%d,%d)dnl' % (start,end)
 	    elif font_weight == '700':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_BOLD,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_BOLD,%d,%d)dnl' % (start,end)
 	    elif font_weight == '800':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRABOLD,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_ULTRABOLD,%d,%d)dnl' % (start,end)
 	    elif font_weight == '900':
-                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_HEAVY,%d,%d)' % (start,end)
+                print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_HEAVY,%d,%d)dnl' % (start,end)
 	    else:
 		print "The font-weight %s is not supported" % font_weight
         pass

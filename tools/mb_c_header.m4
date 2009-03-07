@@ -1,12 +1,12 @@
 changequote(`[', `]')dnl
 divert([-1])
 
-define([ADD_LINEAR_PAINT],[[
-    paint_t *$1;
+define([ADD_LINEAR_PAINT],[
+[    paint_t *$1;
 ]])
 
-define([ADD_RADIAL_PAINT],[[
-    paint_t *$1;
+define([ADD_RADIAL_PAINT],[
+[    paint_t *$1;
 ]])
 define([ADD_PATH],[
 [    shape_t *$1;
@@ -27,8 +27,7 @@ define([ADD_IMAGE],[[
 define([PANGO_BEGIN_TEXT],[
 [    shape_t *$1;
 ]])
-define([PANGO_END_TEXT],[
-])
+define([PANGO_END_TEXT],[])
 define([PANGO_SIZE],[])
 define([PANGO_STYLE],[])
 define([PANGO_WEIGHT],[])
@@ -37,11 +36,11 @@ define([COLOR_STOP],[ ])
 
 define([REF_STOPS_RADIAL],)
 define([REF_STOPS_LINEAR],)
-define([FILL_SHAPE],[[
-    paint_t *$1_fill;
+define([FILL_SHAPE],[
+[    paint_t *$1_fill;
 ]])
-define([STROKE_SHAPE],[[
-    paint_t *$1_stroke;
+define([STROKE_SHAPE],[
+[    paint_t *$1_stroke;
 ]])
 define([FILL_SHAPE_WITH_PAINT],)
 define([STROKE_SHAPE_WITH_PAINT],)

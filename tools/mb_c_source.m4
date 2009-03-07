@@ -443,9 +443,9 @@ mb_sprite_lsym_entry_t $1_symbols[] = {]DECLARE_SYMS
 $2[
 };
 
-]DEFINE_SCENES
-$2
-DEFINE_SCENES_ARRAY
+]DEFINE_SCENES[]dnl
+$2[]dnl
+DEFINE_SCENES_ARRAY[]dnl
 static const int *$1_scenes[[]] = {
 $2[]dnl
 	NULL
