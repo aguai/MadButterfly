@@ -272,7 +272,6 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     
     cairo_surface_destroy(paint_img->surf);
     img_data = paint_img->img;
-    MB_IMG_DATA_FREE(img_data);
     paint_destroy(&paint_img->paint);
     free(paint);
 }
@@ -280,6 +279,9 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
 /*! \brief Create an image painter.
  *
  * Create a painter that fill/stroke shapes with an image.
+ *
+ * \param img is image data return by image load.  Life-cycle of img
+ *            is managed by application code.
  */
 paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 			       mb_img_data_t *img) {

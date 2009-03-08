@@ -207,11 +207,12 @@ void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
     img->h = h;
 }
 
-int sh_image_set_img_data(shape_t *shape, mb_img_data_t *img_data,
-			   co_aix x, co_aix y, co_aix w, co_aix h) {
+int sh_image_set_img_data(shape_t *shape, mb_img_data_t *img_data) {
     int r;
+    sh_image_t *img = (sh_image_t *)shape;
 
-    r = _sh_image_set_img_data(shape, img_data, x, y, w, h);
+    r = _sh_image_set_img_data(shape, img_data,
+			       img->x, img->y, img->w, img->h);
     return r;
 }
 

@@ -71,11 +71,19 @@ void mypreview(MyAppData *data, char *path)
     mb_img_ldr_t *ldr = rdman_img_ldr(rdman);
     mb_img_data_t *img = MB_IMG_LDR_LOAD(ldr, path);
     shape_t *obj = (shape_t *) MB_SPRITE_GET_OBJ(myApp->rootsprite, "previewimg");
+    mb_img_data_t *previewimg_img_data;
+    mb_img_data_t *old_img;
 
+    previewimg_img_data =
+	(mb_img_data_t *)MB_SPRITE_GET_OBJ(myApp->rootsprite,
+					   "previewimg_img_data");
     printf("Preview %s\n",path);
     if (img) {
 	    printf("image %d %d\n",img->w,img->h);
-	    sh_image_set_img_data(obj,img,0,0,img->w,img->h);
+	    old_img = sh_image_get_img_data(obj);
+	    sh_image_set_img_data(obj,img);
+	    if(old_img != previewimg_img_data)
+		MB_IMG_DATA_FREE(old_img);
 	    rdman_shape_changed(MBAPP_RDMAN(myApp),obj);
             rdman_redraw_changed(MBAPP_RDMAN(myApp));
     }
