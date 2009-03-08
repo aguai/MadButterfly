@@ -1,3 +1,5 @@
+all: madbuilder.xpi inkscape-mb
+
 madbuilder.xpi: chrome.manifest install.rdf content/*
 	zip madbuilder.xpi chrome.manifest  content/* install.rdf README
 
