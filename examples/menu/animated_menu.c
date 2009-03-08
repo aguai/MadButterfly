@@ -4,6 +4,7 @@
 //#include "menu.h"
 #include "mbapp.h"
 #include <animated_menu.h>
+static void mb_animated_menu_update(mb_animated_menu_t *m);
 static void set_text(coord_t *g, char *text)
 {
     geo_t *geo;
@@ -204,15 +205,18 @@ static void mb_animated_menu_up(mb_animated_menu_t *m)
     if (m->cur > 5) {
 	m->cur--;
         mb_animated_menu_moveLightBar(m);
+	mb_animated_menu_update(m);
     } else {
         if (m->top > 0) {
 	    m->top--;
             mb_animated_menu_fillMenuContentUp(m);
+	    mb_animated_menu_update(m);
         } else {
 	    if (m->cur == 0) 
 	        return;
 	    m->cur--;
             mb_animated_menu_moveLightBar(m);
+	    mb_animated_menu_update(m);
 	}
     }
 }
@@ -223,24 +227,37 @@ static void mb_animated_menu_down(mb_animated_menu_t *m)
 	if (m->top+m->cur <= m->max) {
 	    m->cur++;
             mb_animated_menu_moveLightBar(m);
+	    mb_animated_menu_update(m);
 	}
     } else  {
         if ((m->top+8) < m->max-1) {
 	    m->top++;
             mb_animated_menu_fillMenuContentDown(m);
+	    mb_animated_menu_update(m);
         } else {
    	    if (m->cur+m->top < m->max-1) {
 	        m->cur++;
                 mb_animated_menu_moveLightBar(m);
+	        mb_animated_menu_update(m);
 	    } else
 	        return;
 	}
     }
 }
 
+void mb_animated_menu_set_update_callback(mb_animated_menu_t *m, void (*f)(mb_animated_menu_t *m, int sel))
+{
+   m->update_callback = f;
+}
 void mb_animated_menu_set_callback(mb_animated_menu_t *m, void (*f)(mb_animated_menu_t *m, int sel))
 {
    m->callback = f;
+}
+static void mb_animated_menu_update(mb_animated_menu_t *m)
+{
+   if (m->update_callback)
+	   m->update_callback(m,m->top+m->cur);
+
 }
 static void mb_animated_menu_select(mb_animated_menu_t *m)
 {
@@ -326,6 +343,7 @@ mb_animated_menu_t *mb_animated_menu_new(MBApp *app,mb_sprite_t *sp,char *objnam
     m->menus_y = (int *) (m->items+ii);
     m->objects = (mb_obj_t **) (m->menus_y+ii);
     m->callback = NULL;
+    m->update_callback = NULL;
     m->speed = 300000;
     for(i=0;i<9;i++) {
         m->items[i] = i;
