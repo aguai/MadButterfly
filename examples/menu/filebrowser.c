@@ -76,7 +76,6 @@ void mypreview(MyAppData *data, char *path)
     if (img) {
 	    printf("image %d %d\n",img->w,img->h);
 	    sh_image_set_img_data(obj,img,0,0,img->w,img->h);
-	    sh_image_transform(obj);
 	    rdman_shape_changed(MBAPP_RDMAN(myApp),obj);
             rdman_redraw_changed(MBAPP_RDMAN(myApp));
     }
