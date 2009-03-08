@@ -113,7 +113,7 @@ mb_img_ldr_t *simple_mb_img_ldr_new(const char *img_repository) {
 	return NULL;
     }
     strcpy((char *)ldr->repo, img_repository);
-    if(img_repository[sz - 1] != '/') {
+    if(img_repository[sz - 1] != '/' && strlen(img_repository) != 0) {
 	((char *)ldr->repo)[sz] = '/';
 	((char *)ldr->repo)[sz + 1] = 0;
     }

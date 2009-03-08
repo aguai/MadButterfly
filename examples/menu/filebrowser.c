@@ -67,7 +67,9 @@ void myselect(mb_animated_menu_t *m, int select)
 
 void mypreview(MyAppData *data, char *path)
 {
-    mb_img_data_t *img = MB_IMG_LDR_LOAD(rdman_img_ldr(MBAPP_RDMAN(myApp)), path);
+    redraw_man_t *rdman = MBAPP_RDMAN(myApp);
+    mb_img_ldr_t *ldr = rdman_img_ldr(rdman);
+    mb_img_data_t *img = MB_IMG_LDR_LOAD(ldr, path);
     shape_t *obj = (shape_t *) MB_SPRITE_GET_OBJ(myApp->rootsprite, "previewimg");
 
     printf("Preview %s\n",path);

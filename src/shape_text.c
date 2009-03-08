@@ -65,8 +65,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     text->layout = NULL;
     text->attrs = attrs;
     text->align = TEXTALIGN_START;
-    sh_text_P_generate_layout(text, rdman->cr);
-
+    
     rdman_shape_man(rdman, (shape_t *)text);
 
     return (shape_t *)text;
@@ -207,6 +206,8 @@ static int get_extents(sh_text_t *text, PangoRectangle *extents) {
 
 void sh_text_transform(shape_t *shape) {
     sh_text_t *text;
+    coord_t *coord;
+    canvas_t *canvas;
     co_aix x, y;
     co_aix shw;
     PangoRectangle extents;
@@ -214,8 +215,12 @@ void sh_text_transform(shape_t *shape) {
     int r;
 
     text = (sh_text_t *)shape;
-
+    
     text->d_font_size = coord_trans_size(shape->coord, text->font_size);
+    
+    coord = sh_get_coord(shape);
+    canvas = _coord_get_canvas(coord);
+    sh_text_P_generate_layout(text, (cairo_t *)canvas);
 
     x = text->x;
     y = text->y;
@@ -259,7 +264,6 @@ static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
     printf("text=%s\n",text->data);
 }
 static void draw_text(sh_text_t *text, cairo_t *cr) {
-    sh_text_P_generate_layout(text, cr);
     cairo_move_to(cr, text->d_x, text->d_y);
     pango_cairo_layout_path(cr,text->layout);
 }

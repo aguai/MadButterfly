@@ -454,7 +454,7 @@ static int X_MB_init(const char *display_name,
 
     xmb_rt->tman = mb_tman_new();
 
-    img_ldr = simple_mb_img_ldr_new("./");
+    img_ldr = simple_mb_img_ldr_new("");
     xmb_rt->img_ldr = img_ldr;
     rdman_set_img_ldr(xmb_rt->rdman, img_ldr);
     
