@@ -64,7 +64,7 @@ function dumpObjItem(obj, name, indent, depth) {
 function Inkscape(file) 
 {
 	var ink = document.getElementById('inkscape');
-	ink.innerHTML = "<embed src="+file+" width=640 height=480 />";
+	ink.innerHTML = "<embed src="+file+" width=700 height=700 />";
 	this.isInProgress = 0;
 
 	setTimeout("inkscape.fetchDocument()",4000);
@@ -385,10 +385,48 @@ var currentLayer = '';
 var last_select = null;
 inkscape = new Inkscape("scene.mbsvg");
 
-$('a.button').mouseover(function () {
-			if (inkscape.isInProgress==0)
-				this.style.MozOpacity = 0.1;
-		}).mouseout(function () {
-			this.style.MozOpacity= 1;
-		});	
+
+  tree = $.tree_create();
+  file1_animation = [
+	  {
+		attributes: {id:"an1-1"},
+		data: "animation1"
+	  },
+	  {
+		attributes: {id:"an1-2"},
+		data: "animation2"
+	  }
+  ];
+  file1 = {
+	attributes:{id:"file1"},
+	data: "scene1.mbsvg",
+	children: file1_animation
+  };
+  file2 = {
+	attributes:{id:"file2"},
+	data: "scene2.mbsvg",
+  };
+  file3 = {
+	attributes:{id:"file3"},
+	data: "scene3.mbsvg",
+  };
+
+  scenes = [ file1,file2,file3];
+  src1 = {attributes:{id:"src1"},data:"src1.c"};
+  src2 = {attributes:{id:"src1"},data:"src2.c"};
+  src3 = {attributes:{id:"src1"},data:"src3.c"};
+	  
+  sources = [src1,src2,src3];
+	   
+  tree.init($("#filelist"), {
+    data: {
+  	type: "json",
+	json : {
+		attributes: {id: "node0"}, state: "open", data: "Project", children: [
+				{ attributes:{id:"scenes"}, data:"scene", children: scenes},
+				{ attributes:{id:"sources"},data:"sources",children: sources}
+			]
+		}
+	}
+  });
 
