@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from twisted.web import server, resource,soap
 from twisted.internet import reactor,defer
-import os,time
+import os,time,sys
 import traceback
 
 
@@ -145,7 +145,7 @@ except:
 
 pid = os.fork()	
 if pid==0:
-	os.execvp("inkscape-mb",["inkscape-mb","/tmp/scene.mbsvg"])
+	os.execvp("inkscape-mb",["inkscape-mb",sys.argv[1]])
 s = Server()
 s.client = None
 s.pid = pid
