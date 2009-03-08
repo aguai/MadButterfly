@@ -74,25 +74,23 @@ shape_t *rdman_shape_image_new(redraw_man_t *rdman, mb_img_data_t *img_data,
     sh_image_t *img;
     cairo_format_t fmt;
     paint_t *paint;
+    int r;
 
     img = O_ALLOC(sh_image_t);
     if(img == NULL)
 	return NULL;
 
     memset(img, 0, sizeof(sh_image_t));
-    
-    img->shape.free = sh_image_free;
     mb_obj_init((mb_obj_t *)img, MBO_IMAGE);
-    img->x = x;
-    img->y = y;
-    img->w = w;
-    img->h = h;
-    img->img_data = img_data;
-
-    paint = rdman_paint_image_new(rdman, img_data);
-    rdman_paint_fill(rdman, paint, (shape_t *)img);
-    img->paint = paint;
     img->rdman = rdman;
+    img->shape.free = sh_image_free;
+    
+    r = sh_image_set_img_data((shape_t *)img, img_data, x, y, w, h);
+    if(r != OK) {
+	mb_obj_destroy((shape_t *)img);
+	free(img);
+	return NULL;
+    }
 
     return (shape_t *)img;
 }
@@ -183,3 +181,32 @@ void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
     img->w = w;
     img->h = h;
 }
+
+int sh_image_set_img_data(shape_t *shape, mb_img_data_t *img_data,
+			   co_aix x, co_aix y, co_aix w, co_aix h) {
+    sh_image_t *img = (sh_image_t *)shape;
+    paint_t *paint;
+    
+    ASSERT(img_data != NULL);
+    ASSERT(shape->obj.obj_type == MBO_IMAGE);
+
+    paint = rdman_paint_image_new(img->rdman, img_data);
+    if(paint == NULL)
+	return ERR;
+    
+    if(img->paint) {
+	rdman_paint_free(img->rdman, img->paint);
+	MB_IMG_DATA_FREE(img->img_data);
+    }
+    
+    img->img_data = img_data;
+    img->x = x;
+    img->y = y;
+    img->w = w;
+    img->h = h;
+    img->paint = paint;
+    rdman_paint_fill(img->rdman, paint, (shape_t *)img);
+    
+    return OK;
+}
+
