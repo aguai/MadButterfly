@@ -244,6 +244,7 @@ extern void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
 				  co_aix w, co_aix h);
 extern int sh_image_set_img_data(shape_t *shape, mb_img_data_t *img_data,
 				 co_aix x, co_aix y, co_aix w, co_aix h);
+extern mb_img_data_t *sh_image_get_img_data(shape_t *shape);
 /* @} */
 /* @} */
 

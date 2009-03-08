@@ -210,3 +210,10 @@ int sh_image_set_img_data(shape_t *shape, mb_img_data_t *img_data,
     return OK;
 }
 
+mb_img_data_t *sh_image_get_img_data(shape_t *shape) {
+    sh_image_t *img = (sh_image_t *)shape;
+    
+    ASSERT(shape->obj.obj_type == MBO_IMAGE);
+    
+    return img->img_data;
+}
