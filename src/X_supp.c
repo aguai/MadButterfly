@@ -177,7 +177,7 @@ static void notify_coord_or_shape(redraw_man_t *rdman,
 static void handle_x_event(X_MB_runtime_t *rt) {
     Display *display = rt->display;
     redraw_man_t *rdman = rt->rdman;
-    XEvent evt;
+    XEvent evt, peek_evt;
     XMotionEvent *mevt;
     XButtonEvent *bevt;
     XExposeEvent *eevt;
@@ -231,6 +231,17 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	    break;
 
 	case MotionNotify:
+	    while(XEventsQueued(display, QueuedAfterReading) > 0) {
+		r = XPeekEvent(display, &peek_evt);
+		if(r == -1)
+		    break;
+		if(peek_evt.type != MotionNotify)
+		    break;
+		XNextEvent(display, &evt);
+	    }
+	    if(r == -1)
+		break;
+	    
 	    mevt = (XMotionEvent *)&evt;
 	    x = mevt->x;
 	    y = mevt->y;
