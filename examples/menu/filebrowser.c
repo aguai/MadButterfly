@@ -65,6 +65,51 @@ void myselect(mb_animated_menu_t *m, int select)
 }
 
 
+void mypreview(MyAppData *data, char *path)
+{
+    mb_img_data_t *img = MB_IMG_LDR_LOAD(rdman_img_ldr(MBAPP_RDMAN(myApp)), path);
+    shape_t *obj = (shape_t *) MB_SPRITE_GET_OBJ(myApp->rootsprite, "previewimg");
+
+    printf("Preview %s\n",path);
+    if (img) {
+	    printf("image %d %d\n",img->w,img->h);
+	    sh_image_set_img_data(obj,img,0,0,img->w,img->h);
+	    sh_image_transform(obj);
+	    rdman_shape_changed(MBAPP_RDMAN(myApp),obj);
+            rdman_redraw_changed(MBAPP_RDMAN(myApp));
+    }
+}
+
+int endWith(char *path, char *ext)
+{
+    int i;
+    char *s;
+
+    s = path+strlen(path)-1;
+    for(i=strlen(ext)-1;i>=0;i--) {
+	    if (*s != ext[i]) return 0;
+	    s--;
+	    if (s < path) return 0;
+    }
+    return 1;
+}
+
+void myupdate(mb_animated_menu_t *m, int select)
+{
+    MyAppData *data = MBAPP_DATA(myApp,MyAppData);
+    char *s = data->titles[select];
+    char path[1024];
+
+    printf("check %s\n",s);
+
+    if (endWith(s,".png")) {
+    	    snprintf(path,1024,"%s%s", data->curDir,data->titles[select]);
+	    mypreview(data,path);
+    }
+}
+
+
+
 struct fileinfo *fileinfo_new()
 {
     struct fileinfo *f = (struct fileinfo *) malloc(sizeof(struct fileinfo));
@@ -152,6 +197,7 @@ MyApp_InitContent(char *dir)
     
     data->m = mb_animated_menu_new(myApp,myApp->rootsprite,"item",NULL);
     mb_animated_menu_set_callback(data->m, myselect);
+    mb_animated_menu_set_update_callback(data->m, myupdate);
     data->curDir = NULL;
     data->nFiles=0;
     MyApp_fillDirInfo(myApp,dir);

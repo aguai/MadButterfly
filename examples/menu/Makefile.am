@@ -34,7 +34,7 @@ EXTRA_DIST =
 
 menu_SOURCES = main.c animated_menu.c animated_menu.h
 nodist_menu_SOURCES = 
-CFLAGS = @pangocairo_CFLAGS@ 
+CFLAGS = @pangocairo_CFLAGS@ -g
 menu_CFLAGS = @pangocairo_CFLAGS@ 
 menu_LDFLAGS = @pangocairo_LIBS@ 
 menu_LDADD = $(top_builddir)/src/libmbfly.la
