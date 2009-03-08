@@ -1,0 +1,10 @@
+# Installation in ubuntu 8.1
+
+* Install required modules
+	* sudo apt-get install python-soappy python-twisted mozplugger python-lxml
+* Install inkscape for madbutterfly
+	* tar -C / -xzvf inkscape-mb.tgz
+* Install madbuilder
+	* firefox madbuilder.xpi
+
+* Restart firefox and select the MadBuilder under tools

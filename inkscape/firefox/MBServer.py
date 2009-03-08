@@ -476,7 +476,7 @@ class MB(soap.SOAPPublisher):
 		except:
 			return traceback.format_exc()
 import os
-os.chdir('/usr/share/inkscape/extensions')
+os.chdir('/usr/local/share/inkscape/extensions')
 
 A = MBScene()
 A.affect()

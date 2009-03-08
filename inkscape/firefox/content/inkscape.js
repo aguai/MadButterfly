@@ -64,7 +64,7 @@ function dumpObjItem(obj, name, indent, depth) {
 function Inkscape(file) 
 {
 	var ink = document.getElementById('inkscape');
-	ink.innerHTML = "<embed src="+file+" width=1000 height=800 />";
+	ink.innerHTML = "<embed src="+file+" width=640 height=480 />";
 	this.isInProgress = 0;
 
 	setTimeout("inkscape.fetchDocument()",4000);
