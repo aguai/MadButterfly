@@ -37,6 +37,7 @@ AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
 
 AC_CONFIG_FILES([Makefile
                  libmbfly.pc
+                 libmbfly-uninstalled.pc
                  examples/Makefile
                  examples/calculator/Makefile
                  examples/svg2code_ex/Makefile
