@@ -68,24 +68,26 @@ void myselect(mb_animated_menu_t *m, int select)
 void mypreview(MyAppData *data, char *path)
 {
     redraw_man_t *rdman = MBAPP_RDMAN(myApp);
-    mb_img_ldr_t *ldr = rdman_img_ldr(rdman);
-    mb_img_data_t *img = MB_IMG_LDR_LOAD(ldr, path);
+    paint_t *paint, *old_paint;
+    paint_t *previewimg_paint;
     shape_t *obj = (shape_t *) MB_SPRITE_GET_OBJ(myApp->rootsprite, "previewimg");
-    mb_img_data_t *previewimg_img_data;
-    mb_img_data_t *old_img;
+    int w, h;
 
-    previewimg_img_data =
-	(mb_img_data_t *)MB_SPRITE_GET_OBJ(myApp->rootsprite,
-					   "previewimg_img_data");
+    previewimg_paint =
+	(paint_t *)MB_SPRITE_GET_OBJ(myApp->rootsprite,
+					   "previewimg_paint_img");
     printf("Preview %s\n",path);
-    if (img) {
-	    printf("image %d %d\n",img->w,img->h);
-	    old_img = sh_image_get_img_data(obj);
-	    sh_image_set_img_data(obj,img);
-	    if(old_img != previewimg_img_data)
-		MB_IMG_DATA_FREE(old_img);
-	    rdman_shape_changed(MBAPP_RDMAN(myApp),obj);
-            rdman_redraw_changed(MBAPP_RDMAN(myApp));
+    paint = rdman_img_ldr_load_paint(rdman, path);
+    if (paint) {
+	paint_image_get_size(paint, &w, &h);
+	printf("image %d %d\n",w, h);
+	old_paint = sh_get_fill(obj);
+	rdman_paint_fill(rdman, paint, obj);
+	if(old_paint != previewimg_paint)
+	    rdman_paint_free(rdman, old_paint);
+	    
+	rdman_shape_changed(MBAPP_RDMAN(myApp),obj);
+	rdman_redraw_changed(MBAPP_RDMAN(myApp));
     }
 }
 

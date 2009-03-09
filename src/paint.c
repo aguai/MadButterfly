@@ -39,7 +39,8 @@ paint_t *rdman_paint_color_new(redraw_man_t *rdman,
     color->g = g;
     color->b = b;
     color->a = a;
-    paint_init(&color->paint, paint_color_prepare, paint_color_free);
+    paint_init(&color->paint, MBP_COLOR,
+	       paint_color_prepare, paint_color_free);
     return (paint_t *)color;
 }
 
@@ -122,7 +123,8 @@ paint_t *rdman_paint_linear_new(redraw_man_t *rdman,
     if(linear == NULL)
 	return NULL;
 
-    paint_init(&linear->paint, paint_linear_prepare, paint_linear_free);
+    paint_init(&linear->paint, MBP_LINEAR,
+	       paint_linear_prepare, paint_linear_free);
 
     linear->x1 = x1;
     linear->y1 = y1;
@@ -212,7 +214,8 @@ paint_t *rdman_paint_radial_new(redraw_man_t *rdman,
     if(radial == NULL)
 	return NULL;
 
-    paint_init(&radial->paint, paint_radial_prepare, paint_radial_free);
+    paint_init(&radial->paint, MBP_RADIAL,
+	       paint_radial_prepare, paint_radial_free);
     radial->cx = cx;
     radial->cy = cy;
     radial->r = r;
@@ -272,6 +275,7 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     
     cairo_surface_destroy(paint_img->surf);
     img_data = paint_img->img;
+    MB_IMG_DATA_FREE(img_data);
     paint_destroy(&paint_img->paint);
     free(paint);
 }
@@ -280,8 +284,8 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
  *
  * Create a painter that fill/stroke shapes with an image.
  *
- * \param img is image data return by image load.  Life-cycle of img
- *            is managed by application code.
+ * \param img is image data return by image load.
+ *            Owner-ship of img is transfered.
  */
 paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 			       mb_img_data_t *img) {
@@ -309,7 +313,8 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
     if(paint == NULL)
 	return NULL;
     
-    paint_init(&paint->paint, paint_image_prepare, paint_image_free);
+    paint_init(&paint->paint, MBP_IMAGE,
+	       paint_image_prepare, paint_image_free);
     paint->img = img;
     paint->surf = cairo_image_surface_create_for_data(img->content,
 						      fmt,
@@ -350,4 +355,12 @@ void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     cmatrix.yy = matrix[4];
     cmatrix.y0 = matrix[5];
     cairo_pattern_set_matrix(img_paint->ptn, &cmatrix);
+}
+
+void paint_image_get_size(paint_t *paint, int *w, int *h) {
+    paint_image_t *ipaint = (paint_image_t *)paint;
+    
+    ASSERT(paint->pnt_type == MBP_IMAGE);
+    *w = ipaint->img->w;
+    *h = ipaint->img->h;
 }

@@ -127,9 +127,10 @@ define([S_ADD_TEXT],[[
 ]])
 
 define([S_ADD_IMAGE],[[
-    obj->$1_img_data = MB_IMG_LDR_LOAD(img_ldr, "$2");
-    obj->$1 = rdman_shape_image_new(rdman, obj->$1_img_data,
+    obj->$1_paint_img = rdman_img_ldr_load_paint(rdman, "$2");
+    obj->$1 = rdman_shape_image_new(rdman,
 				    $3, $4, $5, $6);
+    rdman_paint_fill(rdman, obj->$1_paint_img, obj->$1);
     rdman_add_shape(rdman, obj->$1, obj->$7);
 ]])
 define([S_PANGO_BEGIN_TEXT],[[
@@ -300,7 +301,7 @@ define([F_ADD_TEXT],[[
 
 define([F_ADD_IMAGE],[[
     rdman_shape_free(rdman, obj->$1);
-    MB_IMG_DATA_FREE(obj->$1_img_data);
+    rdman_paint_free(rdman, obj->$1_paint_img);
 ]])
 define([F_PANGO_BEGIN_TEXT],[[
     rdman_shape_free(rdman, obj->$1);

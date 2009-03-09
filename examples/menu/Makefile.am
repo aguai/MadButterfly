@@ -38,7 +38,9 @@ CFLAGS = @pangocairo_CFLAGS@ -g
 menu_CFLAGS = @pangocairo_CFLAGS@ 
 menu_LDFLAGS = @pangocairo_LIBS@ 
 menu_LDADD = $(top_builddir)/src/libmbfly.la
-CLEANFILES = menu.mb menu.c menu.h
+CLEANFILES = menu.mb menu.c menu.h \
+	list.mb list.c list.h \
+	browser.mb browser.c browser.h
 
 filebrowser_SOURCES = filebrowser.c animated_menu.c animated_menu.h
 filebrowser_CFLAGS = @pangocairo_CFLAGS@ 

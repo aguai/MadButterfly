@@ -17,14 +17,15 @@ extern void paint_color_set(paint_t *paint,
 extern void paint_color_get(paint_t *paint,
 			    co_comp_t *r, co_comp_t *g,
 			    co_comp_t *b, co_comp_t *a);
-#define paint_init(_paint, _prepare, _free)	\
-     do {					\
-	 (_paint)->flags = 0;			\
-	 (_paint)->prepare = _prepare;		\
-	 (_paint)->free = _free;		\
-	 STAILQ_INIT((_paint)->members);	\
-	 (_paint)->pnt_next = NULL;		\
-     } while(0)
+#define paint_init(_paint, _type, _prepare, _free)	\
+    do {						\
+	(_paint)->pnt_type = _type;			\
+	(_paint)->flags = 0;				\
+	(_paint)->prepare = _prepare;			\
+	(_paint)->free = _free;				\
+	STAILQ_INIT((_paint)->members);			\
+	(_paint)->pnt_next = NULL;			\
+    } while(0)
 #define paint_destroy(_paint)
 
 
@@ -61,5 +62,6 @@ extern paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 /*! \brief Set a matrix to transform image.
  */
 extern void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]);
+extern void paint_image_get_size(paint_t *paint, int *w, int *h);
 
 #endif /* __PAINT_H_ */

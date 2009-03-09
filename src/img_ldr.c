@@ -2,6 +2,7 @@
 #include <string.h>
 #include <cairo.h>
 #include "mb_tools.h"
+#include "mb_paint.h"
 #include "mb_img_ldr.h"
 
 /*! \brief Simple image loader.
