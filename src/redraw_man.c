@@ -2271,6 +2271,24 @@ static subject_t *ob_get_parent_subject(ob_factory_t *factory,
 
 /* @} */
 
+/*! \brief Load an image as a paint_image_t.
+ */
+paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman, const char *img_id) {
+    mb_img_data_t *img_data;
+    paint_t *paint;
+    mb_img_ldr_t *ldr = rdman_img_ldr(rdman);
+    
+    img_data = MB_IMG_LDR_LOAD(ldr, img_id);
+    if(img_data == NULL)
+	return NULL;
+    
+    paint = rdman_paint_image_new(rdman, img_data);
+    if(paint == NULL)
+	MB_IMG_DATA_FREE(img_data);
+    
+    return paint;
+}
+
 #ifdef UNITTEST
 /* Test cases */
 

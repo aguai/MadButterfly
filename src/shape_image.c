@@ -10,8 +10,8 @@
  *
  * Image (\ref sh_image_t) is a shape to show an image on the output
  * device.  Programmers manipulate object of an image shape to show it
- * at specified position with specified size.  To create a new instance
- * of sh_iamge_t, an image should be specified.  Programmers must have
+ * at specified position with specified size.  For a sh_image_t, an
+ * image should be specified to fill the shape.  Programmers must have
  * a way to load image from files.  The solution proposed by MadButterfly
  * is image loader (\ref mb_img_ldr_t).
  *
@@ -58,48 +58,19 @@ typedef struct _sh_image {
     co_aix w, h;
     co_aix poses[4][2];
     
-    mb_img_data_t *img_data;
-    paint_t *paint;
     redraw_man_t *rdman;
 } sh_image_t;
 
 static void sh_image_free(shape_t *shape);
 
-int _sh_image_set_img_data(shape_t *shape, mb_img_data_t *img_data,
-			   co_aix x, co_aix y, co_aix w, co_aix h) {
-    sh_image_t *img = (sh_image_t *)shape;
-    paint_t *paint;
-    
-    ASSERT(img_data != NULL);
-    ASSERT(shape->obj.obj_type == MBO_IMAGE);
-
-    paint = rdman_paint_image_new(img->rdman, img_data);
-    if(paint == NULL)
-	return ERR;
-    
-    if(img->paint)
-	rdman_paint_free(img->rdman, img->paint);
-    
-    img->img_data = img_data;
-    img->x = x;
-    img->y = y;
-    img->w = w;
-    img->h = h;
-    img->paint = paint;
-    rdman_paint_fill(img->rdman, paint, (shape_t *)img);
-    
-    return OK;
-}
-
 /*! \brief Creae a new image shape.
  *
  * \param img_data is image data whose owner-ship is transfered.
  */
-shape_t *rdman_shape_image_new(redraw_man_t *rdman, mb_img_data_t *img_data,
+shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 			       co_aix x, co_aix y, co_aix w, co_aix h) {
     sh_image_t *img;
     cairo_format_t fmt;
-    paint_t *paint;
     int r;
 
     img = O_ALLOC(sh_image_t);
@@ -110,35 +81,31 @@ shape_t *rdman_shape_image_new(redraw_man_t *rdman, mb_img_data_t *img_data,
     mb_obj_init((mb_obj_t *)img, MBO_IMAGE);
     img->rdman = rdman;
     img->shape.free = sh_image_free;
-    
-    r = _sh_image_set_img_data((shape_t *)img, img_data, x, y, w, h);
-    if(r != OK) {
-	mb_obj_destroy((shape_t *)img);
-	free(img);
-	return NULL;
-    }
 
+    img->x = x;
+    img->y = y;
+    img->w = w;
+    img->h = h;
+    
     return (shape_t *)img;
 }
 
 void sh_image_free(shape_t *shape) {
     sh_image_t *img = (sh_image_t *)shape;
 
-    rdman_paint_free(img->rdman, img->paint);
     mb_obj_destroy(shape);
     free(img);
 }
 
 void sh_image_transform(shape_t *shape) {
     sh_image_t *img = (sh_image_t *)shape;
-    mb_img_data_t *img_data;
+    paint_t *paint;
     co_aix (*poses)[2];
     co_aix img_matrix[6];
     co_aix x_factor, y_factor;
+    int img_w, img_h;
     cairo_matrix_t cmatrix;
     int i;
-    
-    img_data = img->img_data;
     
     poses = img->poses;
     poses[0][0] = img->x;
@@ -151,7 +118,17 @@ void sh_image_transform(shape_t *shape) {
     poses[3][1] = img->y + img->h;
     for(i = 0; i < 4; i++)
 	coord_trans_pos(img->shape.coord, &poses[i][0], &poses[i][1]);
+    
+    geo_from_positions(sh_get_geo(shape), 4, poses);
 
+    paint = sh_get_fill(shape);
+    if(paint == NULL)
+	return;
+
+    ASSERT(paint.pnt_type == MBP_IMAGE);
+    
+    paint_image_get_size(paint, &img_w, &img_h);
+    
     /* Transformation from user space to image space */
     img_matrix[0] = (poses[1][0] - poses[0][0]) / img->w;
     img_matrix[1] = (poses[1][1] - poses[0][1]) / img->w;
@@ -159,21 +136,19 @@ void sh_image_transform(shape_t *shape) {
     img_matrix[3] = (poses[3][0] - poses[0][0]) / img->h;
     img_matrix[4] = (poses[3][1] - poses[0][1]) / img->h;
     img_matrix[5] = -poses[0][1];
-    if(img->w != img_data->w ||
-       img->h != img_data->h) {
+    if(img->w != img_w ||
+       img->h != img_h) {
 	/* Resize image */
-	x_factor = img_data->w / img->w;
+	x_factor = img_w / img->w;
 	img_matrix[0] *= x_factor;
 	img_matrix[1] *= x_factor;
 	img_matrix[2] *= x_factor;
-	y_factor = img_data->h / img->h;
+	y_factor = img_h / img->h;
 	img_matrix[3] *= y_factor;
 	img_matrix[4] *= y_factor;
 	img_matrix[5] *= y_factor;
     }
     paint_image_set_matrix(sh_get_fill(shape), img_matrix);
-    
-    geo_from_positions(sh_get_geo(shape), 4, poses);
 }
 
 /*! \brief Draw image for an image shape.
@@ -205,21 +180,4 @@ void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
     img->y = y;
     img->w = w;
     img->h = h;
-}
-
-int sh_image_set_img_data(shape_t *shape, mb_img_data_t *img_data) {
-    int r;
-    sh_image_t *img = (sh_image_t *)shape;
-
-    r = _sh_image_set_img_data(shape, img_data,
-			       img->x, img->y, img->w, img->h);
-    return r;
-}
-
-mb_img_data_t *sh_image_get_img_data(shape_t *shape) {
-    sh_image_t *img = (sh_image_t *)shape;
-    
-    ASSERT(shape->obj.obj_type == MBO_IMAGE);
-    
-    return img->img_data;
 }

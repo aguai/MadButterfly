@@ -21,7 +21,7 @@ define([ADD_TEXT],[
 [    shape_t *$1;
 ]])
 define([ADD_IMAGE],[[
-    mb_img_data_t *$1_img_data;
+    paint_t *$1_paint_img;
     shape_t *$1;
 ]])
 define([PANGO_BEGIN_TEXT],[
