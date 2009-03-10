@@ -382,11 +382,39 @@ var nextScene;
 var currentScene = 0;
 var currentLayer = '';
 
+
+function dump(n)
+{
+	cmd = "";
+	for(k in n) {
+		cmd = cmd + k+"="+n[k]+"\n";
+	}
+	alert(cmd);
+}
+
+
+function openFile()
+{
+	alert('bug');
+	$.modal('<div>My data</div>');
+	alert('done');
+}
+
+
 var last_select = null;
-inkscape = new Inkscape("scene.mbsvg");
+
+$('#inkscape').html('Please select the project file<br>');
+$('#inkscape').append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
+$('#inkscape').append('<input type=button value="Load" onclick="loadFile()">');
 
 
-  tree = $.tree_create();
+function loadFile()
+{
+  ele = $('#mbsvg');
+  file = ele.attr('value');
+  inkscape = new Inkscape("file://"+file);
+
+  var tree = $.tree_create();
   file1_animation = [
 	  {
 		attributes: {id:"an1-1"},
@@ -422,11 +450,38 @@ inkscape = new Inkscape("scene.mbsvg");
     data: {
   	type: "json",
 	json : {
-		attributes: {id: "node0"}, state: "open", data: "Project", children: [
+		attributes: {id: "prj"}, state: "open", data: "Project", 
+			children: [
 				{ attributes:{id:"scenes"}, data:"scene", children: scenes},
 				{ attributes:{id:"sources"},data:"sources",children: sources}
 			]
 		}
-	}
-  });
+	},
+    ui : {
+		context :  [ 
+			{
+				id: "Open",
+				label: "Open",
+				icon: "open.png",
+				visible: function(NODE,TREE_OBJ) {  if(NODE.length != 1) return false; return NODE[0].id == "prj";},
+				action: function(NODE,TREE_OBJ) { openFile(TREE_OBJ);}
+			},
+			{
+				id: "New",
+				label: "New",
+				icon: "create.png",
+				visible: function(NODE,TREE_OBJ) {  if(NODE.length != 1) return false; return NODE[0].id == "prj";},
+				action: function(NODE,TREE_OBJ) { alert("open is not support yet");}
+			},
+			{
+				id: "Rename",
+				label: "Rename",
+				icon: "rename.png",
+				visible: function(NODE,TREE_OBJ) {  if(NODE.length != 1) return false; return NODE[0].id == "prj";},
+				action: function(NODE,TREE_OBJ) { alert("open is not support yet");}
+			},
+		]
+    },
 
+  });
+}
