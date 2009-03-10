@@ -393,28 +393,16 @@ function dump(n)
 }
 
 
-function openFile()
-{
-	alert('bug');
-	$.modal('<div>My data</div>');
-	alert('done');
-}
 
 
-var last_select = null;
-
-$('#inkscape').html('Please select the project file<br>');
-$('#inkscape').append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
-$('#inkscape').append('<input type=button value="Load" onclick="loadFile()">');
 
 
-function loadFile()
+function loadInkscapeFile()
 {
   ele = $('#mbsvg');
   file = ele.attr('value');
   inkscape = new Inkscape("file://"+file);
 
-  var tree = $.tree_create();
   file1_animation = [
 	  {
 		attributes: {id:"an1-1"},
@@ -446,18 +434,68 @@ function loadFile()
 	  
   sources = [src1,src2,src3];
 	   
-  tree.init($("#filelist"), {
-    data: {
-  	type: "json",
-	json : {
-		attributes: {id: "prj"}, state: "open", data: "Project", 
-			children: [
-				{ attributes:{id:"scenes"}, data:"scene", children: scenes},
-				{ attributes:{id:"sources"},data:"sources",children: sources}
-			]
-		}
-	},
-    ui : {
+}
+
+
+function project_parse(xml)
+{
+
+	var xmlParser = new DOMParser();
+	var xmlDoc = xmlParser.parseFromString( xml, 'text/xml');
+	var scenesNode = xmlDoc.getElementsByTagName("scene");
+	if (scenesNode == null) {
+		alert('This is not a valid scene file');
+	}
+	var len = scenesNode.length;
+	var i,j;
+	var max = 0;
+	var scenes = new Array();
+
+	// Get the length of scenes
+	for(i=0;i<len;i++) {
+		var n = scenesNode[i];
+		var s = new Object();
+		s.attributes = new Object();
+		s.attributes.id = "scene"+i;
+		s.state = "open";
+		s.data = n.getAttribute("src");
+		scenes.push(s);
+	}
+
+	var nodes = xmlDoc.getElementsByTagName("source");
+	var len = nodes.length;
+	var i,j;
+	var max = 0;
+	var sources = [];
+
+	// Get the length of scenes
+	for(i=0;i<len;i++) {
+		var n = nodes[i];
+		var s = new Object();
+		s.attributes = new Object();
+		s.attributes.id = "sources"+i;
+		s.state = "open";
+		s.data = n.getAttribute("src");
+		sources.push(s);
+	}
+
+  	var tree = $.tree_create();
+  	tree.init($("#filelist"), {
+	    data: {
+  		type: "json",
+		json : [
+			{
+				attributes: {id: "prj"}, 
+				state: "open", 
+				data: "Project", 
+				children: [
+					{ attributes:{id:"scenes"}, data:"scene", children: scenes},
+					{ attributes:{id:"sources"},data:"sources",children: sources}
+				]
+			}
+		],
+	    },
+	    ui : {
 		context :  [ 
 			{
 				id: "Open",
@@ -479,9 +517,49 @@ function loadFile()
 				icon: "rename.png",
 				visible: function(NODE,TREE_OBJ) {  if(NODE.length != 1) return false; return NODE[0].id == "prj";},
 				action: function(NODE,TREE_OBJ) { alert("open is not support yet");}
-			},
+			}
 		]
-    },
+    		}
 
-  });
+  	});
 }
+
+function system_read(fname) {
+	try {
+		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+	} catch (e) {
+		alert("Permission to read file was denied.");
+	}
+	var file = Components.classes["@mozilla.org/file/local;1"]
+					.createInstance(Components.interfaces.nsILocalFile);
+	try {
+		file.initWithPath( fname );
+		if ( file.exists() == false ) {
+			alert("File does not exist");
+		}
+		var is = Components.classes["@mozilla.org/network/file-input-stream;1"]
+						.createInstance( Components.interfaces.nsIFileInputStream );
+		is.init( file,0x01, 00004, null);
+		var sis = Components.classes["@mozilla.org/scriptableinputstream;1"]
+						.createInstance( Components.interfaces.nsIScriptableInputStream );
+		sis.init( is );
+		var output = sis.read( sis.available() );
+		sis.close();
+	} catch(e) {
+		alert(fname+" does not exist");
+	}
+	return output;
+}
+
+function project_loadFile()
+{
+	prjname = $('#mbsvg').attr('value');
+	var prj = system_read(prjname);
+	project_parse(prj);
+}
+
+var last_select = null;
+
+$('#inkscape').html('Please select the project file<br>');
+$('#inkscape').append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
+$('#inkscape').append('<input type=button value="Load" onclick="project_loadFile()">');

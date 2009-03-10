@@ -110,10 +110,15 @@ class Server(soap.SOAPPublisher):
 			return d
 		except:
 			traceback.print_exc()
-		
-
-
-
+	def soap_GETPRJ(self,prj):
+		try:
+			f = open(prj,"r")
+			l = f.read()
+			f.close()
+			return l
+		except:
+			traceback.print_exc()
+	
 class Client(object):
 	def __init__(self):
 		self.proxy = soap.Proxy('http://localhost:8080')	
