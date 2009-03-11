@@ -437,6 +437,12 @@ function loadInkscapeFile()
 }
 
 
+function project_loadScene(node)
+{
+	var file = node.textContent;
+	inkscape = new Inkscape("file://"+file);
+}
+
 function project_parse(xml)
 {
 
@@ -494,6 +500,9 @@ function project_parse(xml)
 				]
 			}
 		],
+	    },
+	    callback : {
+	        ondblclk : function(NODE,TREE_OBJ) { project_loadScene(NODE); TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE);}
 	    },
 	    ui : {
 		context :  [ 
