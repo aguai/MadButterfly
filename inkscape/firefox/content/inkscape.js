@@ -3,7 +3,11 @@ var isInProgress=0;
 var MAX_DUMP_DEPTH = 10;
 var inkscape;
 
-      
+
+function endsWith(str, s){
+	var reg = new RegExp (s + "$");
+	return reg.test(str);
+}
 
 function dumpObj(obj, name, indent, depth) {
       if (depth > MAX_DUMP_DEPTH) {
@@ -63,9 +67,9 @@ function dumpObjItem(obj, name, indent, depth) {
  *
  */
 
-function Inkscape(file) 
+function TextEditor(file) 
 {
-	var editor = document.getElementById('editor');
+	var editor = document.getElementById('inkscape');
 	editor.innerHTML = "<embed src="+file+" width=700 height=700 />";
 	this.isInProgress = 0;
 }
@@ -450,21 +454,27 @@ function loadInkscapeFile()
 }
 
 
+function project_showFile(node)
+{
+	var file = node.textContent;
+	if (endsWith(file,"mbsvg")) {
+		project_loadScene(node);
+	} else {
+		project_loadEditor(node);
+	}
+
+}
 function project_loadScene(node)
 {
 	var file = node.textContent;
 	inkscape = new Inkscape("file://"+file);
-	$('#inkscape').show('slow');
-	$('#editor').hide('slow');
 }
 
 
 function project_loadEditor(node)
 {
 	var file = node.textContent;
-	editor = new TextEditor(file);
-	$('#inkscape').hide('slow');
-	$('#editor').show('slow');
+	editor = new TextEditor("file://"+file);
 }
 
 function project_parse(xml)
@@ -526,7 +536,7 @@ function project_parse(xml)
 		],
 	    },
 	    callback : {
-	        ondblclk : function(NODE,TREE_OBJ) { project_loadScene(NODE); TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE);}
+	        ondblclk : function(NODE,TREE_OBJ) { project_showFile(NODE); TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE);}
 	    },
 	    ui : {
 		context :  [ 
