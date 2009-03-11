@@ -1,0 +1,6 @@
+<project>
+	<scene src="/tmp/scene.mbsvg"/>
+	<scene src="/tmp/second.mbsvg"/>
+	<source src="/tmp/main.c"/>
+	<source src="/tmp/second.c"/>
+</project>
