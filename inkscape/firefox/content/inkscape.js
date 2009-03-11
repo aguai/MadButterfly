@@ -57,6 +57,19 @@ function dumpObjItem(obj, name, indent, depth) {
              return obj;
       }
 }
+
+/**
+ *   TextEditor class
+ *
+ */
+
+function Inkscape(file) 
+{
+	var editor = document.getElementById('editor');
+	editor.innerHTML = "<embed src="+file+" width=700 height=700 />";
+	this.isInProgress = 0;
+}
+
 /**
  *   Inkscape class
  *
@@ -441,6 +454,17 @@ function project_loadScene(node)
 {
 	var file = node.textContent;
 	inkscape = new Inkscape("file://"+file);
+	$('#inkscape').show('slow');
+	$('#editor').hide('slow');
+}
+
+
+function project_loadEditor(node)
+{
+	var file = node.textContent;
+	editor = new TextEditor(file);
+	$('#inkscape').hide('slow');
+	$('#editor').show('slow');
 }
 
 function project_parse(xml)
