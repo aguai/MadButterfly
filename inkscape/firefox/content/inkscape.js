@@ -375,17 +375,22 @@ function selectCell(obj)
 
 function onButtonClick(obj)
 {
-	if (inkscape.isInProgress != 0) return;
 	var id = obj.getAttribute('id');
 	if (id == 'Jump') {
+		if (inkscape.isInProgress != 0) return;
 		if (currentScene != 0)
 			inkscape.gotoScene(currentScene);
 	} else if (id == 'InsertKey') {
+		if (inkscape.isInProgress != 0) return;
 		inkscape.insertKey(currentScene);
 	} else if (id == 'ExtendScene') {
+		if (inkscape.isInProgress != 0) return;
 		inkscape.extendScene(currentScene);
 	} else if (id == 'DeleteScene') {
+		if (inkscape.isInProgress != 0) return;
 		inkscape.deleteScene(currentScene);
+	} else if (id == 'Save') {
+		project_save();
 	} else {
 		alert(id+' has not been implemented yet');
 	}
@@ -520,6 +525,7 @@ function project_parse(xml)
 	}
 
   	var tree = $.tree_create();
+	project_tree = tree;
   	tree.init($("#filelist"), {
 	    data: {
   		type: "json",
@@ -596,10 +602,18 @@ function project_addScene(file,treeobj)
 
 function onTree_addSceneFile(node,treeobj)
 {
-	//treeobj.create(false,treeobj.selected,"xxx",null,"newscene");
 	openFileDialog(project_addScene,treeobj);
 }
 
+function project_addSource(file,treeobj)
+{
+	treeobj.create(false,treeobj.selected,file);
+}
+
+function onTree_addSourceFile(node,treeobj)
+{
+	openFileDialog(project_addSource,treeobj);
+}
 
 function onTree_openFile(node,treeobj)
 {
@@ -637,13 +651,57 @@ function system_read(fname) {
 	}
 	return output;
 }
+function system_write(fname,xml) {
+	try {
+		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+	} catch (e) {
+		alert("Permission to read file was denied.");
+	}
+	var file = Components.classes["@mozilla.org/file/local;1"]
+					.createInstance(Components.interfaces.nsILocalFile);
+	try {
+		file.initWithPath( fname );
+		var fostream = Components.classes["@mozilla.org/network/file-output-stream;1"]
+						.createInstance( Components.interfaces.nsIFileOutputStream );
+		fostream.init( file,0x02|0x8|0x20, 0666,0);
+		fostream.write( xml,xml.length );
+		fostream.close();
+	} catch(e) {
+		alert(fname+" does not exist");
+	}
+}
 
 function project_loadFile()
 {
 	prjname = $('#mbsvg').attr('value');
+	project_name = prjname;
 	var prj = system_read(prjname);
 	project_parse(prj);
 	filedialog.dialog('close');
+}
+
+
+function project_save()
+{
+	var i;
+	
+	var xml = "<project>\n";
+	var scenes = $('#scenes');
+	var sources = $('#sources');
+	var list = project_tree.getJSON(scenes);
+	var len = list.children.length;
+
+	for(i=0;i<len;i++) {
+		xml = xml + "\t<scene src='"+list.children[i].data+"' />\n";
+	}
+	list = project_tree.getJSON(sources);
+	len = list.children.length;
+	for(i=0;i<len;i++) {
+		xml = xml + "\t<source src='"+list.children[i].data+"' />\n";
+	}
+	xml = xml + "</project>\n";
+	system_write(project_name,xml);
+
 }
 
 var last_select = null;
