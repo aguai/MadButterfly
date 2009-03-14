@@ -544,8 +544,8 @@ function project_parse(xml)
 				id: "Open",
 				label: "Open",
 				icon: "open.png",
-				visible: function(NODE,TREE_OBJ) {  if(NODE.length != 1) return false; return NODE[0].id == "prj";},
-				action: function(NODE,TREE_OBJ) { openFile(TREE_OBJ);}
+				visible: function(NODE,TREE_OBJ) {  if(NODE.length != 1) return false; return true;},
+				action: function(NODE,TREE_OBJ) { onTree_openFile(NODE,TREE_OBJ);}
 			},
 			{
 				id: "New",
@@ -566,6 +566,50 @@ function project_parse(xml)
 
   	});
 }
+
+function fileDialog_cb()
+{
+	var file = $('#filedialogsrc').attr('value');
+	filedialog.dialog('close');
+	filedialog_cb(file,filedialog_arg);
+}
+
+function openFileDialog(callback,arg)
+{
+	filedialog_cb = callback;
+	filedialog_arg = arg;
+	filedialog.html('Please select the scene file<br>');
+	filedialog.append('<input type=file value="Select the scene file" id="filedialogsrc">');
+	filedialog.append('<input type=button value="Load" onclick="fileDialog_cb()">');
+	filedialog.show();
+	filedialog.dialog('open');
+}
+
+
+function project_addScene(file,treeobj)
+{
+	if (file == '') {
+		return;
+	}
+	treeobj.create(false,treeobj.selected,file);
+}
+
+function onTree_addSceneFile(node,treeobj)
+{
+	//treeobj.create(false,treeobj.selected,"xxx",null,"newscene");
+	openFileDialog(project_addScene,treeobj);
+}
+
+
+function onTree_openFile(node,treeobj)
+{
+	if (node[0].id == "scenes") {
+		onTree_addSceneFile(node,treeobj);
+	} else if (node[0].id == "sources") {
+		onTree_addSourceFile(node,treeobj);
+	}
+}
+
 
 function system_read(fname) {
 	try {
@@ -599,10 +643,23 @@ function project_loadFile()
 	prjname = $('#mbsvg').attr('value');
 	var prj = system_read(prjname);
 	project_parse(prj);
+	filedialog.dialog('close');
 }
 
 var last_select = null;
 
-$('#inkscape').html('Please select the project file<br>');
-$('#inkscape').append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
-$('#inkscape').append('<input type=button value="Load" onclick="project_loadFile()">');
+$('#filedialog').dialog({ width:500});
+jQuery(document).ready(function() {
+		filedialog = jQuery('#filedialog');
+		filedialog.dialog({width:500,
+				   modal: true,
+			           autopen:false,
+				   title:'Please select a file'});
+		filedialog.show();
+		filedialog.html('Please select the project file<br>');
+		filedialog.append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
+		filedialog.append('<input type=button value="Load" onclick="project_loadFile()">');
+		filedialog.dialog("open");
+		});
+
+
