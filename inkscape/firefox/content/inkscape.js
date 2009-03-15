@@ -624,6 +624,30 @@ function onTree_openFile(node,treeobj)
 	}
 }
 
+function system_open_read(fname) {
+	try {
+		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+	} catch (e) {
+		alert("Permission to read file was denied.");
+	}
+	var file = Components.classes["@mozilla.org/file/local;1"]
+					.createInstance(Components.interfaces.nsILocalFile);
+	try {
+		file.initWithPath( fname );
+		if ( file.exists() == false ) {
+			alert("File does not exist");
+		}
+		var is = Components.classes["@mozilla.org/network/file-input-stream;1"]
+						.createInstance( Components.interfaces.nsIFileInputStream );
+		is.init( file,0x01, 00004, null);
+		var sis = Components.classes["@mozilla.org/scriptableinputstream;1"]
+						.createInstance( Components.interfaces.nsIScriptableInputStream );
+		sis.init( is );
+	} catch(e) {
+		alert(fname+" does not exist");
+	}
+	return sis;
+}
 
 function system_read(fname) {
 	try {
@@ -650,6 +674,24 @@ function system_read(fname) {
 		alert(fname+" does not exist");
 	}
 	return output;
+}
+function system_open_write(fname) {
+	try {
+		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+	} catch (e) {
+		alert("Permission to read file was denied.");
+	}
+	var file = Components.classes["@mozilla.org/file/local;1"]
+					.createInstance(Components.interfaces.nsILocalFile);
+	try {
+		file.initWithPath( fname );
+		var fostream = Components.classes["@mozilla.org/network/file-output-stream;1"]
+						.createInstance( Components.interfaces.nsIFileOutputStream );
+		fostream.init( file,0x02|0x8|0x20, 0666,0);
+	} catch(e) {
+		alert(fname+" does not exist");
+	}
+	return fostream;
 }
 function system_write(fname,xml) {
 	try {
@@ -704,14 +746,23 @@ function project_save()
 
 }
 
-var last_select = null;
 
+function onLoadProject(path)
+{
+	project_name = path;
+	var prj = system_read(project_name);
+	project_parse(prj);
+}
+
+var last_select = null;
+var wizard = new Wizard();
+wizard.cb = onLoadProject;
 $('#filedialog').dialog({ width:500});
 jQuery(document).ready(function() {
 		filedialog = jQuery('#filedialog');
 		filedialog.dialog({width:500,
 				   modal: true,
-			           autopen:false,
+			           autoOpen:false,
 				   title:'Please select a file'});
 		filedialog.show();
 		filedialog.html('Please select the project file<br>');

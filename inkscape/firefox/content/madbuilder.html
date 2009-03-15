@@ -9,7 +9,7 @@
 	<script language="javascript" src="tree_component.js"></script>
 	<script type="text/javascript" src="jquery-ui-1.7.custom.min.js"></script>
 	<script type="text/javascript" src="jquery.simplemodal-1.2.3.pack.js"></script>
-
+	<script type="text/javascript" src="wizard.js"></script>
 
 	<style type="text/css"> 
 		.normal {
@@ -63,6 +63,7 @@
 	<a class='button' href='#'> <span id='EditAnimation' onClick='onButtonClick(this)'>Edit Animation</span></a>
 	<a class='button' href='#'> <span id='Test' onClick='onButtonClick(this)'>Test</span></a>
 	<a class='button' href='#'> <span id='Save' onClick='onButtonClick(this)'>Save</span></a>
+	<a class='button' href='#'> <span id='Wizard' onClick='wizard.execute()'>Wizard</span></a>
 	<br/>
 	<br/>
 </div>
@@ -70,6 +71,28 @@
 	<tr><td width=200 height=700 valign=top><div id='filelist' valign=top></div></td><td width=700 height=700 valign=top> <div id='inkscape'></div><div id='editor'></div></td></tr>
 </table>		
 <div id='filedialog'></div>
+
+<div id='wizard'>
+	The name of the project<br>
+	<input type=text id='wizardname' value='default'/><br>
+	Please select the type of applications.<br>
+	<ul>
+		<a href='#' onClick="wizard.step1_cb('text')"><li> Text only menu </li></a>
+		<a href='#' onClick="wizard.step1_cb('preview')"><li> Text with preview menu </li></a>
+	</ul>
+
+</div>
+
+<div id='wizard_step2'>
+	Please select the output path<br>
+	<input id='outputpath' type=file value='/tmp' /><br>
+	<a class 'buttopn' href='#'><span onClick='wizard.step1_cb()'>Prev</span></a>
+	<a class 'buttopn' href='#'><span onClick='wizard.step3_cb()'>Next</span></a>
+</div>
+<div id='wizard_step3'>
+	The step 3 is not implemented yet
+</div>
+
 <script type="text/javascript" src="inkscape.js" >
 </script>
 </body>
