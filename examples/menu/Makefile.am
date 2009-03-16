@@ -32,7 +32,7 @@ browser.mb: $(srcdir)/browser.svg
 noinst_PROGRAMS = menu filebrowser list.so browser.so
 EXTRA_DIST = 
 
-menu_SOURCES = main.c animated_menu.c animated_menu.h
+menu_SOURCES = main.c
 nodist_menu_SOURCES = 
 CFLAGS = @pangocairo_CFLAGS@ -g
 menu_CFLAGS = @pangocairo_CFLAGS@ 
@@ -42,7 +42,7 @@ CLEANFILES = menu.mb menu.c menu.h \
 	list.mb list.c list.h \
 	browser.mb browser.c browser.h
 
-filebrowser_SOURCES = filebrowser.c animated_menu.c animated_menu.h
+filebrowser_SOURCES = filebrowser.c
 filebrowser_CFLAGS = @pangocairo_CFLAGS@ 
 filebrowser_LDFLAGS = @pangocairo_LIBS@ 
 filebrowser_LDADD = $(top_builddir)/src/libmbfly.la

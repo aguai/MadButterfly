@@ -3,7 +3,7 @@ include $(top_srcdir)/config.mk
 lib_LTLIBRARIES = libmbfly.la
 
 noinst_PROGRAMS = X_main
-MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c
+MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c mbaf/animated_menu.c
 libmbfly_la_SOURCES = animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
 	shape_rect.c shape_text.c shift.c subtree_free.c timer.c 	\
