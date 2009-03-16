@@ -10,4 +10,7 @@ include_HEADERS = 	\
 	mb_tools.h	\
 	mb_prop.h	\
 	mb_X_supp.h	\
+	mb_img_ldr.h    \
+	mbapp.h         \
+	animated_menu.h \
 	mb_so.h
