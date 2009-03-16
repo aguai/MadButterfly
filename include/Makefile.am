@@ -13,4 +13,5 @@ include_HEADERS = 	\
 	mb_img_ldr.h    \
 	mbapp.h         \
 	animated_menu.h \
+	mbbutton.h      \
 	mb_so.h
