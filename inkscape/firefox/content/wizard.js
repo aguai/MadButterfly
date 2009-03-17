@@ -29,44 +29,47 @@ Wizard.prototype.step1_cb=function(type)
 // In the step 2, get the output path
 Wizard.prototype.step2_cb=function()
 {
-	this.dir = $('#wizardpath').attr('value');
+	this.dir = $('#outputpath').attr('value');
 	this.step2.dialog('close');
 	this.step3.dialog('open');
-}
-
-// In the step 3, generate files
-Wizard.prototype.step3_cb=function()
-{
+	system_mkdir(this.dir);
 	this.generate_source('main.c','main.c');
+	this.step3.append('main.c<br>');
+	this.generate_source('list.mbsvg','list.mbsvg');
+	this.step3.append('list.mbsvg<br>');
 	this.generate_source('app.h',this.name+'.h');
+	this.step3.append(this.name+'.h<br>');
 	this.generate_source('app.c',this.name+'.c');
+	this.step3.append(this.name+'.c<br>');
 	this.generate_source('app.prj',this.name+'.prj');
+	this.step3.append('app.prj<br>');
 	this.generate_source('Makefile','Makefile');
+	this.step3.append('Makefile<br>');
 	this.done_cb();
 }
 
 Wizard.prototype.done_cb=function()
 {
 	this.step3.dialog('close');
-	this.cb(this.dir+this.name+'.prj');
+	this.cb(this.dir+'/'+this.name+'.prj');
 }
 
 
 Wizard.prototype.generate_source=function (tmpl,fname)
 {
 	var file = system_open_write(this.dir+'/'+fname);
-	var template = system_open_read('wizard/'+this.type+'/'+tmpl);
+	var template = system_open_read('/usr/local/share/mb/template/'+this.type+'/'+tmpl);
 	if (template == null) {
-		alert('Can not find template file '+tmpl);
 		return;
 	}
 	if (file == null) {
-		alert('Can not create '+fname);
 		return;
 	}
 	var data = template.read(template.available());
+	var regex = /\%n/gi;
 	// FIXME: replace name here
-	file.write(data.data.length);
+	data=data.replace(regex,this.name);
+	file.write(data,data.length);
 	file.close();
 	template.close();
 }

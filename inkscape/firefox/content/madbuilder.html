@@ -77,7 +77,7 @@
 	<input type=text id='wizardname' value='default'/><br>
 	Please select the type of applications.<br>
 	<ul>
-		<a href='#' onClick="wizard.step1_cb('text')"><li> Text only menu </li></a>
+		<a href='#' onClick="wizard.step1_cb('textmenu')"><li> Text only menu </li></a>
 		<a href='#' onClick="wizard.step1_cb('preview')"><li> Text with preview menu </li></a>
 	</ul>
 
@@ -87,10 +87,10 @@
 	Please select the output path<br>
 	<input id='outputpath' type=file value='/tmp' /><br>
 	<a class 'buttopn' href='#'><span onClick='wizard.step1_cb()'>Prev</span></a>
-	<a class 'buttopn' href='#'><span onClick='wizard.step3_cb()'>Next</span></a>
+	<a class 'buttopn' href='#'><span onClick='wizard.step2_cb()'>Next</span></a>
 </div>
 <div id='wizard_step3'>
-	The step 3 is not implemented yet
+	Generating files<br>
 </div>
 
 <script type="text/javascript" src="inkscape.js" >

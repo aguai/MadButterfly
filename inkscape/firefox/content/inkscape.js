@@ -472,14 +472,20 @@ function project_showFile(node)
 function project_loadScene(node)
 {
 	var file = node.textContent;
-	inkscape = new Inkscape("file://"+file);
+	if (file.substr(0,1) == '/') 
+		inkscape = new Inkscape("file://"+file);
+	else
+		inkscape = new Inkscape("file://"+project_dir+'/'+file);
 }
 
 
 function project_loadEditor(node)
 {
 	var file = node.textContent;
-	editor = new TextEditor("file://"+file);
+	if (file.substr(0,1) == '/')
+		editor = new TextEditor("file://"+file);
+	else
+		editor = new TextEditor("file://"+project_dir+'/'+file);
 }
 
 function project_parse(xml)
@@ -689,7 +695,7 @@ function system_open_write(fname) {
 						.createInstance( Components.interfaces.nsIFileOutputStream );
 		fostream.init( file,0x02|0x8|0x20, 0666,0);
 	} catch(e) {
-		alert(fname+" does not exist");
+		alert('can not create '+fname);
 	}
 	return fostream;
 }
@@ -713,10 +719,39 @@ function system_write(fname,xml) {
 	}
 }
 
+function system_mkdir(path)
+{
+	try {
+		netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+	} catch (e) {
+		alert("Permission to read file was denied.");
+	}
+	var file = Components.classes["@mozilla.org/file/local;1"]
+					.createInstance(Components.interfaces.nsILocalFile);
+	try {
+		file.initWithPath(path);
+		if( !file.exists() || !file.isDirectory() ) {   // if it doesn't exist, create
+			   file.create(Components.interfaces.nsIFile.DIRECTORY_TYPE, 0777);
+		}
+	} catch(e) {
+		alert('Failed to create directopry '+path+e);
+	}
+}
+
+function getPathDirectory(path)
+{
+	var s = path.lastIndexOf('/');
+	if (s == -1)
+		return '';
+	else
+		return path.substr(0,s);
+}
+
 function project_loadFile()
 {
 	prjname = $('#mbsvg').attr('value');
 	project_name = prjname;
+	project_dir = getPathDirectory(prjname);
 	var prj = system_read(prjname);
 	project_parse(prj);
 	filedialog.dialog('close');
@@ -750,6 +785,7 @@ function project_save()
 function onLoadProject(path)
 {
 	project_name = path;
+	project_dir = getPathDirectory(project_name);
 	var prj = system_read(project_name);
 	project_parse(prj);
 }
