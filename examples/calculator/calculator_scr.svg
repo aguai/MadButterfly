@@ -98,7 +98,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.9475"
-     inkscape:cx="-225.72559"
+     inkscape:cx="-141.75146"
      inkscape:cy="201.83531"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -125,6 +125,15 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
+       style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero"
+       id="rect2462"
+       width="307.12402"
+       height="404.22165"
+       x="-1.6355898e-08"
+       y="0"
+       rx="4.1063418"
+       ry="5.0559778" />
+    <rect
        style="opacity:1;fill:url(#radialGradient3222);fill-opacity:1;stroke:none;stroke-opacity:1"
        id="rect2227"
        width="283.905"
@@ -134,7 +143,7 @@
        rx="4.0359654"
        ry="3.5442207" />
     <rect
-       style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1"
+       style="opacity:0.50000000000000000;fill:#ff0000;stroke:none;stroke-width:0.83874130000000002;stroke-opacity:1"
        id="rect2192"
        width="45.543846"
        height="39.211391"
@@ -417,7 +426,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2194"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2248"
          y="240.63324"
@@ -439,7 +448,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2196"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2252"
          y="293.40369"
@@ -461,7 +470,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2198"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2256"
          y="348.28494"
@@ -483,7 +492,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2184"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2260"
          y="127.70448"

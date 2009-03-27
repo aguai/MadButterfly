@@ -190,12 +190,16 @@ def translate_style(node, coord_id, codefo, doc, prefix):
 
     if prop_map.has_key('stroke-width'):
         if prop_map['stroke-width'].endswith('px'):
-            stroke_width = float(prop_map['stroke-width'][:-2])
+            stroke_width = float(prop_map['stroke-width'][:-2]) / 2
         else:
-            stroke_width = float(prop_map['stroke-width'])
+            stroke_width = float(prop_map['stroke-width']) / 2
             pass
         print >> codefo, 'STROKE_WIDTH([%s], %f)dnl' % (
             node_id, stroke_width)
+        pass
+    elif prop_map.has_key('stroke'):
+        print >> codefo, 'STROKE_WIDTH([%s], %f)dnl' % (
+            node_id, 0.5)
         pass
 
     if prop_map.has_key('display'):
