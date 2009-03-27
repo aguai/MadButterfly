@@ -197,7 +197,7 @@ def translate_style(node, coord_id, codefo, doc, prefix):
         print >> codefo, 'STROKE_WIDTH([%s], %f)dnl' % (
             node_id, stroke_width)
         pass
-    elif prop_map.has_key('stroke'):
+    elif prop_map.has_key('stroke') and prop_map['stroke'] != 'none':
         print >> codefo, 'STROKE_WIDTH([%s], %f)dnl' % (
             node_id, 0.5)
         pass
