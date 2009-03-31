@@ -10,8 +10,8 @@ libmbfly_la_SOURCES = animate.c chgcolor.c coord.c event.c geo.c	\
 	timertool.c tools.c visibility.c X_supp.c prop.c sprite.c	\
 	mouse.c shape_image.c img_ldr.c $(MBAF_SOURCES)
 
-libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ `pkg-config --cflags pangocairo`
-libmbfly_la_LDFLAGS = @cairo_LIBS@ `pkg-config --libs pangocairo`
+libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ @pangocairo_CFLAGS@
+libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
 
 X_main_SOURCES = X_main.c
 X_main_LDADD = $(top_builddir)/src/libmbfly.la

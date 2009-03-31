@@ -138,7 +138,7 @@ extern void elmpool_free(elmpool_t *pool);
 #define MEM2OBJ(var, type, mem) ((type *)((void *)var - OFFSET(type, mem)))
 #define OFF2TYPE(obj, off, type) (*(type *)((void *)(obj) + (off)))
 
-#define MAX(a, b) ((a) > (b)? (a): (b))
-#define MIN(a, b) ((a) < (b)? (a): (b))
+#define MB_MAX(a, b) ((a) > (b)? (a): (b))
+#define MB_MIN(a, b) ((a) < (b)? (a): (b))
 
 #endif /* __TOOLS_H_ */
