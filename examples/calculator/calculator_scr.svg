@@ -152,7 +152,8 @@
        rx="4.0359654"
        ry="3.5442207" />
     <g
-       id="but_0">
+       id="but_0"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -174,7 +175,8 @@
            sodipodi:role="line">0</tspan></text>
     </g>
     <g
-       id="but_1">
+       id="but_1"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -197,7 +199,8 @@
            sodipodi:role="line">1</tspan></text>
     </g>
     <g
-       id="but_2">
+       id="but_2"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -219,7 +222,8 @@
            sodipodi:role="line">2</tspan></text>
     </g>
     <g
-       id="but_3">
+       id="but_3"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -241,7 +245,8 @@
            sodipodi:role="line">3</tspan></text>
     </g>
     <g
-       id="but_4">
+       id="but_4"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -263,7 +268,8 @@
            sodipodi:role="line">4</tspan></text>
     </g>
     <g
-       id="but_5">
+       id="but_5"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -285,7 +291,8 @@
            sodipodi:role="line">5</tspan></text>
     </g>
     <g
-       id="but_6">
+       id="but_6"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -307,7 +314,8 @@
            sodipodi:role="line">6</tspan></text>
     </g>
     <g
-       id="but_7">
+       id="but_7"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -329,7 +337,8 @@
            sodipodi:role="line">7</tspan></text>
     </g>
     <g
-       id="but_8">
+       id="but_8"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -351,7 +360,8 @@
            sodipodi:role="line">8</tspan></text>
     </g>
     <g
-       id="but_9">
+       id="but_9"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -373,7 +383,8 @@
            sodipodi:role="line">9</tspan></text>
     </g>
     <g
-       id="but_add">
+       id="but_add"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -395,7 +406,8 @@
            sodipodi:role="line">+</tspan></text>
     </g>
     <g
-       id="but_minus">
+       id="but_minus"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -417,7 +429,8 @@
            sodipodi:role="line">-</tspan></text>
     </g>
     <g
-       id="but_mul">
+       id="but_mul"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
@@ -439,7 +452,8 @@
            sodipodi:role="line">*</tspan></text>
     </g>
     <g
-       id="but_div">
+       id="but_div"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
@@ -461,7 +475,8 @@
            sodipodi:role="line">/</tspan></text>
     </g>
     <g
-       id="but_eq">
+       id="but_eq"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
@@ -483,7 +498,8 @@
            sodipodi:role="line">=</tspan></text>
     </g>
     <g
-       id="but_clr">
+       id="but_clr"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
