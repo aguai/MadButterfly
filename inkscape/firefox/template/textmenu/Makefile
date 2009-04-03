@@ -1,4 +1,4 @@
-SRC=main.c %f.c
+SRC=main.c %n.c
 OBJ=$(SRC:.c=.o)
 CFLAGS+=`pkg-config --cflags libmbfly` `pkg-config --cflags pangocairo` 
 LDFLAGS=`pkg-config --libs libmbfly`

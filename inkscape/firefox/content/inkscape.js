@@ -70,7 +70,7 @@ function dumpObjItem(obj, name, indent, depth) {
 function TextEditor(file) 
 {
 	var editor = document.getElementById('inkscape');
-	editor.innerHTML = "<embed src="+file+" width=700 height=700 />";
+	editor.innerHTML = "<embed src="+file+" width=900 height=700 />";
 	this.isInProgress = 0;
 }
 
@@ -81,8 +81,9 @@ function TextEditor(file)
 function Inkscape(file) 
 {
 	var ink = document.getElementById('inkscape');
-	ink.innerHTML = "<embed src="+file+" width=700 height=700 />";
+	ink.innerHTML = "<embed src="+file+" width=900 height=700 />";
 	this.isInProgress = 0;
+	this.callback = null;
 
 	setTimeout("inkscape.fetchDocument()",4000);
 }
@@ -122,6 +123,8 @@ Inkscape.prototype.publishDocument= function(resp)
 {
 	mbsvg = new MBSVGString(resp.Body[0].GETDOCResponse[0].Result[0].Text);
 	mbsvg.renderUI();
+	if (this.callback)
+		this.callback(mbsvg);
 
 	var soapBody = new SOAPObject("PUBLISH");
 	var sr = new SOAPRequest("PUBLISH", soapBody);
@@ -215,16 +218,67 @@ Inkscape.prototype.deleteScene1=function(resp)
 	SOAPClient.SendRequest(sr, function (resp,arg) {arg.refreshDocument(resp);},this);
 }	
 
-Inkscape.prototype.fetchDocument = function()
+Inkscape.prototype.fetchDocument = function(callback)
 {	
 	var soapBody = new SOAPObject("START");
+	this.callback = callback
 	var sr = new SOAPRequest("START", soapBody);
 	SOAPClient.Proxy = "http://localhost:19192/";
 	SOAPClient.SendRequest(sr,function(resp,arg) {arg.refreshDocument(resp);},this);
 	this.isInProgress++;
 }
 
+/*
+ *  This module is used to define a symbol for the MadButterfly. This function will search for symbol which is defined in the current select object. We will list all SVG elements 
+ *  in the left side, multiple variables can be defined at one time. When any element is selected, the defined symbol will be listed in the right side. 
+ *
+ */
 
+Inkscape.prototype.MakeSymbol=function()
+{
+	function callback(mbsvg) {
+		this.loadSymbolScreen(mbsvg);
+	}
+	inkscape.fetchDocument(callback);
+}
+
+Inkscape.prototype.loadSymbolScreen=function (mbsvg) {
+	// Swap the left side to be the SVG element tree.
+	var i,l;
+
+	symboldialog.dialog('open');
+	l = mbsvg.selected_objects.length;
+	var jsonobj = []
+	for(i=0;i<l;i++) {
+		// Add symbol into the tree
+		var obj = { attributes: {id: 'sym'+i}, data : mbsvg.selected_objects[i]};
+		jsonobj.push(obj);
+	}
+  	this.symboltree = $.tree_create();
+  	this.symboltree.init($("#symbollist"), {
+	    data: {
+  		type: "json",
+		json : jsonobj
+	    },
+	    callback : {
+	        ondblclk : function(NODE,TREE_OBJ) { this.refreshSymbolPanel(TREE_OBJ); TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE);}
+	    }
+
+  	});
+	// Swap the right side to be the symbol editor screen.
+	symboldialog.show();
+}
+
+jQuery(document).ready(function() {
+		symboldialog = jQuery('#symboldialog');
+		symboldialog.dialog({width:500,
+				   modal: true,
+			           autoOpen:false,
+				   title:'Please select a file'});
+		symboldialog.hide();
+		symboldialog.append("<div id='symbollist'>");
+		symboldialog.append("<div id='symbol'>");
+		});
 
 function MBSVG(file)
 {
@@ -271,7 +325,7 @@ function MBSVG_loadFromDoc(self,xmlDoc)
 		ss.layer = null;
 		scenes.push(ss);
 	}
-	if (max < 20) max = 20;
+	if (max < 20) max = 30;
 	// Collect all layers
 	var nodes = xmlDoc.getElementsByTagNameNS("http://www.w3.org/2000/svg","svg")[0].childNodes;
 	var layers = new Array();
@@ -292,9 +346,17 @@ function MBSVG_loadFromDoc(self,xmlDoc)
 			layers.push(nodes[i]);
 		}
 	}
+	var select = xmlDoc.getElementsByTagNameNS("http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd","select");
+	len = select.length;
+	selectobjs = [];
+	for(i=0;i<len;i++) {
+		selectobjs.push(select[i].getAttribute('ref'));
+	}
+	self.selected_objects = selectobjs;
 	self.layers = layers;
 	self.scenes = scenes;
 	self.maxframe = max;
+	self.doc = xmlDoc;
 }
 
 MBSVGString.prototype=MBSVG.prototype;
@@ -303,7 +365,7 @@ MBSVG.prototype.renderUI=function()
 	var layers = this.layers;
 	var scenes = this.scenes;
 	var max = this.maxframe;
-	var cmd = "<table border=1>\n";
+	var cmd = "<table border=0>\n";
 	cmd = cmd + "<tr><td></td>";
 	for(var j=1;j<=max;j++) 
 		cmd = cmd + "<td>"+j+"</td>";
@@ -320,17 +382,17 @@ MBSVG.prototype.renderUI=function()
 			for(var k=0;k<scenes.length;k++) {
 				if (id != scenes[k].layer) continue;
 				if (n == scenes[k].start) {
-					cmd = cmd + "<td><img class='normal' src=start.png id='"+id_str+"' onClick='selectCell(this)' /></td>";
+					cmd = cmd + "<td><img class='normal' width='16' src=start.png id='"+id_str+"' onClick='selectCell(this)' /></td>";
 					empty = 0;
 					break;
 				} else if ((n>scenes[k].start)&&(n <= scenes[k].end)) {
-					cmd = cmd + "<td><img class='normal' src=fill.png id='"+id_str+"' onClick='selectCell(this)' /></td>";
+					cmd = cmd + "<td><img class='normal' width='16' src=fill.png id='"+id_str+"' onClick='selectCell(this)' /></td>";
 					empty = 0;
 					break;
 				}
 			}
 			if (empty) {
-				cmd = cmd + "<td><img class='normal' src=empty.png id='"+id_str+"'onClick='selectCell(this)' /></td>";
+				cmd = cmd + "<td><img class='normal' width='16' src=empty.png id='"+id_str+"'onClick='selectCell(this)' /></td>";
 			}
 
 		}
@@ -389,8 +451,16 @@ function onButtonClick(obj)
 	} else if (id == 'DeleteScene') {
 		if (inkscape.isInProgress != 0) return;
 		inkscape.deleteScene(currentScene);
+	} else if (id == 'MakeSymbol') {
+		if (inkscape.isInProgress != 0) return;
+		inkscape.MakeSymbol();
 	} else if (id == 'Save') {
 		project_save();
+	} else if (id == 'Test') {
+		if (project_compile()) {
+			project_run();
+		} else {
+		}
 	} else {
 		alert(id+' has not been implemented yet');
 	}
@@ -456,6 +526,10 @@ function loadInkscapeFile()
 	  
   sources = [src1,src2,src3];
 	   
+}
+
+function project_compile()
+{
 }
 
 
@@ -807,4 +881,7 @@ jQuery(document).ready(function() {
 		filedialog.dialog("open");
 		});
 
-
+$('#frame').draggable();
+$('#btns').draggable({cursor:'crosshair'});
+$('#list').tabs();
+$('#display').tabs();
