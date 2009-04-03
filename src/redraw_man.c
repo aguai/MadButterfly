@@ -1614,28 +1614,28 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 	/* Even areas */
 	area = areas[i++];
 	if(area->w != 0 || area->h != 0) {
-	    poses0[0][0] = MIN(poses0[0][0], area->x);
-	    poses0[0][1] = MIN(poses0[0][1], area->y);
-	    poses0[1][0] = MAX(poses0[1][0], area->x + area->w);
-	    poses0[1][1] = MAX(poses0[1][1], area->y + area->h);
+	    poses0[0][0] = MB_MIN(poses0[0][0], area->x);
+	    poses0[0][1] = MB_MIN(poses0[0][1], area->y);
+	    poses0[1][0] = MB_MAX(poses0[1][0], area->x + area->w);
+	    poses0[1][1] = MB_MAX(poses0[1][1], area->y + area->h);
 	}
 	/* Odd areas */
 	area = areas[i++];
 	if(area->w != 0 || area->h != 0) {
-	    poses1[0][0] = MIN(poses1[0][0], area->x);
-	    poses1[0][1] = MIN(poses1[0][1], area->y);
-	    poses1[1][0] = MAX(poses1[1][0], area->x + area->w);
-	    poses1[1][1] = MAX(poses1[1][1], area->y + area->h);
+	    poses1[0][0] = MB_MIN(poses1[0][0], area->x);
+	    poses1[0][1] = MB_MIN(poses1[0][1], area->y);
+	    poses1[1][0] = MB_MAX(poses1[1][0], area->x + area->w);
+	    poses1[1][1] = MB_MAX(poses1[1][1], area->y + area->h);
 	}
     }
 
     if(i < n_areas) {
 	area = areas[i];
 	if(area->w != 0 || area->h != 0) {
-	    poses0[0][0] = MIN(poses0[0][0], area->x);
-	    poses0[0][1] = MIN(poses0[0][1], area->y);
-	    poses0[1][0] = MAX(poses0[1][0], area->x + area->w);
-	    poses0[1][1] = MAX(poses0[1][1], area->y + area->h);
+	    poses0[0][0] = MB_MIN(poses0[0][0], area->x);
+	    poses0[0][1] = MB_MIN(poses0[0][1], area->y);
+	    poses0[1][0] = MB_MAX(poses0[1][0], area->x + area->w);
+	    poses0[1][1] = MB_MAX(poses0[1][1], area->y + area->h);
 	}
     }
 
