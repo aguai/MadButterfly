@@ -98,7 +98,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.9475"
-     inkscape:cx="-225.72559"
+     inkscape:cx="-141.75146"
      inkscape:cy="201.83531"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -125,6 +125,15 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
+       style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero"
+       id="rect2462"
+       width="307.12402"
+       height="404.22165"
+       x="-1.6355898e-08"
+       y="0"
+       rx="4.1063418"
+       ry="5.0559778" />
+    <rect
        style="opacity:1;fill:url(#radialGradient3222);fill-opacity:1;stroke:none;stroke-opacity:1"
        id="rect2227"
        width="283.905"
@@ -134,7 +143,7 @@
        rx="4.0359654"
        ry="3.5442207" />
     <rect
-       style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1"
+       style="opacity:0.50000000000000000;fill:#ff0000;stroke:none;stroke-width:0.83874130000000002;stroke-opacity:1"
        id="rect2192"
        width="45.543846"
        height="39.211391"
@@ -143,7 +152,8 @@
        rx="4.0359654"
        ry="3.5442207" />
     <g
-       id="but_0">
+       id="but_0"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -165,7 +175,8 @@
            sodipodi:role="line">0</tspan></text>
     </g>
     <g
-       id="but_1">
+       id="but_1"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -188,7 +199,8 @@
            sodipodi:role="line">1</tspan></text>
     </g>
     <g
-       id="but_2">
+       id="but_2"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -210,7 +222,8 @@
            sodipodi:role="line">2</tspan></text>
     </g>
     <g
-       id="but_3">
+       id="but_3"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -232,7 +245,8 @@
            sodipodi:role="line">3</tspan></text>
     </g>
     <g
-       id="but_4">
+       id="but_4"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -254,7 +268,8 @@
            sodipodi:role="line">4</tspan></text>
     </g>
     <g
-       id="but_5">
+       id="but_5"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -276,7 +291,8 @@
            sodipodi:role="line">5</tspan></text>
     </g>
     <g
-       id="but_6">
+       id="but_6"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -298,7 +314,8 @@
            sodipodi:role="line">6</tspan></text>
     </g>
     <g
-       id="but_7">
+       id="but_7"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -320,7 +337,8 @@
            sodipodi:role="line">7</tspan></text>
     </g>
     <g
-       id="but_8">
+       id="but_8"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -342,7 +360,8 @@
            sodipodi:role="line">8</tspan></text>
     </g>
     <g
-       id="but_9">
+       id="but_9"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -364,7 +383,8 @@
            sodipodi:role="line">9</tspan></text>
     </g>
     <g
-       id="but_add">
+       id="but_add"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -386,7 +406,8 @@
            sodipodi:role="line">+</tspan></text>
     </g>
     <g
-       id="but_minus">
+       id="but_minus"
+       mbsprite="yes">
       <rect
          ry="5.0559778"
          rx="4.0216751"
@@ -408,7 +429,8 @@
            sodipodi:role="line">-</tspan></text>
     </g>
     <g
-       id="but_mul">
+       id="but_mul"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
@@ -417,7 +439,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2194"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2248"
          y="240.63324"
@@ -430,7 +452,8 @@
            sodipodi:role="line">*</tspan></text>
     </g>
     <g
-       id="but_div">
+       id="but_div"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
@@ -439,7 +462,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2196"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2252"
          y="293.40369"
@@ -452,7 +475,8 @@
            sodipodi:role="line">/</tspan></text>
     </g>
     <g
-       id="but_eq">
+       id="but_eq"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
@@ -461,7 +485,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2198"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2256"
          y="348.28494"
@@ -474,7 +498,8 @@
            sodipodi:role="line">=</tspan></text>
     </g>
     <g
-       id="but_clr">
+       id="but_clr"
+       mbsprite="yes">
       <rect
          ry="3.5442207"
          rx="4.0359654"
@@ -483,7 +508,7 @@
          height="39.211391"
          width="45.543846"
          id="rect2184"
-         style="opacity:0.5;fill:#ff0000;stroke:#000000;stroke-width:0.8387413;stroke-opacity:1" />
+         style="opacity:0.5;fill:#ff0000;stroke:none;stroke-width:0.8387413;stroke-opacity:1" />
       <text
          id="text2260"
          y="127.70448"
