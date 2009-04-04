@@ -1,0 +1,7 @@
+<project>
+	<scene src='list.mbsvg' />
+	<source src='main.c'/>
+	<source src='%n.c'/>
+	<source src='%n.h'/>
+	<source src='Makefile'/>
+</project>
