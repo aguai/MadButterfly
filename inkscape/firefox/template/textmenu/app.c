@@ -2,7 +2,7 @@
 #include <mb.h>
 #include "mbapp.h"
 #include "animated_menu.h"
-#include "app.h"
+#include "%n.h"
 
 void myselect_callback(mb_animated_menu_t *m, int select)
 {
