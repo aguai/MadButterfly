@@ -472,7 +472,13 @@ class MB(soap.SOAPPublisher):
 	def soap_GETDOC(self):
 		try:
 			self.target.generate()
-			return etree.tostring(self.target.document)
+			newdoc = deepcopy(self.target.document)
+			root = newdoc.getroot()
+			for id,node in self.target.selected.iteritems():
+				select = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}select')
+				select.set('ref', id)
+				root.append(select)
+			return etree.tostring(newdoc)
 		except:
 			return traceback.format_exc()
 import os

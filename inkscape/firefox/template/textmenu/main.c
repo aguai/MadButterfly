@@ -4,7 +4,7 @@
 //#include "menu.h"
 #include "mbapp.h"
 #include "animated_menu.h"
-#include "app.h"
+#include "%n.h"
 
 
 char *menus[] = {

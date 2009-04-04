@@ -72,20 +72,19 @@
        sodipodi:rx="14.285714"
        sodipodi:ry="14.285714"
        d="M 128.57143,123.79076 A 14.285714,14.285714 0 1 1 99.999999,123.79076 A 14.285714,14.285714 0 1 1 128.57143,123.79076 z"
-       transform="matrix(0.7,0,0,0.7,14.342634,-4.5390011)" />
-    <rect
-       style="fill:none;stroke:#000000;stroke-opacity:1"
-       id="rect2380"
-       width="30"
-       height="30"
-       x="79.802048"
-       y="67.262962" />
+       transform="matrix(0.7,0,0,0.7,14.342634,-4.5390011)"
+       inkscape:export-filename="/home/wycc/devel/test/main/MadButterfly/inkscape/firefox/content/active-start.png"
+       inkscape:export-xdpi="86.949997"
+       inkscape:export-ydpi="86.949997" />
     <rect
        style="fill:#00d300;stroke:#00d300;stroke-opacity:1;fill-opacity:1"
        id="rect3154"
        width="5.8083773"
        height="3.5355339"
        x="104.04571"
-       y="80.090363" />
+       y="80.090363"
+       inkscape:export-filename="/home/wycc/devel/test/main/MadButterfly/inkscape/firefox/content/active-start.png"
+       inkscape:export-xdpi="86.949997"
+       inkscape:export-ydpi="86.949997" />
   </g>
 </svg>
