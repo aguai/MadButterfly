@@ -228,6 +228,34 @@ Inkscape.prototype.fetchDocument = function(callback)
 	this.isInProgress++;
 }
 
+Inkscape.prototype.changeSymbolName_cb = function(callback)
+{
+	var soapBody = new SOAPObject("CHANGESYMBOL");
+	var v1 = new SOAPObject("v1");
+	v1.attr('type','string');
+	v1.val(this.v1);
+	soapBody.appendChild(v1);
+	var v2 = new SOAPObject("v2");
+	v2.val(this.v2);
+	soapBody.appendChild(v2);
+	var sr = new SOAPRequest("CHANGESYMBOL", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	SOAPClient.SendRequest(sr, function (resp,arg) {arg.refreshDocument(resp);},this);
+	this.inProgress--;
+}
+
+Inkscape.prototype.changeSymbolName = function(id,newname,callback)
+{	
+	var soapBody = new SOAPObject("START");
+	this.callback = callback
+	var sr = new SOAPRequest("START", soapBody);
+	SOAPClient.Proxy = "http://localhost:19192/";
+	this.v1 = id;
+	this.v2 = newname;
+	SOAPClient.SendRequest(sr,function(resp,arg) {arg.changeSymbolName_cb(resp);},this);
+	this.isInProgress++;
+}
+
 /*
  *  This module is used to define a symbol for the MadButterfly. This function will search for symbol which is defined in the current select object. We will list all SVG elements 
  *  in the left side, multiple variables can be defined at one time. When any element is selected, the defined symbol will be listed in the right side. 
@@ -237,9 +265,21 @@ Inkscape.prototype.fetchDocument = function(callback)
 Inkscape.prototype.MakeSymbol=function()
 {
 	function callback(mbsvg) {
-		this.loadSymbolScreen(mbsvg);
+		inkscape.loadSymbolScreen(mbsvg);
 	}
 	inkscape.fetchDocument(callback);
+}
+
+
+Inkscape.prototype.onChangeSymbolName=function()
+{
+	inkscape.changeSymbolName(inkscape.current_symbol, $('#newsymbolname').val());
+	symboldialog.dialog('close')
+}
+
+Inkscape.prototype.refreshSymbolPanel=function(node)
+{
+	inkscape.current_symbol = node.textContent;
 }
 
 Inkscape.prototype.loadSymbolScreen=function (mbsvg) {
@@ -261,10 +301,12 @@ Inkscape.prototype.loadSymbolScreen=function (mbsvg) {
 		json : jsonobj
 	    },
 	    callback : {
-	        ondblclk : function(NODE,TREE_OBJ) { this.refreshSymbolPanel(TREE_OBJ); TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE);}
+	        ondblclk : function(NODE,TREE_OBJ) { inkscape.refreshSymbolPanel(NODE); TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE);}
 	    }
 
   	});
+	var s = $('#changename');
+	s.click(this.onChangeSymbolName);
 	// Swap the right side to be the symbol editor screen.
 	symboldialog.show();
 }
@@ -276,8 +318,8 @@ jQuery(document).ready(function() {
 			           autoOpen:false,
 				   title:'Please select a file'});
 		symboldialog.hide();
-		symboldialog.append("<div id='symbollist'>");
-		symboldialog.append("<div id='symbol'>");
+		symboldialog.append("<div id='symbollist'/>");
+		symboldialog.append("<div id='symbol'><input type='text' id='newsymbolname'> <input type='submit' id='changename'></div> ");
 		});
 
 function MBSVG(file)
