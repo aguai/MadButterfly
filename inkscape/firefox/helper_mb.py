@@ -21,7 +21,6 @@ class Server(soap.SOAPPublisher):
 		return d
 			
 	def quit(self,result,d):
-		print [result]
 		d.callback(result)
 		self.client = None
 	def soap_INSERTKEY(self,layer,n):
@@ -119,6 +118,16 @@ class Server(soap.SOAPPublisher):
 		except:
 			traceback.print_exc()
 	
+	def soap_CHANGESYMBOL(self,id,name):
+		if self.client == None:
+			os.kill(self.pid,12)
+			time.sleep(1)
+			self.client = Client()
+		d = defer.Deferred()
+		print "send changesymbol"
+		self.client.CHANGESYMBOL(id,name).addCallback(self.generic_return,d).addErrback(self.generic_error,d)
+		return d
+
 class Client(object):
 	def __init__(self):
 		self.proxy = soap.Proxy('http://localhost:8080')	
@@ -135,6 +144,9 @@ class Client(object):
 		return self.proxy.callRemote('EXTENDSCENE',layer,n)
 	def DELETESCENE(self,layer,n):
 		return self.proxy.callRemote('DELETESCENE',layer,n)
+	def CHANGESYMBOL(self,id,name):
+		print "send soap CHANGESYMBOL to to client"
+		return self.proxy.callRemote('CHANGESYMBOL',id,name)
 
 os.system("killall -9 inkscape-mb")
 try:
