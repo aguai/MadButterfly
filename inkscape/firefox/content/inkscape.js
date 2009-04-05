@@ -279,7 +279,11 @@ Inkscape.prototype.onChangeSymbolName=function()
 
 Inkscape.prototype.refreshSymbolPanel=function(node)
 {
+	var reg = new RegExp('(.*)\\((.*)\\)');
+	var m = reg.exec(node.textContent);
+	var val = m[2];
 	inkscape.current_symbol = node.textContent;
+	$('#newsymbolname').val(val);
 }
 
 Inkscape.prototype.loadSymbolScreen=function (mbsvg) {
@@ -287,11 +291,18 @@ Inkscape.prototype.loadSymbolScreen=function (mbsvg) {
 	var i,l;
 
 	symboldialog.dialog('open');
+	this.mbsvg = mbsvg;
 	l = mbsvg.selected_objects.length;
 	var jsonobj = []
 	for(i=0;i<l;i++) {
 		// Add symbol into the tree
-		var obj = { attributes: {id: 'sym'+i}, data : mbsvg.selected_objects[i]};
+		var name = mbsvg.findSymbolName(mbsvg.selected_objects[i]);
+		var title=mbsvg.selected_objects[i]+"("+name+")";
+		var obj = { attributes: {id: 'sym'+i}, data : title};
+		if (i == 0) {
+			this.current_symbol = mbsvg.selected_objects[i];
+			$('#newsymbolname').val(name);
+		}
 		jsonobj.push(obj);
 	}
   	this.symboltree = $.tree_create();
@@ -301,7 +312,7 @@ Inkscape.prototype.loadSymbolScreen=function (mbsvg) {
 		json : jsonobj
 	    },
 	    callback : {
-	        ondblclk : function(NODE,TREE_OBJ) { inkscape.refreshSymbolPanel(NODE); TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE);}
+	        ondblclk : function(NODE,TREE_OBJ) { inkscape.refreshSymbolPanel(NODE);}
 	    }
 
   	});
@@ -319,7 +330,7 @@ jQuery(document).ready(function() {
 				   title:'Please select a file'});
 		symboldialog.hide();
 		symboldialog.append("<div id='symbollist'/>");
-		symboldialog.append("<div id='symbol'><input type='text' id='newsymbolname'> <input type='submit' id='changename'></div> ");
+		symboldialog.append("<div id='symbol'><input type='text' id='newsymbolname'> <input type='submit' value='change' id='changename'></div> ");
 		});
 
 function MBSVG(file)
@@ -446,6 +457,13 @@ MBSVG.prototype.renderUI=function()
 }
 
 
+MBSVG.prototype.findSymbolName=function(id)
+{
+	var obj = this.doc.getElementById(id);
+	var name = obj.getAttribute('mbname');
+	return name;
+
+}
 
 /**
  *    UI for madbuilder.html to build the scene editor
