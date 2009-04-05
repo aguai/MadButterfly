@@ -242,6 +242,20 @@ class MBScene(inkex.Effect):
 		if len(layer.scene) > 0 and nth > layer.scene[len(layer.scene)-1].end:
 			layer.scene[len(layer.scene)-1].end = nth
 
+	def findNodeById(self,root,id):
+		for n in root:
+			if n.attrib.get('id') == id:
+				return n
+			nn = self.findNodeById(n,id)
+			if nn is not None:
+				return nn
+		return None
+	def changeSymbol(self,id,newname):
+		node = self.findNodeById(self.document.getroot(),id)
+		if node is not None:
+			node.set('mbname',newname);
+
+
 	def setCurrentScene(self,nth):
 		self.current = nth
 		for layer in self.layer:
@@ -479,6 +493,12 @@ class MB(soap.SOAPPublisher):
 				select.set('ref', id)
 				root.append(select)
 			return etree.tostring(newdoc)
+		except:
+			return traceback.format_exc()
+	def soap_CHANGESYMBOL(self,id,newname):
+		try:
+			self.target.changeSymbol(id,newname)
+			return "OK"
 		except:
 			return traceback.format_exc()
 import os

@@ -405,3 +405,5 @@ application/x-mbsvg:mbsvg: MadButterfly SVG
 	swallow(Inkscape) : /usr/bin/helper_mb.py "$file"
 application/x-c:c: MadButterfly SVG c program
 	swallow(gedit) : gedit "$file"
+application/x-h:h: MadButterfly SVG h program
+	swallow(gedit) : gedit "$file"

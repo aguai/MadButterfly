@@ -7,6 +7,8 @@
 
 application/x-mbsvg:mbsvg: MadButterfly SVG
         swallow(Inkscape) : /usr/local/bin/helper_mb.py "$file"
+application/x-h:h: MadButterfly SVG h program
+	swallow(gedit) : gedit "$file"
 
 * Install inkscape for madbutterfly
 	* tar -C / -xzvf inkscape-mb.tgz
