@@ -24,6 +24,6 @@ Description: GUI environment toolkit
 
 Package: madbuilder
 Architecture: all
-Depends: python-soappy,python-twisted,mozplugger,python-lxml
+Depends: python-soappy,python-twisted,mozplugger,python-lxml,madbutterfly-inkscape
 Description: MadButterFly Integrated Development Environment
  
