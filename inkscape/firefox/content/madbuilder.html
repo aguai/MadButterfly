@@ -1,0 +1,133 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="tree_component.css" />
+	<link type="text/css" href="css/smoothness/jquery-ui-1.7.custom.css" rel="stylesheet" />	
+	<script language="javascript" src="css.js"></script>
+	<script language="javascript" src="jquery-1.3.1.js"></script>
+	<script language="javascript" src="jqXMLUtils.js"></script>
+	<script language="javascript" src="jqSOAPClient.js"></script>
+	<script language="javascript" src="tree_component.js"></script>
+	<script type="text/javascript" src="jquery-ui-1.7.custom.min.js"></script>
+	<script type="text/javascript" src="jquery.simplemodal-1.2.3.pack.js"></script>
+	<script type="text/javascript" src="wizard.js"></script>
+
+	<style type="text/css"> 
+		.normal {
+			background-color:write
+			}
+		.active {
+			background-color: yellow
+			}
+		a.button {
+			background: transparent url('bg_button_a.gif') no-repeat scroll top right;
+			color : #444 ;
+			display : block ; 
+			float : left ; 
+			font : normal 12px arial, sans-serif ;
+			height : 24px; 
+			margin-right : 6px;
+		        padding-right : 18px;
+			text-decoration : none ;
+			}
+		a.button span {
+			background : transparent url('bg_button_span.gif' ) no-repeat ;
+			display : block ;
+			line- height : 14px;
+			padding : 5px 0 5px 18px;
+			}
+		a.button:active {
+		    	background-position: bottom right;
+		        color: blue;
+			outline: none; /* hide dotted outline in Firefox */
+	    	}
+
+	    	a.button:active span {
+		        background-position: bottom left;
+		        color: blue;
+		    	padding: 6px 0 4px 18px; /* push text down 1px */
+		} 
+		.filepanel {
+			height:700px
+		}
+	</style>
+</head>
+<body>
+<div class='draggable' id='frame' width=1100 height=200>
+</div>
+
+<div class='buttonpanel' id='btns'>
+	<br/>
+	<a class='button' href='#'> <span id='Jump'       onClick='onButtonClick(this)'>Jump</span></a>
+	<a class='button' href='#'> <span id='InsertKey' onClick='onButtonClick(this)'>Insert</span></a>
+	<a class='button' href='#'> <span id='ExtendScene' onClick='onButtonClick(this)'>Extend</span></a>
+	<a class='button' href='#'> <span id='DeleteScene' onClick='onButtonClick(this)'>Delete</span></a>
+	<a class='button' href='#'> <span id='MakeSymbol' onClick='onButtonClick(this)'>Make Symbol</span></a>
+	<a class='button' href='#'> <span id='MakeButton' onClick='onButtonClick(this)'>make Button</span></a>
+	<a class='button' href='#'> <span id='EditAnimation' onClick='onButtonClick(this)'>Edit Animation</span></a>
+	<a class='button' href='#'> <span id='Test' onClick='onButtonClick(this)'>Test</span></a>
+	<a class='button' href='#'> <span id='Save' onClick='onButtonClick(this)'>Save</span></a>
+	<a class='button' href='#'> <span id='Wizard' onClick='wizard.execute()'>Wizard</span></a>
+	<br/>
+	<br/>
+</div>
+
+<table><tr>
+<td valign='top'>	
+	<div width='200' height='700' id='list'>
+	<ul>
+		<li><a href='#filelist'>Project</a></li>
+		<li><a href='#sourcelist'>Source list</a></li>
+	</ul>
+<span class='filepanel' height='600' id='filelist' valign='top'/>
+<span class='filepanel' id='sourcelist' valign=top/>
+</div>
+</td>
+<td valign='top' width='900'>
+<div id='display'>
+	<ul>
+		<li><a href='#inkscape'>MBSVG</a></li>
+		<li><a href='#editor'>Editor</a></li>
+		<li><a href='#compiler'>Compiler</a></li>
+		<li><a href='#debugger'>Debugger</a></li>
+	</ul>
+<div>
+<div class='filepanel' id='inkscape'></div>
+<div class='filepanel' id='editor'></div>
+<div class='filepanel' id='compiler'></div>
+<div class='filepanel' id='debugger'></div>
+</div>
+</div>
+</td>
+</table>
+
+
+
+<div id='filedialog'></div>
+
+<div id='wizard'>
+	The name of the project<br>
+	<input type=text id='wizardname' value='default'/><br>
+	Please select the type of applications.<br>
+	<ul>
+		<a href='#' onClick="wizard.step1_cb('textmenu')"><li> Text only menu </li></a>
+		<a href='#' onClick="wizard.step1_cb('preview')"><li> Text with preview menu </li></a>
+	</ul>
+
+</div>
+
+<div id='wizard_step2'>
+	Please select the output path<br>
+	<input id='outputpath' type=file value='/tmp' /><br>
+	<a class 'buttopn' href='#'><span onClick='wizard.step1_cb()'>Prev</span></a>
+	<a class 'buttopn' href='#'><span onClick='wizard.step2_cb()'>Next</span></a>
+</div>
+<div id='wizard_step3'>
+	Generating files<br>
+</div>
+
+<div id='symboldialog' />
+
+<script type="text/javascript" src="inkscape.js" >
+</script>
+</body>
+</html>
