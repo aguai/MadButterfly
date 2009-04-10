@@ -886,6 +886,10 @@ function project_loadFile()
 	prjname = $('#mbsvg').attr('value');
 	project_name = prjname;
 	project_dir = getPathDirectory(prjname);
+	var f = system_open_write("/tmp/madbuilder.ws");
+	var s = "last="+prjname;
+	f.write(s,s.length);
+	f.close();
 	var prj = system_read(prjname);
 	project_parse(prj);
 	filedialog.dialog('close');
@@ -924,21 +928,43 @@ function onLoadProject(path)
 	project_parse(prj);
 }
 
+function loadOldProject()
+{
+	var f = system_open_read("/tmp/madbuilder.ws");
+	if (f == null) return -1;
+	var s = f.read(f.available());
+	f.close();
+
+	var pos = s.indexOf("last=");
+	if (pos == -1) return -1;
+	var m = s.match("last=([^\s]*)");
+	if (m[1]) {
+		var prj = system_read(m[1]);
+		project_dir = getPathDirectory(m[1]);
+		project_parse(prj);
+		$('#filedialog').dialog("close");
+	}
+	return 0;
+	
+}
+
 var last_select = null;
 var wizard = new Wizard();
 wizard.cb = onLoadProject;
 $('#filedialog').dialog({ width:500});
 jQuery(document).ready(function() {
-		filedialog = jQuery('#filedialog');
-		filedialog.dialog({width:500,
+		if (loadOldProject()) {
+			filedialog = jQuery('#filedialog');
+			filedialog.dialog({width:500,
 				   modal: true,
 			           autoOpen:false,
 				   title:'Please select a file'});
-		filedialog.show();
-		filedialog.html('Please select the project file<br>');
-		filedialog.append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
-		filedialog.append('<input type=button value="Load" onclick="project_loadFile()">');
-		filedialog.dialog("open");
+			filedialog.show();
+			filedialog.html('Please select the project file<br>');
+			filedialog.append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
+			filedialog.append('<input type=button value="Load" onclick="project_loadFile()">');
+			filedialog.dialog("open");
+		}
 		});
 
 $('#frame').draggable();
