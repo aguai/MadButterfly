@@ -2,7 +2,7 @@ Source: madbutterfly
 Section: devel
 Priority: extra
 Maintainer: Ben Lau <benlau@visionware.com.hk>
-Build-Depends: debhelper (>= 5),cdbs , mozilla-devscripts
+Build-Depends: debhelper (>= 5),cdbs , mozilla-devscripts,libcairo2-dev , libpango1.0-dev,zip
 Standards-Version: 3.7.3
 Homepage: http://www.assembla.com/spaces/MadButterfly
 
