@@ -9,6 +9,17 @@ function endsWith(str, s){
 	return reg.test(str);
 }
 
+function dumpXML(xml)
+{
+	return (new XMLSerializer()).serializeToString(xml);
+}
+
+
+function showInWindow(content)
+{
+	$('#debug').append("<pre>"+content+"</pre>");
+}
+
 function dumpObj(obj, name, indent, depth) {
       if (depth > MAX_DUMP_DEPTH) {
              return indent + name + ": <Maximum Depth Reached>\n";
@@ -84,6 +95,7 @@ function Inkscape(file)
 	ink.innerHTML = "<embed src="+file+" width=900 height=700 />";
 	this.isInProgress = 0;
 	this.callback = null;
+	this.animation = new MadSwatter(this);
 
 	setTimeout("inkscape.fetchDocument()",4000);
 }
@@ -123,6 +135,7 @@ Inkscape.prototype.publishDocument= function(resp)
 {
 	mbsvg = new MBSVGString(resp.Body[0].GETDOCResponse[0].Result[0].Text);
 	mbsvg.renderUI();
+	this.mbsvg = mbsvg;
 	if (this.callback)
 		this.callback(mbsvg);
 
@@ -286,6 +299,35 @@ Inkscape.prototype.refreshSymbolPanel=function(node)
 	$('#newsymbolname').val(val);
 }
 
+Inkscape.prototype.editAnimation=function () {
+	inkscape.fetchDocument(inkscape.editAnimationCallback);
+}
+
+Inkscape.prototype.editAnimationCallback=function(mbsvg) {
+
+	inkscape.animation.edit(mbsvg);
+	return;
+
+
+	var sodi = mbsvg.getElementsByTag('sodipodi:namedview')[0];	
+
+	var layer=sodi.getAttribute('inkscape:current-layer');
+	var animation = mbsvg.getElementsByTag('animationlist')[0];
+	var alist = animation.getElementsByTag('animation');
+	var len = alist.length;
+	var dialog = $('animation');
+	dialog.dialog('open');
+	var html = new Array();
+	html.append('<ul>');
+	for(i=0;i<alist.len;i++) {
+		html.append('<li><a href="#" onClick="">'+alist[i].getAttribute('name')+"</a></li>");
+	}
+	html.append('</ul>');
+	$('animation_list').html(html.join("\n"));
+	dialog.show();
+}
+
+
 Inkscape.prototype.loadSymbolScreen=function (mbsvg) {
 	// Swap the left side to be the SVG element tree.
 	var i,l;
@@ -352,6 +394,8 @@ function MBSVGString(xml)
 
 function MBSVG_loadFromDoc(self,xmlDoc)
 {
+	var top = xmlDoc.getElementsByTagNameNS("http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd","scenes")[0];
+	self.current = top.getAttribute("current");
 	var scenesNode = xmlDoc.getElementsByTagNameNS("http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd","scene");
 	if (scenesNode == null) {
 		alert('This is not a valid scene file');
@@ -465,6 +509,65 @@ MBSVG.prototype.findSymbolName=function(id)
 
 }
 
+
+/**
+ *   Return a new XML document that all objects which is not in the current scene are deleted.
+ *   
+ *   This function will traverse all scenes. For each scene which is not in the current scene, we will delete the reference group.
+ */
+
+function deepcopy(obj)
+{
+   var seenObjects = [];
+   var mappingArray = [];
+   var	f = function(simpleObject) {
+      var indexOf = seenObjects.indexOf(simpleObject);
+      if (indexOf == -1) {			
+         switch (Ext.type(simpleObject)) {
+            case 'object':
+               seenObjects.push(simpleObject);
+               var newObject = {};
+               mappingArray.push(newObject);
+               for (var p in simpleObject) 
+                  newObject[p] = f(simpleObject[p]);
+               newObject.constructor = simpleObject.constructor;				
+            return newObject;
+ 
+            case 'array':
+               seenObjects.push(simpleObject);
+               var newArray = [];
+               mappingArray.push(newArray);
+               for(var i=0,len=simpleObject.length; i<len; i++)
+                  newArray.push(f(simpleObject[i]));
+            return newArray;
+ 
+            default:	
+            return simpleObject;
+         }
+      } else {
+         return mappingArray[indexOf];
+      }
+   };
+   return f(obj);		
+}
+
+MBSVG.prototype.generateCurrentSVG=function()
+{
+	var i;
+	var scenes = this.scenes;
+	var len = scenes.length;
+	var newcopy = $(this.doc).clone();
+
+	for(i=0;i<len;i++) {
+		if (scenes[i].start > this.current || scenes[i].end < this.current) {
+			var obj = newcopy.find('#'+scenes[i].ref);
+			obj.remove();
+		}
+	}
+	return newcopy;
+}
+
+
 /**
  *    UI for madbuilder.html to build the scene editor
  */
@@ -521,6 +624,19 @@ function onButtonClick(obj)
 			project_run();
 		} else {
 		}
+	} else if (id == 'Open') {
+		filedialog = jQuery('#filedialog');
+		filedialog.dialog({width:500,
+			   modal: true,
+		           autoOpen:false,
+			   title:'Please select a file'});
+		filedialog.show();
+		filedialog.html('Please select the project file<br>');
+		filedialog.append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
+		filedialog.append('<input type=button value="Load" onclick="project_loadFile()">');
+		filedialog.dialog("open");
+	} else if (id == 'EditAnimation') {
+		inkscape.editAnimation();
 	} else {
 		alert(id+' has not been implemented yet');
 	}
@@ -930,6 +1046,7 @@ function onLoadProject(path)
 
 function loadOldProject()
 {
+	return -1;
 	var f = system_open_read("/tmp/madbuilder.ws");
 	if (f == null) return -1;
 	var s = f.read(f.available());
@@ -948,26 +1065,3 @@ function loadOldProject()
 	
 }
 
-var last_select = null;
-var wizard = new Wizard();
-wizard.cb = onLoadProject;
-$('#filedialog').dialog({ width:500});
-jQuery(document).ready(function() {
-		if (loadOldProject()) {
-			filedialog = jQuery('#filedialog');
-			filedialog.dialog({width:500,
-				   modal: true,
-			           autoOpen:false,
-				   title:'Please select a file'});
-			filedialog.show();
-			filedialog.html('Please select the project file<br>');
-			filedialog.append('<input type=file value="Select the project file" id="mbsvg" accept="image/png">');
-			filedialog.append('<input type=button value="Load" onclick="project_loadFile()">');
-			filedialog.dialog("open");
-		}
-		});
-
-$('#frame').draggable();
-$('#btns').draggable({cursor:'crosshair'});
-$('#list').tabs();
-$('#display').tabs();
