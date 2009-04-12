@@ -10,6 +10,9 @@
 	<script type="text/javascript" src="jquery-ui-1.7.custom.min.js"></script>
 	<script type="text/javascript" src="jquery.simplemodal-1.2.3.pack.js"></script>
 	<script type="text/javascript" src="wizard.js"></script>
+	<script type="text/javascript" src="madswatter.js"></script>
+	<script type="text/javascript" src="inkscape.js"></script>
+	<script type="text/javascript" src="main.js" ></script>
 
 	<style type="text/css"> 
 		.normal {
@@ -47,7 +50,10 @@
 		    	padding: 6px 0 4px 18px; /* push text down 1px */
 		} 
 		.filepanel {
-			height:700px
+			height:700px;
+		}
+		.tab {
+			font-size: 20px;
 		}
 	</style>
 </head>
@@ -67,32 +73,37 @@
 	<a class='button' href='#'> <span id='Test' onClick='onButtonClick(this)'>Test</span></a>
 	<a class='button' href='#'> <span id='Save' onClick='onButtonClick(this)'>Save</span></a>
 	<a class='button' href='#'> <span id='Wizard' onClick='wizard.execute()'>Wizard</span></a>
+	<a class='button' href='#'> <span id='Open' onClick='onButtonClick(this)'>Open</span></a>
 	<br/>
 	<br/>
 </div>
 
 <table><tr>
 <td valign='top'>	
-	<div width='200' height='700' id='list'>
+<div width='200' height='700' id='list'>
 	<ul>
-		<li><a href='#filelist'>Project</a></li>
-		<li><a href='#sourcelist'>Source list</a></li>
+		<li><a class='tab' href='#filelist'>Project</a></li>
+		<li><a class='tab' href='#sourcelist'>Source list</a></li>
+		<li><a class='tab' href='#debug' valign='top'>Debug</a></li>
 	</ul>
-<span class='filepanel' height='600' id='filelist' valign='top'/>
-<span class='filepanel' id='sourcelist' valign=top/>
+<div class='filepanel' id='filelist'></div>
+<div class='filepanel' id='sourcelist'></div>
+<div class='filepanel' id='debug'></div>
 </div>
 </td>
 <td valign='top' width='900'>
 <div id='display'>
 	<ul>
-		<li><a href='#inkscape'>MBSVG</a></li>
-		<li><a href='#editor'>Editor</a></li>
-		<li><a href='#compiler'>Compiler</a></li>
-		<li><a href='#debugger'>Debugger</a></li>
+		<li><a class='tab' href='#inkscape'>MBSVG</a></li>
+		<li><a class='tab' href='#editor'>Editor</a></li>
+		<li><a class='tab' href='#madswatter'>Animation</a></li>
+		<li><a class='tab' href='#compiler'>Compiler</a></li>
+		<li><a class='tab' href='#debugger'>Debugger</a></li>
 	</ul>
 <div>
 <div class='filepanel' id='inkscape'></div>
 <div class='filepanel' id='editor'></div>
+<div class='filepanel' id='madswatter'></div>
 <div class='filepanel' id='compiler'></div>
 <div class='filepanel' id='debugger'></div>
 </div>
@@ -127,7 +138,5 @@
 
 <div id='symboldialog' />
 
-<script type="text/javascript" src="inkscape.js" >
-</script>
 </body>
 </html>
