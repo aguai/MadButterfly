@@ -2,8 +2,9 @@
 
 * Install required modules
 	* sudo apt-get install python-soappy python-twisted mozplugger python-lxml
+	* sudo apt-get build-dep inkscape
 * Install the /etc/mozpluggerrc
-	* Add the following two lines into /etc.mozpluggerrc
+	* Add the following two lines into /etc/mozpluggerrc
 
 application/x-mbsvg:mbsvg: MadButterfly SVG
         swallow(Inkscape) : /usr/local/bin/helper_mb.py "$file"

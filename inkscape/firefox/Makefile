@@ -1,7 +1,9 @@
 all: madbuilder.xpi inkscape-mb
 
 madbuilder.xpi: chrome.manifest install.rdf content/*
+	cp -a template content
 	zip -r madbuilder.xpi chrome.manifest  content/* install.rdf README
+	rm -rf content/template
 
 inkscape-0.46.tar.gz:
 	wget -O inkscape-0.46.tar.gz http://nchc.dl.sourceforge.net/sourceforge/inkscape/inkscape-0.46.tar.gz
