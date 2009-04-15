@@ -97,7 +97,7 @@ function Inkscape(file)
 	this.callback = null;
 	this.animation = new MadSwatter(this);
 
-	setTimeout("inkscape.fetchDocument()",4000);
+	setTimeout("inkscape.fetchDocument()",3000);
 }
 
 Inkscape.prototype.gotoScene = function (n)
