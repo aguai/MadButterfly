@@ -46,7 +46,6 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     if(text == NULL)
 	return NULL;
 
-
     memset(text, 0, sizeof(sh_text_t));
     mb_obj_init(text, MBO_TEXT);
     text->data = strdup(txt);
