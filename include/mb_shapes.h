@@ -18,6 +18,7 @@
  * A shape implementation must include
  * - rdman_shape_*_new()
  *   - clear memory for shape_t member.
+ *     - mb_obj_init() to initialize shape_t::obj.
  *   - assign *_free() to \ref shape_t::free.
  *   - make new object been managed by a redraw manager.
  *     - call rdman_shape_man()
@@ -241,6 +242,58 @@ extern void sh_image_transform(shape_t *shape);
 extern void sh_image_draw(shape_t *shape, cairo_t *cr);
 extern void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
 				  co_aix w, co_aix h);
+/* @} */
+
+/*! \defgroup shape_stext A Simple Implementation of Shape of Image
+ * @{
+ */
+
+/*! \defgroup font_face Define font face used to describe style of text.
+ * @{
+ */
+/*! \brief Font face of MadButterfly.
+ *
+ * It actully a cairo_font_face_t, now.  But, it can be change for latter.
+ * So, programmer should not depend on cairo_font_face_t.
+ */
+typedef struct _mb_font_face mb_font_face_t;
+
+enum MB_FONT_SLANTS {
+    MB_FONT_SLANT_DUMMY,
+    MB_FONT_SLANT_ROMAN,
+    MB_FONT_SLANT_ITALIC,
+    MB_FONT_SLANT_OBLIQUE,
+    MB_FONT_SLANT_MAX
+};
+
+extern mb_font_face_t *mb_font_face_query(redraw_man_t *rdman,
+					  const char *family,
+					  int slant,
+					  int weight);
+extern void mb_font_face_free(mb_font_face_t *face);
+/* @} */
+
+/*! \brief Describe style of a block of text.
+ *
+ * \ref sh_stext_t describes style of a text by a list of
+ * \ref mb_style_blk_t.
+ */
+typedef struct {
+    int n_chars;
+    mb_font_face_t *face;
+    co_aix font_sz;
+} mb_style_blk_t;
+
+extern shape_t *rdman_shape_stext_new(redraw_man_t *rdman,
+				      co_aix x, co_aix y,
+				      const char *txt);
+extern void sh_stext_transform(shape_t *shape);
+extern void sh_stext_draw(shape_t *shape, cairo_t *cr);
+extern int sh_stext_set_text(shape_t *shape, const char *txt);
+extern int sh_stext_set_style(shape_t *shape,
+			       const mb_style_blk_t *blks,
+			       int nblks);
+
 /* @} */
 /* @} */
 

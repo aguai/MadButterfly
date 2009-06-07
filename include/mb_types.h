@@ -48,7 +48,8 @@ enum { MBO_DUMMY,
        MBO_PATH,
        MBO_TEXT,
        MBO_RECT,
-       MBO_IMAGE
+       MBO_IMAGE,
+       MBO_STEXT
 };
 #define MBO_CLASS_MASK 0xf000
 #define MBO_CLASS(x) (((mb_obj_t *)(x))->obj_type & MBO_CLASS_MASK)
@@ -374,6 +375,7 @@ struct _shape {
 #define sh_pos_is_in(sh, x, y) geo_pos_is_in(sh_get_geo(sh), x, y)
 #define sh_get_area(sh) geo_get_area(sh_get_geo(sh))
 #define sh_get_coord(sh) ((sh)->coord)
+#define sh_get_aggr_matrix(sh) (coord_get_aggr_matrix(sh_get_coord(sh)))
 #define sh_get_fill(sh) ((sh)->fill)
 #define sh_get_stroke(sh) ((sh)->stroke)
 
