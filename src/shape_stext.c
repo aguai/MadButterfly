@@ -12,8 +12,13 @@
 #define OK 0
 #define ERR -1
 
+/*! \brief Find out a font pattern.
+ *
+ * This function use fontconfig to decide a font file in pattern.  It can
+ * replaced by other mechanism if you think it is not what you want.
+ */
 static
-FcPattern *query_fontconfig(const char *family, int slant, int weight) {
+FcPattern *query_font_pattern(const char *family, int slant, int weight) {
     FcPattern *ptn, *p;
     FcValue val;
     FcConfig *cfg;
@@ -65,6 +70,80 @@ err:
 
 }
 
+/*! \brief Find out a font face for a pattern specified.
+ *
+ * The pattern, here, is a vector of family, slant, and weight.
+ * This function base on fontconfig and cairo FreeType font supporting.
+ * You can replace this function with other font mechanisms.
+ */
+static
+cairo_font_face_t *query_font_face(const char *family,
+				   int slant,
+				   int weight) {
+    cairo_font_face_t *cface;
+    FcPattern *ptn;
+    
+    ptn = query_font_pattern(family, slant, weight);
+    cface = cairo_ft_font_face_create_for_pattern(ptn);
+    FcPatternDestroy(ptn);
+    
+    return cface;
+}
+
+static
+void free_font_face(cairo_font_face_t *cface) {
+    ASSERT(cface == NULL);
+
+    cairo_font_face_destroy(cface);
+}
+
+/*! \brief This is scaled font for specified size and extent.
+ *
+ * Font face only specified which font would be used to draw text
+ * message.  But, it also need to scale glyphs to specified size and
+ * rotation.  This function return a scaled font specified by a
+ * matrix that transform glyph from design space of the font to
+ * user space of cairo surface.
+ */
+static
+cairo_scaled_font_t *get_ciaro_scaled_font(cairo_font_face_t *cface,
+					   co_aix *matrix) {
+    cairo_font_face_t *scaled_font;
+    cairo_matrix_t font_matrix;
+    static cairo_matir_t id = {
+	1, 0,
+	0, 1,
+	0, 0
+    };
+    static cairo_font_options_t *opt = NULL;
+
+    ASSERT(matrix != NULL);
+
+    if(opt == NULL) {
+	opt = cairo_font_options_create();
+	if(opt == NULL)
+	    return NULL;
+    }
+
+    font_matrix.xx = *matrix++;
+    font_matrix.xy = *matrix++;
+    font_matrix.x0 = *matrix++;
+    font_matrix.yx = *matrix++;
+    font_matrix.yy = *matrix++;
+    font_matrix.y0 = *matrix;
+    scaled_font = cairo_scaled_font_create(cface, &font_matrix,
+					   &id, opt);
+
+    return scaled_font;
+}
+
+static
+void free_scaled_font(cairo_scaled_font_t *scaled_font) {
+    cairo_scaled_font_destroy(scaled_font);
+}
+
+/* ============================================================ */
+
 /*! \brief Query and return a font face for a specified attribute vector.
  *
  * Programmers use mb_font_face_t to specify fonts used to show a
@@ -80,15 +159,7 @@ mb_font_face_t *mb_font_face_query(redraw_man_t *rdman,
 				   const char *family,
 				   int slant,
 				   int weight) {
-    cairo_font_face_t *cface;
-    FcPattern *ptn;
-
-    ptn = query_fontconfig(family, slant, weight);
-
-    cface = cairo_ft_font_face_create_for_pattern(ptn);
-    FcPatternDestroy(ptn);
-    
-    return (mb_font_face_t *)cface;
+    return (mb_font_face_t *)query_font_face(family, slant, weight);
 }
 
 void mb_font_face_free(mb_font_face_t *face) {
