@@ -1,4 +1,4 @@
-#if 0
+#ifdef SHAPE_STEXT
 
 #include <stdio.h>
 #include <cairo.h>
@@ -11,6 +11,33 @@
 #endif
 #define OK 0
 #define ERR -1
+
+/*! \defgroup fontconfig_freetype Fontconfig and FreeType Layer.
+ *
+ * This layer implements a font provider to reset of the system.
+ * It bases on fontconfig and FreeType supporting of Cairo.
+ *
+ * @{
+ */
+/*! \brief Stakeholder of scaled font.
+ *
+ * It is actually a cairo_scaled_font_t, now.  But, it should not be
+ * noticed by out-siders.  Only \ref fontconfig_freetype
+ * should known it.
+ */
+typedef struct _mb_scaled_font mb_scaled_font_t;
+
+/*! \brief Stakeholder of scaled font.
+ *
+ * Although, mb_text_extents_t is defined as a cairo_scaled_font_t, but
+ * programmers should assume it is opague.
+ */
+typedef cairo_text_extents_t mb_text_extents_t;
+
+#define MBE_GET_X_ADV(ext) ((ext)->x_advance)
+#define MBE_GET_Y_ADV(ext) ((ext)->y_advance)
+#define MBE_GET_WIDTH(ext) ((ext)->width)
+#define MBE_GET_HEIGHT(ext) ((ext)->height)
 
 /*! \brief Find out a font pattern.
  *
@@ -77,9 +104,7 @@ err:
  * You can replace this function with other font mechanisms.
  */
 static
-cairo_font_face_t *query_font_face(const char *family,
-				   int slant,
-				   int weight) {
+mb_font_face_t *query_font_face(const char *family, int slant, int weight) {
     cairo_font_face_t *cface;
     FcPattern *ptn;
     
@@ -87,14 +112,14 @@ cairo_font_face_t *query_font_face(const char *family,
     cface = cairo_ft_font_face_create_for_pattern(ptn);
     FcPatternDestroy(ptn);
     
-    return cface;
+    return (mb_font_face_t *)cface;
 }
 
 static
-void free_font_face(cairo_font_face_t *cface) {
-    ASSERT(cface == NULL);
+void free_font_face(mb_font_face_t *face) {
+    ASSERT(face == NULL);
 
-    cairo_font_face_destroy(cface);
+    cairo_font_face_destroy((cairo_font_face_t *)face);
 }
 
 /*! \brief This is scaled font for specified size and extent.
@@ -106,8 +131,8 @@ void free_font_face(cairo_font_face_t *cface) {
  * user space of cairo surface.
  */
 static
-cairo_scaled_font_t *get_ciaro_scaled_font(cairo_font_face_t *cface,
-					   co_aix *matrix) {
+mb_scaled_font_t *get_cairo_scaled_font(mb_font_face_t *face,
+					co_aix *matrix) {
     cairo_font_face_t *scaled_font;
     cairo_matrix_t font_matrix;
     static cairo_matir_t id = {
@@ -131,18 +156,40 @@ cairo_scaled_font_t *get_ciaro_scaled_font(cairo_font_face_t *cface,
     font_matrix.yx = *matrix++;
     font_matrix.yy = *matrix++;
     font_matrix.y0 = *matrix;
-    scaled_font = cairo_scaled_font_create(cface, &font_matrix,
+    scaled_font = cairo_scaled_font_create((cairo_font_face_t *)face,
+					   &font_matrix,
 					   &id, opt);
 
-    return scaled_font;
+    return (mb_scaled_font_t *)scaled_font;
 }
 
 static
-void free_scaled_font(cairo_scaled_font_t *scaled_font) {
-    cairo_scaled_font_destroy(scaled_font);
+void free_scaled_font(mb_scaled_font_t *scaled_font) {
+    cairo_scaled_font_destroy((cairo_scaled_font_t *)scaled_font);
 }
 
-/* ============================================================ */
+static
+void text_extents(mb_scaled_font_t *scaled_font, const char *txt,
+		  mb_text_extents_t *extents) {
+    cairo_scaled_font_text_extents((cairo_scaled_font_t *)scaled_font,
+				   txt,
+				   (cairo_text_extents_t *)extents);
+}
+
+static
+mb_text_extents_t *mb_text_extents_new(void) {
+    cairo_text_extents_t *extents;
+
+    extents = (cairo_text_extents_t *)malloc(sizeof(cairo_text_extents_t));
+    return extents;
+}
+
+static
+void mb_text_extents_free(mb_text_extents_t *extents) {
+    free(extents);
+}
+
+/* @} */
 
 /*! \brief Query and return a font face for a specified attribute vector.
  *
@@ -159,13 +206,12 @@ mb_font_face_t *mb_font_face_query(redraw_man_t *rdman,
 				   const char *family,
 				   int slant,
 				   int weight) {
-    return (mb_font_face_t *)query_font_face(family, slant, weight);
+    return query_font_face(family, slant, weight);
 }
 
 void mb_font_face_free(mb_font_face_t *face) {
-    cairo_font_face_t *cface = (cairo_font_face_t *)face;
     ASSERT(face != NULL);
-    cairo_font_face_destroy(face);
+    free_font_face(face);
 }
 
 /*! \brief A simple implementation of text shape.
@@ -178,7 +224,7 @@ typedef struct _sh_stext {
     int nblks;			      /*!< \brief Number of style blocks */
     int max_nblks;
     co_aix x, y;
-    cairo_scaled_font_t **scaled_fonts;
+    mb_scaled_font_t **scaled_fonts;
 } sh_stext_t;
 
 shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
@@ -375,4 +421,4 @@ int sh_stext_set_style(shape_t *shape,
     return OK;
 }
 
-#endif /* 0 */
+#endif /* SHAPE_STEXT */
