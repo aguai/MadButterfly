@@ -1,15 +1,69 @@
+#if 0
+
 #include <stdio.h>
 #include <cairo.h>
-#include <fontconfig.h>
+#include <cairo-ft.h>
+#include <fontconfig/fontconfig.h>
 #include "mb_shapes.h"
-
-#if 0
 
 #ifndef ASSERT
 #define ASSERT(x)
 #endif
 #define OK 0
 #define ERR -1
+
+static
+FcPattern *query_fontconfig(const char *family, int slant, int weight) {
+    FcPattern *ptn, *p;
+    FcValue val;
+    FcConfig *cfg;
+    FcBool r;
+    static int slant_map[] = {	/* from MB_FONT_SLANT_* to FC_SLANT_* */
+	FC_SLANT_ROMAN,
+	FC_SLANT_ROMAN,
+	FC_SLANT_ITALIC,
+	FC_SLANT_OBLIQUE};
+
+    cfg = FcConfigGetCurrent();
+    ptn = FcPatternCreate();
+    p = FcPatternCreate();
+    if(ptn == NULL || p == NULL)
+	goto err;
+
+    val.type = FcTypeString;
+    val.u.s = family;
+    FcPatternAdd(ptn, "family", &val, FcTrue);
+    
+    val.type = FcTypeInteger;
+    val.u.i = slant_map[slant];
+    FcPatternAdd(ptn, "slant", &val, FcTrue);
+    
+    val.type = FcTypeInteger;
+    val.u.i = weight;
+    FcPatternAdd(ptn, "weight", &val, FcTrue);
+
+    r = FcConfigSubstituteWithPat(cfg, ptn, NULL, FcMatchPattern);
+    if(!r)
+	goto err;
+    
+    r = FcConfigSubstituteWithPat(cfg, p, ptn, FcMatchFont);
+    if(!r)
+	goto err;
+
+    FcDefaultSubstitute(p);
+
+    FcPatternDestroy(ptn);
+
+    return p;
+    
+err:
+    if(ptn)
+	FcPatternDestroy(ptn);
+    if(p)
+	FcPatternDestroy(p);
+    return NULL;
+
+}
 
 /*! \brief Query and return a font face for a specified attribute vector.
  *
@@ -28,29 +82,8 @@ mb_font_face_t *mb_font_face_query(redraw_man_t *rdman,
 				   int weight) {
     cairo_font_face_t *cface;
     FcPattern *ptn;
-    FcValue val;
-    static int slant_map[] = {	/* from MB_FONT_SLANT_* to FC_SLANT_* */
-	FC_SLANT_ROMAN,
-	FC_SLANT_ROMAN,
-	FC_SLANT_ITALIC,
-	FC_SLANT_OBLIQUE};
 
-    ptn = FcPatternCreate();
-    val.type = FcTypeString;
-    val.s = family;
-    FcPatternAdd(ptn, "family", val, FcTrue);
-    
-    if(family < 0 || family >= MB_FONT_SLANT_MAX) {
-	FcPatternDestroy(ptn);
-	return NULL;
-    }
-    val.type = FcTypeInteger;
-    val.i = slant_map[slant];
-    FcPatternAdd(ptn, "slant", val, FcTrue);
-    
-    val.type = FcTypeInteger;
-    val.i = weight;
-    FcPatternAdd(ptn, "weight", val, FcTrue);
+    ptn = query_fontconfig(family, slant, weight);
 
     cface = cairo_ft_font_face_create_for_pattern(ptn);
     FcPatternDestroy(ptn);
