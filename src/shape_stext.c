@@ -36,6 +36,8 @@ typedef cairo_text_extents_t mb_text_extents_t;
 
 #define MBE_GET_X_ADV(ext) ((ext)->x_advance)
 #define MBE_GET_Y_ADV(ext) ((ext)->y_advance)
+#define MBE_GET_X_BEARING(ext) ((ext)->x_bearing)
+#define MBE_GET_Y_BEARING(ext) ((ext)->y_bearing)
 #define MBE_GET_WIDTH(ext) ((ext)->width)
 #define MBE_GET_HEIGHT(ext) ((ext)->height)
 
@@ -131,8 +133,8 @@ void free_font_face(mb_font_face_t *face) {
  * user space of cairo surface.
  */
 static
-mb_scaled_font_t *get_cairo_scaled_font(mb_font_face_t *face,
-					co_aix *matrix) {
+mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
+					       co_aix *matrix) {
     cairo_font_face_t *scaled_font;
     cairo_matrix_t font_matrix;
     static cairo_matir_t id = {
@@ -164,13 +166,13 @@ mb_scaled_font_t *get_cairo_scaled_font(mb_font_face_t *face,
 }
 
 static
-void free_scaled_font(mb_scaled_font_t *scaled_font) {
+void scaled_font_free(mb_scaled_font_t *scaled_font) {
     cairo_scaled_font_destroy((cairo_scaled_font_t *)scaled_font);
 }
 
 static
-void text_extents(mb_scaled_font_t *scaled_font, const char *txt,
-		  mb_text_extents_t *extents) {
+void compute_text_extents(mb_scaled_font_t *scaled_font, const char *txt,
+			  mb_text_extents_t *extents) {
     cairo_scaled_font_text_extents((cairo_scaled_font_t *)scaled_font,
 				   txt,
 				   (cairo_text_extents_t *)extents);
@@ -275,82 +277,68 @@ int compute_utf8_chars_sz(const char *txt, int n_chars) {
 }
 
 static
-void compute_text_extents(char *txt, int txt_len,
-			 cairo_scaled_font_t *scaled_font,
-			 cairo_text_extents_t *extents) {
-    char saved;
-
-    saved = txt[txt_len];
-    txt[txt_len] = 0;
-    cairo_scaled_font_text_extents(scaled_font, txt, extents);
-    txt[txt_len] = saved;
-}
-
-static
-cairo_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
+mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
 					   cairo_font_face_t *face,
 					   co_aix shift_x, co_aix shift_y,
 					   co_aix font_sz) {
-    cairo_matrix_t cmtx;
-    static cairo_matrix_t cid;
-    static cairo_font_options_t *fopt = NULL;
-    co_aix *matrix;
-    cairo_scaled_font_t *scaled;
-    int i;
+    co_aix matrix[6], scaled_matrix[6];
+    co_aix *aggr;
+    mb_scaled_font_t *scaled;
 
-    if(fopt == NULL) {
-	cairo_matrix_init_identify(&cid);
-	fopt = cairo_font_options_create();
-	if(fopt == NULL)
-	    return NULL;
-    }
+    aggr = sh_get_aggr_matrix((shape_t *)txt_o);
+    matrix[0] = font_sz;
+    matrix[1] = 0;
+    matrix[2] = shift_x;
+    matrix[3] = 0;
+    matrix[4] = font_sz;
+    matrix[5] += shift_y;
+    matrix_mul(aggr, matrix, scaled_matrix);
+    
+    scaled = make_scaled_font_face_matrix(face, scaled_matrix);
 
-    matrix = sh_get_aggr_matrix((shape_t *)txt_o);
-    i = 0;
-    cmtx.xx = matrix[i++];
-    cmtx.xy = matrix[i++];
-    cmtx.x0 = matrix[i++] + shift_x;
-    cmtx.yx = matrix[i++];
-    cmtx.yy = matrix[i++];
-    cmtx.y0 = matrix[i] + shift_y;
-    
-    scaled = cairo_scaled_font_create(face, &cmtx, &cid, fopt);
-    
     return scaled;
 }
 
 static
-void compute_extents(sh_stext_t *txt_o) {
-    co_aix adv_x, adv_y;
-    cairo_text_extents_t extents;
+void compute_styled_extents(sh_stext_t *txt_o) {
+    mb_text_extents_t sub_extents, full_extents;
+    mb_text_extents_t *ext;
     mb_style_blk_t *blk;
-    cairo_scaled_font_t *scaled_font;
-    char *txt;
-    co_aix shift_x, shift_y;
     int blk_txt_len;
+    mb_scaled_font_t *scaled_font;
+    char *txt, saved;
+    co_aix shift_x, shift_y;
     int i;
-
-    adv_x = adv_y = 0;
+    
+    memset(&full_extents, sizeof(mb_text_extents_t), 0);
+    
     blk = txt_o->style_blks;
     scaled_font = txt_o->scaled_fonts;
     txt = (char *)txt_o->txt;
-    shift_x = txt_o->x;
-    shift_y = txt_o->y;
+    ext = &full_extents;
     for(i = 0; i < txt_o->nblks; i++) {
-	*scaled_font = make_scaled_fonts(txt_o, blk->face,
-					 shift_x, shift_y, font_sz);
+	shift_x = txt_o->x + full_extents.x_adv;
+	shift_y = txt_o->y + full_extents.y_adv;
+	
+	*scaled_font = make_scaled_font_face(txt_o, blk->face,
+					     shift_x, shift_y, font_sz);
 	ASSERT(*scaled_font != NULL);
 	
 	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
 	ASSERT(blk_txt_len != ERR);
 	
-	compute_text_extents(txt, blk_txt_len, *scaled_font, &extents);
-	adv_x += extents.x_advance;
-	adv_y += extents.y_advance;
+	saved = txt[blk_txt_len];
+	txt[blk_txt_len] = 0;
+	compute_text_extents(scaled_font, txt, &extents);
+	txt[blk_txt_len] = saved;
+
+	adv_x += MBE_GET_X_ADV(&extents);
+	adv_y += MBE_GET_Y_ADV(&extents);
 	
 	scaled_font++;
 	blk++;
 	txt += blk_txt_len;
+	ext = &sub_extents;
     }
 }
 
