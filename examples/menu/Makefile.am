@@ -2,34 +2,31 @@ include $(top_srcdir)/config.mk
 
 #SUFFIXES=.svg .so
 
-list.so: list.o
-	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
-
-list.o: list.h
+noinst_LTLIBRARIES = list.la browser.la
+list_la_SOURCES = list.c
+list_la_LDFLAGS = -module -avoid-version -rpath /nowhere -shared
+browser_la_SOURCES = browser.c
+browser_la_LDFLAGS = -module -avoid-version -rpath /nowhere -shared
 
 list.mb: $(srcdir)/list.svg
 	$(top_srcdir)/tools/svg2code.py $< $@
 
-list.c: list.mb
+list.c: list.mb list.h
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
 list.h: list.mb
 	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
 
-browser.so: browser.o
-	$(CC) $(CFLAGS) -I../../include  -I ../../include -shared -o $@ $<
-
-browser.o: browser.h
-
 browser.h: browser.mb
 	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@
 
-browser.c: browser.mb
+browser.c: browser.mb browser.h
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
+
 browser.mb: $(srcdir)/browser.svg
 	$(top_srcdir)/tools/svg2code.py $< $@
 
-noinst_PROGRAMS = menu filebrowser list.so browser.so
+noinst_PROGRAMS = menu filebrowser
 EXTRA_DIST = 
 
 menu_SOURCES = main.c
