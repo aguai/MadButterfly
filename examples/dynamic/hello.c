@@ -48,7 +48,7 @@ int main(int argc, char * const argv[]) {
     if (argc > 1) 
 	    myApp = MBApp_Init(argv[1]);
     else
-	    myApp = MBApp_Init("scene");
+	    myApp = MBApp_Init(".libs/scene");
     data.currentscene=0;
     MBApp_setData(myApp,&data);
     //b = mb_button_new(myApp, myApp->rootsprite, "btn");
