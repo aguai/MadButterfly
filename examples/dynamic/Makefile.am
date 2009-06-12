@@ -35,7 +35,7 @@ mytext_la_SOURCES = mytext.c
 mytext_la_LDFLAGS = -module -avoid-version -rpath /nowhere -shared
 
 
-scene_la_SOURCES = mytext.c
+scene_la_SOURCES = scene.c
 scene_la_LDFLAGS = -module -avoid-version -rpath /nowhere -shared
 
 

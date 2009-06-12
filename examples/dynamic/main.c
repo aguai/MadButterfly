@@ -121,7 +121,7 @@ MyApp_InitContent()
     mb_button_t *b;
     mb_sprite_t *sprite;
 
-    sprite = sprite_load("button", myApp->rdman, myApp->rdman->root_coord);
+    sprite = sprite_load(".libs/button", myApp->rdman, myApp->rdman->root_coord);
     b = mb_button_new(myApp->rdman, sprite, "btn");
     mb_button_add_onClick(b, test,NULL);
 }
@@ -140,7 +140,7 @@ int main(int argc, char * const argv[]) {
     if (argc > 1) 
 	    myApp = MBApp_Init(argv[1]);
     else
-	    myApp = MBApp_Init("scene");
+	    myApp = MBApp_Init(".libs/scene");
     data.currentscene=0;
     draw_text();
     MBApp_setData(myApp,&data);
