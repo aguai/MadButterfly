@@ -14,7 +14,8 @@ dynamic_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = 
 CLEANFILES = menu.c menu.h menu.mb \
 	button.c button.h button.mb \
-	scene.c scene.h scene.mb
+	scene.c scene.h scene.mb \
+	mytext.c mytext.h mytext.mb
 
 
 hello_SOURCES = hello.c 
