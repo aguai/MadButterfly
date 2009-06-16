@@ -13,8 +13,8 @@ LT_INIT
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
-PKG_CHECK_MODULES([cairo], [cairo >= 0.22], , AC_MSG_ERROR([cairo >= 0.22 not found]))
-PKG_CHECK_MODULES([pangocairo], [pangocairo >= 0.22], , AC_MSG_ERROR([pangocairo >= 0.22 not found]))
+PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
+PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.22], , AC_MSG_ERROR([pangocairo >= 1.22 not found]))
 
 # Checks for header files.
 AC_PATH_X

@@ -2,7 +2,8 @@ include $(top_srcdir)/config.mk
 
 #SUFFIXES=.svg .mbso
 
-noinst_PROGRAMS = dynamic hello text button.so mytext.so scene.so
+noinst_PROGRAMS = dynamic hello text
+noinst_LTLIBRARIES = button.la mytext.la scene.la
 EXTRA_DIST = menu.svg button.svg
 
 dynamic_SOURCES = main.c
@@ -25,12 +26,20 @@ text_SOURCES = text.c
 text_LDFLAGS = @pangocairo_LIBS@ 
 text_LDADD = $(top_builddir)/src/libmbfly.la
 
-button.so: button.o
-	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
 
-button.o: button.c button.h
+button_la_SOURCES = button.c
+button_la_LDFLAGS = -module -avoid-version -rpath /nowhere -shared
 
-button.c: button.mb
+
+mytext_la_SOURCES = mytext.c
+mytext_la_LDFLAGS = -module -avoid-version -rpath /nowhere -shared
+
+
+scene_la_SOURCES = scene.c
+scene_la_LDFLAGS = -module -avoid-version -rpath /nowhere -shared
+
+
+button.c: button.mb button.h
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
 button.h: button.mb
@@ -39,12 +48,7 @@ button.h: button.mb
 button.mb: button.svg
 	$(top_srcdir)/tools/svg2code.py $< $@
 
-mytext.so: mytext.o
-	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
-
-mytext.o: mytext.c mytext.h
-
-mytext.c: mytext.mb
+mytext.c: mytext.mb mytext.h
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
 mytext.h: mytext.mb
@@ -53,12 +57,7 @@ mytext.h: mytext.mb
 mytext.mb: mytext.svg
 	$(top_srcdir)/tools/svg2code.py $< $@
 
-scene.so: scene.o
-	$(CC) $(CFLAGS) -I ../../include -shared -o $@ $<
-
-scene.o: scene.c scene.h
-
-scene.c: scene.mb
+scene.c: scene.mb scene.h
 	m4 -I $(top_srcdir)/tools mb_c_source.m4 $< > $@
 
 scene.h: scene.mb

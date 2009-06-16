@@ -57,7 +57,7 @@ mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman, coord_t *root)
 		return NULL;
 	}
 	s = name + strlen(name)-1;
-	while((s != name) && *s != '/') s--;
+	while((s != name) && *(s-1) != '/') s--;
 	snprintf(path,sizeof(path), "%s_new", s);
 	new = dlsym(handle,path);
 	if (new == NULL) {
