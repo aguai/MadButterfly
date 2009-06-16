@@ -40,6 +40,12 @@ typedef cairo_text_extents_t mb_text_extents_t;
 #define MBE_GET_Y_BEARING(ext) ((ext)->y_bearing)
 #define MBE_GET_WIDTH(ext) ((ext)->width)
 #define MBE_GET_HEIGHT(ext) ((ext)->height)
+#define MBE_SET_X_ADV(ext, v) do { ((ext)->x_advance) = v; } while(0)
+#define MBE_SET_Y_ADV(ext, v) do { ((ext)->y_advance) = v; } while(0)
+#define MBE_SET_X_BEARING(ext, v) do { ((ext)->x_bearing) = v; } while(0)
+#define MBE_SET_Y_BEARING(ext, v) do { ((ext)->y_bearing) = v; } while(0)
+#define MBE_SET_WIDTH(ext, v) do { ((ext)->width) = v; } while(0)
+#define MBE_SET_HEIGHT(ext, v) do { ((ext)->height) = v; } while(0)
 
 /*! \brief Find out a font pattern.
  *
@@ -227,6 +233,7 @@ typedef struct _sh_stext {
     int max_nblks;
     co_aix x, y;
     mb_scaled_font_t **scaled_fonts;
+    mb_text_extents_t extents;
 } sh_stext_t;
 
 shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
@@ -299,10 +306,45 @@ mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
     return scaled;
 }
 
+/*! \brief Extend an extents from another sub-extents.
+ *
+ * A styled text is styled by several styled blocks, so extents of
+ * blocks should be computed separated, collected, and aggreagated
+ * into a full extents.
+ */
 static
-void compute_styled_extents(sh_stext_t *txt_o) {
-    mb_text_extents_t sub_extents, full_extents;
-    mb_text_extents_t *ext;
+void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
+    co_aix f_rbx, f_rby;
+    co_aix s_rbx, s_rby;
+
+    f_rbx = MBE_GET_X_BEARING(full) + MBE_GET_WIDTH(full);
+    f_rby = MBE_GET_Y_BEARING(full) + MBE_GET_HEIGHT(full);
+    s_rbx = MBE_GET_X_BEARING(sub) + MBE_GET_WIDTH(sub);
+    s_rby = MBE_GET_Y_BEARING(sub) + MBE_GET_HEIGHT(sub);
+    
+    /* set bearing */
+    if(MBE_GET_X_BEARING(full) > MBE_GET_X_BEARING(sub))
+	MBE_SET_X_BEARING(full, MBE_GET_X_BEARING(sub));
+    if(MBE_GET_Y_BEARING(full) > MBE_GET_Y_BEARING(sub))
+	MBE_SET_Y_BEARING(full, MBE_GET_Y_BEARING(sub));
+    
+    /* set width/height */
+    if(f_rbx < s_rbx)
+	MBE_SET_WIDTH(full, s_rbx - MBE_GET_X_BEARING(full));
+    if(f_rby < s_rby)
+	MBE_SET_HEIGHT(full, s_rby - MBE_GET_Y_BEARING(full));
+}
+
+/*! \brief Compute extents of a stext object according style blocks.
+ *
+ * It create scaled fonts for style blocks, compute their extents,
+ * and compute where they should be draw acoording advance of style
+ * blocks before a style block.
+ */
+static
+void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
+    mb_text_extents_t sub_extents;
+    mb_text_extents_t *extents;
     mb_style_blk_t *blk;
     int blk_txt_len;
     mb_scaled_font_t *scaled_font;
@@ -315,7 +357,7 @@ void compute_styled_extents(sh_stext_t *txt_o) {
     blk = txt_o->style_blks;
     scaled_font = txt_o->scaled_fonts;
     txt = (char *)txt_o->txt;
-    ext = &full_extents;
+    extents = &txt_o->extents;
     for(i = 0; i < txt_o->nblks; i++) {
 	shift_x = txt_o->x + full_extents.x_adv;
 	shift_y = txt_o->y + full_extents.y_adv;
@@ -329,16 +371,15 @@ void compute_styled_extents(sh_stext_t *txt_o) {
 	
 	saved = txt[blk_txt_len];
 	txt[blk_txt_len] = 0;
-	compute_text_extents(scaled_font, txt, &extents);
+	compute_text_extents(*scaled_font, txt, extents);
 	txt[blk_txt_len] = saved;
 
-	adv_x += MBE_GET_X_ADV(&extents);
-	adv_y += MBE_GET_Y_ADV(&extents);
-	
+	extent_extents(&txt_o->full_extents, extents);
+
 	scaled_font++;
 	blk++;
 	txt += blk_txt_len;
-	ext = &sub_extents;
+	extents = &sub_extents;
     }
 }
 
@@ -353,6 +394,7 @@ void sh_stext_transform(shape_t *shape) {
     sh_stext_t *txt_o = (sh_stext_t *)shape;
 
     ASSERT(txt_o != NULL);
+    compute_styled_extents_n_scaled_font(txt_o);
 }
 
 void sh_stext_draw(shape_t *shape, cairo_t *cr) {
