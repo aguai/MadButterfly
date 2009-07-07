@@ -2,7 +2,8 @@ include $(top_srcdir)/config.mk
 
 lib_LTLIBRARIES = libmbfly.la
 
-noinst_PROGRAMS = X_main
+noinst_PROGRAMS = X_main $(TESTCASE)
+
 MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c mbaf/animated_menu.c
 libmbfly_la_SOURCES = animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
@@ -15,5 +16,13 @@ libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
 
 X_main_SOURCES = X_main.c
 X_main_LDADD = $(top_builddir)/src/libmbfly.la
-X_main_CPPFLAGS = @pangocairo_CFLAGS@ -I$(top_builddir)/src
+X_main_CPPFLAGS = @pangocairo_CFLAGS@ -I$(top_builddir)/include
 X_main_LDFLAGS = @pangocairo_LIBS@
+
+testcase_SOURCES = testcase.c $(libmbfly_la_SOURCES)
+testcase_CFLAGS = -I$(top_builddir)/include \
+		-DUNITTEST -g @cairo_CFLAGS@ \
+		@pangocairo_CFLAGS@
+testcase_LDFLAGS = -lcunit -L/usr/local/lib/ @pangocairo_LIBS@
+
+EXTRA_PROGRAMS = testcase

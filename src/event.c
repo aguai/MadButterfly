@@ -116,7 +116,7 @@ struct _area {
 	    (w) += (s) - (a);			\
 	    (s) = (a);				\
 	} else {				\
-	    (w) = MAX(w, (a) - (s) + 1);	\
+	    (w) = MB_MAX(w, (a) - (s) + 1);	\
 	}					\
     } while(0)
 
@@ -155,7 +155,8 @@ enum { MBO_DUMMY,
        MBO_SHAPES=0x1000,
        MBO_PATH,
        MBO_TEXT,
-       MBO_RECT
+       MBO_RECT,
+       MBO_IMAGE
 };
 #define MBO_TYPE(x) (((mb_obj_t *)(x))->obj_type)
 #define IS_MBO_SHAPES(x) (((mb_obj_t *)(x))->obj_type & MBO_SHAPES)
