@@ -14,7 +14,7 @@ AC_PROG_LIBTOOL
 
 # Checks for libraries.
 PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
-PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.22], , AC_MSG_ERROR([pangocairo >= 1.22 not found]))
+PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
 
 # Checks for header files.
 AC_PATH_X
@@ -34,6 +34,10 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
+
+AC_ARG_ENABLE([testcase],[enable testcase for unittest],
+	[AC_SUBST([TESTCASE],[testcase])],
+	[AC_SUBST([TESTCASE],)])
 
 AC_CONFIG_FILES([Makefile
                  libmbfly.pc
