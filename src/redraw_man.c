@@ -10,6 +10,9 @@
 #include "mb_observer.h"
 #include "mb_prop.h"
 
+/* required by rdman_img_ldr_load_paint() */
+#include "mb_paint.h"
+
 /*! \page dirty Dirty geo, coord, and area.
  *
  * \section dirty_of_ego Dirty of geo
@@ -1885,6 +1888,10 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
     cairo_set_operator(rdman->backend, saved_op);
 }
 #else /* UNITTEST */
+static void make_clip(cairo_t *cr, int n_dirty_areas,
+		      area_t **dirty_areas) {
+}
+
 static void clear_canvas(canvas_t *canvas) {
 }
 
@@ -2293,7 +2300,6 @@ paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman, const char *img_id) {
 /* Test cases */
 
 #include <CUnit/Basic.h>
-#include "mb_paint.h"
 
 struct _sh_dummy {
     shape_t shape;
@@ -2376,7 +2382,7 @@ paint_t *dummy_paint_new(redraw_man_t *rdman) {
     if(paint == NULL)
 	return NULL;
 
-    paint_init(paint, dummy_paint_prepare, dummy_paint_free);
+    paint_init(paint, MBP_DUMMY, dummy_paint_prepare, dummy_paint_free);
 
     return paint;
 }
