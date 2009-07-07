@@ -12,6 +12,14 @@
 #define OK 0
 #define ERR -1
 
+/*! \page stext Simple Text
+ *
+ * A sh_stext_t is broken into fragments.  Each fragment comprises the text
+ * and the styles applied on the fragement.  The styles determines font face
+ * used to show the text.  The fragment of text with styles is called
+ * styled block.
+ */
+
 /*! \defgroup fontconfig_freetype Fontconfig and FreeType Layer.
  *
  * This layer implements a font provider to reset of the system.
@@ -31,6 +39,15 @@ typedef struct _mb_scaled_font mb_scaled_font_t;
  *
  * Although, mb_text_extents_t is defined as a cairo_scaled_font_t, but
  * programmers should assume it is opague.
+ * 
+ * An extents is the span of showing a fragement of text on the output device.
+ * It includes x and y advance of cursor after showinng the text.
+ * The cursor maybe not really existed.  But, the advance is computed as
+ * the cursor existed.  It also includes width and height of the text.
+ * The bearing of a styled block is the left-top corner of the bounding box.
+ * The bounding box of a styled block is the minimal rectangle, on the
+ * output device, that can contain the text.  The bearing is related to
+ * the base line for an extents.
  */
 typedef cairo_text_extents_t mb_text_extents_t;
 
@@ -314,7 +331,7 @@ mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
  */
 static
 void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
-    co_aix f_rbx, f_rby;
+    co_aix f_rbx, f_rby;	/* rb stands for right button */
     co_aix s_rbx, s_rby;
 
     f_rbx = MBE_GET_X_BEARING(full) + MBE_GET_WIDTH(full);
