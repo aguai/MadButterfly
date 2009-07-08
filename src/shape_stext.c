@@ -1,5 +1,3 @@
-#ifdef SHAPE_STEXT
-
 #include <stdio.h>
 #include <cairo.h>
 #include <cairo-ft.h>
@@ -89,15 +87,15 @@ FcPattern *query_font_pattern(const char *family, int slant, int weight) {
 
     val.type = FcTypeString;
     val.u.s = family;
-    FcPatternAdd(ptn, "family", &val, FcTrue);
+    FcPatternAdd(ptn, "family", val, FcTrue);
     
     val.type = FcTypeInteger;
     val.u.i = slant_map[slant];
-    FcPatternAdd(ptn, "slant", &val, FcTrue);
+    FcPatternAdd(ptn, "slant", val, FcTrue);
     
     val.type = FcTypeInteger;
     val.u.i = weight;
-    FcPatternAdd(ptn, "weight", &val, FcTrue);
+    FcPatternAdd(ptn, "weight", val, FcTrue);
 
     r = FcConfigSubstituteWithPat(cfg, ptn, NULL, FcMatchPattern);
     if(!r)
@@ -158,9 +156,9 @@ void free_font_face(mb_font_face_t *face) {
 static
 mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
 					       co_aix *matrix) {
-    cairo_font_face_t *scaled_font;
+    cairo_scaled_font_t *scaled_font;
     cairo_matrix_t font_matrix;
-    static cairo_matir_t id = {
+    static cairo_matrix_t id = {
 	1, 0,
 	0, 1,
 	0, 0
@@ -272,7 +270,7 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
     txt_o->max_nblks = 0;
     txt_o->x = x;
     txt_o->y = y;
-    txt_o->exts = NULL;
+    txt_o->scaled_fonts = NULL;
 
     if(txt_o->txt == NULL) {
 	free(txt_o);
@@ -287,14 +285,14 @@ int compute_utf8_chars_sz(const char *txt, int n_chars) {
     int i;
     const char *p = txt;
     
-    for(i = 0; i < n && *p; i++) {
+    for(i = 0; i < n_chars && *p; i++) {
 	if(*p++ & 0x80)
 	    continue;		/* single byte */
 	/* multi-bytes */
 	while(*p && ((*p & 0xc0) == 0x80))
 	    p++;
     }
-    if(i < n)
+    if(i < n_chars)
 	return ERR;
     
     return p - txt;
@@ -302,7 +300,7 @@ int compute_utf8_chars_sz(const char *txt, int n_chars) {
 
 static
 mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
-					   cairo_font_face_t *face,
+					   mb_font_face_t *face,
 					   co_aix shift_x, co_aix shift_y,
 					   co_aix font_sz) {
     co_aix matrix[6], scaled_matrix[6];
@@ -361,26 +359,24 @@ void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
 static
 void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
     mb_text_extents_t sub_extents;
-    mb_text_extents_t *extents;
-    mb_style_blk_t *blk;
+    const mb_style_blk_t *blk;
     int blk_txt_len;
-    mb_scaled_font_t *scaled_font;
+    mb_scaled_font_t **scaled_font;
     char *txt, saved;
     co_aix shift_x, shift_y;
     int i;
     
-    memset(&full_extents, sizeof(mb_text_extents_t), 0);
+    memset(&txt_o->extents, sizeof(mb_text_extents_t), 0);
     
     blk = txt_o->style_blks;
     scaled_font = txt_o->scaled_fonts;
     txt = (char *)txt_o->txt;
-    extents = &txt_o->extents;
     for(i = 0; i < txt_o->nblks; i++) {
-	shift_x = txt_o->x + full_extents.x_adv;
-	shift_y = txt_o->y + full_extents.y_adv;
+	shift_x = txt_o->x + MBE_GET_X_ADV(&txt_o->extents);
+	shift_y = txt_o->y + MBE_GET_Y_ADV(&txt_o->extents);
 	
 	*scaled_font = make_scaled_font_face(txt_o, blk->face,
-					     shift_x, shift_y, font_sz);
+					     shift_x, shift_y, blk->font_sz);
 	ASSERT(*scaled_font != NULL);
 	
 	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
@@ -388,15 +384,14 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
 	
 	saved = txt[blk_txt_len];
 	txt[blk_txt_len] = 0;
-	compute_text_extents(*scaled_font, txt, extents);
+	compute_text_extents(*scaled_font, txt, &sub_extents);
 	txt[blk_txt_len] = saved;
 
-	extent_extents(&txt_o->full_extents, extents);
+	extent_extents(&txt_o->extents, &sub_extents);
 
 	scaled_font++;
 	blk++;
 	txt += blk_txt_len;
-	extents = &sub_extents;
     }
 }
 
@@ -429,7 +424,7 @@ int sh_stext_set_text(shape_t *shape, const char *txt) {
     ASSERT(txt != NULL);
     
     sz = strlen(txt) + 1;
-    new_txt = realloc(txt_o->txt, sz);
+    new_txt = (char *)realloc((void *)txt_o->txt, sz);
     if(new_txt == NULL)
 	return ERR;
     
@@ -444,28 +439,41 @@ int sh_stext_set_style(shape_t *shape,
 			int nblks) {
     sh_stext_t *txt_o = (sh_stext_t *)shape;
     mb_style_blk_t *new_blks;
-    co_aix *new_exts;
     int sz;
 
     ASSERT(txt_o != NULL);
     ASSERT(nblks >= 0);
     
     if(nblks > txt_o->max_nblks) {
-	sz = nblks * (sizeof(mb_style_blk_t) + sizeof(int));
-	new_blks = (mb_style_blk_t *)realloc(txt_o->style_blks, sz);
+	sz = nblks * sizeof(mb_style_blk_t);
+	new_blks = (mb_style_blk_t *)realloc((void *)txt_o->style_blks, sz);
 	if(new_blks == NULL)
 	    return ERR;
-	new_exts = (int *)(new_blks + nblks);
 	
 	txt_o->style_blks = new_blks;
-	txt_o->exts = new_exts;
 	txt_o->max_nblks = nblks;
     }
 
-    memcpy(txt_o->blks, blks, nblks * sizeof(mb_style_blk_t));
+    memcpy(txt_o->style_blks, blks, nblks * sizeof(mb_style_blk_t));
     txt_o->nblks = nblks;
     
     return OK;
 }
 
-#endif /* SHAPE_STEXT */
+#ifdef UNITTEST
+
+static
+void test_compute_text_extents(void) {
+}
+
+#include <CUnit/Basic.h>
+CU_pSuite get_stext_suite(void) {
+    CU_pSuite suite;
+
+    suite = CU_add_suite("Suite_stext", NULL, NULL);
+    CU_ADD_TEST(suite, test_compute_text_extents);
+
+    return suite;
+}
+
+#endif /* UNITTEST */
