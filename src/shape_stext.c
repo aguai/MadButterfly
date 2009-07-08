@@ -20,8 +20,10 @@
 
 /*! \defgroup fontconfig_freetype Fontconfig and FreeType Layer.
  *
- * This layer implements a font provider to reset of the system.
+ * This layer implements a font provider to rest of the system.
  * It bases on fontconfig and FreeType supporting of Cairo.
+ * If you want to provide stext with technologies other than fontconfig and
+ * FreeType, just replace this layer with the implmenetation that you want.
  *
  * @{
  */
