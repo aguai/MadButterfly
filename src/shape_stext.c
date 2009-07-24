@@ -68,6 +68,9 @@ typedef cairo_text_extents_t mb_text_extents_t;
  *
  * This function use fontconfig to decide a font file in pattern.  It can
  * replaced by other mechanism if you think it is not what you want.
+ *
+ * \param slant make font prune if it it non-zero.
+ * \param weight make font normal if it is 100.
  */
 static
 FcPattern *query_font_pattern(const char *family, int slant, int weight) {
@@ -464,8 +467,45 @@ int sh_stext_set_style(shape_t *shape,
 
 #ifdef UNITTEST
 
+#include <CUnit/Basic.h>
+
+static
+void test_query_font_face(void) {
+    mb_font_face_t *face;
+
+    face = query_font_face("serif", 0, 100);
+    CU_ASSERT(face != NULL);
+    mb_font_face_free(face);
+}
+
+static
+void test_make_scaled_font_face_matrix(void) {
+    co_aix matrix[6] = {5, 0, 0, 5, 0, 0};
+    mb_font_face_t *face;
+    mb_scaled_font_t *scaled;
+
+    face = query_font_face("serif", 0, 100);
+    scaled = make_scaled_font_face_matrix(face, matrix);
+    CU_ASSERT(scaled != NULL);
+    scaled_font_free(scaled);
+}
+
 static
 void test_compute_text_extents(void) {
+    co_aix matrix[6] = {0.2, 0, 0, 0, 0.2, 0};
+    mb_font_face_t *face;
+    mb_scaled_font_t *scaled;
+    mb_text_extents_t ext;
+
+    face = query_font_face("serif", 0, 100);
+    scaled = make_scaled_font_face_matrix(face, matrix);
+    CU_ASSERT(scaled != NULL);
+
+    compute_text_extents(scaled, "test", &ext);
+    CU_ASSERT(ext.height == 5);
+    CU_ASSERT(ext.width == 20);
+
+    scaled_font_free(scaled);
 }
 
 #include <CUnit/Basic.h>
@@ -473,6 +513,9 @@ CU_pSuite get_stext_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_stext", NULL, NULL);
+    CU_ADD_TEST(suite, test_query_font_face);
+    CU_ADD_TEST(suite, test_make_scaled_font_face_matrix);
+    CU_ADD_TEST(suite, test_compute_text_extents);
     CU_ADD_TEST(suite, test_compute_text_extents);
 
     return suite;
