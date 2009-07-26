@@ -564,7 +564,7 @@ void test_make_scaled_font_face_matrix(void) {
     
     scaled = make_scaled_font_face_matrix(face, matrix);
     CU_ASSERT(scaled != NULL);
-    status = cairo_scaled_font_status(scaled);
+    status = cairo_scaled_font_status((cairo_scaled_font_t *)scaled);
     CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
     
     scaled_font_free(scaled);
