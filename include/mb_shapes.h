@@ -41,6 +41,15 @@
  * redraw_man.c::clean_shape().  It's task is to update \ref geo_t of the
  * shape object.  In most situtation, it call geo_from_positions() to
  * update geo_t.
+ *
+ * \section rdman_man_shape Make a redraw manager managing a shape.
+ * 
+ * It means managing life cycle of a shape to make a redraw manager
+ * managing a shape.  Shapes are referenced by a redraw manager to
+ * update output device.  So, a redraw manager must make sure all
+ * shapes are valid when they are needed to update output.  To make sure
+ * lifecycle of shapes are synchronized with status of a redraw manager,
+ * lifecycle of shapes are managed by associated redraw manager.
  * 
  */
 
