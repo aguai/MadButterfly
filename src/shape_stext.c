@@ -271,8 +271,28 @@ typedef struct _sh_stext {
 				       *    style_blks */
     co_aix x, y;
     mb_scaled_font_t **scaled_fonts;
+    int nscaled;
+    int maxscaled;
     mb_text_extents_t extents;
 } sh_stext_t;
+
+static
+void _rdman_shape_stext_free(shape_t *shape) {
+    sh_stext_t *txt_o = (sh_stext_t *)shape;
+    int i;
+
+    if(txt_o->style_blks)
+	free((void *)txt_o->style_blks);
+    if(txt_o->scaled_fonts) {
+	for(i = 0; i < txt_o->nscaled; i++)
+	    scaled_font_free(txt_o->scaled_fonts[i]);
+	free(txt_o->scaled_fonts);
+    }
+    if(txt_o->txt)
+	free((void *)txt_o->txt);
+
+    free(txt_o);
+}
 
 shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
 		      const char *txt) {
@@ -294,11 +314,15 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
     txt_o->x = x;
     txt_o->y = y;
     txt_o->scaled_fonts = NULL;
+    txt_o->nscaled = 0;
+    txt_o->maxscaled = 0;
 
     if(txt_o->txt == NULL) {
 	free(txt_o);
 	txt_o = NULL;
     }
+
+    txt_o->shape.free = _rdman_shape_stext_free;
     
     rdman_shape_man(rdman, (shape_t *)txt_o);
     
