@@ -299,7 +299,9 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
 	free(txt_o);
 	txt_o = NULL;
     }
-
+    
+    rdman_shape_man(rdman, (shape_t *)txt_o);
+    
     return (shape_t *)txt_o;
 }
 
