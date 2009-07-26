@@ -4,6 +4,29 @@
 #include <fontconfig/fontconfig.h>
 #include "mb_shapes.h"
 
+#ifdef UNITTEST
+typedef struct _ut_shape {
+    co_aix aggr[6];
+    void (*free)(struct _ut_shape *);
+} ut_shape_t;
+#define shape_t ut_shape_t
+
+#undef sh_get_aggr_matrix
+#define sh_get_aggr_matrix(sh) (sh)->aggr
+
+#undef mb_obj_init
+#define mb_obj_init(o, t)
+#undef rdman_shape_man
+#define rdman_shape_man(rdman, sh)
+
+#define rdman_shape_stext_new ut_rdman_shape_stext_new
+#define sh_stext_transform ut_sh_stext_transform
+#define sh_stext_draw ut_sh_stext_draw
+#define sh_stext_set_text ut_sh_stext_set_text
+#define sh_stext_set_style ut_sh_stext_set_style
+
+#endif /* UNITTEST */
+
 #ifndef ASSERT
 #define ASSERT(x)
 #endif
@@ -428,6 +451,12 @@ void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
  * It create scaled fonts for style blocks, compute their extents,
  * and compute where they should be draw acoording advance of style
  * blocks before a style block.
+ *
+ * The scaled font that is created by this function for style blocks
+ * are drawed at origin.  So, extents of these blocks are also based
+ * on that the text are drawed at origin of user space.  But,
+ * aggreagated extents (sh_stext_t::extents) accounts x/y advances
+ * to create correct extents for full text string with style blocks.
  */
 static
 void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
@@ -436,20 +465,36 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
     int blk_txt_len;
     mb_scaled_font_t **scaled_font;
     char *txt, saved;
-    co_aix shift_x, shift_y;
-    int i;
+    int i, nscaled;
     
     memset(&txt_o->extents, sizeof(mb_text_extents_t), 0);
     
     blk = txt_o->style_blks;
+    
     scaled_font = txt_o->scaled_fonts;
+    nscaled = txt_o->nscaled;
+    for(i = 0; i < nscaled; i++) {
+	scaled_font_free(*scaled_font);
+	scaled_font++;
+    }
+    txt_o->nscaled = 0;
+    
+    if(txt_o->maxscaled >= txt_o->nblks)
+	scaled_font = txt_o->scaled_fonts;
+    else {
+	scaled_font = (mb_scaled_font_t **)
+	    realloc(txt_o->scaled_fonts,
+		    txt_o->nblks * sizeof(mb_scaled_font_t *));
+	ASSERT(scaled_font != NULL);
+	
+	txt_o->maxscaled = txt_o->nblks;
+	txt_o->scaled_fonts = scaled_font;
+    }
+
     txt = (char *)txt_o->txt;
     for(i = 0; i < txt_o->nblks; i++) {
-	shift_x = txt_o->x + MBE_GET_X_ADV(&txt_o->extents);
-	shift_y = txt_o->y + MBE_GET_Y_ADV(&txt_o->extents);
-	
 	*scaled_font = make_scaled_font_face(txt_o, blk->face,
-					     shift_x, shift_y, blk->font_sz);
+					     0, 0, blk->font_sz);
 	ASSERT(*scaled_font != NULL);
 	
 	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
@@ -466,6 +511,8 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
 	blk++;
 	txt += blk_txt_len;
     }
+    
+    txt_o->nscaled = txt_o->nblks;
 }
 
 /*
@@ -527,7 +574,8 @@ int sh_stext_set_style(shape_t *shape,
 	txt_o->max_nblks = nblks;
     }
 
-    memcpy(txt_o->style_blks, blks, nblks * sizeof(mb_style_blk_t));
+    memcpy((mb_style_blk_t *)txt_o->style_blks,
+	   blks, nblks * sizeof(mb_style_blk_t));
     txt_o->nblks = nblks;
     
     return OK;
@@ -544,7 +592,7 @@ void test_query_font_face(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = cairo_font_face_status(face);
+    status = cairo_font_face_status((cairo_font_face_t *)face);
     CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
     
     free_font_face(face);
@@ -559,7 +607,7 @@ void test_make_scaled_font_face_matrix(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = cairo_font_face_status(face);
+    status = cairo_font_face_status((cairo_font_face_t *)face);
     CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
     
     scaled = make_scaled_font_face_matrix(face, matrix);
@@ -631,6 +679,56 @@ void test_compute_utf8_chars_sz(void) {
     CU_ASSERT(sz == ERR);
 }
 
+static
+void test_compute_styled_extents_n_scaled_font(void) {
+    sh_stext_t *txt_o;
+    co_aix *aggr;
+    mb_style_blk_t blks[2];
+    mb_font_face_t *face;
+    mb_text_extents_t *ext;
+    int r;
+
+    txt_o = (sh_stext_t *)rdman_shape_stext_new((redraw_man_t *)NULL,
+						10, 15, "Hello World");
+    CU_ASSERT(txt_o != NULL);
+
+    aggr = txt_o->shape.aggr;
+    aggr[0] = 1;
+    aggr[1] = 0;
+    aggr[2] = 0;
+    aggr[3] = 0;
+    aggr[4] = 1;
+    aggr[5] = 0;
+
+    face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
+    CU_ASSERT(face != NULL);
+    
+    blks[0].n_chars = 5;
+    blks[0].face = face;
+    blks[0].font_sz = 10;
+    
+    blks[1].n_chars = 4;
+    blks[1].face = face;
+    blks[1].font_sz = 15.5;
+    
+    r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
+    CU_ASSERT(r == OK);
+
+    compute_styled_extents_n_scaled_font(txt_o);
+
+    ext = &txt_o->extents;
+    CU_ASSERT(MBE_GET_HEIGHT(ext) > 11);
+    CU_ASSERT(MBE_GET_HEIGHT(ext) < 20);
+    CU_ASSERT(MBE_GET_WIDTH(ext) > 36);
+    CU_ASSERT(MBE_GET_WIDTH(ext) < 72);
+    CU_ASSERT(MBE_GET_X_ADV(ext) > 36);
+    CU_ASSERT(MBE_GET_X_ADV(ext) < 72);
+    CU_ASSERT(MBE_GET_Y_ADV(ext) == 0);
+    
+    _rdman_shape_stext_free((shape_t *)txt_o);
+    free_font_face(face);
+}
+
 #include <CUnit/Basic.h>
 CU_pSuite get_stext_suite(void) {
     CU_pSuite suite;
@@ -641,6 +739,7 @@ CU_pSuite get_stext_suite(void) {
     CU_ADD_TEST(suite, test_compute_text_extents);
     CU_ADD_TEST(suite, test_extent_extents);
     CU_ADD_TEST(suite, test_compute_utf8_chars_sz);
+    CU_ADD_TEST(suite, test_compute_styled_extents_n_scaled_font);
 
     return suite;
 }
