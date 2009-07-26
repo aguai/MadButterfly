@@ -265,8 +265,10 @@ typedef struct _sh_stext {
     shape_t shape;
     const char *txt;		      /*!< \brief Text to be showed */
     const mb_style_blk_t *style_blks; /*!< \brief Style of text */
-    int nblks;			      /*!< \brief Number of style blocks */
-    int max_nblks;
+    int nblks;			      /*!< \brief Number of valid style
+				       *    blocks */
+    int max_nblks;		      /*!< \brief Available space of
+				       *    style_blks */
     co_aix x, y;
     mb_scaled_font_t **scaled_fonts;
     mb_text_extents_t extents;
