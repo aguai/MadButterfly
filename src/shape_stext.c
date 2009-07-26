@@ -305,16 +305,26 @@ static
 int compute_utf8_chars_sz(const char *txt, int n_chars) {
     int i;
     const char *p = txt;
+    const char *v;
     
     for(i = 0; i < n_chars && *p; i++) {
-	if(*p++ & 0x80)
-	    continue;		/* single byte */
-	/* multi-bytes */
-	while(*p && ((*p & 0xc0) == 0x80))
+	if(!(*p & 0x80))	/* single byte */
 	    p++;
+	else if((*p & 0xe0) == 0xc0) /* 2 bytes */
+	    p += 2;
+	else if((*p & 0xf0) == 0xe0) /* 3 bytes */
+	    p += 3;
+	else if((*p & 0xf8) == 0xf0) /* 4 bytes */
+	    p += 4;
+	else
+	    return ERR;
     }
     if(i < n_chars)
 	return ERR;
+
+    for(v = txt; v != p; v++)
+	if(*v == '\x0')
+	    return ERR;
     
     return p - txt;
 }
@@ -581,6 +591,18 @@ void test_extent_extents(void) {
     CU_ASSERT(MBE_GET_Y_ADV(&ext1) == -8);
 }
 
+static
+void test_compute_utf8_chars_sz(void) {
+    const char *str = "\xe4\xb8\xad\xe6\x96\x87test\xe6\xb8\xac\xe8\xa9\xa6";
+    int sz;
+    
+    sz = compute_utf8_chars_sz(str, 4);
+    CU_ASSERT(sz == 8);
+
+    sz = compute_utf8_chars_sz(str, 9);
+    CU_ASSERT(sz == ERR);
+}
+
 #include <CUnit/Basic.h>
 CU_pSuite get_stext_suite(void) {
     CU_pSuite suite;
@@ -590,6 +612,7 @@ CU_pSuite get_stext_suite(void) {
     CU_ADD_TEST(suite, test_make_scaled_font_face_matrix);
     CU_ADD_TEST(suite, test_compute_text_extents);
     CU_ADD_TEST(suite, test_extent_extents);
+    CU_ADD_TEST(suite, test_compute_utf8_chars_sz);
 
     return suite;
 }
