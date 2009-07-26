@@ -352,23 +352,37 @@ static
 void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
     co_aix f_rbx, f_rby;	/* rb stands for right button */
     co_aix s_rbx, s_rby;
+    co_aix s_xbr, s_ybr;
+    co_aix new_x_adv, new_y_adv;
 
     f_rbx = MBE_GET_X_BEARING(full) + MBE_GET_WIDTH(full);
     f_rby = MBE_GET_Y_BEARING(full) + MBE_GET_HEIGHT(full);
-    s_rbx = MBE_GET_X_BEARING(sub) + MBE_GET_WIDTH(sub);
-    s_rby = MBE_GET_Y_BEARING(sub) + MBE_GET_HEIGHT(sub);
+    s_xbr = MBE_GET_X_BEARING(sub) + MBE_GET_X_ADV(full);
+    s_ybr = MBE_GET_Y_BEARING(sub) + MBE_GET_Y_ADV(full);
+    s_rbx = s_xbr + MBE_GET_WIDTH(sub);
+    s_rby = s_ybr + MBE_GET_HEIGHT(sub);
     
     /* set bearing */
-    if(MBE_GET_X_BEARING(full) > MBE_GET_X_BEARING(sub))
-	MBE_SET_X_BEARING(full, MBE_GET_X_BEARING(sub));
-    if(MBE_GET_Y_BEARING(full) > MBE_GET_Y_BEARING(sub))
-	MBE_SET_Y_BEARING(full, MBE_GET_Y_BEARING(sub));
+    if(MBE_GET_X_BEARING(full) > s_xbr)
+	MBE_SET_X_BEARING(full, s_xbr);
+    if(MBE_GET_Y_BEARING(full) > s_ybr)
+	MBE_SET_Y_BEARING(full, s_ybr);
     
     /* set width/height */
     if(f_rbx < s_rbx)
 	MBE_SET_WIDTH(full, s_rbx - MBE_GET_X_BEARING(full));
+    else
+	MBE_SET_WIDTH(full, f_rbx - MBE_GET_X_BEARING(full));
     if(f_rby < s_rby)
 	MBE_SET_HEIGHT(full, s_rby - MBE_GET_Y_BEARING(full));
+    else
+	MBE_SET_HEIGHT(full, f_rby - MBE_GET_Y_BEARING(full));
+
+    /* set x/y advance */
+    new_x_adv = MBE_GET_X_ADV(full) + MBE_GET_X_ADV(sub);
+    new_y_adv = MBE_GET_Y_ADV(full) + MBE_GET_Y_ADV(sub);
+    MBE_SET_X_ADV(full, new_x_adv);
+    MBE_SET_Y_ADV(full, new_y_adv);
 }
 
 /*! \brief Compute extents of a stext object according style blocks.
@@ -532,11 +546,39 @@ void test_compute_text_extents(void) {
     CU_ASSERT(scaled != NULL);
 
     compute_text_extents(scaled, "test", &ext);
-    CU_ASSERT(ext.height >= 5 && ext.height <= 12);
-    CU_ASSERT(ext.width >= 16 && ext.width <= 48);
+    CU_ASSERT(MBE_GET_HEIGHT(&ext) >= 5 && MBE_GET_HEIGHT(&ext) <= 12);
+    CU_ASSERT(MBE_GET_WIDTH(&ext) >= 16 && MBE_GET_WIDTH(&ext) <= 48);
 
     scaled_font_free(scaled);
     free_font_face(face);
+}
+
+static
+void test_extent_extents(void) {
+    mb_text_extents_t ext1, ext2;
+
+    MBE_SET_WIDTH(&ext1, 20);
+    MBE_SET_HEIGHT(&ext1, 10);
+    MBE_SET_X_BEARING(&ext1, 1);
+    MBE_SET_Y_BEARING(&ext1, -8);
+    MBE_SET_X_ADV(&ext1, 21);
+    MBE_SET_Y_ADV(&ext1, -3);
+    
+    MBE_SET_WIDTH(&ext2, 30);
+    MBE_SET_HEIGHT(&ext2, 11);
+    MBE_SET_X_BEARING(&ext2, 2);
+    MBE_SET_Y_BEARING(&ext2, -11);
+    MBE_SET_X_ADV(&ext2, 32);
+    MBE_SET_Y_ADV(&ext2, -5);
+    
+    extent_extents(&ext1, &ext2);
+
+    CU_ASSERT(MBE_GET_WIDTH(&ext1) == 52);
+    CU_ASSERT(MBE_GET_HEIGHT(&ext1) == 16);
+    CU_ASSERT(MBE_GET_X_BEARING(&ext1) == 1);
+    CU_ASSERT(MBE_GET_Y_BEARING(&ext1) == -14);
+    CU_ASSERT(MBE_GET_X_ADV(&ext1) == 53);
+    CU_ASSERT(MBE_GET_Y_ADV(&ext1) == -8);
 }
 
 #include <CUnit/Basic.h>
@@ -547,7 +589,7 @@ CU_pSuite get_stext_suite(void) {
     CU_ADD_TEST(suite, test_query_font_face);
     CU_ADD_TEST(suite, test_make_scaled_font_face_matrix);
     CU_ADD_TEST(suite, test_compute_text_extents);
-    CU_ADD_TEST(suite, test_compute_text_extents);
+    CU_ADD_TEST(suite, test_extent_extents);
 
     return suite;
 }
