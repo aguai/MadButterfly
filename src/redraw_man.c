@@ -1826,6 +1826,9 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
 	case MBO_IMAGE:
 	    sh_image_draw(shape, cr);
 	    break;
+	case MBO_STEXT:
+	    sh_stext_draw(shape, cr);
+	    break;
 #ifdef UNITTEST
 	default:
 	    sh_dummy_fill(shape, cr);
