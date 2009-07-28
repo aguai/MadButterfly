@@ -7,6 +7,7 @@
 
 #ifdef UNITTEST
 
+#define NO_DOX(x) x
 #define UT_FAKE(r, x, param)			\
     r x param {}
 
@@ -42,6 +43,27 @@ typedef struct _ut_shape {
 #define sh_stext_draw ut_sh_stext_draw
 #define sh_stext_set_text ut_sh_stext_set_text
 #define sh_stext_set_style ut_sh_stext_set_style
+
+#undef cairo_get_scaled_font
+#define cairo_get_scaled_font(cr) ((cairo_scaled_font_t *)NULL)
+#undef cairo_set_scaled_font
+#define cairo_set_scaled_font(cr, scaled) ((cairo_scaled_font_t *)NULL)
+#undef cairo_scaled_font_reference
+#define cairo_scaled_font_reference(x)
+#define MAX_MOVE 32
+NO_DOX(static co_aix move_xys[MAX_MOVE][2]);
+NO_DOX(static int move_cnt = 0);
+#undef cairo_move_to
+#define cairo_move_to(cr, x, y)			\
+    do {					\
+	move_xys[move_cnt][0] = x;		\
+	move_xys[move_cnt++][1] = y;		\
+    } while(0)
+#undef cairo_show_text
+#define cairo_show_text(cr, txt)
+#undef cairo_scaled_font_destroy
+#define cairo_scaled_font_destroy(scaled)			\
+    if(scaled != NULL) cairo_scaled_font_destroy(scaled)
 
 #endif /* UNITTEST */
 
@@ -272,6 +294,33 @@ mb_text_extents_t *mb_text_extents_new(void) {
 static
 void mb_text_extents_free(mb_text_extents_t *extents) {
     free(extents);
+}
+
+static
+void draw_text_scaled(cairo_t *cr, const char *txt, int tlen,
+		      mb_scaled_font_t *scaled, co_aix x, co_aix y) {
+    cairo_scaled_font_t *saved_scaled;
+    int total_tlen;
+    const char *buf;
+
+    total_tlen = strlen(txt);
+    if(total_tlen > tlen)
+	buf = strndup(txt, tlen);
+    else
+	buf = txt;
+    
+    saved_scaled = cairo_get_scaled_font(cr);
+    cairo_scaled_font_reference(saved_scaled);
+    cairo_set_scaled_font(cr, (cairo_scaled_font_t *)scaled);
+    
+    cairo_move_to(cr, x, y);
+    cairo_show_text(cr, buf);
+    
+    cairo_set_scaled_font(cr, saved_scaled);
+    cairo_scaled_font_destroy(saved_scaled);
+
+    if(total_tlen > tlen)
+	free((char *)buf);
 }
 
 /* @} */
@@ -566,8 +615,35 @@ void sh_stext_transform(shape_t *shape) {
 
 void sh_stext_draw(shape_t *shape, cairo_t *cr) {
     sh_stext_t *txt_o = (sh_stext_t *)shape;
+    co_aix x, y;
+    const char *txt;
+    scaled_fonts_lst_t *scaled_fonts;
+    mb_scaled_font_t *scaled;
+    style_blks_lst_t *style_blks;
+    mb_style_blk_t *blk;
+    mb_text_extents_t *ext;
+    int blk_txt_len;
+    int i;
 
     ASSERT(txt_o != NULL);
+    
+    x = txt_o->dx;
+    y = txt_o->dy;
+    txt = txt_o->txt;
+    scaled_fonts = &txt_o->scaled_fonts;
+    style_blks = &txt_o->style_blks;
+    ext = txt_o->sub_exts.ds;
+    
+    for(i = 0; i < scaled_fonts->num; i++) {
+	scaled = scaled_fonts->ds[i];
+	blk = style_blks->ds + i;
+	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
+	draw_text_scaled(cr, txt, blk_txt_len, scaled, x, y);
+	
+	x += MBE_GET_X_ADV(ext);
+	y += MBE_GET_Y_ADV(ext);
+	txt += blk_txt_len;
+    }
 }
 
 int sh_stext_set_text(shape_t *shape, const char *txt) {
@@ -822,6 +898,53 @@ void test_sh_stext_transform(void) {
     free_font_face(face);
 }
 
+static
+void test_sh_stext_draw(void) {
+    sh_stext_t *txt_o;
+    mb_style_blk_t blks[2];
+    co_aix *aggr;
+    mb_font_face_t *face;
+    area_t *area;
+    int r;
+
+    txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, 100, 50, "hello world");
+    CU_ASSERT(txt_o != NULL);
+    
+    aggr = txt_o->shape.aggr;
+    aggr[0] = 2;
+    aggr[1] = 0;
+    aggr[2] = 0;
+    aggr[3] = 0;
+    aggr[4] = 1;
+    aggr[5] = 0;
+
+    face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
+    CU_ASSERT(face != NULL);
+    
+    blks[0].n_chars = 5;
+    blks[0].face = face;
+    blks[0].font_sz = 10;
+    
+    blks[1].n_chars = 6;
+    blks[1].face = face;
+    blks[1].font_sz = 15.5;
+    
+    r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
+    CU_ASSERT(r == OK);
+
+    sh_stext_transform((shape_t *)txt_o);
+
+    sh_stext_draw((shape_t *)txt_o, NULL);
+    CU_ASSERT(move_cnt == 2);
+    CU_ASSERT(move_xys[0][0] == 200);
+    CU_ASSERT(move_xys[0][1] == 50);
+    CU_ASSERT(move_xys[1][0] >= 240 && move_xys[1][0] < 270);
+    CU_ASSERT(move_xys[1][1] == 50);
+
+    _rdman_shape_stext_free((shape_t *)txt_o);
+    free_font_face(face);
+}
+
 #include <CUnit/Basic.h>
 CU_pSuite get_stext_suite(void) {
     CU_pSuite suite;
@@ -834,6 +957,7 @@ CU_pSuite get_stext_suite(void) {
     CU_ADD_TEST(suite, test_compute_utf8_chars_sz);
     CU_ADD_TEST(suite, test_compute_styled_extents_n_scaled_font);
     CU_ADD_TEST(suite, test_sh_stext_transform);
+    CU_ADD_TEST(suite, test_sh_stext_draw);
 
     return suite;
 }
