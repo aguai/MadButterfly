@@ -124,6 +124,21 @@ extern void elmpool_free(elmpool_t *pool);
 	da->ds[da->num++] = v;				\
 	return 0;					\
     }
+#define DARRAY_DEFINE_ADV(name, type)			\
+    static int name ## _adv(name ## _t *da, int n) {	\
+	type *new_ds;					\
+	int max;					\
+	if((da->num + n) > (da)->max) {			\
+	    max = ((da)->num + n + 31) & ~0x1f;		\
+	    new_ds = realloc(da->ds,			\
+			     max * sizeof(type));	\
+	    if(new_ds == NULL) return -1;		\
+	    da->ds = new_ds;				\
+	    da->max = max;				\
+	}						\
+	da->num += n;					\
+	return 0;					\
+    }
 #define DARRAY_CLEAN(da) do { (da)->num = 0; } while(0)
 #define DARRAY_INIT(da) \
     do { (da)->num = (da)->max = 0; (da)->ds = NULL; } while(0)

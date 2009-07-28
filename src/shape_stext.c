@@ -3,6 +3,7 @@
 #include <cairo-ft.h>
 #include <fontconfig/fontconfig.h>
 #include "mb_shapes.h"
+#include "mb_tools.h"
 
 #ifdef UNITTEST
 typedef struct _ut_shape {
@@ -281,21 +282,20 @@ void mb_font_face_free(mb_font_face_t *face) {
     free_font_face(face);
 }
 
+DARRAY(scaled_fonts_lst, mb_scaled_font_t *);
+DARRAY_DEFINE(scaled_fonts_lst, mb_scaled_font_t *);
+DARRAY(style_blks_lst, mb_style_blk_t);
+DARRAY_DEFINE_ADV(style_blks_lst, mb_style_blk_t);
+
 /*! \brief A simple implementation of text shape.
  *
  */
 typedef struct _sh_stext {
     shape_t shape;
     const char *txt;		      /*!< \brief Text to be showed */
-    const mb_style_blk_t *style_blks; /*!< \brief Style of text */
-    int nblks;			      /*!< \brief Number of valid style
-				       *    blocks */
-    int max_nblks;		      /*!< \brief Available space of
-				       *    style_blks */
+    style_blks_lst_t style_blks;
     co_aix x, y;
-    mb_scaled_font_t **scaled_fonts;
-    int nscaled;
-    int maxscaled;
+    scaled_fonts_lst_t scaled_fonts;
     mb_text_extents_t extents;
 } sh_stext_t;
 
@@ -304,13 +304,12 @@ void _rdman_shape_stext_free(shape_t *shape) {
     sh_stext_t *txt_o = (sh_stext_t *)shape;
     int i;
 
-    if(txt_o->style_blks)
-	free((void *)txt_o->style_blks);
-    if(txt_o->scaled_fonts) {
-	for(i = 0; i < txt_o->nscaled; i++)
-	    scaled_font_free(txt_o->scaled_fonts[i]);
-	free(txt_o->scaled_fonts);
-    }
+    DARRAY_DESTROY(&txt_o->style_blks);
+    
+    for(i = 0; i < txt_o->scaled_fonts.num; i++)
+	scaled_font_free(txt_o->scaled_fonts.ds[i]);
+    DARRAY_DESTROY(&txt_o->scaled_fonts);
+    
     if(txt_o->txt)
 	free((void *)txt_o->txt);
 
@@ -331,14 +330,10 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
     mb_obj_init(txt_o, MBO_STEXT);
     
     txt_o->txt = strdup(txt);
-    txt_o->style_blks = NULL;
-    txt_o->nblks = 0;
-    txt_o->max_nblks = 0;
+    DARRAY_INIT(&txt_o->style_blks);
     txt_o->x = x;
     txt_o->y = y;
-    txt_o->scaled_fonts = NULL;
-    txt_o->nscaled = 0;
-    txt_o->maxscaled = 0;
+    DARRAY_INIT(&txt_o->scaled_fonts);
 
     if(txt_o->txt == NULL) {
 	free(txt_o);
@@ -461,58 +456,44 @@ void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
 static
 void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
     mb_text_extents_t sub_extents;
-    const mb_style_blk_t *blk;
+    mb_style_blk_t *blk;
+    style_blks_lst_t *style_blks;
     int blk_txt_len;
-    mb_scaled_font_t **scaled_font;
+    mb_scaled_font_t *scaled;
+    scaled_fonts_lst_t *scaled_fonts;
     char *txt, saved;
     int i, nscaled;
     
     memset(&txt_o->extents, sizeof(mb_text_extents_t), 0);
     
-    blk = txt_o->style_blks;
+    scaled_fonts = &txt_o->scaled_fonts;
+    for(i = 0; i < scaled_fonts->num; i++)
+	scaled_font_free(scaled_fonts->ds[i]);
+    DARRAY_CLEAN(scaled_fonts);
     
-    scaled_font = txt_o->scaled_fonts;
-    nscaled = txt_o->nscaled;
-    for(i = 0; i < nscaled; i++) {
-	scaled_font_free(*scaled_font);
-	scaled_font++;
-    }
-    txt_o->nscaled = 0;
+    style_blks = &txt_o->style_blks;
+    blk = style_blks->ds;
     
-    if(txt_o->maxscaled >= txt_o->nblks)
-	scaled_font = txt_o->scaled_fonts;
-    else {
-	scaled_font = (mb_scaled_font_t **)
-	    realloc(txt_o->scaled_fonts,
-		    txt_o->nblks * sizeof(mb_scaled_font_t *));
-	ASSERT(scaled_font != NULL);
-	
-	txt_o->maxscaled = txt_o->nblks;
-	txt_o->scaled_fonts = scaled_font;
-    }
-
     txt = (char *)txt_o->txt;
-    for(i = 0; i < txt_o->nblks; i++) {
-	*scaled_font = make_scaled_font_face(txt_o, blk->face,
-					     0, 0, blk->font_sz);
-	ASSERT(*scaled_font != NULL);
+    for(i = 0; i < style_blks->num; i++) {
+	scaled = make_scaled_font_face(txt_o, blk->face,
+				       0, 0, blk->font_sz);
+	ASSERT(scaled != NULL);
+	scaled_fonts_lst_add(scaled_fonts, scaled);
 	
 	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
 	ASSERT(blk_txt_len != ERR);
 	
 	saved = txt[blk_txt_len];
 	txt[blk_txt_len] = 0;
-	compute_text_extents(*scaled_font, txt, &sub_extents);
+	compute_text_extents(scaled, txt, &sub_extents);
 	txt[blk_txt_len] = saved;
 
 	extent_extents(&txt_o->extents, &sub_extents);
 
-	scaled_font++;
 	blk++;
 	txt += blk_txt_len;
-    }
-    
-    txt_o->nscaled = txt_o->nblks;
+    }    
 }
 
 /*
@@ -558,26 +539,20 @@ int sh_stext_set_style(shape_t *shape,
 			const mb_style_blk_t *blks,
 			int nblks) {
     sh_stext_t *txt_o = (sh_stext_t *)shape;
+    style_blks_lst_t *style_blks;
     mb_style_blk_t *new_blks;
     int sz;
 
     ASSERT(txt_o != NULL);
     ASSERT(nblks >= 0);
     
-    if(nblks > txt_o->max_nblks) {
-	sz = nblks * sizeof(mb_style_blk_t);
-	new_blks = (mb_style_blk_t *)realloc((void *)txt_o->style_blks, sz);
-	if(new_blks == NULL)
-	    return ERR;
-	
-	txt_o->style_blks = new_blks;
-	txt_o->max_nblks = nblks;
-    }
-
-    memcpy((mb_style_blk_t *)txt_o->style_blks,
-	   blks, nblks * sizeof(mb_style_blk_t));
-    txt_o->nblks = nblks;
+    style_blks = &txt_o->style_blks;
+    DARRAY_CLEAN(style_blks);
+    style_blks_lst_adv(style_blks, nblks);
     
+    memcpy(style_blks->ds,
+	   blks, nblks * sizeof(mb_style_blk_t));
+	   
     return OK;
 }
 
