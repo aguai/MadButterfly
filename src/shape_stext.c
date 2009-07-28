@@ -597,6 +597,8 @@ void test_make_scaled_font_face_matrix(void) {
 static
 void test_compute_text_extents(void) {
     co_aix matrix[6] = {10, 0, 0, 0, 10, 0};
+    co_aix x_adv1, x_adv2;
+    co_aix x_bearing1, x_bearing2;
     mb_font_face_t *face;
     mb_scaled_font_t *scaled;
     mb_text_extents_t ext;
@@ -609,8 +611,24 @@ void test_compute_text_extents(void) {
     compute_text_extents(scaled, "test", &ext);
     CU_ASSERT(MBE_GET_HEIGHT(&ext) >= 5 && MBE_GET_HEIGHT(&ext) <= 12);
     CU_ASSERT(MBE_GET_WIDTH(&ext) >= 16 && MBE_GET_WIDTH(&ext) <= 48);
-
+    x_adv1 = MBE_GET_X_ADV(&ext);
+    x_bearing1 = MBE_GET_X_BEARING(&ext);
     scaled_font_free(scaled);
+
+    matrix[2] = 5;
+    scaled = make_scaled_font_face_matrix(face, matrix);
+    CU_ASSERT(scaled != NULL);
+
+    compute_text_extents(scaled, "test", &ext);
+    CU_ASSERT(MBE_GET_HEIGHT(&ext) >= 5 && MBE_GET_HEIGHT(&ext) <= 12);
+    CU_ASSERT(MBE_GET_WIDTH(&ext) >= 16 && MBE_GET_WIDTH(&ext) <= 48);
+    x_adv2 = MBE_GET_X_ADV(&ext);
+    x_bearing2 = MBE_GET_X_BEARING(&ext);
+    scaled_font_free(scaled);
+
+    CU_ASSERT(x_adv1 == x_adv2);
+    CU_ASSERT((x_bearing1 + 5) == x_bearing2);
+
     free_font_face(face);
 }
 
