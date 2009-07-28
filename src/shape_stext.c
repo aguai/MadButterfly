@@ -6,6 +6,13 @@
 #include "mb_tools.h"
 
 #ifdef UNITTEST
+
+#define UT_FAKE(r, x, param)			\
+    r x param {}
+
+UT_FAKE(void, sh_stext_transform, (shape_t *shape));
+UT_FAKE(void, sh_stext_draw, (shape_t *shape, cairo_t *cr));
+
 typedef struct _ut_area {
     co_aix x, y;
     co_aix w, h;
