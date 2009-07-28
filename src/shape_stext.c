@@ -6,14 +6,24 @@
 #include "mb_tools.h"
 
 #ifdef UNITTEST
+typedef struct _ut_area {
+    co_aix x, y;
+    co_aix w, h;
+} ut_area_t;
+#define area_t ut_area_t
+
 typedef struct _ut_shape {
     co_aix aggr[6];
     void (*free)(struct _ut_shape *);
+    ut_area_t area;
 } ut_shape_t;
 #define shape_t ut_shape_t
 
 #undef sh_get_aggr_matrix
 #define sh_get_aggr_matrix(sh) (sh)->aggr
+
+#undef sh_get_area
+#define sh_get_area(sh) (&(sh)->area)
 
 #undef mb_obj_init
 #define mb_obj_init(o, t)
@@ -295,6 +305,7 @@ typedef struct _sh_stext {
     const char *txt;		      /*!< \brief Text to be showed */
     style_blks_lst_t style_blks;
     co_aix x, y;
+    co_aix dx, dy;
     scaled_fonts_lst_t scaled_fonts;
     mb_text_extents_t extents;
 } sh_stext_t;
@@ -452,6 +463,10 @@ void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
  * on that the text are drawed at origin of user space.  But,
  * aggreagated extents (sh_stext_t::extents) accounts x/y advances
  * to create correct extents for full text string with style blocks.
+ *
+ * This function assumes texts are always drawed at 0, 0. So,
+ * transform function should adjust x and y bearing corresponding
+ * x, y of text to compute area.
  */
 static
 void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
@@ -502,12 +517,33 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
  * - computing offset x,y for the text of style blocks,
  * - free old scaled fonts, and
  * - making scaled fonts for style blocks.
+ *
+ * Extents of style blocks are computed with x,y at 0,0.
+ * So, we should add x,y, after transforming by the aggreagated matrix,
+ * to output area.
  */
 void sh_stext_transform(shape_t *shape) {
     sh_stext_t *txt_o = (sh_stext_t *)shape;
+    area_t *area;
+    mb_text_extents_t *ext;
+    co_aix *aggr;
 
     ASSERT(txt_o != NULL);
+
+    aggr = sh_get_aggr_matrix(shape);
+    
+    txt_o->dx = txt_o->x;
+    txt_o->dy = txt_o->y;
+    matrix_trans_pos(aggr, &txt_o->dx, &txt_o->dy);
+    
     compute_styled_extents_n_scaled_font(txt_o);
+    ext = &txt_o->extents;
+    
+    area = sh_get_area(shape);
+    area->x = MBE_GET_X_BEARING(ext) + txt_o->dx;
+    area->y = MBE_GET_Y_BEARING(ext) + txt_o->dy;
+    area->w = MBE_GET_WIDTH(ext);
+    area->h = MBE_GET_HEIGHT(ext);
 }
 
 void sh_stext_draw(shape_t *shape, cairo_t *cr) {
@@ -722,6 +758,52 @@ void test_compute_styled_extents_n_scaled_font(void) {
     free_font_face(face);
 }
 
+static
+void test_sh_stext_transform(void) {
+    sh_stext_t *txt_o;
+    mb_style_blk_t blks[2];
+    co_aix *aggr;
+    mb_font_face_t *face;
+    area_t *area;
+    int r;
+
+    txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, 100, 50, "hello world");
+    CU_ASSERT(txt_o != NULL);
+
+    aggr = txt_o->shape.aggr;
+    aggr[0] = 2;
+    aggr[1] = 0;
+    aggr[2] = 0;
+    aggr[3] = 0;
+    aggr[4] = 1;
+    aggr[5] = 0;
+
+    face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
+    CU_ASSERT(face != NULL);
+    
+    blks[0].n_chars = 5;
+    blks[0].face = face;
+    blks[0].font_sz = 10;
+    
+    blks[1].n_chars = 4;
+    blks[1].face = face;
+    blks[1].font_sz = 15.5;
+    
+    r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
+    CU_ASSERT(r == OK);
+
+    sh_stext_transform((shape_t *)txt_o);
+
+    area = sh_get_area((shape_t *)txt_o);
+    CU_ASSERT(area->x >= 200 && area->x < 220);
+    CU_ASSERT(area->y >= 40 && area->y < 50);
+    CU_ASSERT(area->w >= 80 && area->w < 120);
+    CU_ASSERT(area->h >= 8 && area->h < 12);
+    
+    _rdman_shape_stext_free((shape_t *)txt_o);
+    free_font_face(face);
+}
+
 #include <CUnit/Basic.h>
 CU_pSuite get_stext_suite(void) {
     CU_pSuite suite;
@@ -733,6 +815,7 @@ CU_pSuite get_stext_suite(void) {
     CU_ADD_TEST(suite, test_extent_extents);
     CU_ADD_TEST(suite, test_compute_utf8_chars_sz);
     CU_ADD_TEST(suite, test_compute_styled_extents_n_scaled_font);
+    CU_ADD_TEST(suite, test_sh_stext_transform);
 
     return suite;
 }

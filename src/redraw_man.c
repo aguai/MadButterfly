@@ -1172,6 +1172,9 @@ static void clean_shape(shape_t *shape) {
     case MBO_IMAGE:
 	sh_image_transform(shape);
 	break;
+    case MBO_STEXT:
+	sh_text_transform(shape);
+	break;
 #ifdef UNITTEST
     default:
 	sh_dummy_transform(shape);
