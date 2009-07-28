@@ -303,6 +303,8 @@ DARRAY(scaled_fonts_lst, mb_scaled_font_t *);
 DARRAY_DEFINE(scaled_fonts_lst, mb_scaled_font_t *);
 DARRAY(style_blks_lst, mb_style_blk_t);
 DARRAY_DEFINE_ADV(style_blks_lst, mb_style_blk_t);
+DARRAY(extents_lst, mb_text_extents_t);
+DARRAY_DEFINE_ADV(extents_lst, mb_text_extents_t);
 
 /*! \brief A simple implementation of text shape.
  *
@@ -315,6 +317,7 @@ typedef struct _sh_stext {
     co_aix dx, dy;
     scaled_fonts_lst_t scaled_fonts;
     mb_text_extents_t extents;
+    extents_lst_t sub_exts;
 } sh_stext_t;
 
 static
@@ -327,6 +330,7 @@ void _rdman_shape_stext_free(shape_t *shape) {
     for(i = 0; i < txt_o->scaled_fonts.num; i++)
 	scaled_font_free(txt_o->scaled_fonts.ds[i]);
     DARRAY_DESTROY(&txt_o->scaled_fonts);
+    DARRAY_DESTROY(&txt_o->sub_exts);
     
     if(txt_o->txt)
 	free((void *)txt_o->txt);
@@ -352,6 +356,7 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
     txt_o->x = x;
     txt_o->y = y;
     DARRAY_INIT(&txt_o->scaled_fonts);
+    DARRAY_INIT(&txt_o->sub_exts);
 
     if(txt_o->txt == NULL) {
 	free(txt_o);
@@ -477,12 +482,13 @@ void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
  */
 static
 void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
-    mb_text_extents_t sub_extents;
     mb_style_blk_t *blk;
     style_blks_lst_t *style_blks;
     int blk_txt_len;
     mb_scaled_font_t *scaled;
     scaled_fonts_lst_t *scaled_fonts;
+    extents_lst_t *sub_exts;
+    mb_text_extents_t *sub;
     char *txt, saved;
     int i, nscaled;
     
@@ -495,6 +501,10 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
     
     style_blks = &txt_o->style_blks;
     blk = style_blks->ds;
+
+    sub_exts = &txt_o->sub_exts;
+    DARRAY_CLEAN(sub_exts);
+    extents_lst_adv(sub_exts, style_blks->num);
     
     txt = (char *)txt_o->txt;
     for(i = 0; i < style_blks->num; i++) {
@@ -502,16 +512,17 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
 				       0, 0, blk->font_sz);
 	ASSERT(scaled != NULL);
 	scaled_fonts_lst_add(scaled_fonts, scaled);
+	sub = sub_exts->ds + i;
 	
 	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
 	ASSERT(blk_txt_len != ERR);
 	
 	saved = txt[blk_txt_len];
 	txt[blk_txt_len] = 0;
-	compute_text_extents(scaled, txt, &sub_extents);
+	compute_text_extents(scaled, txt, sub);
 	txt[blk_txt_len] = saved;
 
-	extent_extents(&txt_o->extents, &sub_extents);
+	extent_extents(&txt_o->extents, sub);
 
 	blk++;
 	txt += blk_txt_len;
