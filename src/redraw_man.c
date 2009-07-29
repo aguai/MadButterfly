@@ -1173,7 +1173,7 @@ static void clean_shape(shape_t *shape) {
 	sh_image_transform(shape);
 	break;
     case MBO_STEXT:
-	sh_text_transform(shape);
+	sh_stext_transform(shape);
 	break;
 #ifdef UNITTEST
     default:
