@@ -145,8 +145,6 @@ def translate_style(node, coord_id, codefo, doc, prefix):
     except:
 	pass
 
-    print "# opacity of %s is %g" % (node_id, opacity)
-
     if prop_map.has_key('fill'):
         fill = prop_map['fill'].strip()
         if fill.startswith('#') and len(fill) == 7:
@@ -374,7 +372,7 @@ def _get_id(obj):
 #
 def check_mbname(func):
     def deco(obj, coord_id, codefo, doc):
-        if obj.hasAttribute('mbname'):
+        if obj.hasAttribute('mbname') and obj.getAttribute('mbname'):
             ## \note mbname declare that this node should be in the
             # symbol table.
             mbname = obj.getAttribute('mbname')
@@ -436,40 +434,45 @@ def translate_font_style(text, codefo):
 
     return style_map
 
-def merge_style(tspan,text):
+def merge_style(tspan, text):
     newmap = tspan.style_map
     map = text.style_map
     for k,v in text.style_map.items():
-	    if not newmap.has_key(k):
-	        newmap[k] = v
-def translate_tspan(tspan, text,coord_id, codefo, doc,txt_strs,attrs):
+        if not newmap.has_key(k):
+            newmap[k] = v
+            pass
+        pass
+    pass
+
+def translate_tspan(tspan, text, coord_id, codefo, doc, txt_strs, attrs):
     try:
    	map = tspan.style_map
     except:
         map = translate_font_style(tspan, codefo)
         tspan.style_map = map
+        pass
     if tspan.hasAttribute('x'):
-	    # Render the tspan as an independent text if the x attribute is defined. All elements inside 
-	    # the tspan will be ignore by the outter text or tspan elements.
-	    # FIXME: We need to apply the style map recursively.
-	    merge_style(tspan,text)
-	    translate_text(tspan,coord_id,codefo,doc)
-	    return ''
-    attr = [len(txt_strs.encode('utf8'))-1,0, tspan]
+        # Render the tspan as an independent text if the x
+        # attribute is defined. All elements inside 
+        # the tspan will be ignore by the outter text or tspan elements.
+        # FIXME: We need to apply the style map recursively.
+        merge_style(tspan, text)
+        translate_text(tspan, coord_id, codefo, doc)
+        return ''
+    attr = [len(txt_strs.encode('utf8')) - 1, 0, tspan]
     attrs.append(attr)
     for node in tspan.childNodes:
         if node.localName == None:
             txt_strs = txt_strs + node.data
         elif node.localName == 'tspan':
-	    txt_strs = translate_tspan(node,tspan,coord_id, codefo, doc,txt_strs,attrs)
+	    txt_strs = translate_tspan(node, tspan, coord_id, codefo,
+                                       doc, txt_strs, attrs)
             pass
         pass
     attr[1] = len(txt_strs.encode('utf8'))
     return txt_strs
 
-    
-
-def generate_font_attributes(attrs,coord_id, codefo,doc):
+def pango_generate_font_attributes(attrs,coord_id, codefo,doc):
     for a in attrs:
 	start = a[0]
 	end   = a[1]
@@ -485,8 +488,9 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
 	    else:
                 font_sz = float(style_map['font-size'])
                 print >> codefo, 'PANGO_SIZE(%d,%d,%d)dnl' % (font_sz*1024,start,end)
+                pass
             pass
-
+        
         if style_map.has_key('font-style'):
             font_style = style_map['font-style'].lower()
 	    if font_style == 'normal':
@@ -495,21 +499,22 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
                 print >> codefo, 'PANGO_STYLE(PANGO_STYLE_ITALIC,%d,%d)dnl' % (start,end)
 	    elif font_style == 'oblique':
                 print >> codefo, 'PANGO_STYLE(PANGO_STYLE_OBLIQUE,%d,%d)dnl' % (start,end)
-        pass
+                pass
+            pass
 
         if style_map.has_key('font-family'):
             font_family = style_map['font-family']
             print >> codefo, 'PANGO_FAMILY(%s,%d,%d)dnl' % (font_family,start,end)
-        pass
+            pass
         if style_map.has_key('text-anchor'):
             text_anchor = style_map['text-anchor'].lower()
 	    # FIXME: We need to implement a mb_text_set_aligment to implement SVG-styled alignment.
 	    print "The text-anchor is not implemented yet"
-        pass
+            pass
         if style_map.has_key('font-variant'):
             font_variant = style_map['font-variant'].lower()
 	    print "The font-variant is not implemented yet"
-        pass
+            pass
         if style_map.has_key('font-weight'):
             font_weight = style_map['font-weight'].lower()
 	    if font_weight == 'normal':
@@ -540,36 +545,20 @@ def generate_font_attributes(attrs,coord_id, codefo,doc):
                 print >> codefo, 'PANGO_STYLE(PANGO_WEIGHT_HEAVY,%d,%d)dnl' % (start,end)
 	    else:
 		print "The font-weight %s is not supported" % font_weight
-        pass
+                pass
+            pass
         if style_map.has_key('direction'):
             direction = style_map['direction'].lower()
 	    print "The direction is not implemented yet"
-        pass
+            pass
         if style_map.has_key('unicode-bidi'):
             bidi = style_map['unicode-bidi'].lower()
 	    print "The bidi is not implemented yet"
-        pass
-    pass
-	    
-def translate_text(text, coord_id, codefo, doc):
-    try:
-        map = text.style_map
-    except:	
-        map = translate_font_style(text, codefo)
-        text.style_map = map
-    attrs = []
-    attr = [0,0, text]
-    attrs.append(attr)
-
-    txt_strs = ''
-    for node in text.childNodes:
-        if node.localName == None:
-            txt_strs = txt_strs + node.data
-        elif node.localName == 'tspan':
-	    txt_strs = translate_tspan(node,text,coord_id, codefo, doc,txt_strs,attrs)
             pass
         pass
-    attr[1] = len(txt_strs.encode('utf8'))
+    pass
+
+def pango_gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
     if txt_strs:
         text_id = _get_id(text)
         x = float(text.getAttribute('x'))
@@ -579,7 +568,7 @@ def translate_text(text, coord_id, codefo, doc):
             'PANGO_BEGIN_TEXT([%s], [%s], %f, %f, 16, [%s])dnl' % (
             text_id.encode('utf8'), u''.join(txt_strs).encode('utf8'),
             x, y, coord_id.encode('utf8'))
-        generate_font_attributes(attrs, coord_id, codefo, doc)
+        pango_generate_font_attributes(attrs, coord_id, codefo, doc)
         print >> codefo, \
             'PANGO_END_TEXT([%s], [%s], %f, %f, 16, [%s])dnl' % (
             text_id.encode('utf8'), u''.join(txt_strs).encode('utf8'),
@@ -591,7 +580,40 @@ def translate_text(text, coord_id, codefo, doc):
 	     mbname = text.getAttribute('mbname')
 	     id = text.getAttribute('id')
 	     print >> codefo, 'ADD_SYMBOL([%s],[%s])dnl' % (id,mbname)
+             pass
         pass
+    pass
+
+def stext_gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
+    pass
+
+def gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
+    raise NotImplementedError, \
+        'gen_text should be assigned to an implementation'
+
+@check_mbname
+def translate_text(text, coord_id, codefo, doc):
+    try:
+        map = text.style_map
+    except:	
+        map = translate_font_style(text, codefo)
+        text.style_map = map
+        pass
+    attrs = []
+    attr = [0, 0, text]
+    attrs.append(attr)
+
+    txt_strs = ''
+    for node in text.childNodes:
+        if node.localName == None:
+            txt_strs = txt_strs + node.data
+        elif node.localName == 'tspan':
+	    txt_strs = translate_tspan(node, text,coord_id, codefo,
+                                       doc,txt_strs, attrs)
+            pass
+        pass
+    attr[1] = len(txt_strs.encode('utf8'))
+    gen_text(text, coord_id, codefo, doc, txt_strs, attrs)
     pass
 
 @check_mbname
@@ -760,18 +782,33 @@ def svg_2_code(dom, codefo):
 
 if __name__ == '__main__':
     from os import path
-    if len(sys.argv) == 3:
-        svgfn = sys.argv[1]
-        codefn = sys.argv[2]
-    elif len(sys.argv) == 2:
-        svgfn = sys.argv[1]
+    import optparse
+    
+    usage='usage: %prog [options] <SVG file> [<output>]'
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option('-s', '--stext', dest='stext',
+                      action='store_true', default=False,
+                      help='Use sh_stext instead of sh_text');
+    options, args = parser.parse_args()
+    
+    if len(args) == 2:
+        svgfn = args[0]
+        codefn = args[1]
+    elif len(args) == 1:
+        svgfn = args[0]
         codefn = 'out.mb'
     else:
-        print >> sys.stderr, '%s <SVG file> [<output>]' % (sys.argv[0])
+        parser.print_help()
         sys.exit(1)
         pass
     
     struct_name = path.basename(codefn).split('.')[0]
+
+    if options.stext:
+        gen_text = stext_gen_text
+    else:
+        gen_text = pango_gen_text
+        pass
 
     dom = parse(svgfn)
     codefo = file(codefn, 'w+')
