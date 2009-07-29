@@ -574,17 +574,83 @@ def pango_gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
             text_id.encode('utf8'), u''.join(txt_strs).encode('utf8'),
             x, y, coord_id.encode('utf8'))
 	translate_style(text, coord_id, codefo, doc, 'TEXT_')
-        if text.hasAttribute('mbname'):
-	     ## \note mbname declare that this node should be in the
-	     # symbol table.
-	     mbname = text.getAttribute('mbname')
-	     id = text.getAttribute('id')
-	     print >> codefo, 'ADD_SYMBOL([%s],[%s])dnl' % (id,mbname)
-             pass
+        pass
+    pass
+
+def stext_generate_font_attributes(text, attrs, coord_id, codefo, doc):
+    text_id = _get_id(text)
+    
+    for start, end, node in attrs:
+        style_map = node.style_map
+        
+        font_sz = 10
+        if style_map.has_key('font-size'):
+            fsz = style_map['font-size']
+            if fsz.endswith('px'):
+                font_sz = float(fsz[:-2])
+            else:
+                font_sz = float(fsz)
+                pass
+            pass
+        
+        if style_map.has_key('font-family'):
+            font_family = style_map['font-family']
+        else:
+            font_family = 'serif'
+            pass
+        
+        font_slant = 0
+        if style_map.has_key('font-style'):
+            fn_style = style_map['font-style']
+            if fn_style == 'normal':
+                font_slant = 0
+            elif fn_style == 'italic':
+                font_slant = 100
+            elif fn_style == 'oblique':
+                font_slant = 110
+            else:
+                raise ValueError, '%s is not a valid font-style' % (fn_style)
+            pass
+        
+        font_weight = 80
+        if style_map.has_key('font-weight'):
+            fn_weight = style_map['font-weight']
+            if fn_weight == 'normal':
+                font_weight = 80
+            elif fn_weight == 'medium':
+                font_weight = 100
+            elif fn_weight == 'bold':
+                font_weight = 200
+            elif fn_weight == 'bolder':
+                font_weight = 150
+            elif fn_weight == 'light':
+                font_weight = 50
+            elif fn_weight == 'lighter':
+                font_weight = 70
+            else:
+                font_weight = int(fn_weight)
+                pass
+            pass
+        
+        print >> codefo, 'STYLE_BLOCK([%s], %d, [%s], %f, %d, %d)dnl' % (
+            text_id, end - start, font_family, font_sz,
+            font_slant, font_weight)
         pass
     pass
 
 def stext_gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
+    if not txt_strs:
+        return
+    
+    text_id = _get_id(text)
+    x = float(text.getAttribute('x'))
+    y = float(text.getAttribute('y'))
+    print >> codefo, 'dnl'
+    print >> codefo, \
+        'ADD_STEXT([%s], [%s], %f, %f, [%s])dnl' % \
+        (text_id, txt_strs.encode('utf8'), x, y, coord_id)
+    translate_style(text, coord_id, codefo, doc, 'STEXT_')
+    stext_generate_font_attributes(text, attrs, coord_id, codefo, doc)
     pass
 
 def gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
@@ -608,7 +674,7 @@ def translate_text(text, coord_id, codefo, doc):
         if node.localName == None:
             txt_strs = txt_strs + node.data
         elif node.localName == 'tspan':
-	    txt_strs = translate_tspan(node, text,coord_id, codefo,
+	    txt_strs = translate_tspan(node, text, coord_id, codefo,
                                        doc,txt_strs, attrs)
             pass
         pass
