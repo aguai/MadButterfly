@@ -20,6 +20,7 @@ define([ADD_PATH])
 define([ADD_RECT])
 define([ADD_COORD])
 define([ADD_TEXT],)
+define([ADD_STEXT])
 define([ADD_IMAGE],)
 define([PANGO_BEGIN_TEXT],)
 define([PANGO_END_TEXT],)
@@ -39,10 +40,24 @@ define([COORD_TRANSLATE],)
 define([COORD_MATRIX],)
 define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
+define([STYLE_BLOCK])
 define([ADD_SYMBOL],)
 define([SCENE])
 ])
 
+define([C_NL],[
+])
+define([RM_C_NL],
+        [ifelse(index([$1],C_NL), -1,
+                [$1],
+                [substr([$1], 0, index([$1],C_NL))[\n]RM_C_NL(substr([$1],
+             eval(index([$1],C_NL) + 1)))])])
+define([TO_CSTR], ["[]RM_C_NL(patsubst(patsubst(patsubst([$1],
+		  [\\], [[\\\\]]),
+		  [	],[[\\t]]),
+         	  ["], [[\\"]]))[]"])
+
+dnl -------------------- Declare Local Variables --------------------
 define([D_COLOR_STOP],[
 	{$6,$2,$3,$4,$5}])
 
@@ -60,14 +75,26 @@ ifelse(COUNT($5),0,,[dnl
 ])dnl
 ])
 
+define([D_ADD_STEXT],[dnl
+define([$1_CNT], 0)dnl
+[    mb_style_blk_t *$1_blk;
+]])
+
+define([D_STYLE_BLOCK],[dnl
+define([$1_CNT], eval($1_CNT + 1))dnl
+])
+
 define([DECLARE_VARS], [divert([-1])
 define([DIMPORT],[IMPORT(]QUOTE($[]1)[,[D_])])
 DECLARE_EMPTIES
 DIMPORT([ADD_LINEAR_PAINT])
 DIMPORT([ADD_RADIAL_PAINT])
 DIMPORT([COLOR_STOP])
+DIMPORT([ADD_STEXT])
+DIMPORT([STYLE_BLOCK])
 divert[]])
 
+dnl -------------------- Setup Value for Member Variables --------------------
 define([S_ADD_LINEAR_PAINT],[
     obj->$1 = rdman_paint_linear_new(rdman, $2, $3, $4, $5);
 ifelse(COUNT($6),0,,[dnl
@@ -242,6 +269,28 @@ define([S_SHAPE_MATRIX],[dnl
     rdman_coord_changed(rdman, obj->$1);
 ]])
 
+define([S_ADD_STEXT],[dnl
+[    obj->$1 = rdman_shape_stext_new(rdman, ]TO_CSTR([$2])[, $3, $4);
+    rdman_add_shape(rdman, obj->$1, obj->$5);
+    obj->$1_style_blks_num = ]$1_CNT[;
+    obj->$1_style_blks = $1_blk =
+        (mb_style_blk_t *)malloc(sizeof(mb_style_blk_t) * ]$1_CNT[);
+]dnl
+define($1_IDX,0)dnl
+])
+
+define([S_STYLE_BLOCK],[dnl
+[    $1_blk->n_chars = $2;
+    $1_blk->font_sz = $4;
+    $1_blk->face = mb_font_face_query(rdman, ]TO_CSTR([$3])[, $5, $6);
+    $1_blk++;
+]dnl
+define([$1_IDX], eval($1_IDX + 1))dnl
+ifelse($1_IDX, $1_CNT,
+[    sh_stext_set_style(obj->$1, obj->$1_style_blks, ]$1_CNT[);
+])dnl
+])
+
 define([SETUP_VARS],[divert([-1])
 define([SIMPORT],[IMPORT(]QUOTE($[]1)[,[S_])])
 DECLARE_EMPTIES
@@ -254,6 +303,7 @@ SIMPORT([ADD_PATH],)
 SIMPORT([ADD_RECT])
 SIMPORT([ADD_COORD])
 SIMPORT([ADD_TEXT])
+SIMPORT([ADD_STEXT])
 SIMPORT([ADD_IMAGE])
 SIMPORT([PANGO_BEGIN_TEXT])
 SIMPORT([PANGO_END_TEXT])
@@ -273,8 +323,10 @@ SIMPORT([COORD_TRANSLATE])
 SIMPORT([COORD_MATRIX])
 SIMPORT([SHAPE_TRANSLATE])
 SIMPORT([SHAPE_MATRIX])
+SIMPORT([STYLE_BLOCK])
 divert[]])
 
+dnl -------------------- Clear Member Variables --------------------
 define([F_ADD_LINEAR_PAINT],[[
     stops = paint_linear_stops(obj->$1, 0, NULL);
     free(stops);
@@ -321,6 +373,10 @@ define([F_STROKE_SHAPE],[[
     rdman_paint_free(rdman, obj->$1_stroke);
 ]])
 
+define([F_ADD_STEXT],[[
+    rdman_shape_free(rdman, obj->$1);
+]])
+
 define([CLEAR_VARS],[divert([-1])
 define([FIMPORT],[IMPORT(]QUOTE($[]1)[,[F_])])
 DECLARE_EMPTIES
@@ -335,6 +391,7 @@ FIMPORT([FILL_SHAPE])
 FIMPORT([STROKE_SHAPE])
 divert[]])
 
+dnl -------------------- Macro to Reverse Calling --------------------
 define([REVERSE_VARS],[divert([-1])
 define([__REV_VAR],[])
 define([PUSH_REV], [
@@ -374,6 +431,7 @@ RIMPORT([SHAPE_MATRIX])
 divert[]dnl
 ])
 
+dnl -------------------- Define Symbol Table --------------------
 define([Y_ADD_SYMBOL],[[{"$2", MB_SPRITE_OFFSET($1)},]])
 
 define([DECLARE_SYMS], [divert([-1])
@@ -407,6 +465,7 @@ SCAIMPORT([SCENE])
 divert[]dnl
 ])
 
+dnl -------------------- C Template --------------------
 define([MADBUTTERFLY],[dnl
 [#include <stdio.h>
 #include <stdlib.h>

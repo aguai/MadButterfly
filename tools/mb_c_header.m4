@@ -20,6 +20,11 @@ define([ADD_COORD],[
 define([ADD_TEXT],[
 [    shape_t *$1;
 ]])
+define([ADD_STEXT],[
+[    shape_t *$1;
+     int $1_style_blks_num;
+     mb_style_blk_t *$1_style_blks;
+]])
 define([ADD_IMAGE],[[
     paint_t *$1_paint_img;
     shape_t *$1;
@@ -52,6 +57,7 @@ define([COORD_TRANSLATE],)
 define([COORD_MATRIX],)
 define([SHAPE_TRANSLATE],)
 define([SHAPE_MATRIX],)
+define([STYLE_BLOCK],[])
 define([ADD_SYMBOL],)
 define([SCENE])
 
