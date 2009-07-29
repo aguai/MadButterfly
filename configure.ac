@@ -35,9 +35,38 @@ AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
 
-AC_ARG_ENABLE([testcase],[enable testcase for unittest],
-	[AC_SUBST([TESTCASE],[testcase])],
-	[AC_SUBST([TESTCASE],)])
+AC_ARG_ENABLE([testcase],
+	[--enable-testcase	Turn on sh_text],
+[case "${enableval}" in
+  yes) testcase=true ;;
+  no) testcase=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-testcase]) ;;
+esac],[testcase=false])
+AM_CONDITIONAL([TESTCASE], [test x$testcase = xtrue])
+
+AC_ARG_ENABLE([sh_text],
+	[--disable-sh_text	Turn off sh_text],
+[case "${enableval}" in
+  yes) sh_text=true ;;
+  no) sh_text=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_text]) ;;
+esac],[sh_text=true])
+AM_CONDITIONAL([SH_TEXT], [test x$sh_text = xtrue])
+[if [ x"${sh_text}" = xtrue ]; then]
+AC_DEFINE([SH_TEXT])
+[fi]
+
+AC_ARG_ENABLE([sh_stext],
+	[--disable-sh_stext	Turn off sh_stext],
+[case "${enableval}" in
+  yes) sh_stext=true ;;
+  no) sh_stext=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_stext]) ;;
+esac],[sh_stext=true])
+AM_CONDITIONAL([SH_STEXT], [test x$sh_stext = xtrue])
+[if [ x"${sh_stext}" = xtrue ]; then]
+AC_DEFINE([SH_STEXT])
+[fi]
 
 AC_CONFIG_FILES([Makefile
                  libmbfly.pc
@@ -53,4 +82,8 @@ AC_CONFIG_FILES([Makefile
                  include/Makefile
                  inkscape/Makefile
                  tools/Makefile])
+
+AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
+AH_TEMPLATE([SH_STEXT],[Enable sh_stext object])
+
 AC_OUTPUT
