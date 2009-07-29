@@ -387,8 +387,8 @@ void _rdman_shape_stext_free(shape_t *shape) {
     free(txt_o);
 }
 
-shape_t *rdman_shape_stext_new(redraw_man_t *rdman, co_aix x, co_aix y,
-		      const char *txt) {
+shape_t *rdman_shape_stext_new(redraw_man_t *rdman, const char *txt,
+			       co_aix x, co_aix y) {
     sh_stext_t *txt_o;
 
     ASSERT(txt != NULL);
@@ -812,7 +812,7 @@ void test_compute_styled_extents_n_scaled_font(void) {
     int r;
 
     txt_o = (sh_stext_t *)rdman_shape_stext_new((redraw_man_t *)NULL,
-						10, 15, "Hello World");
+						"Hello World", 10, 15);
     CU_ASSERT(txt_o != NULL);
 
     aggr = txt_o->shape.aggr;
@@ -861,7 +861,7 @@ void test_sh_stext_transform(void) {
     area_t *area;
     int r;
 
-    txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, 100, 50, "hello world");
+    txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, "hello world", 100, 50);
     CU_ASSERT(txt_o != NULL);
 
     aggr = txt_o->shape.aggr;
@@ -907,7 +907,7 @@ void test_sh_stext_draw(void) {
     area_t *area;
     int r;
 
-    txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, 100, 50, "hello world");
+    txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, "hello world", 100, 50);
     CU_ASSERT(txt_o != NULL);
     
     aggr = txt_o->shape.aggr;

@@ -294,8 +294,8 @@ typedef struct {
 } mb_style_blk_t;
 
 extern shape_t *rdman_shape_stext_new(redraw_man_t *rdman,
-				      co_aix x, co_aix y,
-				      const char *txt);
+				      const char *txt,
+				      co_aix x, co_aix y);
 extern void sh_stext_transform(shape_t *shape);
 extern void sh_stext_draw(shape_t *shape, cairo_t *cr);
 extern int sh_stext_set_text(shape_t *shape, const char *txt);
