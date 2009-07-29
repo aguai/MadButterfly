@@ -9,6 +9,7 @@
 #include "mb_redraw_man.h"
 #include "mb_observer.h"
 #include "mb_prop.h"
+#include "../config.h"
 
 /* required by rdman_img_ldr_load_paint() */
 #include "mb_paint.h"
@@ -1163,18 +1164,22 @@ static void clean_shape(shape_t *shape) {
     case MBO_PATH:
 	sh_path_transform(shape);
 	break;
+#ifdef SH_TEXT
     case MBO_TEXT:
 	sh_text_transform(shape);
 	break;
+#endif
     case MBO_RECT:
 	sh_rect_transform(shape);
 	break;
     case MBO_IMAGE:
 	sh_image_transform(shape);
 	break;
+#ifdef SH_STEXT
     case MBO_STEXT:
 	sh_stext_transform(shape);
 	break;
+#endif
 #ifdef UNITTEST
     default:
 	sh_dummy_transform(shape);
@@ -1817,18 +1822,22 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
 	case MBO_PATH:
 	    sh_path_draw(shape, cr);
 	    break;
+#ifdef SH_TEXT
 	case MBO_TEXT:
 	    sh_text_draw(shape, cr);
 	    break;
+#endif
 	case MBO_RECT:
 	    sh_rect_draw(shape, cr);
 	    break;
 	case MBO_IMAGE:
 	    sh_image_draw(shape, cr);
 	    break;
+#ifdef SH_STEXT
 	case MBO_STEXT:
 	    sh_stext_draw(shape, cr);
 	    break;
+#endif
 #ifdef UNITTEST
 	default:
 	    sh_dummy_fill(shape, cr);
