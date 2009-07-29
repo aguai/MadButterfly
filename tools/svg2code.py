@@ -659,6 +659,7 @@ def gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
 
 @check_mbname
 def translate_text(text, coord_id, codefo, doc):
+    coord_id = translate_shape_transform(text, coord_id, codefo)
     try:
         map = text.style_map
     except:	
@@ -763,6 +764,7 @@ def translate_group(group, parent_id, codefo, doc):
         translate_transform(group_id, transform, codefo, 'COORD_')
         pass
 
+    mock_sn = 0
     translate_style(group, group_id, codefo, doc, 'GROUP_')
     for node in group.childNodes:
         if node.namespaceURI != svgns:
