@@ -12,7 +12,7 @@ BUILT_SOURCES = calculator_scr.c calculator_scr.h calculator_scr.mb
 CLEANFILES = calculator_scr.c calculator_scr.h calculator_scr.mb
 
 calculator_scr.mb: $(srcdir)/calculator_scr.svg
-	$(top_srcdir)/tools/svg2code.py $? $@
+	$(top_srcdir)/tools/svg2code.py -s $? $@
 
 calculator_scr.h: calculator_scr.mb
 	m4 -I $(top_srcdir)/tools mb_c_header.m4 $< > $@

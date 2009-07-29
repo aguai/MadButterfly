@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <mb.h>
 #include "calculator_scr.h"
 
@@ -66,14 +67,20 @@ static void show_text(calc_data_t *calc_data, int num, int saved, int op,
     rdman = X_MB_rdman(calc_data->rt);
 
     sprintf(buf, "%d%s", num, suffix);
-    sh_text_set_text(calc_data->code->screen_text_u, buf);
+    sh_stext_set_text(calc_data->code->screen_text_u, buf);
+    calc_data->code->screen_text_u_style_blks[0].n_chars = strlen(buf);
+    sh_stext_set_style(calc_data->code->screen_text_u,
+		       calc_data->code->screen_text_u_style_blks, 1);
     rdman_shape_changed(rdman, calc_data->code->screen_text_u);
 
     if(op == 'n')
 	sprintf(buf, "None");
     else
 	sprintf(buf, "%d%c", saved, op);
-    sh_text_set_text(calc_data->code->saved_text, buf);
+    sh_stext_set_text(calc_data->code->saved_text, buf);
+    calc_data->code->saved_text_style_blks[0].n_chars = strlen(buf);
+    sh_stext_set_style(calc_data->code->saved_text,
+		       calc_data->code->saved_text_style_blks, 1);
     rdman_shape_changed(rdman, calc_data->code->saved_text);
 }
 
