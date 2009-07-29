@@ -853,6 +853,57 @@ void test_compute_styled_extents_n_scaled_font(void) {
 }
 
 static
+void test_compute_styled_extents_n_scaled_font_rotate(void) {
+    sh_stext_t *txt_o;
+    co_aix *aggr;
+    mb_style_blk_t blks[2];
+    mb_font_face_t *face;
+    mb_text_extents_t *ext;
+    int r;
+
+    txt_o = (sh_stext_t *)rdman_shape_stext_new((redraw_man_t *)NULL,
+						"Hello World", 10, 15);
+    CU_ASSERT(txt_o != NULL);
+
+    aggr = txt_o->shape.aggr;
+    aggr[0] = 1;
+    aggr[1] = 0;
+    aggr[2] = 0;
+    aggr[3] = 1;
+    aggr[4] = 1;
+    aggr[5] = 0;
+
+    face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
+    CU_ASSERT(face != NULL);
+    
+    blks[0].n_chars = 5;
+    blks[0].face = face;
+    blks[0].font_sz = 10;
+    
+    blks[1].n_chars = 4;
+    blks[1].face = face;
+    blks[1].font_sz = 15.5;
+    
+    r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
+    CU_ASSERT(r == OK);
+
+    compute_styled_extents_n_scaled_font(txt_o);
+
+    ext = &txt_o->extents;
+    CU_ASSERT(MBE_GET_HEIGHT(ext) > 47);
+    CU_ASSERT(MBE_GET_HEIGHT(ext) < 92);
+    CU_ASSERT(MBE_GET_WIDTH(ext) > 36);
+    CU_ASSERT(MBE_GET_WIDTH(ext) < 72);
+    CU_ASSERT(MBE_GET_X_ADV(ext) > 36);
+    CU_ASSERT(MBE_GET_X_ADV(ext) < 72);
+    CU_ASSERT(MBE_GET_Y_ADV(ext) > 36);
+    CU_ASSERT(MBE_GET_Y_ADV(ext) < 72);
+    
+    _rdman_shape_stext_free((shape_t *)txt_o);
+    free_font_face(face);
+}
+
+static
 void test_sh_stext_transform(void) {
     sh_stext_t *txt_o;
     mb_style_blk_t blks[2];
@@ -934,12 +985,61 @@ void test_sh_stext_draw(void) {
 
     sh_stext_transform((shape_t *)txt_o);
 
+    move_cnt = 0;
     sh_stext_draw((shape_t *)txt_o, NULL);
     CU_ASSERT(move_cnt == 2);
     CU_ASSERT(move_xys[0][0] == 200);
     CU_ASSERT(move_xys[0][1] == 50);
     CU_ASSERT(move_xys[1][0] >= 240 && move_xys[1][0] < 270);
     CU_ASSERT(move_xys[1][1] == 50);
+
+    _rdman_shape_stext_free((shape_t *)txt_o);
+    free_font_face(face);
+}
+
+static
+void test_sh_stext_draw_rotate(void) {
+    sh_stext_t *txt_o;
+    mb_style_blk_t blks[2];
+    co_aix *aggr;
+    mb_font_face_t *face;
+    area_t *area;
+    int r;
+
+    txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, "hello world", 100, 50);
+    CU_ASSERT(txt_o != NULL);
+    
+    aggr = txt_o->shape.aggr;
+    aggr[0] = 2;
+    aggr[1] = 0;
+    aggr[2] = 0;
+    aggr[3] = 1;
+    aggr[4] = 1;
+    aggr[5] = 0;
+
+    face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
+    CU_ASSERT(face != NULL);
+    
+    blks[0].n_chars = 5;
+    blks[0].face = face;
+    blks[0].font_sz = 10;
+    
+    blks[1].n_chars = 6;
+    blks[1].face = face;
+    blks[1].font_sz = 15.5;
+    
+    r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
+    CU_ASSERT(r == OK);
+
+    sh_stext_transform((shape_t *)txt_o);
+
+    move_cnt = 0;
+    sh_stext_draw((shape_t *)txt_o, NULL);
+    CU_ASSERT(move_cnt == 2);
+    CU_ASSERT(move_xys[0][0] == 200);
+    CU_ASSERT(move_xys[0][1] == 150);
+    CU_ASSERT(move_xys[1][0] >= 240 && move_xys[1][0] < 270);
+    CU_ASSERT(move_xys[1][1] >= 170 && move_xys[1][1] < 185);
 
     _rdman_shape_stext_free((shape_t *)txt_o);
     free_font_face(face);
@@ -956,8 +1056,10 @@ CU_pSuite get_stext_suite(void) {
     CU_ADD_TEST(suite, test_extent_extents);
     CU_ADD_TEST(suite, test_compute_utf8_chars_sz);
     CU_ADD_TEST(suite, test_compute_styled_extents_n_scaled_font);
+    CU_ADD_TEST(suite, test_compute_styled_extents_n_scaled_font_rotate);
     CU_ADD_TEST(suite, test_sh_stext_transform);
     CU_ADD_TEST(suite, test_sh_stext_draw);
+    CU_ADD_TEST(suite, test_sh_stext_draw_rotate);
 
     return suite;
 }
