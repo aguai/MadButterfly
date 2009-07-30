@@ -36,7 +36,7 @@ AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
 
 AC_ARG_ENABLE([testcase],
-	[--enable-testcase	Turn on sh_text],
+	[--enable-testcase	Enable testcase],
 [case "${enableval}" in
   yes) testcase=true ;;
   no) testcase=false ;;
