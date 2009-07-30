@@ -314,7 +314,7 @@ void draw_text_scaled(cairo_t *cr, const char *txt, int tlen,
     cairo_set_scaled_font(cr, (cairo_scaled_font_t *)scaled);
     
     cairo_move_to(cr, x, y);
-    cairo_show_text(cr, buf);
+    cairo_text_path(cr, buf);
     
     cairo_set_scaled_font(cr, saved_scaled);
     cairo_scaled_font_destroy(saved_scaled);
@@ -478,7 +478,7 @@ mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
  */
 static
 void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
-    co_aix f_rbx, f_rby;	/* rb stands for right button */
+    co_aix f_rbx, f_rby;	/* rb stands for right bottom */
     co_aix s_rbx, s_rby;
     co_aix s_xbr, s_ybr;
     co_aix new_x_adv, new_y_adv;
@@ -541,8 +541,6 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
     char *txt, saved;
     int i, nscaled;
     
-    memset(&txt_o->extents, sizeof(mb_text_extents_t), 0);
-    
     scaled_fonts = &txt_o->scaled_fonts;
     for(i = 0; i < scaled_fonts->num; i++)
 	scaled_font_free(scaled_fonts->ds[i]);
@@ -571,11 +569,19 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
 	compute_text_extents(scaled, txt, sub);
 	txt[blk_txt_len] = saved;
 
-	extent_extents(&txt_o->extents, sub);
-
 	blk++;
 	txt += blk_txt_len;
-    }    
+    }
+    
+    if(style_blks->num > 0) {
+	sub = sub_exts->ds;
+	memcpy(&txt_o->extents, sub, sizeof(mb_text_extents_t));
+	for(i = 1; i < style_blks->num; i++) {
+	    sub = sub_exts->ds + i;
+	    extent_extents(&txt_o->extents, sub);
+	}
+    } else
+	memset(&txt_o->extents, sizeof(mb_text_extents_t), 0);    
 }
 
 /*
