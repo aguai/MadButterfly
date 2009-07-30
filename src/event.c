@@ -562,6 +562,8 @@ static int _shape_pos_is_in_cairo(shape_t *shape, co_aix x, co_aix y,
     return FALSE;
 }
 
+/*! \brief Find all shapes whose bounding box include a specified position.
+ */
 static
 int _shape_pos_is_in(shape_t *shape, co_aix x, co_aix y,
 		     int *in_stroke, cairo_t *cr) {
@@ -579,6 +581,8 @@ int _shape_pos_is_in(shape_t *shape, co_aix x, co_aix y,
     return TRUE;
 }
 
+/*! \brief Find first shape that is draw at a specified position.
+ */
 static shape_t *_find_shape_in_pos(redraw_man_t *rdman,
 				   co_aix x, co_aix y, int *in_stroke) {
     shape_t *shape;
