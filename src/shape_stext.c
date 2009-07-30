@@ -314,7 +314,7 @@ void draw_text_scaled(cairo_t *cr, const char *txt, int tlen,
     cairo_set_scaled_font(cr, (cairo_scaled_font_t *)scaled);
     
     cairo_move_to(cr, x, y);
-    cairo_show_text(cr, buf);
+    cairo_text_path(cr, buf);
     
     cairo_set_scaled_font(cr, saved_scaled);
     cairo_scaled_font_destroy(saved_scaled);
