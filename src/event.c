@@ -9,6 +9,7 @@
 #include "mb_redraw_man.h"
 #include "mb_shapes.h"
 #endif
+#include "../config.h"
 
 #define OK 0
 #define ERR -1
@@ -156,7 +157,8 @@ enum { MBO_DUMMY,
        MBO_PATH,
        MBO_TEXT,
        MBO_RECT,
-       MBO_IMAGE
+       MBO_IMAGE,
+       MBO_STEXT
 };
 #define MBO_TYPE(x) (((mb_obj_t *)(x))->obj_type)
 #define IS_MBO_SHAPES(x) (((mb_obj_t *)(x))->obj_type & MBO_SHAPES)
@@ -527,23 +529,39 @@ static int _collect_shapes_at_point(redraw_man_t *rdman,
     return OK;
 }
 
+/*! \brief Draw path of a shape.
+ *
+ * \note This function should be merged with what is in redraw_man.c.
+ */
 static void draw_shape_path(shape_t *shape, cairo_t *cr) {
     switch(MBO_TYPE(shape)) {
     case MBO_PATH:
 	sh_path_draw(shape, cr);
 	break;
+#ifdef SH_TEXT
     case MBO_TEXT:
 	sh_text_draw(shape, cr);
 	break;
+#endif
     case MBO_RECT:
 	sh_rect_draw(shape, cr);
 	break;
     case MBO_IMAGE:
 	sh_image_draw(shape, cr);
 	break;
+#ifdef SH_STEXT
+    case MBO_STEXT:
+	sh_stext_draw(shape, cr);
+	break;
+#endif
     }
 }
 
+/*! \brief Implement exactly point testing with Cairo.
+ *
+ * \note This function should not be called directly. Call
+ *  _shape_pos_is_in() insteaded.
+ */
 static int _shape_pos_is_in_cairo(shape_t *shape, co_aix x, co_aix y,
 				  int *in_stroke, cairo_t *cr) {
     draw_shape_path(shape, cr);
@@ -594,7 +612,7 @@ static shape_t *_find_shape_in_pos(redraw_man_t *rdman,
 	shape = rdman_get_shape_gl(rdman, i);
 	if(sh_get_flags(shape, GEF_HIDDEN))
 	    continue;
-	r = _shape_pos_is_in_cairo(shape, x, y, in_stroke, cr);
+	r = _shape_pos_is_in(shape, x, y, in_stroke, cr);
 	if(r)
 	    return shape;
     }
