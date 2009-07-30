@@ -2025,6 +2025,8 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
     r = draw_coord_shapes_in_dirty_areas(rdman, coord);
     
     reset_clip(canvas);
+
+    return OK;
 }
 
 static void draw_shapes_in_dirty_areas(redraw_man_t *rdman) {
