@@ -253,7 +253,7 @@ extern void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
 				  co_aix w, co_aix h);
 /* @} */
 
-/*! \defgroup shape_stext A Simple Implementation of Shape of Image
+/*! \defgroup shape_stext Shape of Simple Text
  * @{
  */
 
