@@ -454,16 +454,21 @@ mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
 					   co_aix font_sz) {
     co_aix matrix[6], scaled_matrix[6];
     co_aix *aggr;
+    co_aix noshift_aggr[6];
     mb_scaled_font_t *scaled;
 
     aggr = sh_get_aggr_matrix((shape_t *)txt_o);
+    memcpy(noshift_aggr, aggr, sizeof(co_aix) * 6);
+    noshift_aggr[2] = 0;
+    noshift_aggr[5] = 0;
+    
     matrix[0] = font_sz;
     matrix[1] = 0;
     matrix[2] = shift_x;
     matrix[3] = 0;
     matrix[4] = font_sz;
     matrix[5] += shift_y;
-    matrix_mul(aggr, matrix, scaled_matrix);
+    matrix_mul(noshift_aggr, matrix, scaled_matrix);
     
     scaled = make_scaled_font_face_matrix(face, scaled_matrix);
 
