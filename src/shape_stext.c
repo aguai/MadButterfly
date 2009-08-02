@@ -64,6 +64,7 @@ NO_DOX(static int move_cnt = 0);
 #undef cairo_scaled_font_destroy
 #define cairo_scaled_font_destroy(scaled)			\
     if(scaled != NULL) cairo_scaled_font_destroy(scaled)
+#define cairo_text_path(cr, buf)
 
 #endif /* UNITTEST */
 
