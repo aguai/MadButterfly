@@ -67,17 +67,12 @@
 #define mbe_line_to cairo_line_to
 #define mbe_in_fill cairo_in_fill
 #define mbe_destroy cairo_destroy
-#define mbe_curve_t cairo_curve_t
 #define mbe_stroke cairo_stroke
-#define mbe_show_t cairo_show_t
 #define mbe_rotate cairo_rotate
-#define mbe_move_t cairo_move_t
 #define mbe_line_t cairo_line_t
 #define mbe_create cairo_create
 #define mbe_scale cairo_scale
 #define mbe_paint cairo_paint
-#define mbe_get_t cairo_get_t
-#define mbe_for_t cairo_for_t
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
 #define mbe_clip cairo_clip
