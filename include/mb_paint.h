@@ -1,7 +1,7 @@
 #ifndef __PAINT_H_
 #define __PAINT_H_
 
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_redraw_man.h"
 #include "mb_img_ldr.h"

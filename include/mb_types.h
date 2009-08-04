@@ -1,7 +1,7 @@
 #ifndef __MB_TYPES_H_
 #define __MB_TYPES_H_
 
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_tools.h"
 #include "mb_observer.h"
 #include "mb_prop.h"
@@ -14,8 +14,8 @@ typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
 typedef struct _mb_obj mb_obj_t;
 typedef struct _mb_sprite mb_sprite_t;
-/*! \todo Replace cairo_t with canvas_t. */
-typedef cairo_t canvas_t;
+/*! \todo Replace mbe_t with canvas_t. */
+typedef mbe_t canvas_t;
 
 struct _redraw_man;
 
@@ -81,7 +81,7 @@ enum { MBO_DUMMY,
 struct _paint {
     int pnt_type;
     int flags;
-    void (*prepare)(paint_t *paint, cairo_t *cr);
+    void (*prepare)(paint_t *paint, mbe_t *cr);
     void (*free)(struct _redraw_man *rdman, paint_t *paint);
     STAILQ(shnode_t) members;
     paint_t *pnt_next;		/*!< \brief Collect all paints of a rdman. */

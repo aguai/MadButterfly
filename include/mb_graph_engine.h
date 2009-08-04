@@ -1,0 +1,87 @@
+#ifndef __MBE_H_
+#define __MBE_H_
+
+#include <cairo.h>
+
+#define mbe_ft_font_face_create_for_pattern cairo_ft_font_face_create_for_pattern
+#define mbe_image_surface_create_from_png cairo_image_surface_create_from_png
+#define mbe_image_surface_create_for_data cairo_image_surface_create_for_data
+#define mbe_pattern_add_color_stop_rgba cairo_pattern_add_color_stop_rgba
+#define mbe_pattern_create_for_surface cairo_pattern_create_for_surface
+#define mbe_scaled_font_text_extents cairo_scaled_font_text_extents
+#define mbe_image_surface_get_stride cairo_image_surface_get_stride
+#define mbe_image_surface_get_height cairo_image_surface_get_height
+#define mbe_image_surface_get_format cairo_image_surface_get_format
+#define mbe_image_surface_get_width cairo_image_surface_get_width
+#define mbe_image_surface_get_data cairo_image_surface_get_data
+#define mbe_scaled_font_reference cairo_scaled_font_reference
+#define mbe_pattern_create_radial cairo_pattern_create_radial
+#define mbe_pattern_create_linear cairo_pattern_create_linear
+#define mbe_image_surface_create cairo_image_surface_create
+#define mbe_xlib_surface_create cairo_xlib_surface_create
+#define mbe_scaled_font_destroy cairo_scaled_font_destroy
+#define mbe_font_options_create cairo_font_options_create
+#define mbe_font_face_reference cairo_font_face_reference
+#define mbe_set_source_surface cairo_set_source_surface
+#define mbe_scaled_font_status cairo_scaled_font_status
+#define mbe_scaled_font_create cairo_scaled_font_create
+#define mbe_pattern_set_matrix cairo_pattern_set_matrix
+#define mbe_font_face_destroy cairo_font_face_destroy
+#define mbe_paint_with_alpha cairo_paint_with_alpha
+#define mbe_font_face_status cairo_font_face_status
+#define mbe_surface_destroy cairo_surface_destroy
+#define mbe_set_source_rgba cairo_set_source_rgba
+#define mbe_set_scaled_font cairo_set_scaled_font
+#define mbe_pattern_destroy cairo_pattern_destroy
+#define mbe_get_scaled_font cairo_get_scaled_font
+#define mbe_text_extents_t cairo_text_extents_t
+#define mbe_set_source_rgb cairo_set_source_rgb
+#define mbe_set_line_width cairo_set_line_width
+#define mbe_font_options_t cairo_font_options_t
+#define mbe_scaled_font_t cairo_scaled_font_t
+#define mbe_get_font_face cairo_get_font_face
+#define mbe_fill_preserve cairo_fill_preserve
+#define mbe_set_operator cairo_set_operator
+#define mbe_get_operator cairo_get_operator
+#define mbe_arc_negative cairo_arc_negative
+#define mbe_font_face_t cairo_font_face_t
+#define mbe_set_source cairo_set_source
+#define mbe_reset_clip cairo_reset_clip
+#define mbe_operator_t cairo_operator_t
+#define mbe_get_target cairo_get_target
+#define mbe_close_path cairo_close_path
+#define mbe_translate cairo_translate
+#define mbe_text_path cairo_text_path
+#define mbe_surface_t cairo_surface_t
+#define mbe_show_text cairo_show_text
+#define mbe_rectangle cairo_rectangle
+#define mbe_pattern_t cairo_pattern_t
+#define mbe_in_stroke cairo_in_stroke
+#define mbe_status_t cairo_status_t
+#define mbe_new_path cairo_new_path
+#define mbe_matrix_t cairo_matrix_t
+#define mbe_format_t cairo_format_t
+#define mbe_curve_to cairo_curve_to
+#define mbe_restore cairo_restore
+#define mbe_move_to cairo_move_to
+#define mbe_line_to cairo_line_to
+#define mbe_in_fill cairo_in_fill
+#define mbe_destroy cairo_destroy
+#define mbe_curve_t cairo_curve_t
+#define mbe_stroke cairo_stroke
+#define mbe_show_t cairo_show_t
+#define mbe_rotate cairo_rotate
+#define mbe_move_t cairo_move_t
+#define mbe_line_t cairo_line_t
+#define mbe_create cairo_create
+#define mbe_scale cairo_scale
+#define mbe_paint cairo_paint
+#define mbe_get_t cairo_get_t
+#define mbe_for_t cairo_for_t
+#define mbe_save cairo_save
+#define mbe_fill cairo_fill
+#define mbe_clip cairo_clip
+#define mbe_arc cairo_arc
+#define mbe_t cairo_t
+
+#endif /* __MBE_H_ */

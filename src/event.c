@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifndef UNITTEST
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_redraw_man.h"
 #include "mb_shapes.h"
@@ -28,29 +28,29 @@
 typedef float co_aix;
 
 typedef struct shape shape_t;
-typedef struct cairo_surface cairo_surface_t;
+typedef struct cairo_surface mbe_surface_t;
 typedef struct coord coord_t;
 
-typedef struct cairo cairo_t;
+typedef struct cairo mbe_t;
 struct cairo {
     STAILQ(shape_t) drawed;
     STAILQ(shape_t) clip_pathes;
-    cairo_surface_t *tgt;
+    mbe_surface_t *tgt;
 };
 
 struct cairo_surface {
-    cairo_t *cr;
+    mbe_t *cr;
     int w, h;
     unsigned char *data;
 };
 
-#define cairo_new_path(cr) do { STAILQ_CLEAN((cr)->drawed); } while(0)
-#define cairo_get_target(cr) (cr)->tgt
+#define mbe_new_path(cr) do { STAILQ_CLEAN((cr)->drawed); } while(0)
+#define mbe_get_target(cr) (cr)->tgt
 static
-cairo_t *cairo_create(cairo_surface_t *target) {
-    cairo_t *cr;
+mbe_t *mbe_create(mbe_surface_t *target) {
+    mbe_t *cr;
 
-    cr = (cairo_t *)malloc(sizeof(cairo_t));
+    cr = (mbe_t *)malloc(sizeof(mbe_t));
     STAILQ_INIT(cr->drawed);
     STAILQ_INIT(cr->clip_pathes);
     cr->tgt = target;
@@ -58,23 +58,23 @@ cairo_t *cairo_create(cairo_surface_t *target) {
 
     return cr;
 }
-#define cairo_destroy(cr) do { free(cr); } while(0)
-#define cairo_clip(cr)			\
+#define mbe_destroy(cr) do { free(cr); } while(0)
+#define mbe_clip(cr)			\
     do {				\
 	memcpy(&(cr)->clip_pathes,	\
 	       &(cr)->drawed,		\
 	       sizeof((cr)->drawed));	\
 	STAILQ_CLEAN((cr)->drawed);	\
     } while(0)
-#define cairo_fill(cr)
+#define mbe_fill(cr)
 
-#define cairo_image_surface_get_width(surface) (surface)->w
-#define cairo_image_surface_get_height(surface) (surface)->h
+#define mbe_image_surface_get_width(surface) (surface)->w
+#define mbe_image_surface_get_height(surface) (surface)->h
 static
-cairo_surface_t *cairo_image_surface_create(int format, int w, int h) {
-    cairo_surface_t *surf;
+mbe_surface_t *mbe_image_surface_create(int format, int w, int h) {
+    mbe_surface_t *surf;
 
-    surf = (cairo_surface_t *)malloc(sizeof(cairo_surface_t));
+    surf = (mbe_surface_t *)malloc(sizeof(mbe_surface_t));
     surf->w = w;
     surf->h = h;
     surf->data = (unsigned char *)malloc(h);
@@ -82,9 +82,9 @@ cairo_surface_t *cairo_image_surface_create(int format, int w, int h) {
 
     return surf;
 }
-#define cairo_surface_destroy(surface)		\
+#define mbe_surface_destroy(surface)		\
     do { free((surface)->data); free(surface); } while(0)
-#define cairo_image_surface_get_stride(surface) 1
+#define mbe_image_surface_get_stride(surface) 1
 #define CAIRO_FORMAT_A1 1
 
 
@@ -300,7 +300,7 @@ coord_t *postorder_coord_subtree(coord_t *root, coord_t *last) {
 }
 
 static
-void shape_draw(shape_t *sh, cairo_t *cr) {
+void shape_draw(shape_t *sh, mbe_t *cr) {
     STAILQ_INS_TAIL(cr->drawed, shape_t, drawed_next, sh);
 }
 
@@ -328,7 +328,7 @@ void sh_update_area(shape_t *sh) {
 
 
 struct redraw_man {
-    cairo_t *cr;
+    mbe_t *cr;
     coord_t *root_coord;
     int shape_gl_sz;
     shape_t *shape_gl[32];
@@ -366,7 +366,7 @@ static shape_t *rdman_shapes(redraw_man_t *rdman, shape_t *last_shape) {
 static coord_t *rdman_coord_new_noparent(redraw_man_t *rdman);
 
 static
-redraw_man_t *redraw_man_new(cairo_t *cr, cairo_t *backend) {
+redraw_man_t *redraw_man_new(mbe_t *cr, mbe_t *backend) {
     redraw_man_t *rdman;
 
     rdman = O_ALLOC(redraw_man_t);
@@ -380,7 +380,7 @@ redraw_man_t *redraw_man_new(cairo_t *cr, cairo_t *backend) {
     } while(0)
 
 static
-int cairo_in_fill(cairo_t *cr, int x, int y) {
+int mbe_in_fill(mbe_t *cr, int x, int y) {
     shape_t *shape;
     int i;
 
@@ -395,7 +395,7 @@ int cairo_in_fill(cairo_t *cr, int x, int y) {
     return 0;
 }
 
-#define cairo_in_stroke cairo_in_fill
+#define mbe_in_stroke mbe_in_fill
 
 static
 void rdman_coord_init_noparent(redraw_man_t *rdman, coord_t *co) {
@@ -474,8 +474,8 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape,
 }
 
 static
-void *cairo_image_surface_get_data(cairo_surface_t *surf) {
-    cairo_t *cr;
+void *mbe_image_surface_get_data(mbe_surface_t *surf) {
+    mbe_t *cr;
     shape_t *shape1, *shape2;
     co_aix x1, y1, x2, y2;
     int i, j;
@@ -533,7 +533,7 @@ static int _collect_shapes_at_point(redraw_man_t *rdman,
  *
  * \note This function should be merged with what is in redraw_man.c.
  */
-static void draw_shape_path(shape_t *shape, cairo_t *cr) {
+static void draw_shape_path(shape_t *shape, mbe_t *cr) {
     switch(MBO_TYPE(shape)) {
     case MBO_PATH:
 	sh_path_draw(shape, cr);
@@ -563,16 +563,16 @@ static void draw_shape_path(shape_t *shape, cairo_t *cr) {
  *  _shape_pos_is_in() insteaded.
  */
 static int _shape_pos_is_in_cairo(shape_t *shape, co_aix x, co_aix y,
-				  int *in_stroke, cairo_t *cr) {
+				  int *in_stroke, mbe_t *cr) {
     draw_shape_path(shape, cr);
     if(shape->fill) {
-	if(cairo_in_fill(cr, x, y)) {
+	if(mbe_in_fill(cr, x, y)) {
 	    *in_stroke = 0;
 	    return TRUE;
 	}
     }
     if(shape->stroke) {
-	if(cairo_in_stroke(cr, x, y)) {
+	if(mbe_in_stroke(cr, x, y)) {
 	    *in_stroke = 1;
 	    return TRUE;
 	}
@@ -584,7 +584,7 @@ static int _shape_pos_is_in_cairo(shape_t *shape, co_aix x, co_aix y,
  */
 static
 int _shape_pos_is_in(shape_t *shape, co_aix x, co_aix y,
-		     int *in_stroke, cairo_t *cr) {
+		     int *in_stroke, mbe_t *cr) {
     int r;
 
     r = sh_pos_is_in(shape, x, y);
@@ -592,7 +592,7 @@ int _shape_pos_is_in(shape_t *shape, co_aix x, co_aix y,
 	return FALSE;
 
     r = _shape_pos_is_in_cairo(shape, x, y, in_stroke, cr);
-    cairo_new_path(cr);
+    mbe_new_path(cr);
     if(!r)
 	return FALSE;
 
@@ -604,7 +604,7 @@ int _shape_pos_is_in(shape_t *shape, co_aix x, co_aix y,
 static shape_t *_find_shape_in_pos(redraw_man_t *rdman,
 				   co_aix x, co_aix y, int *in_stroke) {
     shape_t *shape;
-    cairo_t *cr;
+    mbe_t *cr;
     int i, r;
 
     cr = rdman_get_cr(rdman);
@@ -667,57 +667,57 @@ int mb_obj_pos_is_in(redraw_man_t *rdman, mb_obj_t *obj,
 }
 
 static
-cairo_t * _prepare_cairo_for_testing(redraw_man_t *rdman) {
-    cairo_surface_t *surface, *rdman_surface;
-    cairo_t *cr;
+mbe_t * _prepare_mbe_for_testing(redraw_man_t *rdman) {
+    mbe_surface_t *surface, *rdman_surface;
+    mbe_t *cr;
     int w, h;
 
-    rdman_surface = cairo_get_target(rdman_get_cr(rdman));
-    w = cairo_image_surface_get_width(rdman_surface);
-    h = cairo_image_surface_get_height(rdman_surface);
+    rdman_surface = mbe_get_target(rdman_get_cr(rdman));
+    w = mbe_image_surface_get_width(rdman_surface);
+    h = mbe_image_surface_get_height(rdman_surface);
     
-    surface = cairo_image_surface_create(CAIRO_FORMAT_A1, w, h);
+    surface = mbe_image_surface_create(CAIRO_FORMAT_A1, w, h);
     if(surface == NULL)
 	return NULL;
 
-    cr = cairo_create(surface);
+    cr = mbe_create(surface);
     if(cr == NULL)
-	cairo_surface_destroy(surface);
+	mbe_surface_destroy(surface);
     
     return cr;
 }
 
 static
-void _release_cairo_for_testing(cairo_t *cr) {
-    cairo_destroy(cr);
+void _release_mbe_for_testing(mbe_t *cr) {
+    mbe_destroy(cr);
 }
 
 static
-void _draw_to_mask(shape_t *shape, cairo_t *cr) {
+void _draw_to_mask(shape_t *shape, mbe_t *cr) {
     if(sh_get_flags(shape, GEF_OV_DRAW))
 	return;
     
     draw_shape_path(shape, cr);
-    cairo_clip(cr);
+    mbe_clip(cr);
     
     sh_set_flags(shape, GEF_OV_DRAW);
 }
 
 static
-int _fill_and_check(shape_t *shape, cairo_t *cr) {
+int _fill_and_check(shape_t *shape, mbe_t *cr) {
     int h, stride;
-    cairo_surface_t *surface;
+    mbe_surface_t *surface;
     unsigned char *data;
     int i, sz;
 
     draw_shape_path(shape, cr);
-    cairo_fill(cr);
+    mbe_fill(cr);
 
-    surface = cairo_get_target(cr);
-    data = cairo_image_surface_get_data(surface);
+    surface = mbe_get_target(cr);
+    data = mbe_image_surface_get_data(surface);
 
-    h = cairo_image_surface_get_height(surface);
-    stride = cairo_image_surface_get_stride(surface);
+    h = mbe_image_surface_get_height(surface);
+    stride = mbe_image_surface_get_stride(surface);
 
     sz = stride * h;
     for(i = 0; i < sz; i++) {
@@ -738,7 +738,7 @@ int _fill_and_check(shape_t *shape, cairo_t *cr) {
  */
 static
 int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
-			 cairo_t *cr) {
+			 mbe_t *cr) {
     area_t *area, *candi_area;
     coord_t *coord, *candi_coord, *root;
     shape_t *shape, *candi_shape;
@@ -829,13 +829,13 @@ void _clear_ov_draw(mb_obj_t *obj) {
  */
 int mb_objs_are_overlay(redraw_man_t *rdman,
 		       mb_obj_t *obj1, mb_obj_t *obj2) {
-    cairo_t *cr;
+    mbe_t *cr;
     area_t *area;
     shape_t *shape;
     coord_t *coord, *root;
     int r;
 
-    cr = _prepare_cairo_for_testing(rdman);
+    cr = _prepare_mbe_for_testing(rdman);
 
     if(IS_MBO_SHAPES(obj1)) {
 	shape = (shape_t *)obj1;
@@ -862,7 +862,7 @@ int mb_objs_are_overlay(redraw_man_t *rdman,
     
  out:
     _clear_ov_draw(obj2);	/* marked by _is_obj_objs_overlay() */
-    _release_cairo_for_testing(cr);
+    _release_mbe_for_testing(cr);
     return r;
 }
 
@@ -873,12 +873,12 @@ int mb_objs_are_overlay(redraw_man_t *rdman,
 static
 redraw_man_t *_fake_rdman(void) {
     redraw_man_t *rdman;
-    cairo_t *cr, *backend;
-    cairo_surface_t *surf;
+    mbe_t *cr, *backend;
+    mbe_surface_t *surf;
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
-    backend = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
+    backend = mbe_create(surf);
     rdman = redraw_man_new(cr, backend);
     
     return rdman;
@@ -886,8 +886,8 @@ redraw_man_t *_fake_rdman(void) {
 
 static
 void _free_fake_rdman(redraw_man_t *rdman) {
-    cairo_surface_destroy(rdman->cr->tgt);
-    cairo_destroy(rdman->cr);
+    mbe_surface_destroy(rdman->cr->tgt);
+    mbe_destroy(rdman->cr);
     free(rdman);
 }
 
@@ -938,8 +938,8 @@ void test_is_obj_objs_overlay(void) {
     redraw_man_t *rdman;
     coord_t *root, *coord1, *coord2;
     shape_t *shape1, *shape2, *shape3;
-    cairo_t *cr;
-    cairo_surface_t *surf;
+    mbe_t *cr;
+    mbe_surface_t *surf;
     int r;
 
     rdman = _fake_rdman();
@@ -962,102 +962,102 @@ void test_is_obj_objs_overlay(void) {
     shape_add_point(shape2, 5, 5);
     shape_add_point(shape3, 4, 3);
     
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(!r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(!r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(!r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(!r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(!r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape3, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(!r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape3, GEF_OV_DRAW);
     
     shape_add_point(shape1, 5, 5);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(!r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape3, GEF_OV_DRAW);
 
-    surf = cairo_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
-    cr = cairo_create(surf);
+    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(r);
-    cairo_destroy(cr);
-    cairo_surface_destroy(surf);
+    mbe_destroy(cr);
+    mbe_surface_destroy(surf);
     sh_clear_flags(shape3, GEF_OV_DRAW);
 
     rdman_shape_free(rdman, shape1);

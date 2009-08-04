@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_redraw_man.h"
 
@@ -235,7 +235,7 @@ static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 
 /*! \brief Make path for arcs in a path.
  */
-void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
+void sh_path_arc_path(mbe_t *cr, const co_aix **args_p,
 		      const int **fix_args_p) {
     co_aix cx, cy, x0, y0, x, y, xx, xy;
     co_aix dx, dy, dx0, dy0, dxx, dxy;
@@ -295,15 +295,15 @@ void sh_path_arc_path(cairo_t *cr, const co_aix **args_p,
 
     /* Make a path for arc */
     rotate = acos(dxx / rx);
-    cairo_save(cr);
-    cairo_translate(cr, cx, cy);
-    cairo_rotate(cr, rotate);
-    cairo_scale(cr, 1.0, xyratio);
+    mbe_save(cr);
+    mbe_translate(cr, cx, cy);
+    mbe_rotate(cr, rotate);
+    mbe_scale(cr, 1.0, xyratio);
     if(sweep)
-	cairo_arc(cr, 0, 0, rx, angle0, angle);
+	mbe_arc(cr, 0, 0, rx, angle0, angle);
     else
-	cairo_arc_negative(cr, 0, 0, rx, angle0, angle);
-    cairo_restore(cr);
+	mbe_arc_negative(cr, 0, 0, rx, angle0, angle);
+    mbe_restore(cr);
 
     *args_p = args;
     *fix_args_p = fix_args;
@@ -795,7 +795,7 @@ void sh_path_transform(shape_t *shape) {
     }
 }
 
-static void sh_path_path(shape_t *shape, cairo_t *cr) {
+static void sh_path_path(shape_t *shape, mbe_t *cr) {
     sh_path_t *path;
     int cmd_len;
     char *cmds, cmd;
@@ -821,12 +821,12 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	case 'M':
 	    x = *args++;
 	    y = *args++;
-	    cairo_move_to(cr, x, y);
+	    mbe_move_to(cr, x, y);
 	    break;
 	case 'L':
 	    x = *args++;
 	    y = *args++;
-	    cairo_line_to(cr, x, y);
+	    mbe_line_to(cr, x, y);
 	    break;
 	case 'C':
 	    x1 = *args++;
@@ -835,7 +835,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y2 = *args++;
 	    x = *args++;
 	    y = *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
+	    mbe_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'S':
 	    x1 = x + x - x2;
@@ -844,7 +844,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y2 = *args++;
 	    x = *args++;
 	    y = *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
+	    mbe_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'Q':
 	    x1 = *args++;
@@ -853,7 +853,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y2 = y1;
 	    x = *args++;
 	    y = *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
+	    mbe_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'T':
 	    x1 = x + x - x2;
@@ -862,13 +862,13 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
 	    y2 = y1;
 	    x = *args++;
 	    y = *args++;
-	    cairo_curve_to(cr, x1, y1, x2, y2, x, y);
+	    mbe_curve_to(cr, x1, y1, x2, y2, x, y);
 	    break;
 	case 'A':
 	    sh_path_arc_path(cr, &args, &fix_args);
 	    break;
 	case 'Z':
-	    cairo_close_path(cr);
+	    mbe_close_path(cr);
 	    break;
 	case '\x0':
 	    i = cmd_len;	/* padding! Skip remain ones. */
@@ -877,7 +877,7 @@ static void sh_path_path(shape_t *shape, cairo_t *cr) {
     }
 }
 
-void sh_path_draw(shape_t *shape, cairo_t *cr) {
+void sh_path_draw(shape_t *shape, mbe_t *cr) {
     sh_path_path(shape, cr);
 }
 

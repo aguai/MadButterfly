@@ -3,7 +3,7 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include <cairo-xlib.h>
 #include "mb_redraw_man.h"
 #include "mb_timer.h"
@@ -31,8 +31,8 @@ struct _X_MB_runtime {
     Display *display;
     Window win;
     Visual *visual;
-    cairo_surface_t *surface, *backend_surface;
-    cairo_t *cr, *backend_cr;
+    mbe_surface_t *surface, *backend_surface;
+    mbe_t *cr, *backend_cr;
     redraw_man_t *rdman;
     mb_tman_t *tman;
     mb_img_ldr_t *img_ldr;
@@ -441,18 +441,18 @@ static int X_MB_init(const char *display_name,
 		      &xmb_rt->visual, &xmb_rt->win);
 
     xmb_rt->surface =
-	cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+	mbe_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     
     xmb_rt->backend_surface =
-	cairo_xlib_surface_create(xmb_rt->display,
+	mbe_xlib_surface_create(xmb_rt->display,
 				  xmb_rt->win,
 				  xmb_rt->visual,
 				  w, h);
 
-    xmb_rt->cr = cairo_create(xmb_rt->surface);
-    xmb_rt->backend_cr = cairo_create(xmb_rt->backend_surface);
+    xmb_rt->cr = mbe_create(xmb_rt->surface);
+    xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
 
-    cairo_set_source_surface(xmb_rt->backend_cr, xmb_rt->surface, 0, 0);
+    mbe_set_source_surface(xmb_rt->backend_cr, xmb_rt->surface, 0, 0);
 
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
@@ -491,14 +491,14 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 	MB_IMG_LDR_FREE(xmb_rt->img_ldr);
 
     if(xmb_rt->cr)
-	cairo_destroy(xmb_rt->cr);
+	mbe_destroy(xmb_rt->cr);
     if(xmb_rt->backend_cr)
-	cairo_destroy(xmb_rt->backend_cr);
+	mbe_destroy(xmb_rt->backend_cr);
 
     if(xmb_rt->surface)
-	cairo_surface_destroy(xmb_rt->surface);
+	mbe_surface_destroy(xmb_rt->surface);
     if(xmb_rt->backend_surface)
-	cairo_surface_destroy(xmb_rt->backend_surface);
+	mbe_surface_destroy(xmb_rt->backend_surface);
 
     if(xmb_rt->display)
 	XCloseDisplay(xmb_rt->display);

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include <cairo-ft.h>
 #include <fontconfig/fontconfig.h>
 #include "mb_shapes.h"
@@ -12,7 +12,7 @@
     r x param {}
 
 UT_FAKE(void, sh_stext_transform, (shape_t *shape));
-UT_FAKE(void, sh_stext_draw, (shape_t *shape, cairo_t *cr));
+UT_FAKE(void, sh_stext_draw, (shape_t *shape, mbe_t *cr));
 
 typedef struct _ut_area {
     co_aix x, y;
@@ -44,27 +44,27 @@ typedef struct _ut_shape {
 #define sh_stext_set_text ut_sh_stext_set_text
 #define sh_stext_set_style ut_sh_stext_set_style
 
-#undef cairo_get_scaled_font
-#define cairo_get_scaled_font(cr) ((cairo_scaled_font_t *)NULL)
-#undef cairo_set_scaled_font
-#define cairo_set_scaled_font(cr, scaled) ((cairo_scaled_font_t *)NULL)
-#undef cairo_scaled_font_reference
-#define cairo_scaled_font_reference(x)
+#undef mbe_get_scaled_font
+#define mbe_get_scaled_font(cr) ((mbe_scaled_font_t *)NULL)
+#undef mbe_set_scaled_font
+#define mbe_set_scaled_font(cr, scaled) ((mbe_scaled_font_t *)NULL)
+#undef mbe_scaled_font_reference
+#define mbe_scaled_font_reference(x)
 #define MAX_MOVE 32
 NO_DOX(static co_aix move_xys[MAX_MOVE][2]);
 NO_DOX(static int move_cnt = 0);
-#undef cairo_move_to
-#define cairo_move_to(cr, x, y)			\
+#undef mbe_move_to
+#define mbe_move_to(cr, x, y)			\
     do {					\
 	move_xys[move_cnt][0] = x;		\
 	move_xys[move_cnt++][1] = y;		\
     } while(0)
-#undef cairo_show_text
-#define cairo_show_text(cr, txt)
-#undef cairo_scaled_font_destroy
-#define cairo_scaled_font_destroy(scaled)			\
-    if(scaled != NULL) cairo_scaled_font_destroy(scaled)
-#define cairo_text_path(cr, buf)
+#undef mbe_show_text
+#define mbe_show_text(cr, txt)
+#undef mbe_scaled_font_destroy
+#define mbe_scaled_font_destroy(scaled)
+#undef mbe_text_path
+#define mbe_text_path(cr, buf)
 
 #endif /* UNITTEST */
 
@@ -93,7 +93,7 @@ NO_DOX(static int move_cnt = 0);
  */
 /*! \brief Stakeholder of scaled font.
  *
- * It is actually a cairo_scaled_font_t, now.  But, it should not be
+ * It is actually a mbe_scaled_font_t, now.  But, it should not be
  * noticed by out-siders.  Only \ref fontconfig_freetype
  * should known it.
  */
@@ -101,7 +101,7 @@ typedef struct _mb_scaled_font mb_scaled_font_t;
 
 /*! \brief Stakeholder of scaled font.
  *
- * Although, mb_text_extents_t is defined as a cairo_scaled_font_t, but
+ * Although, mb_text_extents_t is defined as a mbe_scaled_font_t, but
  * programmers should assume it is opague.
  * 
  * An extents is the span of showing a fragement of text on the output device.
@@ -113,7 +113,7 @@ typedef struct _mb_scaled_font mb_scaled_font_t;
  * output device, that can contain the text.  The bearing is related to
  * the base line for an extents.
  */
-typedef cairo_text_extents_t mb_text_extents_t;
+typedef mbe_text_extents_t mb_text_extents_t;
 
 #define MBE_GET_X_ADV(ext) ((ext)->x_advance)
 #define MBE_GET_Y_ADV(ext) ((ext)->y_advance)
@@ -213,11 +213,11 @@ err:
  */
 static
 mb_font_face_t *query_font_face(const char *family, int slant, int weight) {
-    cairo_font_face_t *cface;
+    mbe_font_face_t *cface;
     FcPattern *ptn;
     
     ptn = query_font_pattern(family, slant, weight);
-    cface = cairo_ft_font_face_create_for_pattern(ptn);
+    cface = mbe_ft_font_face_create_for_pattern(ptn);
     FcPatternDestroy(ptn);
     
     return (mb_font_face_t *)cface;
@@ -227,7 +227,7 @@ static
 void free_font_face(mb_font_face_t *face) {
     ASSERT(face == NULL);
 
-    cairo_font_face_destroy((cairo_font_face_t *)face);
+    mbe_font_face_destroy((mbe_font_face_t *)face);
 }
 
 /*! \brief This is scaled font for specified size and extent.
@@ -241,19 +241,19 @@ void free_font_face(mb_font_face_t *face) {
 static
 mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
 					       co_aix *matrix) {
-    cairo_scaled_font_t *scaled_font;
-    cairo_matrix_t font_matrix;
-    static cairo_matrix_t id = {
+    mbe_scaled_font_t *scaled_font;
+    mbe_matrix_t font_matrix;
+    static mbe_matrix_t id = {
 	1, 0,
 	0, 1,
 	0, 0
     };
-    static cairo_font_options_t *opt = NULL;
+    static mbe_font_options_t *opt = NULL;
     
     ASSERT(matrix != NULL);
     
     if(opt == NULL) {
-	opt = cairo_font_options_create();
+	opt = mbe_font_options_create();
 	if(opt == NULL)
 	    return NULL;
     }
@@ -264,7 +264,7 @@ mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
     font_matrix.yx = *matrix++;
     font_matrix.yy = *matrix++;
     font_matrix.y0 = *matrix;
-    scaled_font = cairo_scaled_font_create((cairo_font_face_t *)face,
+    scaled_font = mbe_scaled_font_create((mbe_font_face_t *)face,
 					   &font_matrix,
 					   &id, opt);
 
@@ -273,22 +273,22 @@ mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
 
 static
 void scaled_font_free(mb_scaled_font_t *scaled_font) {
-    cairo_scaled_font_destroy((cairo_scaled_font_t *)scaled_font);
+    mbe_scaled_font_destroy((mbe_scaled_font_t *)scaled_font);
 }
 
 static
 void compute_text_extents(mb_scaled_font_t *scaled_font, const char *txt,
 			  mb_text_extents_t *extents) {
-    cairo_scaled_font_text_extents((cairo_scaled_font_t *)scaled_font,
+    mbe_scaled_font_text_extents((mbe_scaled_font_t *)scaled_font,
 				   txt,
-				   (cairo_text_extents_t *)extents);
+				   (mbe_text_extents_t *)extents);
 }
 
 static
 mb_text_extents_t *mb_text_extents_new(void) {
-    cairo_text_extents_t *extents;
+    mbe_text_extents_t *extents;
 
-    extents = (cairo_text_extents_t *)malloc(sizeof(cairo_text_extents_t));
+    extents = (mbe_text_extents_t *)malloc(sizeof(mbe_text_extents_t));
     return extents;
 }
 
@@ -298,9 +298,9 @@ void mb_text_extents_free(mb_text_extents_t *extents) {
 }
 
 static
-void draw_text_scaled(cairo_t *cr, const char *txt, int tlen,
+void draw_text_scaled(mbe_t *cr, const char *txt, int tlen,
 		      mb_scaled_font_t *scaled, co_aix x, co_aix y) {
-    cairo_scaled_font_t *saved_scaled;
+    mbe_scaled_font_t *saved_scaled;
     int total_tlen;
     const char *buf;
 
@@ -310,15 +310,15 @@ void draw_text_scaled(cairo_t *cr, const char *txt, int tlen,
     else
 	buf = txt;
     
-    saved_scaled = cairo_get_scaled_font(cr);
-    cairo_scaled_font_reference(saved_scaled);
-    cairo_set_scaled_font(cr, (cairo_scaled_font_t *)scaled);
+    saved_scaled = mbe_get_scaled_font(cr);
+    mbe_scaled_font_reference(saved_scaled);
+    mbe_set_scaled_font(cr, (mbe_scaled_font_t *)scaled);
     
-    cairo_move_to(cr, x, y);
-    cairo_text_path(cr, buf);
+    mbe_move_to(cr, x, y);
+    mbe_text_path(cr, buf);
     
-    cairo_set_scaled_font(cr, saved_scaled);
-    cairo_scaled_font_destroy(saved_scaled);
+    mbe_set_scaled_font(cr, saved_scaled);
+    mbe_scaled_font_destroy(saved_scaled);
 
     if(total_tlen > tlen)
 	free((char *)buf);
@@ -625,7 +625,7 @@ void sh_stext_transform(shape_t *shape) {
     area->h = MBE_GET_HEIGHT(ext);
 }
 
-void sh_stext_draw(shape_t *shape, cairo_t *cr) {
+void sh_stext_draw(shape_t *shape, mbe_t *cr) {
     sh_stext_t *txt_o = (sh_stext_t *)shape;
     co_aix x, y;
     const char *txt;
@@ -705,11 +705,11 @@ int sh_stext_set_style(shape_t *shape,
 static
 void test_query_font_face(void) {
     mb_font_face_t *face;
-    cairo_status_t status;
+    mbe_status_t status;
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = cairo_font_face_status((cairo_font_face_t *)face);
+    status = mbe_font_face_status((mbe_font_face_t *)face);
     CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
     
     free_font_face(face);
@@ -720,16 +720,16 @@ void test_make_scaled_font_face_matrix(void) {
     co_aix matrix[6] = {5, 0, 0, 0, 5, 0};
     mb_font_face_t *face;
     mb_scaled_font_t *scaled;
-    cairo_status_t status;
+    mbe_status_t status;
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = cairo_font_face_status((cairo_font_face_t *)face);
+    status = mbe_font_face_status((mbe_font_face_t *)face);
     CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
     
     scaled = make_scaled_font_face_matrix(face, matrix);
     CU_ASSERT(scaled != NULL);
-    status = cairo_scaled_font_status((cairo_scaled_font_t *)scaled);
+    status = mbe_scaled_font_status((mbe_scaled_font_t *)scaled);
     CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
     
     scaled_font_free(scaled);

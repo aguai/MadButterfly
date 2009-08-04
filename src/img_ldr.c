@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_tools.h"
 #include "mb_paint.h"
 #include "mb_img_ldr.h"
@@ -16,7 +16,7 @@ typedef struct _simple_mb_img_ldr simple_mb_img_ldr_t;
 
 struct _simple_mb_img_data {
     mb_img_data_t img;
-    cairo_surface_t *surf;
+    mbe_surface_t *surf;
 };
 typedef struct _simple_mb_img_data simple_mb_img_data_t;
 
@@ -26,9 +26,9 @@ static
 mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
     simple_mb_img_ldr_t *sldr = (simple_mb_img_ldr_t *)ldr;
     simple_mb_img_data_t *img;
-    cairo_surface_t *surf;
+    mbe_surface_t *surf;
     char *fname;
-    cairo_format_t fmt;
+    mbe_format_t fmt;
     int sz;
 
     sz = strlen(sldr->repo);
@@ -37,20 +37,20 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
     strcpy(fname, sldr->repo);
     strcat(fname, img_id);
     
-    surf = cairo_image_surface_create_from_png(fname);
+    surf = mbe_image_surface_create_from_png(fname);
     if(surf == NULL)
 	return NULL;
 
     img = O_ALLOC(simple_mb_img_data_t);
     if(img == NULL) {
-	cairo_surface_destroy(surf);
+	mbe_surface_destroy(surf);
 	return NULL;
     }
-    img->img.content = cairo_image_surface_get_data(surf);
-    img->img.w = cairo_image_surface_get_width(surf);
-    img->img.h = cairo_image_surface_get_height(surf);
-    img->img.stride = cairo_image_surface_get_stride(surf);
-    fmt = cairo_image_surface_get_format(surf);
+    img->img.content = mbe_image_surface_get_data(surf);
+    img->img.w = mbe_image_surface_get_width(surf);
+    img->img.h = mbe_image_surface_get_height(surf);
+    img->img.stride = mbe_image_surface_get_stride(surf);
+    fmt = mbe_image_surface_get_format(surf);
     switch(fmt) {
     case CAIRO_FORMAT_ARGB32:
 	img->img.fmt = MB_IFMT_ARGB32;
@@ -69,7 +69,7 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
 	break;
 	
     default:
-	cairo_surface_destroy(surf);
+	mbe_surface_destroy(surf);
 	free(img);
 	return NULL;
     }
@@ -82,7 +82,7 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
 static
 void simple_mb_img_ldr_img_free(mb_img_data_t *img) {
     simple_mb_img_data_t *simg = (simple_mb_img_data_t *)img;
-    cairo_surface_destroy((cairo_surface_t *)simg->surf);
+    mbe_surface_destroy((mbe_surface_t *)simg->surf);
     free(img);
 }
 
