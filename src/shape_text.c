@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include <pango/pangocairo.h>
 #include "mb_types.h"
 #include "mb_shapes.h"
@@ -18,8 +18,8 @@ typedef struct _sh_text {
     co_aix d_x, d_y;		/* device x and y */
     co_aix font_size;
     co_aix d_font_size;
-    cairo_font_face_t *face;
-    cairo_scaled_font_t *scaled_font;
+    mbe_font_face_t *face;
+    mbe_scaled_font_t *scaled_font;
     int flags;
     PangoLayout *layout;
     int align;
@@ -32,14 +32,14 @@ static void sh_text_free(shape_t *shape) {
     sh_text_t *text = (sh_text_t *)shape;
 
     if(text->scaled_font)
-	cairo_scaled_font_destroy(text->scaled_font);
-    cairo_font_face_destroy(text->face);
+	mbe_scaled_font_destroy(text->scaled_font);
+    mbe_font_face_destroy(text->face);
 }
 
-static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr);
+static void sh_text_P_generate_layout(sh_text_t *text,mbe_t *cr);
 shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 			      const char *txt, co_aix x, co_aix y,
-			      co_aix font_size, cairo_font_face_t *face,PangoAttrList *attrs) {
+			      co_aix font_size, mbe_font_face_t *face,PangoAttrList *attrs) {
     sh_text_t *text;
 
     text = (sh_text_t *)malloc(sizeof(sh_text_t));
@@ -56,7 +56,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     text->x = x;
     text->y = y;
     text->font_size = font_size;
-    cairo_font_face_reference(face);
+    mbe_font_face_reference(face);
     text->face = face;
     text->flags |= TXF_SCALE_DIRTY;
 
@@ -193,10 +193,10 @@ void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format)
 }
 
 static int get_extents(sh_text_t *text, PangoRectangle *extents) {
-    cairo_matrix_t fmatrix;
-    cairo_matrix_t ctm;
-    cairo_scaled_font_t *new_scaled;
-    cairo_font_options_t *fopt;
+    mbe_matrix_t fmatrix;
+    mbe_matrix_t ctm;
+    mbe_scaled_font_t *new_scaled;
+    mbe_font_options_t *fopt;
 
     pango_layout_get_extents(text->layout, NULL, extents);
     pango_extents_to_pixels(extents,NULL);
@@ -219,7 +219,7 @@ void sh_text_transform(shape_t *shape) {
     
     coord = sh_get_coord(shape);
     canvas = _coord_get_canvas(coord);
-    sh_text_P_generate_layout(text, (cairo_t *)canvas);
+    sh_text_P_generate_layout(text, (mbe_t *)canvas);
 
     x = text->x;
     y = text->y;
@@ -244,7 +244,7 @@ void sh_text_transform(shape_t *shape) {
     /*! \todo Support ratation for shape_text. */
 }
 
-static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
+static void sh_text_P_generate_layout(sh_text_t *text,mbe_t *cr)
 {
     PangoAttribute *attr;
     PangoAttrList *attrlist;
@@ -255,20 +255,20 @@ static void sh_text_P_generate_layout(sh_text_t *text,cairo_t *cr)
     }
     text->layout = pango_cairo_create_layout(cr);
     desc = pango_font_description_from_string("Sans Bold");
-    //cairo_set_source_rgb (cr, 0, 0, 0);
+    //mbe_set_source_rgb (cr, 0, 0, 0);
     pango_layout_set_font_description (text->layout, desc);
     pango_layout_set_text(text->layout,text->data,strlen(text->data));
     pango_layout_set_attributes(text->layout, text->attrs);
     pango_cairo_update_layout(cr,text->layout);
     printf("text=%s\n",text->data);
 }
-static void draw_text(sh_text_t *text, cairo_t *cr) {
-    cairo_move_to(cr, text->d_x, text->d_y);
+static void draw_text(sh_text_t *text, mbe_t *cr) {
+    mbe_move_to(cr, text->d_x, text->d_y);
     pango_cairo_layout_path(cr,text->layout);
 }
 
 
-void sh_text_draw(shape_t *shape, cairo_t *cr) {
+void sh_text_draw(shape_t *shape, mbe_t *cr) {
     draw_text((sh_text_t *)shape, cr);
 }
 

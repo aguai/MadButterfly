@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_shapes.h"
 #include "mb_img_ldr.h"
@@ -70,7 +70,7 @@ static void sh_image_free(shape_t *shape);
 shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 			       co_aix x, co_aix y, co_aix w, co_aix h) {
     sh_image_t *img;
-    cairo_format_t fmt;
+    mbe_format_t fmt;
     int r;
 
     img = O_ALLOC(sh_image_t);
@@ -104,7 +104,7 @@ void sh_image_transform(shape_t *shape) {
     co_aix img_matrix[6];
     co_aix x_factor, y_factor;
     int img_w, img_h;
-    cairo_matrix_t cmatrix;
+    mbe_matrix_t cmatrix;
     int i;
     
     poses = img->poses;
@@ -155,17 +155,17 @@ void sh_image_transform(shape_t *shape) {
  *
  * \note Image is not rescaled for size of the shape.
  */
-void sh_image_draw(shape_t *shape, cairo_t *cr) {
+void sh_image_draw(shape_t *shape, mbe_t *cr) {
     sh_image_t *img = (sh_image_t *)shape;
-    cairo_pattern_t *saved_source;
-    cairo_matrix_t matrix, saved_matrix;
+    mbe_pattern_t *saved_source;
+    mbe_matrix_t matrix, saved_matrix;
     co_aix *aggr;
     
-    cairo_move_to(cr, img->poses[0][0], img->poses[0][1]);
-    cairo_line_to(cr, img->poses[1][0], img->poses[1][1]);
-    cairo_line_to(cr, img->poses[2][0], img->poses[2][1]);
-    cairo_line_to(cr, img->poses[3][0], img->poses[3][1]);
-    cairo_close_path(cr);
+    mbe_move_to(cr, img->poses[0][0], img->poses[0][1]);
+    mbe_line_to(cr, img->poses[1][0], img->poses[1][1]);
+    mbe_line_to(cr, img->poses[2][0], img->poses[2][1]);
+    mbe_line_to(cr, img->poses[3][0], img->poses[3][1]);
+    mbe_close_path(cr);
 }
 
 /*! \brief Change geometry of an image.

@@ -1,7 +1,7 @@
 #ifndef __REDRAW_MAN_H_
 #define __REDRAW_MAN_H_
 
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_tools.h"
 #include "mb_types.h"
 #include "mb_observer.h"
@@ -65,8 +65,8 @@ struct _redraw_man {
 
     free_objs_t free_objs;
 
-    cairo_t *cr;
-    cairo_t *backend;
+    mbe_t *cr;
+    mbe_t *backend;
 
     ob_factory_t ob_factory;
 
@@ -89,8 +89,8 @@ struct _redraw_man {
 				 */
 };
 
-extern int redraw_man_init(redraw_man_t *rdman, cairo_t *cr,
-			   cairo_t *backend);
+extern int redraw_man_init(redraw_man_t *rdman, mbe_t *cr,
+			   mbe_t *backend);
 extern void redraw_man_destroy(redraw_man_t *rdman);
 extern int rdman_find_overlaid_shapes(redraw_man_t *rdman,
 				      geo_t *geo,

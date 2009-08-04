@@ -4,7 +4,7 @@
 #include <sys/select.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include <cairo-xlib.h>
 #include <pango/pangocairo.h>
 
@@ -120,9 +120,9 @@ void handle_connection(Display *display, mb_tman_t *tman,
     }
 }
 
-void draw_path(cairo_t *cr, int w, int h) {
-    cairo_t *tmpcr;
-    cairo_surface_t *tmpsuf;
+void draw_path(mbe_t *cr, int w, int h) {
+    mbe_t *tmpcr;
+    mbe_surface_t *tmpsuf;
     redraw_man_t rdman;
     shape_t *path1, *path2, *rect;
     coord_t *coord1, *coord2, *coord3;
@@ -132,7 +132,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     paint_t *stroke, *text_stroke;
     shape_t *text;
     grad_stop_t fill3_stops[3];
-    cairo_font_face_t *face;
+    mbe_font_face_t *face;
     struct timeval tv;
     mb_tman_t *tman;
     mb_timeval_t mbtv, start, playing;
@@ -141,10 +141,10 @@ void draw_path(cairo_t *cr, int w, int h) {
     mb_action_t *act;
     PangoAttrList *attrs = pango_attr_list_new();
 
-    tmpsuf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
-    tmpcr = cairo_create(tmpsuf);
+    tmpsuf = mbe_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    tmpcr = mbe_create(tmpsuf);
 
-    cairo_set_source_surface(cr, tmpsuf, 0, 0);
+    mbe_set_source_surface(cr, tmpsuf, 0, 0);
     redraw_man_init(&rdman, tmpcr, cr);
     coord1 = rdman_coord_new(&rdman, rdman.root_coord);
     coord2 = rdman_coord_new(&rdman, rdman.root_coord);
@@ -155,7 +155,7 @@ void draw_path(cairo_t *cr, int w, int h) {
     stroke = rdman_paint_color_new(&rdman, 0.4, 0.4, 0.4, 1);
     text_stroke = rdman_paint_color_new(&rdman, 0.5, 0.5, 0.5, 1);
 
-    face = cairo_get_font_face(tmpcr);
+    face = mbe_get_font_face(tmpcr);
     text = rdman_shape_text_new(&rdman, "hello \xe6\xbc\xa2\xe5\xad\x97",
 				10, h / 4, 36.0, face, attrs);
     text_fill = rdman_paint_radial_new(&rdman, 100, h / 4, 70);
@@ -255,18 +255,18 @@ void draw_path(cairo_t *cr, int w, int h) {
     rdman_shape_free(&rdman, rect);
     rdman_shape_free(&rdman, text);
     redraw_man_destroy(&rdman);
-    cairo_destroy(tmpcr);
-    cairo_surface_destroy(tmpsuf);
+    mbe_destroy(tmpcr);
+    mbe_surface_destroy(tmpsuf);
 }
 
-void drawing(cairo_surface_t *surface, int w, int h) {
-    cairo_t *cr;
+void drawing(mbe_surface_t *surface, int w, int h) {
+    mbe_t *cr;
 
-    cr = cairo_create(surface);
-    cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_paint(cr);
+    cr = mbe_create(surface);
+    mbe_set_source_rgb(cr, 0, 0, 0);
+    mbe_paint(cr);
     draw_path(cr, w, h);
-    cairo_destroy(cr);
+    mbe_destroy(cr);
 }
 
 int
@@ -276,7 +276,7 @@ main(int argc, char * const argv[]) {
     int screen;
     XSetWindowAttributes wattr;
     int depth;
-    cairo_surface_t *surface;
+    mbe_surface_t *surface;
     int w, h;
     int x, y;
     int r;
@@ -300,9 +300,9 @@ main(int argc, char * const argv[]) {
 			CWOverrideRedirect, &wattr);
     r = XMapWindow(display, win);
 
-    surface = cairo_xlib_surface_create(display, win, visual, w, h);
+    surface = mbe_xlib_surface_create(display, win, visual, w, h);
     if(surface == NULL)
-	printf("cairo_xlib_surface_create\n");
+	printf("mbe_xlib_surface_create\n");
 
     drawing(surface, w, h);
 

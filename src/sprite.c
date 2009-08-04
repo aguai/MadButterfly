@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include "mb_types.h"

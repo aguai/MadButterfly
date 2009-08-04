@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_shapes.h"
 #include "mb_tools.h"
@@ -330,7 +330,7 @@
 typedef struct _sh_dummy sh_dummy_t;
 
 extern void sh_dummy_transform(shape_t *shape);
-extern void sh_dummy_fill(shape_t *, cairo_t *);
+extern void sh_dummy_fill(shape_t *, mbe_t *);
 #endif /* UNITTEST */
 
 static subject_t *ob_subject_alloc(ob_factory_t *factory);
@@ -507,14 +507,14 @@ static void free_objs_destroy(redraw_man_t *rdman) {
 
 
 
-static cairo_t *canvas_new(int w, int h) {
+static mbe_t *canvas_new(int w, int h) {
 #ifndef UNITTEST
-    cairo_surface_t *surface;
-    cairo_t *cr;
+    mbe_surface_t *surface;
+    mbe_t *cr;
     
-    surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+    surface = mbe_image_surface_create(CAIRO_FORMAT_ARGB32,
 					 w, h);
-    cr = cairo_create(surface);
+    cr = mbe_create(surface);
 
     return cr;
 #else
@@ -522,19 +522,19 @@ static cairo_t *canvas_new(int w, int h) {
 #endif
 }
 
-static void canvas_free(cairo_t *canvas) {
+static void canvas_free(mbe_t *canvas) {
 #ifndef UNITTEST
-    cairo_destroy(canvas);
+    mbe_destroy(canvas);
 #endif
 }
 
-static void canvas_get_size(cairo_t *canvas, int *w, int *h) {
+static void canvas_get_size(mbe_t *canvas, int *w, int *h) {
 #ifndef UNITTEST
-    cairo_surface_t *surface;
+    mbe_surface_t *surface;
 
-    surface = cairo_get_target(canvas);
-    *w = cairo_image_surface_get_width(surface);
-    *h = cairo_image_surface_get_height(surface);
+    surface = mbe_get_target(canvas);
+    *w = mbe_image_surface_get_width(surface);
+    *h = mbe_image_surface_get_height(surface);
 #else
     *w = 0;
     *h = 0;
@@ -576,7 +576,7 @@ static void geo_detach_coord(geo_t *geo, coord_t *coord) {
 
 static coord_canvas_info_t *coord_canvas_info_new(redraw_man_t *rdman,
 						  coord_t *coord,
-						  cairo_t *canvas) {
+						  mbe_t *canvas) {
     coord_canvas_info_t *info;
 
     info = (coord_canvas_info_t *)elmpool_elm_alloc(rdman->coord_canvas_pool);
@@ -599,7 +599,7 @@ static void coord_canvas_info_free(redraw_man_t *rdman,
 static void mouse_event_root_dummy(event_t *evt, void *arg) {
 }
 
-int redraw_man_init(redraw_man_t *rdman, cairo_t *cr, cairo_t *backend) {
+int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
     extern int _paint_color_size;
     observer_t *addrm_ob;
@@ -1353,7 +1353,7 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     co_aix x, y;
     int w, h;
     int c_w, c_h;
-    cairo_t *canvas;
+    mbe_t *canvas;
     co_aix *aggr;
     co_aix poses[2][2];
 
@@ -1782,23 +1782,23 @@ static int clean_rdman_dirties(redraw_man_t *rdman) {
  */
 
 #ifndef UNITTEST
-static void set_shape_stroke_param(shape_t *shape, cairo_t *cr) {
-    cairo_set_line_width(cr, shape->stroke_width);
+static void set_shape_stroke_param(shape_t *shape, mbe_t *cr) {
+    mbe_set_line_width(cr, shape->stroke_width);
 }
 
 static void fill_path_preserve(redraw_man_t *rdman) {
-    cairo_fill_preserve(rdman->cr);
+    mbe_fill_preserve(rdman->cr);
 }
 
 static void fill_path(redraw_man_t *rdman) {
-    cairo_fill(rdman->cr);
+    mbe_fill(rdman->cr);
 }
 
 static void stroke_path(redraw_man_t *rdman) {
-    cairo_stroke(rdman->cr);
+    mbe_stroke(rdman->cr);
 }
 #else
-static void set_shape_stroke_param(shape_t *shape, cairo_t *cr) {
+static void set_shape_stroke_param(shape_t *shape, mbe_t *cr) {
 }
 
 static void fill_path_preserve(redraw_man_t *rdman) {
@@ -1811,7 +1811,7 @@ static void stroke_path(redraw_man_t *rdman) {
 }
 #endif
 
-static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
+static void draw_shape(redraw_man_t *rdman, mbe_t *cr, shape_t *shape) {
     paint_t *fill, *stroke;
 
     /*! \todo Move operator of shapes into singleton structures that define
@@ -1865,45 +1865,45 @@ static void draw_shape(redraw_man_t *rdman, cairo_t *cr, shape_t *shape) {
 
 #ifndef UNITTEST
 static void clear_canvas(canvas_t *canvas) {
-    cairo_operator_t old_op;
+    mbe_operator_t old_op;
 
-    old_op = cairo_get_operator(canvas);
-    cairo_set_operator(canvas, CAIRO_OPERATOR_CLEAR);
-    cairo_paint(canvas);
-    cairo_set_operator(canvas, old_op);
+    old_op = mbe_get_operator(canvas);
+    mbe_set_operator(canvas, CAIRO_OPERATOR_CLEAR);
+    mbe_paint(canvas);
+    mbe_set_operator(canvas, old_op);
 }
 
-static void make_clip(cairo_t *cr, int n_dirty_areas,
+static void make_clip(mbe_t *cr, int n_dirty_areas,
 		      area_t **dirty_areas) {
     int i;
     area_t *area;
 
-    cairo_new_path(cr);
+    mbe_new_path(cr);
     for(i = 0; i < n_dirty_areas; i++) {
 	area = dirty_areas[i];
-	cairo_rectangle(cr, area->x, area->y, area->w, area->h);
+	mbe_rectangle(cr, area->x, area->y, area->w, area->h);
     }
-    cairo_clip(cr);
+    mbe_clip(cr);
 }
 
 static void reset_clip(canvas_t *cr) {
-    cairo_reset_clip(cr);
+    mbe_reset_clip(cr);
 }
 
 static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 			      area_t **dirty_areas) {
-    cairo_operator_t saved_op;
+    mbe_operator_t saved_op;
     
     if(n_dirty_areas)
 	make_clip(rdman->backend, n_dirty_areas, dirty_areas);
     
-    saved_op = cairo_get_operator(rdman->backend);
-    cairo_set_operator(rdman->backend, CAIRO_OPERATOR_SOURCE);
-    cairo_paint(rdman->backend);
-    cairo_set_operator(rdman->backend, saved_op);
+    saved_op = mbe_get_operator(rdman->backend);
+    mbe_set_operator(rdman->backend, CAIRO_OPERATOR_SOURCE);
+    mbe_paint(rdman->backend);
+    mbe_set_operator(rdman->backend, saved_op);
 }
 #else /* UNITTEST */
-static void make_clip(cairo_t *cr, int n_dirty_areas,
+static void make_clip(mbe_t *cr, int n_dirty_areas,
 		      area_t **dirty_areas) {
 }
 
@@ -1920,10 +1920,10 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 
 static void update_cached_canvas_2_parent(redraw_man_t *rdman,
 					  coord_t *coord) {
-    cairo_t *pcanvas, *canvas;
-    cairo_surface_t *surface;
-    cairo_pattern_t *pattern;
-    cairo_matrix_t cr_matrix;
+    mbe_t *pcanvas, *canvas;
+    mbe_surface_t *surface;
+    mbe_pattern_t *pattern;
+    mbe_matrix_t cr_matrix;
     co_aix reverse[6];
     co_aix canvas2pdev_matrix[6];
 
@@ -1942,11 +1942,11 @@ static void update_cached_canvas_2_parent(redraw_man_t *rdman,
 
     canvas = _coord_get_canvas(coord);
     pcanvas = _coord_get_canvas(coord->parent);
-    surface = cairo_get_target(canvas);
-    pattern = cairo_pattern_create_for_surface(surface);
-    cairo_pattern_set_matrix(pattern, &cr_matrix);
-    cairo_set_source(pcanvas, pattern);
-    cairo_paint_with_alpha(pcanvas, coord->opacity);
+    surface = mbe_get_target(canvas);
+    pattern = mbe_pattern_create_for_surface(surface);
+    mbe_pattern_set_matrix(pattern, &cr_matrix);
+    mbe_set_source(pcanvas, pattern);
+    mbe_paint_with_alpha(pcanvas, coord->opacity);
 }
 
 static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
@@ -1955,7 +1955,7 @@ static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
     int r;
     area_t **areas;
     int n_areas;
-    cairo_t *canvas;
+    mbe_t *canvas;
     geo_t *member;
     coord_t *child;
     int mem_idx;
@@ -2003,7 +2003,7 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
 				   coord_t *coord) {
     area_t **areas, *area;
     int n_areas;
-    cairo_t *canvas;
+    mbe_t *canvas;
     int i;
     int r;
     
@@ -2129,15 +2129,15 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 int rdman_redraw_all(redraw_man_t *rdman) {
     area_t area;
 #ifndef UNITTEST
-    cairo_surface_t *surface;
+    mbe_surface_t *surface;
 #endif
     int r;
 
     area.x = area.y = 0;
 #ifndef UNITTEST
-    surface = cairo_get_target(rdman->cr);
-    area.w = cairo_image_surface_get_width(surface);
-    area.h = cairo_image_surface_get_height(surface);
+    surface = mbe_get_target(rdman->cr);
+    area.w = mbe_image_surface_get_width(surface);
+    area.h = mbe_image_surface_get_height(surface);
 #else
     area.w = 1024;
     area.h = 1024;
@@ -2377,14 +2377,14 @@ void sh_dummy_transform(shape_t *shape) {
     dummy->trans_cnt++;
 }
 
-void sh_dummy_fill(shape_t *shape, cairo_t *cr) {
+void sh_dummy_fill(shape_t *shape, mbe_t *cr) {
     sh_dummy_t *dummy;
 
     dummy = (sh_dummy_t *)shape;
     dummy->draw_cnt++;
 }
 
-static void dummy_paint_prepare(paint_t *paint, cairo_t *cr) {
+static void dummy_paint_prepare(paint_t *paint, mbe_t *cr) {
 }
 
 static void dummy_paint_free(redraw_man_t *rdman, paint_t *paint) {

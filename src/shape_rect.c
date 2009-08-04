@@ -129,24 +129,24 @@ void sh_rect_transform(shape_t *shape) {
     }
 }
 
-void sh_rect_draw(shape_t *shape, cairo_t *cr) {
+void sh_rect_draw(shape_t *shape, mbe_t *cr) {
     sh_rect_t *rect = (sh_rect_t *)shape;
     int i;
     co_aix (*poses)[2];
 
     poses = rect->poses;
     if(rect->rx != 0 && rect->ry != 0) {
-	cairo_move_to(cr, poses[11][0], poses[11][1]);
+	mbe_move_to(cr, poses[11][0], poses[11][1]);
 	for(i = 0; i < 12; i += 3) {
-	    cairo_line_to(cr, poses[i][0], poses[i][1]);
-	    cairo_curve_to(cr,
+	    mbe_line_to(cr, poses[i][0], poses[i][1]);
+	    mbe_curve_to(cr,
 			   poses[i + 1][0], poses[i + 1][1],
 			   poses[i + 1][0], poses[i + 1][1],
 			   poses[i + 2][0], poses[i + 2][1]);
 	}
     } else {
-	cairo_move_to(cr, poses[3][0], poses[3][1]);
+	mbe_move_to(cr, poses[3][0], poses[3][1]);
 	for(i = 0; i < 4; i++)
-	    cairo_line_to(cr, poses[i][0], poses[i][1]);
+	    mbe_line_to(cr, poses[i][0], poses[i][1]);
     }
 }

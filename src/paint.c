@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_paint.h"
 
 #define ASSERT(x)
@@ -15,10 +15,10 @@ typedef struct _paint_color {
 int _paint_color_size = sizeof(paint_color_t);
 
 
-static void paint_color_prepare(paint_t *paint, cairo_t *cr) {
+static void paint_color_prepare(paint_t *paint, mbe_t *cr) {
     paint_color_t *color = (paint_color_t *)paint;
 
-    cairo_set_source_rgba(cr, color->r, color->g, color->b, color->a);
+    mbe_set_source_rgba(cr, color->r, color->g, color->b, color->a);
 }
 
 static void paint_color_free(redraw_man_t *rdman, paint_t *paint) {
@@ -75,41 +75,41 @@ typedef struct _paint_linear {
     int n_stops;
     grad_stop_t *stops;
     int flags;
-    cairo_pattern_t *ptn;
+    mbe_pattern_t *ptn;
 } paint_linear_t;
 
 #define LIF_DIRTY 0x1
 
-static void paint_linear_prepare(paint_t *paint, cairo_t *cr) {
+static void paint_linear_prepare(paint_t *paint, mbe_t *cr) {
     paint_linear_t *linear = (paint_linear_t *)paint;
-    cairo_pattern_t *ptn;
+    mbe_pattern_t *ptn;
     grad_stop_t *stop;
     int i;
 
     ptn = linear->ptn;
     if(linear->flags & LIF_DIRTY) {
 	if(ptn)
-	    cairo_pattern_destroy(ptn);
+	    mbe_pattern_destroy(ptn);
 	linear->flags &= ~LIF_DIRTY;
-	ptn = cairo_pattern_create_linear(linear->x1, linear->y1,
+	ptn = mbe_pattern_create_linear(linear->x1, linear->y1,
 					  linear->x2, linear->y2);
 	for(i = 0; i < linear->n_stops; i++) {
 	    stop = &linear->stops[i];
-	    cairo_pattern_add_color_stop_rgba(ptn, stop->offset,
+	    mbe_pattern_add_color_stop_rgba(ptn, stop->offset,
 					      stop->r, stop->g, stop->b,
 					      stop->a);
 	}
 	linear->ptn = ptn;
     }
 
-    cairo_set_source(cr, ptn);
+    mbe_set_source(cr, ptn);
 }
 
 static void paint_linear_free(redraw_man_t *rdman, paint_t *paint) {
     paint_linear_t *linear = (paint_linear_t *)paint;
 
     if(linear->ptn)
-	cairo_pattern_destroy(linear->ptn);
+	mbe_pattern_destroy(linear->ptn);
     paint_destroy(paint);
     free(paint);
 }
@@ -169,39 +169,39 @@ typedef struct _paint_radial {
     int n_stops;
     grad_stop_t *stops;
     int flags;
-    cairo_pattern_t *ptn;
+    mbe_pattern_t *ptn;
 } paint_radial_t;
 
 #define RDF_DIRTY 0x1
 
-static void paint_radial_prepare(paint_t *paint, cairo_t *cr) {
+static void paint_radial_prepare(paint_t *paint, mbe_t *cr) {
     paint_radial_t *radial = (paint_radial_t *)paint;
-    cairo_pattern_t *ptn;
+    mbe_pattern_t *ptn;
     grad_stop_t *stop;
     int i;
 
     if(radial->flags & RDF_DIRTY) {
-	ptn = cairo_pattern_create_radial(radial->cx, radial->cy, 0,
+	ptn = mbe_pattern_create_radial(radial->cx, radial->cy, 0,
 					  radial->cx, radial->cy,
 					  radial->r);
 	ASSERT(ptn != NULL);
 	stop = radial->stops;
 	for(i = 0; i < radial->n_stops; i++, stop++) {
-	    cairo_pattern_add_color_stop_rgba(ptn, stop->offset,
+	    mbe_pattern_add_color_stop_rgba(ptn, stop->offset,
 					      stop->r, stop->g,
 					      stop->b, stop->a);
 	}
-	cairo_pattern_destroy(radial->ptn);
+	mbe_pattern_destroy(radial->ptn);
 	radial->ptn = ptn;
     }
-    cairo_set_source(cr, radial->ptn);
+    mbe_set_source(cr, radial->ptn);
 }
 
 static void paint_radial_free(redraw_man_t *rdman, paint_t *paint) {
     paint_radial_t *radial = (paint_radial_t *)paint;
 
     if(radial->ptn)
-	cairo_pattern_destroy(radial->ptn);
+	mbe_pattern_destroy(radial->ptn);
     paint_destroy(paint);
     free(paint);
 }
@@ -255,17 +255,17 @@ grad_stop_t *paint_radial_stops(paint_t *paint,
 typedef struct _paint_image {
     paint_t paint;
     mb_img_data_t *img;
-    cairo_surface_t *surf;
-    cairo_pattern_t *ptn;
+    mbe_surface_t *surf;
+    mbe_pattern_t *ptn;
 } paint_image_t;
 
 static
-void paint_image_prepare(paint_t *paint, cairo_t *cr) {
+void paint_image_prepare(paint_t *paint, mbe_t *cr) {
     paint_image_t *paint_img = (paint_image_t *)paint;
     mb_img_data_t *img_data;
 
     img_data = paint_img->img;
-    cairo_set_source(cr, paint_img->ptn);
+    mbe_set_source(cr, paint_img->ptn);
 }
 
 static
@@ -273,7 +273,7 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     paint_image_t *paint_img = (paint_image_t *)paint;
     mb_img_data_t *img_data;
     
-    cairo_surface_destroy(paint_img->surf);
+    mbe_surface_destroy(paint_img->surf);
     img_data = paint_img->img;
     MB_IMG_DATA_FREE(img_data);
     paint_destroy(&paint_img->paint);
@@ -316,7 +316,7 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
     paint_init(&paint->paint, MBP_IMAGE,
 	       paint_image_prepare, paint_image_free);
     paint->img = img;
-    paint->surf = cairo_image_surface_create_for_data(img->content,
+    paint->surf = mbe_image_surface_create_for_data(img->content,
 						      fmt,
 						      img->w,
 						      img->h,
@@ -327,10 +327,10 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 	return NULL;
     }
     
-    paint->ptn = cairo_pattern_create_for_surface(paint->surf);
+    paint->ptn = mbe_pattern_create_for_surface(paint->surf);
     if(paint->ptn == NULL) {
 	paint_destroy(&paint->paint);
-	cairo_surface_destroy(paint->surf);
+	mbe_surface_destroy(paint->surf);
 	free(paint);
 	return NULL;
     }
@@ -346,7 +346,7 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
  */
 void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     paint_image_t *img_paint = (paint_image_t *)paint;
-    cairo_matrix_t cmatrix;
+    mbe_matrix_t cmatrix;
     
     cmatrix.xx = matrix[0];
     cmatrix.xy = matrix[1];
@@ -354,7 +354,7 @@ void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     cmatrix.yx = matrix[3];
     cmatrix.yy = matrix[4];
     cmatrix.y0 = matrix[5];
-    cairo_pattern_set_matrix(img_paint->ptn, &cmatrix);
+    mbe_pattern_set_matrix(img_paint->ptn, &cmatrix);
 }
 
 void paint_image_get_size(paint_t *paint, int *w, int *h) {

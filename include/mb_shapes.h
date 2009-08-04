@@ -7,7 +7,7 @@
 #ifndef __SHAPES_H_
 #define __SHAPES_H_
 
-#include <cairo.h>
+#include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_redraw_man.h"
 #include "mb_img_ldr.h"
@@ -63,7 +63,7 @@
 extern shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data);
 extern shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman, char *commands, co_aix *arg,int  arg_cnt,int *fix_arg,int fix_arg_cnt);
 extern void sh_path_transform(shape_t *shape);
-extern void sh_path_draw(shape_t *shape, cairo_t *cr);
+extern void sh_path_draw(shape_t *shape, mbe_t *cr);
 /* @} */
 
 /*! \defgroup shape_text Shape of Text
@@ -72,7 +72,7 @@ extern void sh_path_draw(shape_t *shape, cairo_t *cr);
 extern shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 				     const char *txt, co_aix x, co_aix y,
 				     co_aix font_size,
-				     cairo_font_face_t *face,PangoAttrList *attrs);
+				     mbe_font_face_t *face,PangoAttrList *attrs);
 /*! \brief Change the content of the text element.
  *  In the SVG, the content of a text tag can be composed of several tspan inside it. The Madbutterfly parser will collect all content of a 
  *  text segement as a single string. The attribute of these characters are saved in a seperate data structure. In the program level, we will
@@ -85,7 +85,7 @@ extern shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 extern void sh_text_set_text(shape_t *shape, const char *txt);
 
 extern void sh_text_transform(shape_t *shape);
-extern void sh_text_draw(shape_t *shape, cairo_t *cr);
+extern void sh_text_draw(shape_t *shape, mbe_t *cr);
 /* @} */
 
 /*! \defgroup mb_text_t Shape of Text
@@ -125,7 +125,7 @@ typedef struct {
     int nseg;
     mb_text_segment_t *segs;
     int flag;
-    cairo_surface_t *surface;
+    mbe_surface_t *surface;
 } mb_text_t;
 
 /*! \brief Change the style of the text.
@@ -236,7 +236,7 @@ extern shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
 				     co_aix w, co_aix h,
 				     co_aix rx, co_aix ry);
 extern void sh_rect_transform(shape_t *shape);
-extern void sh_rect_draw(shape_t *shape, cairo_t *cr);
+extern void sh_rect_draw(shape_t *shape, mbe_t *cr);
 extern void sh_rect_set(shape_t *shape, co_aix x, co_aix y,
 			co_aix w, co_aix h, co_aix rx, co_aix ry);
 /* @} */
@@ -248,7 +248,7 @@ extern shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 				      co_aix x, co_aix y,
 				      co_aix w, co_aix h);
 extern void sh_image_transform(shape_t *shape);
-extern void sh_image_draw(shape_t *shape, cairo_t *cr);
+extern void sh_image_draw(shape_t *shape, mbe_t *cr);
 extern void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
 				  co_aix w, co_aix h);
 /* @} */
@@ -262,8 +262,8 @@ extern void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
  */
 /*! \brief Font face of MadButterfly.
  *
- * It actully a cairo_font_face_t, now.  But, it can be change for latter.
- * So, programmer should not depend on cairo_font_face_t.
+ * It actully a mbe_font_face_t, now.  But, it can be change for latter.
+ * So, programmer should not depend on mbe_font_face_t.
  */
 typedef struct _mb_font_face mb_font_face_t;
 
@@ -297,7 +297,7 @@ extern shape_t *rdman_shape_stext_new(redraw_man_t *rdman,
 				      const char *txt,
 				      co_aix x, co_aix y);
 extern void sh_stext_transform(shape_t *shape);
-extern void sh_stext_draw(shape_t *shape, cairo_t *cr);
+extern void sh_stext_draw(shape_t *shape, mbe_t *cr);
 extern int sh_stext_set_text(shape_t *shape, const char *txt);
 extern int sh_stext_set_style(shape_t *shape,
 			       const mb_style_blk_t *blks,
