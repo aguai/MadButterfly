@@ -28,7 +28,6 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
     simple_mb_img_data_t *img;
     mbe_surface_t *surf;
     char *fname;
-    mbe_format_t fmt;
     int sz;
 
     sz = strlen(sldr->repo);
@@ -50,29 +49,7 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
     img->img.w = mbe_image_surface_get_width(surf);
     img->img.h = mbe_image_surface_get_height(surf);
     img->img.stride = mbe_image_surface_get_stride(surf);
-    fmt = mbe_image_surface_get_format(surf);
-    switch(fmt) {
-    case CAIRO_FORMAT_ARGB32:
-	img->img.fmt = MB_IFMT_ARGB32;
-	break;
-	
-    case CAIRO_FORMAT_RGB24:
-	img->img.fmt = MB_IFMT_RGB24;
-	break;
-	
-    case CAIRO_FORMAT_A8:
-	img->img.fmt = MB_IFMT_A8;
-	break;
-	
-    case CAIRO_FORMAT_A1:
-	img->img.fmt = MB_IFMT_A1;
-	break;
-	
-    default:
-	mbe_surface_destroy(surf);
-	free(img);
-	return NULL;
-    }
+    img->img.fmt = mbe_image_surface_get_format(surf);
     img->img.free = simple_mb_img_ldr_img_free;
     img->surf = surf;
 

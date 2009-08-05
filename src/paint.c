@@ -290,25 +290,7 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
 paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 			       mb_img_data_t *img) {
     paint_image_t *paint;
-    int fmt;
 
-    switch(img->fmt) {
-    case MB_IFMT_ARGB32:
-	fmt = CAIRO_FORMAT_ARGB32;
-	break;
-    case MB_IFMT_RGB24:
-	fmt = CAIRO_FORMAT_RGB24;
-	break;
-    case MB_IFMT_A8:
-	fmt = CAIRO_FORMAT_A8;
-	break;
-    case MB_IFMT_A1:
-	fmt = CAIRO_FORMAT_A1;
-	break;
-    default:
-	return NULL;
-    }
-    
     paint = O_ALLOC(paint_image_t);
     if(paint == NULL)
 	return NULL;
@@ -317,7 +299,7 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 	       paint_image_prepare, paint_image_free);
     paint->img = img;
     paint->surf = mbe_image_surface_create_for_data(img->content,
-						      fmt,
+						      img->fmt,
 						      img->w,
 						      img->h,
 						      img->stride);

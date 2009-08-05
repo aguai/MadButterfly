@@ -28,17 +28,17 @@
 typedef float co_aix;
 
 typedef struct shape shape_t;
-typedef struct cairo_surface mbe_surface_t;
+typedef struct _mbe_surface mbe_surface_t;
 typedef struct coord coord_t;
 
-typedef struct cairo mbe_t;
-struct cairo {
+typedef struct _mbe mbe_t;
+struct _mbe {
     STAILQ(shape_t) drawed;
     STAILQ(shape_t) clip_pathes;
     mbe_surface_t *tgt;
 };
 
-struct cairo_surface {
+struct _mbe_surface {
     mbe_t *cr;
     int w, h;
     unsigned char *data;
@@ -85,7 +85,8 @@ mbe_surface_t *mbe_image_surface_create(int format, int w, int h) {
 #define mbe_surface_destroy(surface)		\
     do { free((surface)->data); free(surface); } while(0)
 #define mbe_image_surface_get_stride(surface) 1
-#define CAIRO_FORMAT_A1 1
+#undef MB_IFMT_A1
+#define MB_IFMT_A1 1
 
 
 typedef struct _area area_t;
@@ -676,7 +677,7 @@ mbe_t * _prepare_mbe_for_testing(redraw_man_t *rdman) {
     w = mbe_image_surface_get_width(rdman_surface);
     h = mbe_image_surface_get_height(rdman_surface);
     
-    surface = mbe_image_surface_create(CAIRO_FORMAT_A1, w, h);
+    surface = mbe_image_surface_create(MB_IFMT_A1, w, h);
     if(surface == NULL)
 	return NULL;
 
@@ -876,7 +877,7 @@ redraw_man_t *_fake_rdman(void) {
     mbe_t *cr, *backend;
     mbe_surface_t *surf;
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     backend = mbe_create(surf);
     rdman = redraw_man_new(cr, backend);
@@ -962,7 +963,7 @@ void test_is_obj_objs_overlay(void) {
     shape_add_point(shape2, 5, 5);
     shape_add_point(shape3, 4, 3);
     
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(!r);
@@ -970,7 +971,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(!r);
@@ -978,7 +979,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(!r);
@@ -986,7 +987,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(!r);
@@ -994,7 +995,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(!r);
@@ -1002,7 +1003,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(shape3, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(!r);
@@ -1012,7 +1013,7 @@ void test_is_obj_objs_overlay(void) {
     
     shape_add_point(shape1, 5, 5);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(r);
@@ -1020,7 +1021,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)coord2, cr);
     CU_ASSERT(r);
@@ -1028,7 +1029,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(coord2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(r);
@@ -1036,7 +1037,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape2, cr);
     CU_ASSERT(r);
@@ -1044,7 +1045,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(shape2, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)shape1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(!r);
@@ -1052,7 +1053,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_surface_destroy(surf);
     sh_clear_flags(shape3, GEF_OV_DRAW);
 
-    surf = mbe_image_surface_create(CAIRO_FORMAT_A1, 100, 100);
+    surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)shape3, cr);
     CU_ASSERT(r);

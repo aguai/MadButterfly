@@ -512,7 +512,7 @@ static mbe_t *canvas_new(int w, int h) {
     mbe_surface_t *surface;
     mbe_t *cr;
     
-    surface = mbe_image_surface_create(CAIRO_FORMAT_ARGB32,
+    surface = mbe_image_surface_create(MB_IFMT_ARGB32,
 					 w, h);
     cr = mbe_create(surface);
 
@@ -1868,7 +1868,7 @@ static void clear_canvas(canvas_t *canvas) {
     mbe_operator_t old_op;
 
     old_op = mbe_get_operator(canvas);
-    mbe_set_operator(canvas, CAIRO_OPERATOR_CLEAR);
+    mbe_set_operator(canvas, MBE_OPERATOR_CLEAR);
     mbe_paint(canvas);
     mbe_set_operator(canvas, old_op);
 }
@@ -1898,7 +1898,7 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 	make_clip(rdman->backend, n_dirty_areas, dirty_areas);
     
     saved_op = mbe_get_operator(rdman->backend);
-    mbe_set_operator(rdman->backend, CAIRO_OPERATOR_SOURCE);
+    mbe_set_operator(rdman->backend, MBE_OPERATOR_SOURCE);
     mbe_paint(rdman->backend);
     mbe_set_operator(rdman->backend, saved_op);
 }

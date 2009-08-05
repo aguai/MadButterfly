@@ -441,7 +441,7 @@ static int X_MB_init(const char *display_name,
 		      &xmb_rt->visual, &xmb_rt->win);
 
     xmb_rt->surface =
-	mbe_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
     
     xmb_rt->backend_surface =
 	mbe_xlib_surface_create(xmb_rt->display,
