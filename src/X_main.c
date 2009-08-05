@@ -141,7 +141,7 @@ void draw_path(mbe_t *cr, int w, int h) {
     mb_action_t *act;
     PangoAttrList *attrs = pango_attr_list_new();
 
-    tmpsuf = mbe_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    tmpsuf = mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
     tmpcr = mbe_create(tmpsuf);
 
     mbe_set_source_surface(cr, tmpsuf, 0, 0);

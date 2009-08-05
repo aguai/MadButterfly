@@ -710,7 +710,7 @@ void test_query_font_face(void) {
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
     status = mbe_font_face_status((mbe_font_face_t *)face);
-    CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
+    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     free_font_face(face);
 }
@@ -725,12 +725,12 @@ void test_make_scaled_font_face_matrix(void) {
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
     status = mbe_font_face_status((mbe_font_face_t *)face);
-    CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
+    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     scaled = make_scaled_font_face_matrix(face, matrix);
     CU_ASSERT(scaled != NULL);
     status = mbe_scaled_font_status((mbe_scaled_font_t *)scaled);
-    CU_ASSERT(status == CAIRO_STATUS_SUCCESS);
+    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     scaled_font_free(scaled);
     free_font_face(face);

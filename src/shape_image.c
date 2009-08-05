@@ -70,7 +70,7 @@ static void sh_image_free(shape_t *shape);
 shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 			       co_aix x, co_aix y, co_aix w, co_aix h) {
     sh_image_t *img;
-    mbe_format_t fmt;
+    mb_img_fmt_t fmt;
     int r;
 
     img = O_ALLOC(sh_image_t);
