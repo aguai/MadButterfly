@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <cairo.h>
+#include <cairo-xlib.h>
 #include "mb_img_ldr.h"
 
 /*! \defgroup mb_graph_engine MadButterfly Graphic Engine
