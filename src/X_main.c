@@ -5,7 +5,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "mb_graph_engine.h"
-#include <cairo-xlib.h>
 #include <pango/pangocairo.h>
 
 #include <string.h>

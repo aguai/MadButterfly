@@ -4,7 +4,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "mb_graph_engine.h"
-#include <cairo-xlib.h>
 #include "mb_redraw_man.h"
 #include "mb_timer.h"
 #include "mb_X_supp.h"

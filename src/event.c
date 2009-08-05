@@ -558,12 +558,12 @@ static void draw_shape_path(shape_t *shape, mbe_t *cr) {
     }
 }
 
-/*! \brief Implement exactly point testing with Cairo.
+/*! \brief Implement exactly point testing with MB graphic engine.
  *
  * \note This function should not be called directly. Call
  *  _shape_pos_is_in() insteaded.
  */
-static int _shape_pos_is_in_cairo(shape_t *shape, co_aix x, co_aix y,
+static int _shape_pos_is_in_mbe(shape_t *shape, co_aix x, co_aix y,
 				  int *in_stroke, mbe_t *cr) {
     draw_shape_path(shape, cr);
     if(shape->fill) {
@@ -592,7 +592,7 @@ int _shape_pos_is_in(shape_t *shape, co_aix x, co_aix y,
     if(!r)
 	return FALSE;
 
-    r = _shape_pos_is_in_cairo(shape, x, y, in_stroke, cr);
+    r = _shape_pos_is_in_mbe(shape, x, y, in_stroke, cr);
     mbe_new_path(cr);
     if(!r)
 	return FALSE;
@@ -735,7 +735,7 @@ int _fill_and_check(shape_t *shape, mbe_t *cr) {
  * coord is relative less than shapes.  Check areas of coord can
  * skip sub-trees and avoid useless heavy computation.  For shapes,
  * it not only check overlay of area.  It also check overlay by
- * actually drawing on a cairo surface.
+ * actually drawing on a mbe surface.
  */
 static
 int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
@@ -825,7 +825,7 @@ void _clear_ov_draw(mb_obj_t *obj) {
 
 /*! \brief Test if two objects are overlaid.
  *
- * \todo Detect overlay in better way with cairo.
+ * \todo Detect overlay in better way with mbe.
  * \note This function cost heavy on CPU power.
  */
 int mb_objs_are_overlay(redraw_man_t *rdman,
