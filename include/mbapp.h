@@ -9,7 +9,7 @@ struct _mbapp {
     subject_t *kbevents;
     void *private;
 };
-MBApp *MBApp_Init(char *module);
+MBApp *MBApp_Init(const char *module, const char *module_dir);
 void MBApp_setData(MBApp *app,void *data);
 mb_tman_t *MBApp_getTimer(MBApp *app);
 void MBApp_loop(MBApp *en);

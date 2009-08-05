@@ -226,7 +226,7 @@ int main(int argc, char * const argv[]) {
 	    dir = argv[1];
     else
 	    dir ="/tmp";
-    myApp = MBApp_Init(".libs/browser");
+    myApp = MBApp_Init("browser", ".libs");
     MBApp_setData(myApp,&data);
     MyApp_InitContent(dir);
 

@@ -11,61 +11,82 @@
 #include "mb_observer.h"
 #include "mb_prop.h"
 
-static char *sprite_search_path=NULL;
+#define ASSERT(x)
+#define OK 0
+#define ERR 1
 
-static int sprite_search_so(char *path, int len, const char *name)
-{
+static char *sprite_search_path = NULL;
+
+static char *sprite_search_so(const char *name) {
     struct stat st;
+    int fsz;
+    char *fullname;
+    int r;
     
-    if (sprite_search_path == NULL) {
+    if(sprite_search_path == NULL)
 	sprite_search_path = strdup("/usr/share/madbutterffly");
-    }
     
-    snprintf(path, len, "./%s.so", name);
-    if (stat(path, &st)==0) {
-	return 0;
+    fsz = strlen(sprite_search_path) + strlen(name) + 5;
+    fullname = (char *)malloc(fsz);
+
+    snprintf(fullname, fsz, "%s/%s.so", sprite_search_path, name);
+    r = stat(fullname, &st);
+    if(r != 0) {
+	free(fullname);
+	return NULL;
     }
-    snprintf(path, len, "%s/%s.so", sprite_search_path, name);
-    if (stat(path, &st)==0) {
-	return 0;
-    } else {
-	return -1;
-    }
+
+    return fullname;
 }
 
-void sprite_set_search_path(char *path)
-{
+void sprite_set_search_path(char *path) {
+    int sz;
+    
     if (sprite_search_path)
 	free(sprite_search_path);
+    
     sprite_search_path = strdup(path);
+    
+    sz = strlen(sprite_search_path);
+    if(sprite_search_path[sz - 1] == '/')
+	sprite_search_path[sz - 1] = 0;
 }
 
-mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman, coord_t *root)
-{
-    char path[1024];
-    const char *s;
+mb_sprite_t *
+sprite_load(const char *name, redraw_man_t *rdman, coord_t *root) {
+    char cnstr_name[256];
+    char *so_path;
+    const char *bname;
     void *handle;
-    mb_sprite_t *(*new)(redraw_man_t *, coord_t *);
+    mb_sprite_t *(*cnstr)(redraw_man_t *, coord_t *);
     mb_sprite_t *obj;
+    int r;
     
-    if (sprite_search_so(path, sizeof(path),name)) {
-	fprintf(stderr," can not find %s in search path\n", name);
+    so_path = sprite_search_so(name);
+    if(so_path == NULL)
 	return NULL;
-    }
-    handle = dlopen(path,RTLD_LAZY);
-    if (handle == NULL) {
-	fprintf(stderr, "can not load object %s\n", path);
+    
+    handle = dlopen(so_path, RTLD_LAZY);
+    free(so_path);
+    if (handle == NULL)
 	return NULL;
-    }
-    s = name + strlen(name)-1;
-    while((s != name) && *(s-1) != '/') s--;
-    snprintf(path,sizeof(path), "%s_new", s);
-    new = dlsym(handle,path);
-    if (new == NULL) {
-	fprintf(stderr," Can not find symbol %s at module\n", path);
+    
+    bname = strrchr(name, '/');
+    if(bname != NULL && strlen(bname) > 250)
 	return NULL;
-    }
-    obj = new(rdman, root);
+    
+    if(bname == NULL)
+	bname = name;
+    else
+	bname++;
+    
+    snprintf(cnstr_name, sizeof(cnstr_name), "%s_new", bname);
+    cnstr = dlsym(handle, cnstr_name);
+    if (cnstr == NULL)
+	return NULL;
+    
+    obj = cnstr(rdman, root);
+    
     return obj;
 }
 
