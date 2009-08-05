@@ -45,10 +45,10 @@ int main(int argc, char * const argv[]) {
     MyAppData data;
     mb_timeval_t tmo,interval;
 
-    if (argc > 1) 
-	    myApp = MBApp_Init(argv[1]);
+    if (argc > 1)
+	myApp = MBApp_Init(argv[1], "");
     else
-	    myApp = MBApp_Init(".libs/scene");
+	myApp = MBApp_Init("scene", ".libs");
     data.currentscene=0;
     MBApp_setData(myApp,&data);
     //b = mb_button_new(myApp, myApp->rootsprite, "btn");
