@@ -30,7 +30,6 @@ static void mb_animated_menu_fillMenuContent(mb_animated_menu_t *m)
     mb_progm_t *progm;
     mb_word_t *word;
 
-    printf("max item is %d\n", m->max);
     // fill new item
     for(i=0;i<8;i++) {
         group = (coord_t *) m->objects[m->items[i]];
@@ -58,7 +57,6 @@ static void mb_animated_menu_complete(event_t *ev,void *arg)
     mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
 
     m->ready++;
-    printf("animated done ready=%d\n", m->ready);
 }
 
 static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
@@ -119,7 +117,6 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
 	m->items[i] = m->items[i-1];
     }
     m->items[0] = tmp;
-    printf("fill menu\n");
 }
 
 
@@ -270,9 +267,11 @@ static void mb_animated_menu_keyHandler(event_t *ev, void *arg);
 static void mb_animated_menu_send_pending_key(event_t *ev,void *arg)
 {
     mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
-
-    if (m->ready<=0) 
-	    mb_animated_menu_keyHandler((event_t *) &m->pending_key,m);
+    X_kb_event_t *xkey;
+    
+    xkey = &m->pending_keys[m->pending_pos];
+    m->pending_pos = (m->pending_pos + 1) & 0xf;
+    mb_animated_menu_keyHandler((event_t *) xkey, m);
 }
 static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
 {
@@ -281,11 +280,15 @@ static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
     if(xkey->event.type != EVT_KB_PRESS) {
         return;
     }
-    printf("read=%d\n",m->ready);
     if (m->ready<=0) {
-    	    subject_add_observer(mb_progm_get_complete(m->progm), mb_animated_menu_send_pending_key,m);
-	    mb_progm_finish(m->progm);
-	    m->pending_key = *xkey;
+	    m->pending_keys[m->pending_last++] = *xkey;
+	    m->pending_last &= 0xf;
+	    if(m->pending_last == m->pending_pos)
+		m->pending_last = (m->pending_last - 1) & 0xf;
+	    else
+		subject_add_observer(mb_progm_get_complete(m->progm),
+				     mb_animated_menu_send_pending_key,
+				     m);
 	    return;
     }
     switch(xkey->sym) {
@@ -360,6 +363,7 @@ mb_animated_menu_t *mb_animated_menu_new(mbaf_t *app,mb_sprite_t *sp,char *objna
     m->lightbar = (mb_obj_t *) MB_SPRITE_GET_OBJ(sp,name);
     if (m->lightbar==NULL)
 	    fprintf(stderr,"Can not find object %s\n",name);
+    m->pending_pos = m->pending_last = 0;
     mb_animated_menu_fillMenuContent(m);
     subject_add_observer(MBAF_KB_SUBJECT(app), mb_animated_menu_keyHandler,m);
     return m;

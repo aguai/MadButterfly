@@ -32,12 +32,12 @@
      inkscape:cx="267.0313"
      inkscape:cy="228.90269"
      inkscape:document-units="px"
-     inkscape:current-layer="item7"
+     inkscape:current-layer="layer4"
      showgrid="false"
-     inkscape:window-width="1124"
-     inkscape:window-height="867"
-     inkscape:window-x="212"
-     inkscape:window-y="90" />
+     inkscape:window-width="1024"
+     inkscape:window-height="768"
+     inkscape:window-x="0"
+     inkscape:window-y="0" />
   <defs
      id="defs4">
     <linearGradient
@@ -277,7 +277,7 @@
      inkscape:label="lightbar">
     <g
        mbname="item_lightbar"
-       transform="matrix(0.9148913,0,0,1,167.44763,103.34853)"
+       transform="matrix(0.9148913,0,0,1,168.41407,93.684101)"
        id="item_lightbar"
        style="stroke:none">
       <rect
