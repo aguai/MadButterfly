@@ -14,8 +14,8 @@
 #include <mb.h>
 #include <string.h>
 //#include "menu.h"
-#include "mbapp.h"
-#include "animated_menu.h"
+#include "mb_af.h"
+#include "mb_ani_menu.h"
 
 
 

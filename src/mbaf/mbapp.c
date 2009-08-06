@@ -1,5 +1,5 @@
 #include <mb.h>
-#include <mbapp.h>
+#include <mb_af.h>
 
 mbaf_t *mbaf_init(const char *module, const char *module_dir)
 {
