@@ -2,8 +2,8 @@
 #include <mb.h>
 #include <string.h>
 //#include "menu.h"
-#include "mbapp.h"
-#include "animated_menu.h"
+#include "mb_af.h"
+#include "mb_ani_menu.h"
 #include "%n.h"
 
 
@@ -40,7 +40,7 @@ int main(int argc, char * const argv[]) {
     mb_obj_t *button;
     MyAppData data;
 
-    myApp = mbaf_init("list");
+    myApp = mbaf_init("list", "");
     mbaf_set_data(myApp,&data);
     _MyApp_InitContent(argc,argv);
 

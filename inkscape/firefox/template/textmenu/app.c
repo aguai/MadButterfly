@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <mb.h>
-#include "mbapp.h"
-#include "animated_menu.h"
+#include "mb_af.h"
+#include "mb_ani_menu.h"
 #include "%n.h"
 
 void myselect_callback(mb_animated_menu_t *m, int select)

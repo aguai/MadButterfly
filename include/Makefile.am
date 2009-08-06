@@ -11,7 +11,7 @@ include_HEADERS = 	\
 	mb_prop.h	\
 	mb_X_supp.h	\
 	mb_img_ldr.h    \
-	mbapp.h         \
-	animated_menu.h \
+	mb_af.h         \
+	mb_ani_menu.h \
 	mbbutton.h      \
 	mb_so.h
