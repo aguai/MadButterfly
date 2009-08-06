@@ -42,9 +42,9 @@ char *menus[] = {
 
 typedef struct {
 	mb_animated_menu_t *m;
-}MyAppData;
+}app_data_t;
 
-MBApp *myApp;
+mbaf_t *app;
 
 
 
@@ -54,33 +54,33 @@ void myselect(mb_animated_menu_t *m, int select)
 }
 
 
-MyApp_InitContent()
+app_init_content()
 {
-    MyAppData *data = MBAPP_DATA(myApp,MyAppData);
-    subject_t *key = MBAPP_keySubject(myApp);
+    app_data_t *data = MBAF_DATA(app,app_data_t);
+    subject_t *key = MBAF_KB_SUBJECT(app);
     char name[255];
     coord_t *l;
     int i;
-    mb_sprite_t *sprite=myApp->rootsprite;
+    mb_sprite_t *sprite=app->rootsprite;
     
-    data->m = mb_animated_menu_new(myApp,myApp->rootsprite,"item",menus);
+    data->m = mb_animated_menu_new(app,app->rootsprite,"item",menus);
     mb_animated_menu_set_callback(data->m, myselect);
 }
 
 int main(int argc, char * const argv[]) {
     subject_t *subject;
     mb_obj_t *button;
-    MyAppData data;
+    app_data_t data;
     mb_timeval_t tmo,interval;
 
     if (argc > 1) 
-	myApp = MBApp_Init(argv[1], "");
+	app = mbaf_init(argv[1], "");
     else
-	myApp = MBApp_Init("list", ".libs");
-    MBApp_setData(myApp,&data);
-    MyApp_InitContent();
+	app = mbaf_init("list", ".libs");
+    mbaf_set_data(app,&data);
+    app_init_content();
 
-    MBApp_loop(myApp);
+    mbaf_loop(app);
 
     return 0;
 }

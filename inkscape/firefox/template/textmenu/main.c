@@ -19,12 +19,12 @@ char *menus[] = {
 };
 
 
-MBApp *myApp;
+mbaf_t *myApp;
 
 _MyApp_InitContent(int argc, char *argv[])
 {
-    MyAppData *data = MBAPP_DATA(myApp,MyAppData);
-    subject_t *key = MBAPP_keySubject(myApp);
+    MyAppData *data = MBAF_DATA(myApp,MyAppData);
+    subject_t *key = MBAF_KB_SUBJECT(myApp);
     char name[255];
     coord_t *l;
     int i;
@@ -40,11 +40,11 @@ int main(int argc, char * const argv[]) {
     mb_obj_t *button;
     MyAppData data;
 
-    myApp = MBApp_Init("list");
-    MBApp_setData(myApp,&data);
+    myApp = mbaf_init("list");
+    mbaf_set_data(myApp,&data);
     _MyApp_InitContent(argc,argv);
 
-    MBApp_loop(myApp);
+    mbaf_loop(myApp);
 
     return 0;
 }

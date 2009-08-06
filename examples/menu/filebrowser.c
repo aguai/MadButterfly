@@ -36,15 +36,15 @@ typedef struct {
 	struct fileinfo *files[MAX_ENTRY];
 	char *titles[MAX_ENTRY];
 	int nFiles;
-}MyAppData;
+}app_data_t;
 
-MBApp *myApp;
+mbaf_t *app;
 
 
 
 void myselect(mb_animated_menu_t *m, int select)
 {
-    MyAppData *data = MBAPP_DATA(myApp,MyAppData);
+    app_data_t *data = MBAF_DATA(app,app_data_t);
     char path[1024];
     int len,i;
 
@@ -61,20 +61,20 @@ void myselect(mb_animated_menu_t *m, int select)
     	snprintf(path,1024,"%s/%s", data->curDir,data->titles[select]);
     }
 
-    MyApp_fillDirInfo(myApp, path);
+    MyApp_fillDirInfo(app, path);
 }
 
 
-void mypreview(MyAppData *data, char *path)
+void mypreview(app_data_t *data, char *path)
 {
-    redraw_man_t *rdman = MBAPP_RDMAN(myApp);
+    redraw_man_t *rdman = MBAF_RDMAN(app);
     paint_t *paint, *old_paint;
     paint_t *previewimg_paint;
-    shape_t *obj = (shape_t *) MB_SPRITE_GET_OBJ(myApp->rootsprite, "previewimg");
+    shape_t *obj = (shape_t *) MB_SPRITE_GET_OBJ(app->rootsprite, "previewimg");
     int w, h;
 
     previewimg_paint =
-	(paint_t *)MB_SPRITE_GET_OBJ(myApp->rootsprite,
+	(paint_t *)MB_SPRITE_GET_OBJ(app->rootsprite,
 					   "previewimg_paint_img");
     printf("Preview %s\n",path);
     paint = rdman_img_ldr_load_paint(rdman, path);
@@ -86,8 +86,8 @@ void mypreview(MyAppData *data, char *path)
 	if(old_paint != previewimg_paint)
 	    rdman_paint_free(rdman, old_paint);
 	    
-	rdman_shape_changed(MBAPP_RDMAN(myApp),obj);
-	rdman_redraw_changed(MBAPP_RDMAN(myApp));
+	rdman_shape_changed(MBAF_RDMAN(app),obj);
+	rdman_redraw_changed(MBAF_RDMAN(app));
     }
 }
 
@@ -107,7 +107,7 @@ int endWith(char *path, char *ext)
 
 void myupdate(mb_animated_menu_t *m, int select)
 {
-    MyAppData *data = MBAPP_DATA(myApp,MyAppData);
+    app_data_t *data = MBAF_DATA(app,app_data_t);
     char *s = data->titles[select];
     char path[1024];
 
@@ -141,9 +141,9 @@ void fileinfo_free(struct fileinfo *f)
 }
 
 
-MyApp_fillDirInfo(MBApp *app,char *curdir)
+MyApp_fillDirInfo(mbaf_t *app,char *curdir)
 {
-    MyAppData *data = MBAPP_DATA(myApp,MyAppData);
+    app_data_t *data = MBAF_DATA(app,app_data_t);
     DIR *dir;
     struct dirent *e;
     struct fileinfo *f;
@@ -199,26 +199,26 @@ MyApp_fillDirInfo(MBApp *app,char *curdir)
 
 MyApp_InitContent(char *dir)
 {
-    MyAppData *data = MBAPP_DATA(myApp,MyAppData);
-    subject_t *key = MBAPP_keySubject(myApp);
+    app_data_t *data = MBAF_DATA(app,app_data_t);
+    subject_t *key = MBAF_KB_SUBJECT(app);
     char name[255];
     coord_t *l;
     int i;
-    mb_sprite_t *sprite=myApp->rootsprite;
+    mb_sprite_t *sprite=app->rootsprite;
     
-    data->m = mb_animated_menu_new(myApp,myApp->rootsprite,"item",NULL);
+    data->m = mb_animated_menu_new(app,app->rootsprite,"item",NULL);
     mb_animated_menu_set_callback(data->m, myselect);
     mb_animated_menu_set_update_callback(data->m, myupdate);
     data->curDir = NULL;
     data->nFiles=0;
-    MyApp_fillDirInfo(myApp,dir);
+    MyApp_fillDirInfo(app,dir);
     mb_animated_menu_set_speed(data->m,300);
 }
 
 int main(int argc, char * const argv[]) {
     subject_t *subject;
     mb_obj_t *button;
-    MyAppData data;
+    app_data_t data;
     mb_timeval_t tmo,interval;
     char *dir;
 
@@ -226,11 +226,11 @@ int main(int argc, char * const argv[]) {
 	    dir = argv[1];
     else
 	    dir ="/tmp";
-    myApp = MBApp_Init("browser", ".libs");
-    MBApp_setData(myApp,&data);
+    app = mbaf_init("browser", ".libs");
+    mbaf_set_data(app,&data);
     MyApp_InitContent(dir);
 
-    MBApp_loop(myApp);
+    mbaf_loop(app);
 
     return 0;
 }

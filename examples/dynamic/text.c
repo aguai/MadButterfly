@@ -11,7 +11,7 @@
 #include "mbapp.h"
 
 
-MBApp *myApp;
+mbaf_t *app;
 
 typedef struct {
     shape_t *rect;
@@ -19,14 +19,14 @@ typedef struct {
     int start_x,start_y;
     observer_t *obs1,*obs2;
     int currentscene;
-}MyAppData;
+}app_data_t;
 
 
 void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
 {
-    MyAppData *en = MBAPP_DATA((MBApp *)arg,MyAppData );
+    app_data_t *en = MBAF_DATA((mbaf_t *)arg,app_data_t );
     mb_timeval_t timer,interval;
-    shape_t *text = (shape_t *) MB_SPRITE_GET_OBJ(myApp->rootsprite,"mytext");
+    shape_t *text = (shape_t *) MB_SPRITE_GET_OBJ(app->rootsprite,"mytext");
     mb_textstyle_t style;
 
     mb_textstyle_init(&style);
@@ -35,7 +35,7 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
     get_now(&timer);
     MB_TIMEVAL_SET(&interval, 1 ,0);
     MB_TIMEVAL_ADD(&timer, &interval);
-    mb_tman_timeout( MBApp_getTimer(myApp), &timer, switch_scene, myApp);
+    mb_tman_timeout( mbaf_get_timer(app), &timer, switch_scene, app);
 
     en->currentscene = (en->currentscene + 1) % 2;
     printf("xxx\n");
@@ -48,12 +48,12 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
 	mb_textstyle_set_color(&style, TEXTCOLOR_RGB(0,255,0));
 	sh_text_set_style(text,0,5,&style);
     }
-    rdman_shape_changed(MBAPP_RDMAN(myApp), text);
+    rdman_shape_changed(MBAF_RDMAN(app), text);
 #if 0
     /* Removed!
      * X_MB_handle_connection() will invoke it automatically.
      */
-    rdman_redraw_changed(MBAPP_RDMAN(myApp));
+    rdman_redraw_changed(MBAF_RDMAN(app));
 #endif
 }
 
@@ -61,21 +61,21 @@ int main(int argc, char * const argv[]) {
     subject_t *subject;
     mb_button_t *b;
     mb_obj_t *button;
-    MyAppData data;
+    app_data_t data;
     mb_timeval_t tmo,interval;
 
     if (argc > 1) 
-	myApp = MBApp_Init(argv[1], "");
+	app = mbaf_init(argv[1], "");
     else
-	myApp = MBApp_Init("mytext", ".libs");
+	app = mbaf_init("mytext", ".libs");
     data.currentscene=0;
-    MBApp_setData(myApp,&data);
+    mbaf_set_data(app,&data);
     get_now(&tmo);
     MB_TIMEVAL_SET(&interval, 1 ,0);
-    mb_tman_timeout( MBApp_getTimer(myApp), &tmo, switch_scene, myApp);
+    mb_tman_timeout( mbaf_get_timer(app), &tmo, switch_scene, app);
     
 
-    MBApp_loop(myApp);
+    mbaf_loop(app);
 
     return 0;
 }
