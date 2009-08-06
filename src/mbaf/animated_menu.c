@@ -38,19 +38,19 @@ static void mb_animated_menu_fillMenuContent(mb_animated_menu_t *m)
 	        set_text(group, m->titles[m->top+i]);
 	else
 	        set_text(group, "");
-    	rdman_coord_changed(MBAPP_RDMAN(m->app),group);
+    	rdman_coord_changed(MBAF_RDMAN(m->app),group);
     }
 
 
     textgroup = (coord_t *) m->objects[m->items[i]];
     coord_hide(textgroup);
-    rdman_coord_changed(MBAPP_RDMAN(m->app),textgroup);
+    rdman_coord_changed(MBAF_RDMAN(m->app),textgroup);
 
     lightbar = (coord_t *) m->lightbar;
     group = (coord_t *) m->objects[m->cur];
     coord_y(lightbar) = coord_y(group);
-    rdman_coord_changed(MBAPP_RDMAN(m->app),lightbar);
-    rdman_redraw_changed(MBAPP_RDMAN(m->app));
+    rdman_coord_changed(MBAF_RDMAN(m->app),lightbar);
+    rdman_redraw_changed(MBAF_RDMAN(m->app));
 }
 
 static void mb_animated_menu_complete(event_t *ev,void *arg)
@@ -78,7 +78,7 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
     group = (coord_t *) m->objects[m->items[8]];
     set_text(group, m->titles[m->top]);
 
-    m->progm = progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
+    m->progm = progm = mb_progm_new(2, MBAF_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
     MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -112,8 +112,8 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
     mb_progm_free_completed(progm);
     m->ready--;
     subject_add_observer(mb_progm_get_complete(progm), mb_animated_menu_complete,m);
-    mb_progm_start(progm, X_MB_tman(MBAPP_RDMAN(m->app)->rt), &now);
-    rdman_redraw_changed(MBAPP_RDMAN(m->app));
+    mb_progm_start(progm, X_MB_tman(MBAF_RDMAN(m->app)->rt), &now);
+    rdman_redraw_changed(MBAF_RDMAN(m->app));
     tmp = m->items[8];
     for(i=8;i>0;i--) {
 	m->items[i] = m->items[i-1];
@@ -140,7 +140,7 @@ static void mb_animated_menu_fillMenuContentDown(mb_animated_menu_t *m)
     // fill new item
     set_text((coord_t *)m->objects[m->items[8]], m->titles[m->top+7]);
 
-    m->progm = progm = mb_progm_new(2, MBAPP_RDMAN(m->app));
+    m->progm = progm = mb_progm_new(2, MBAF_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
     MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -168,8 +168,8 @@ static void mb_animated_menu_fillMenuContentDown(mb_animated_menu_t *m)
     mb_progm_free_completed(progm);
     m->ready--;
     subject_add_observer(mb_progm_get_complete(progm), mb_animated_menu_complete,m);
-    mb_progm_start(progm, X_MB_tman(MBAPP_RDMAN(m->app)->rt), &now);
-    rdman_redraw_changed(MBAPP_RDMAN(m->app));
+    mb_progm_start(progm, X_MB_tman(MBAF_RDMAN(m->app)->rt), &now);
+    rdman_redraw_changed(MBAF_RDMAN(m->app));
     tmp = m->items[0];
     for(i=0;i<8;i++) {
 	m->items[i] = m->items[i+1];
@@ -185,7 +185,7 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
     coord_t *group;
     coord_t *lightbar;
 
-    m->progm = progm = mb_progm_new(1, MBAPP_RDMAN(m->app));
+    m->progm = progm = mb_progm_new(1, MBAF_RDMAN(m->app));
     MB_TIMEVAL_SET(&start, 0, 0);
     MB_TIMEVAL_SET(&playing, 0, m->speed);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -196,8 +196,8 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
     mb_progm_free_completed(progm);
     m->ready--;
     subject_add_observer(mb_progm_get_complete(progm), mb_animated_menu_complete,m);
-    mb_progm_start(progm, X_MB_tman(MBAPP_RDMAN(m->app)->rt), &now);
-    rdman_redraw_changed(MBAPP_RDMAN(m->app));
+    mb_progm_start(progm, X_MB_tman(MBAF_RDMAN(m->app)->rt), &now);
+    rdman_redraw_changed(MBAF_RDMAN(m->app));
 }
 
 static void mb_animated_menu_up(mb_animated_menu_t *m)
@@ -318,7 +318,7 @@ static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
  *         ${objectnames}_lightbar is the lightbar.
  *
  */
-mb_animated_menu_t *mb_animated_menu_new(MBApp *app,mb_sprite_t *sp,char *objnames,char *menus[])
+mb_animated_menu_t *mb_animated_menu_new(mbaf_t *app,mb_sprite_t *sp,char *objnames,char *menus[])
 {
     mb_animated_menu_t *m;
     int i,len;
@@ -361,7 +361,7 @@ mb_animated_menu_t *mb_animated_menu_new(MBApp *app,mb_sprite_t *sp,char *objnam
     if (m->lightbar==NULL)
 	    fprintf(stderr,"Can not find object %s\n",name);
     mb_animated_menu_fillMenuContent(m);
-    subject_add_observer(MBAPP_keySubject(app), mb_animated_menu_keyHandler,m);
+    subject_add_observer(MBAF_KB_SUBJECT(app), mb_animated_menu_keyHandler,m);
     return m;
 }
 

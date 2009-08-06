@@ -9,7 +9,7 @@ typedef struct _mb_animated_menu {
 	int max;
 	int ready;
 	int speed;
-	MBApp *app;
+	mbaf_t *app;
 	mb_sprite_t *sprite;
 	mb_obj_t **objects;
 	mb_obj_t *lightbar;
@@ -25,7 +25,7 @@ typedef struct _mb_animated_menu {
  *         ${objectnames}_lightbar is the lightbar.
  *
  */
-mb_animated_menu_t *mb_animated_menu_new(MBApp *app,mb_sprite_t *sp,char *objnames,char *menus[]);
+mb_animated_menu_t *mb_animated_menu_new(mbaf_t *app,mb_sprite_t *sp,char *objnames,char *menus[]);
 void mb_animated_menu_set_speed(mb_animated_menu_t *m,int speed);
 int mb_animated_menu_get_speed(mb_animated_menu_t *m);
 void mb_animated_menu_set_callback(mb_animated_menu_t *m, void (*f)(mb_animated_menu_t *m, int sel));

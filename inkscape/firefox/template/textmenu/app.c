@@ -10,7 +10,7 @@ void myselect_callback(mb_animated_menu_t *m, int select)
     // Put the callback function for menu select here
 }
 
-void MyApp_InitContent(MBApp *app,int argc,char *argv[])
+void MyApp_InitContent(mbaf_t *app,int argc,char *argv[])
 {
    // This function is called when the application is started.
 }

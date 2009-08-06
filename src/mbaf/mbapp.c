@@ -1,8 +1,9 @@
 #include <mb.h>
 #include <mbapp.h>
-MBApp *MBApp_Init(const char *module, const char *module_dir)
+
+mbaf_t *mbaf_init(const char *module, const char *module_dir)
 {
-    MBApp *app = (MBApp *) malloc(sizeof(MBApp));
+    mbaf_t *app = (mbaf_t *) malloc(sizeof(mbaf_t));
     X_MB_runtime_t *rt;
 
     rt = X_MB_new(":0.0", 800, 600);
@@ -28,27 +29,27 @@ MBApp *MBApp_Init(const char *module, const char *module_dir)
     return app;
 }
 
-void MBApp_setData(MBApp *app,void *data)
+void mbaf_set_data(mbaf_t *app,void *data)
 {
     app->private = (void *) data;
 }
 
-mb_tman_t *MBApp_getTimer(MBApp *app)
+mb_tman_t *mbaf_get_timer(mbaf_t *app)
 {
     return X_MB_tman(app->rt);
 }
 
-void MBApp_loop(MBApp *en)
+void mbaf_loop(mbaf_t *app)
 {
     /*
      * Start handle connections, includes one to X server.
      * User start to interact with the application.
      */
-    X_MB_handle_connection(en->rt);
+    X_MB_handle_connection(app->rt);
 
     /*
      * Clean
      */
-    X_MB_free(en->rt);
-    free(en);
+    X_MB_free(app->rt);
+    free(app);
 }
