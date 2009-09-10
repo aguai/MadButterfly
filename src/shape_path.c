@@ -177,6 +177,16 @@ static co_aix _angle_rotated_ellipse(co_aix x, co_aix y,
     return angle;
 }
 
+static void _rotate(co_aix *x, co_aix *y, co_aix _sin, co_aix _cos) {
+    co_aix nx, ny;
+
+    nx = *x * _cos - *y * _sin;
+    ny = *x * _sin + *y * _cos;
+
+    *x = nx;
+    *y = ny;
+}
+
 #define TAKE_NUM(r) do {			\
 	SKIP_SPACE(p);				\
 	old = p;				\
@@ -186,20 +196,23 @@ static co_aix _angle_rotated_ellipse(co_aix x, co_aix y,
 	r = atof(old);				\
     } while(0);
 
-static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
-				    const char **data_p,
-				    co_aix **pnts_p,
-				    co_aix **float_args_p) {
+static int _sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
+				     const char **data_p,
+				     co_aix **pnts_p,
+				     co_aix **float_args_p) {
     co_aix rx, ry;
     co_aix x_rotate;
     int large, sweep;
     co_aix x, y, x0, y0, cx, cy;
+    co_aix corners[4][2];
     co_aix angle_start, angle_stop;
     co_aix *pnts = *pnts_p;
     const char *old;
     const char *p;
     char *cmds;
     co_aix *float_args;
+    co_aix _sin, _cos;
+    int i;
 
     p = *data_p;
     cmds = *cmds_p;
@@ -229,7 +242,26 @@ static int sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 
 	_calc_center(x0, y0, x, y, rx, ry, x_rotate, large,
 		     sweep, &cx, &cy);
-	pnts += 8;		/*!< \note Add corners here. */
+
+	/* Compute positions for four corners.
+	 * These four corners form a bounding box for the arc.
+	 */
+	_sin = sinf(x_rotate);
+	_cos = cosf(x_rotate);
+	corners[0][0] = -rx;
+	corners[0][1] = -ry;
+	corners[1][0] = rx;
+	corners[1][1] = -ry;
+	corners[2][0] = rx;
+	corners[2][1] = ry;
+	corners[3][0] = -rx;
+	corners[3][1] = ry;
+	for(i = 0; i < 4; i++) {
+	    _rotate(&corners[i][0], &corners[i][1], _sin, _cos);
+	    *pnts++ = corners[i][0] + cx;
+	    *pnts++ = corners[i][1] + cy;
+	}
+	
 	*(pnts++) = x;
 	*(pnts++) = y;
 
@@ -388,7 +420,7 @@ void __sh_path_arc_path(mbe_t *cr, const co_aix **args_p,
     udxy = (-udra45x + udra45y) * _sqrt2;
 
     /*! \note  Why we calculate these numbers there?
-     * If we compute it when filling arguments, sh_path_arc_cmd_arg_fill(),
+     * If we compute it when filling arguments, _sh_path_arc_cmd_arg_fill(),
      * we can avoid to recompute it for every drawing.  But, transforming of
      * coordinate can effect value of the numbers.
      */
@@ -764,9 +796,9 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 
 	case 'A':
 	case 'a':
-	    r = sh_path_arc_cmd_arg_fill(cmd, &cmds,
-					 (const char **)&p, &pnts,
-					 &float_args);
+	    r = _sh_path_arc_cmd_arg_fill(cmd, &cmds,
+					  (const char **)&p, &pnts,
+					  &float_args);
 	    if(r != OK)
 		return ERR;
 	    break;
