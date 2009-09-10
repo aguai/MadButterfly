@@ -136,9 +136,10 @@ define([S_ADD_RECT],[[
 define([S_ADD_PATH],[[
     {
         char _cmds[] = "$3";
-        float _args[] = {$4};
-        int _fix_args[] = {$6};
-        obj->$1 = rdman_shape_path_new_from_binary(rdman, _cmds,_args,$5,_fix_args,$7);
+        float _pnts[] = {$4};
+        float _float_args[] = {$6};
+        obj->$1 = rdman_shape_path_new_from_binary(rdman, _cmds,
+		  				   _pnts, $5, _float_args, $7);
         rdman_add_shape(rdman, obj->$1, obj->$2);
     }
 ]])

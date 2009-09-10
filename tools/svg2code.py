@@ -238,7 +238,7 @@ def _calc_ellipse_of_arc(x0, y0, rx, ry, x_rotate, large, sweep, x, y):
     _sin = math.sin(x_rotate)
     _cos = math.cos(x_rotate)
     
-    nrx = x * _cos + y * _sin
+    nrx = x * _cos + y * _sin   # Not Rotated X
     nry = x * -_sin + y * _cos
     nrx0 = x0 * _cos + y0 * _sin
     nry0 = x0 * -_sin + y0 * _cos
@@ -251,6 +251,9 @@ def _calc_ellipse_of_arc(x0, y0, rx, ry, x_rotate, large, sweep, x, y):
     udx2 = udx * udx
     udy2 = udy * udy
     udl2 = udx2 + udy2
+    if udl2 > 1:                # make sure never > 1
+        udl2 = 1
+        pass
 
     if udy != 0:
 	# center is at left-side of arc
@@ -280,9 +283,7 @@ def _calc_ellipse_of_arc(x0, y0, rx, ry, x_rotate, large, sweep, x, y):
     cx = nrcx * _cos - nrcy * _sin
     cy = nrcx * _sin + nrcy * _cos
     
-    xx = rx * _cos + cx
-    xy = rx * _sin + cy
-    return cx, cy, xx, xy
+    return cx, cy
 
 # M x y             : Move to (x,y)
 # Z                 : close path
@@ -310,7 +311,36 @@ command_length={'M': 2, 'm':2,
                 'T': 2, 't':2,
                 'A': 7, 'a':7}
 
-def translate_path_data(data,codefo):
+def _angle_rotated_ellipse(x, y, rx, ry, x_rotate):
+    import math
+    
+    _cos = math.cos(x_rotate)
+    _sin = math.sin(x_rotate)
+
+    nrx = (x * _cos + y * _sin) / rx
+    nry = (-x * _sin + y * _cos) / ry
+    
+    xy_tan = nry / nrx
+    xy_angle = math.atan(xy_tan)
+
+    if nrx < 0:
+        xy_angle = math.pi + xy_angle
+        pass
+    
+    return xy_angle
+
+def rotate(x, y, angle):
+    import math
+    _cos = math.cos(angle)
+    _sin = math.sin(angle)
+    nx = x * _cos - y * _sin
+    ny = x * _sin + y * _cos
+    return nx, ny
+
+def translate_path_data(data, codefo):
+    import string
+    import math
+    
     temp = data.split()
     fields=[]
     for f in temp:
@@ -320,8 +350,8 @@ def translate_path_data(data,codefo):
     cmd = ''
     cmd_args=0
     commands=''
-    args=[]
-    fix_args=[]
+    pnts=[]
+    float_args=[]
     for f in fields:
         if f in command_length:
             if cmd_args != 0 and (narg % cmd_args) != 0:
@@ -334,24 +364,87 @@ def translate_path_data(data,codefo):
         if (narg % cmd_args) == 0:
             commands = commands + cmd
             pass
+
+        if cmd == 'H':
+            arg = float(f)
+            pnts.append(arg)
+            pnts.append(pnts[-2])
+            continue
+        if cmd == 'h':
+            arg = float(f)
+            pnts.append(arg + pnts[-2])
+            pnts.append(pnts[-2])
+            continue
+        if cmd == 'V':
+            arg = float(f)
+            pnts.append(pnts[-2])
+            pnts.append(arg)
+            continue
+        if cmd == 'v':
+            arg = float(f)
+            pnts.append(pnts[-2])
+            pnts.append(arg + pnts[-2])
+            continue
+            
         arg = float(f)
-        args.append(arg)
+        if (cmd not in 'am') and (cmd in string.lowercase):
+            # relative and not arc or moveto
+            arg = arg + pnts[-2]
+            pass
+        pnts.append(arg)
         narg = narg + 1
-        
+
+        # For arc curve
         if (narg % cmd_args) == 0 and (cmd in 'Aa'):
             x0, y0, rx, ry, x_rotate, large, sweep, x, y = \
-                tuple(args[-9:])
+                tuple(pnts[-9:])
+            if cmd == 'a':
+                # relative position
+                abs_x = x + x0
+                abs_y = y + y0
+            else:
+                abs_x = x
+                abs_y = y
+                pass
             x_rotate = int(x_rotate)
             large = int(large)
             sweep = int(sweep)
-            cx, cy, xx, xy = _calc_ellipse_of_arc(x0, y0, rx, ry,
-                                                  x_rotate, large,
-                                                  sweep, x, y)
-            args[-7:] = [cx, cy, xx, xy, x, y]
-            fix_args.append(sweep)
+            cx, cy = _calc_ellipse_of_arc(x0, y0, rx, ry,
+                                          x_rotate, large,
+                                          sweep, abs_x, abs_y)
+            # Corners
+            c0x, c0y = rotate(-rx, -ry, x_rotate)
+            c0x, c0y = c0x + cx, c0y + cy
+
+            c1x, c1y = rotate(rx, -ry, x_rotate)
+            c1x, c1y = c1x + cx, c1y + cy
+
+            c2x, c2y = rotate(rx, ry, x_rotate)
+            c2x, c2y = c2x + cx, c2y + cy
+
+            c3x, c3y = rotate(-rx, ry, x_rotate)
+            c3x, c3y = c3x + cx, c3y + cy
+            
+            pnts[-7:] = [c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y, abs_x, abs_y]
+            
+            start_angle = _angle_rotated_ellipse(x0 - cx, y0 - cy,
+                                             rx, ry, x_rotate)
+            stop_angle = _angle_rotated_ellipse(x - cx, y - cy,
+                                            rx, ry, x_rotate)
+            
+            # sweep == 1 for positive-angle direction
+            # sweep == 0 for negative-angle direction
+            if start_angle > stop_angle and sweep:
+                stop_angle = math.pi * 2 + stop_angle
+            elif start_angle < stop_angle and not sweep:
+                start_angle = math.pi * 2 + start_angle
+                pass
+            
+            float_args.extend([cx, cy, rx, ry,
+                               start_angle, stop_angle, x_rotate])
             pass
         pass
-    return commands, args, fix_args
+    return commands, pnts, float_args
 
 _id_sn = 0
 
@@ -389,17 +482,19 @@ def translate_path(path, coord_id, codefo, doc):
 
     path_id = path.getAttribute('id')
     d = path.getAttribute('d')
-    (commands,args,fix_args) = translate_path_data(d,codefo)
+    (commands, pnts, float_args) = translate_path_data(d, codefo)
     print >> codefo, 'dnl'
     #print >> codefo, 'ADD_PATH([%s], [%s], [%s])dnl' % (path_id, d, coord_id)
-    sarg=''
-    for c in args:
-        sarg = sarg + "%f," % c
-    s_fix_arg=''
-    for c in fix_args:
-        s_fix_arg = s_fix_arg + ("%d," % c)
+    spnts=''
+    for c in pnts:
+        spnts = spnts + "%f," % c
+    s_float_arg=''
+    for c in float_args:
+        s_float_arg = s_float_arg + ("%f," % c)
 
-    print >> codefo, 'ADD_PATH([%s], [%s],[%s],[%s],[%d],[%s],[%d])dnl' % (path_id, coord_id,commands,sarg,len(args),s_fix_arg,len(fix_args))
+    print >> codefo, 'ADD_PATH([%s], [%s], [%s], [%s], [%d], [%s], [%d])dnl' % (
+        path_id, coord_id, commands, spnts, len(pnts),
+        s_float_arg, len(float_args))
 
     translate_style(path, coord_id, codefo, doc, 'PATH_')
     pass
