@@ -47,7 +47,6 @@
 #define mbe_fill_preserve cairo_fill_preserve
 #define mbe_set_operator cairo_set_operator
 #define mbe_get_operator cairo_get_operator
-#define mbe_arc_negative cairo_arc_negative
 #define mbe_set_source cairo_set_source
 #define mbe_reset_clip cairo_reset_clip
 #define mbe_get_target cairo_get_target
@@ -72,7 +71,6 @@
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
 #define mbe_clip cairo_clip
-#define mbe_arc cairo_arc
 
 typedef cairo_text_extents_t mbe_text_extents_t;
 typedef cairo_font_options_t mbe_font_options_t;
@@ -84,6 +82,7 @@ typedef cairo_pattern_t mbe_pattern_t;
 typedef cairo_status_t mbe_status_t;
 typedef cairo_matrix_t mbe_matrix_t;
 typedef cairo_t mbe_t;
+typedef float co_aix;
 
 static mbe_surface_t *
 mbe_image_surface_create_for_data(unsigned char *data,
@@ -161,6 +160,29 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height) {
     }
     
     return cairo_image_surface_create(_fmt, width, height);
+}
+
+static void
+mbe_transform(mbe_t *mbe, const co_aix matrix[6]) {
+    cairo_matrix_t cmtx;
+
+    cmtx.xx = matrix[0];
+    cmtx.xy = matrix[1];
+    cmtx.x0 = matrix[2];
+    cmtx.yx = matrix[3];
+    cmtx.yy = matrix[4];
+    cmtx.y0 = matrix[5];
+
+    cairo_transform(mbe, &cmtx);
+}
+
+static void
+mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
+	co_aix angle_start, co_aix angle_stop) {
+    if(angle_start <= angle_stop)
+	cairo_arc(mbe, x, y, radius, angle_start, angle_stop);
+    else
+	cairo_arc_negative(mbe, x, y, radius, angle_start, angle_stop);
 }
 
 /* @} */

@@ -6,7 +6,6 @@
 #include "mb_observer.h"
 #include "mb_prop.h"
 
-typedef float co_aix;
 typedef struct _shape shape_t;
 typedef struct _geo geo_t;
 typedef struct _area area_t;

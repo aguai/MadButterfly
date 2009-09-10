@@ -61,7 +61,12 @@
  * @{
  */
 extern shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data);
-extern shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman, char *commands, co_aix *arg,int  arg_cnt,int *fix_arg,int fix_arg_cnt);
+extern shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
+						 char *commands,
+						 co_aix *pnts,
+						 int pnt_cnt,
+						 co_aix *float_args,
+						 int float_arg_cnt);
 extern void sh_path_transform(shape_t *shape);
 extern void sh_path_draw(shape_t *shape, mbe_t *cr);
 /* @} */
