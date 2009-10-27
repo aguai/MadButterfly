@@ -14,7 +14,7 @@
 typedef struct _sh_text {
     shape_t shape;
     char *data;
-    co_aix x, y;
+    co_aix x, y,w,h;
     co_aix d_x, d_y;		/* device x and y */
     co_aix font_size;
     co_aix d_font_size;
@@ -64,6 +64,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     text->layout = NULL;
     text->attrs = attrs;
     text->align = TEXTALIGN_START;
+    text->w = text->h = 0;
     
     rdman_shape_man(rdman, (shape_t *)text);
 
@@ -141,6 +142,16 @@ void sh_text_set_font(shape_t *shape,char *family)
     pango_attr_list_change(text->attrs, attr);
 }
 
+void sh_text_set_align(shape_t *shape,int align)
+{
+    sh_text_t *text = (sh_text_t *)shape;
+    text->align = align;
+}
+void sh_text_set_width(shape_t *shape,int width)
+{
+    sh_text_t *text = (sh_text_t *)shape;
+    text->w = width;
+}
 void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format)
 {
     PangoAttribute *attr;
@@ -257,10 +268,18 @@ static void sh_text_P_generate_layout(sh_text_t *text,mbe_t *cr)
     desc = pango_font_description_from_string("Sans Bold");
     //mbe_set_source_rgb (cr, 0, 0, 0);
     pango_layout_set_font_description (text->layout, desc);
+    if (text->w != 0)
+        pango_layout_set_width(text->layout, text->w);
     pango_layout_set_text(text->layout,text->data,strlen(text->data));
     pango_layout_set_attributes(text->layout, text->attrs);
+    if (text->align == TEXTALIGN_START)
+	    pango_layout_set_alignment(text->layout, PANGO_ALIGN_LEFT);
+    else if (text->align == TEXTALIGN_MIDDLE)
+	    pango_layout_set_alignment(text->layout, PANGO_ALIGN_CENTER);
+    else if (text->align == TEXTALIGN_END)
+	    pango_layout_set_alignment(text->layout, PANGO_ALIGN_RIGHT);
     pango_cairo_update_layout(cr,text->layout);
-    printf("text=%s\n",text->data);
+    //printf("text=%s\n",text->data);
 }
 static void draw_text(sh_text_t *text, mbe_t *cr) {
     mbe_move_to(cr, text->d_x, text->d_y);
