@@ -6,6 +6,7 @@
 #include "mb_types.h"
 #include "mb_observer.h"
 #include "mb_img_ldr.h"
+#include "mb_timer.h"
 
 typedef struct _redraw_man redraw_man_t;
 
@@ -224,5 +225,36 @@ extern void sprite_set_search_path(char *path);
 
 extern paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman,
 					 const char *img_id);
+
+typedef void (*mb_eventcb_t )(int fd,void *arg);
+#define MONITOR_READ   1
+#define MONITOR_WRITE  2
+
+/*! \brief The backend engine mb_backend_t is used to define the interface to realize the MB.
+ *
+ * A backend is used to receive events from the system. The MB does not define the backend by itself.
+ * Instead, it define an interface which allow the lower layer to implement the event system. Each
+ * backend need to provides the following events.
+ *
+ * - keyboard event
+ * - timer event
+ * - image loader(?)
+ * - render manager(?)
+ */
+typedef struct {
+    
+    void *(*init)(char *display,int w,int h);
+    void (*free)(void *be);
+    void (*add_event)(void *be,int type, int fd, mb_eventcb_t f,void *arg);
+    void (*remove_event)(void *be,int type, int fd);
+    void (*loop)(void *be);
+    subject_t *(*kbevents)(void *be);
+    redraw_man_t *(*rdman)(void *be);
+    mb_tman_t *(*tman)(void *be);
+    ob_factory_t *(*factory)(void *be);
+    mb_img_ldr_t *(*loader)(void *be);
+} mb_backend_t;
+
+extern mb_backend_t backend;
 
 #endif /* __REDRAW_MAN_H_ */

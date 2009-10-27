@@ -25,7 +25,13 @@ struct _X_kb_info {
 };
 
 /* @} */
-
+#define MAX_MONITORS 200
+typedef struct {
+    int type;
+    int fd;
+    mb_eventcb_t f;
+    void *arg;
+}  monitor_t;
 struct _X_MB_runtime {
     Display *display;
     Window win;
@@ -38,6 +44,8 @@ struct _X_MB_runtime {
     int w, h;
 
     X_kb_info_t kbinfo;
+    monitor_t monitors[MAX_MONITORS];
+    int n_monitor;
 
 #ifndef ONLY_MOUSE_MOVE_RAW
     /* States */
@@ -327,16 +335,17 @@ static void handle_x_event(X_MB_runtime_t *rt) {
  * The display is managed by specified rdman and tman.  rdman draws
  * on the display, and tman trigger actions according timers.
  */
-void X_MB_handle_connection(X_MB_runtime_t *rt) {
+void X_MB_handle_connection(void *be) {
+    X_MB_runtime_t *rt = (X_MB_runtime_t *) be;
     Display *display = rt->display;
     redraw_man_t *rdman = rt->rdman;
     mb_tman_t *tman = rt->tman;
     int fd;
     mb_timeval_t now, tmo;
     struct timeval tv;
-    fd_set rfds;
+    fd_set rfds,wfds;
     int nfds;
-    int r, r1;
+    int r, r1,i;
 
     handle_x_event(rt);
 
@@ -344,7 +353,14 @@ void X_MB_handle_connection(X_MB_runtime_t *rt) {
     nfds = fd + 1;
     while(1) {
 	FD_ZERO(&rfds);
+	FD_ZERO(&wfds);
 	FD_SET(fd, &rfds);
+        for(i=0;i<rt->n_monitor;i++) {
+	    if (rt->monitors[i].type == MONITOR_READ)
+		FD_SET(rt->monitors[i].fd, &rfds);
+	    else if (rt->monitors[i].type == MONITOR_WRITE)
+		FD_SET(rt->monitors[i].fd, &wfds);
+        }
 	
 	get_now(&now);
 	r = mb_tman_next_timeout(tman, &now, &tmo);
@@ -368,6 +384,15 @@ void X_MB_handle_connection(X_MB_runtime_t *rt) {
 	    XFlush(display);
 	} else if(FD_ISSET(fd, &rfds)){
 	    handle_x_event(rt);
+	} else {
+            for(i=0;i<rt->n_monitor;i++) {
+	        if (rt->monitors[i].type == MONITOR_READ)
+		    if (FD_ISSET(rt->monitors[i].fd, &rfds))
+		    	rt->monitors[i].f(rt->monitors[i].fd,rt->monitors[i].arg);
+	        else if (rt->monitors[i].type == MONITOR_WRITE)
+		    if (FD_ISSET(rt->monitors[i].fd, &wfds))
+		    	rt->monitors[i].f(rt->monitors[i].fd,rt->monitors[i].arg);
+            }
 	}
     }
 }
@@ -467,6 +492,7 @@ static int X_MB_init(const char *display_name,
     img_ldr = simple_mb_img_ldr_new("");
     xmb_rt->img_ldr = img_ldr;
     rdman_set_img_ldr(xmb_rt->rdman, img_ldr);
+    memset(xmb_rt->monitors,0,sizeof(xmb_rt->monitors));
     
 #ifndef ONLY_MOUSE_MOVE_RAW
     xmb_rt->last = NULL;
@@ -505,7 +531,7 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
     X_kb_destroy(&xmb_rt->kbinfo);
 }
 
-X_MB_runtime_t *X_MB_new(const char *display_name, int w, int h) {
+void *X_MB_new(const char *display_name, int w, int h) {
     X_MB_runtime_t *rt;
     int r;
 
@@ -520,34 +546,93 @@ X_MB_runtime_t *X_MB_new(const char *display_name, int w, int h) {
     return rt;
 }
 
-void X_MB_free(X_MB_runtime_t *rt) {
-    X_MB_destroy(rt);
+void X_MB_free(void *rt) {
+    X_MB_destroy((X_MB_runtime_t *) rt);
     free(rt);
 }
 
-subject_t *X_MB_kbevents(X_MB_runtime_t *xmb_rt) {
+subject_t *X_MB_kbevents(void *rt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->kbinfo.kbevents;
 }
 
-redraw_man_t *X_MB_rdman(X_MB_runtime_t *xmb_rt) {
+redraw_man_t *X_MB_rdman(void *rt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->rdman;
 }
 
-mb_tman_t *X_MB_tman(X_MB_runtime_t *xmb_rt) {
+mb_tman_t *X_MB_tman(void *rt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->tman;
 }
 
-ob_factory_t *X_MB_ob_factory(X_MB_runtime_t *xmb_rt) {
+ob_factory_t *X_MB_ob_factory(void *rt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     ob_factory_t *factory;
 
     factory = rdman_get_ob_factory(xmb_rt->rdman);
     return factory;
 }
 
-mb_img_ldr_t *X_MB_img_ldr(X_MB_runtime_t *xmb_rt) {
+mb_img_ldr_t *X_MB_img_ldr(void *rt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     X_MB_runtime_t *img_ldr;
 
     img_ldr = xmb_rt->img_ldr;
 
     return img_ldr;
 }
+
+void X_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
+{
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+    int i;
+
+    for(i=0;i<xmb_rt->n_monitor;i++) {
+        if (xmb_rt->monitors[i].type == type && xmb_rt->monitors[i].fd == fd) {
+	    xmb_rt->monitors[i].f = f;
+	    xmb_rt->monitors[i].arg = arg;
+	    return;
+	}
+    }
+    for(i=0;i<xmb_rt->n_monitor;i++) {
+        if (xmb_rt->monitors[i].type == 0) {
+	    xmb_rt->monitors[i].type = type;
+	    xmb_rt->monitors[i].fd = fd;
+	    xmb_rt->monitors[i].f = f;
+	    xmb_rt->monitors[i].arg = arg;
+	    return;
+	}
+    }
+    if (i == MAX_MONITORS) return;
+    xmb_rt->monitors[i].type = type;
+    xmb_rt->monitors[i].fd = fd;
+    xmb_rt->monitors[i].f = f;
+    xmb_rt->monitors[i].arg = arg;
+    i++;
+    xmb_rt->n_monitor=i;
+}
+
+void X_remove_event(void *rt, int type, int fd)
+{
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+    int i;
+    for(i=0;i<xmb_rt->n_monitor;i++) {
+        if (xmb_rt->monitors[i].type == type && xmb_rt->monitors[i].fd == fd) {
+	    xmb_rt->monitors[i].type = 0;
+	    return;
+	}
+    }
+}
+mb_backend_t backend = { X_MB_new,
+			 X_MB_free,
+			 X_add_event,
+			 X_remove_event,
+			 X_MB_handle_connection,
+			 X_MB_kbevents,
+			 X_MB_rdman,
+			 X_MB_tman,
+			 X_MB_ob_factory,
+			 X_MB_img_ldr
+		};
+			 

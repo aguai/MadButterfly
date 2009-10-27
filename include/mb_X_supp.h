@@ -23,14 +23,14 @@ typedef struct _X_kb_event X_kb_event_t;
 
 typedef struct _X_MB_runtime X_MB_runtime_t;
 
-extern void X_MB_handle_connection(X_MB_runtime_t *rt);
-extern X_MB_runtime_t *X_MB_new(const char *display_name, int w, int h);
-extern void X_MB_free(X_MB_runtime_t *xmb_rt);
+extern void X_MB_handle_connection(void *rt);
+extern void *X_MB_new(const char *display_name, int w, int h);
+extern void X_MB_free(void *xmb_rt);
 
-extern subject_t *X_MB_kbevents(X_MB_runtime_t *xmb_rt);
-extern redraw_man_t *X_MB_rdman(X_MB_runtime_t *xmb_rt);
-extern mb_tman_t *X_MB_tman(X_MB_runtime_t *xmb_rt);
-extern ob_factory_t *X_MB_ob_factory(X_MB_runtime_t *xmb_rt);
-extern mb_img_ldr_t *X_MB_img_ldr(X_MB_runtime_t *xmb_rt);
+extern subject_t *X_MB_kbevents(void *xmb_rt);
+extern redraw_man_t *X_MB_rdman(void *xmb_rt);
+extern mb_tman_t *X_MB_tman(void *xmb_rt);
+extern ob_factory_t *X_MB_ob_factory(void *xmb_rt);
+extern mb_img_ldr_t *X_MB_img_ldr(void *xmb_rt);
 
 #endif
