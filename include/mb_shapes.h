@@ -176,6 +176,9 @@ static inline void mb_textstyle_init(mb_textstyle_t *style)
 {
     style->property = 0;
 }
+/*! \brief Get the dimension of the text
+ */
+extern void sh_text_get_size(shape_t *sh, int *w, int *h);
 extern void mb_textstyle_set_font(mb_textstyle_t *style, char *font);
 static inline char *mb_textstyle_get_font(mb_textstyle_t *style)
 {
@@ -229,7 +232,6 @@ extern void mb_text_set_style(mb_text_t *text, int begin,int end,mb_textstyle_t 
 extern void mb_text_get_style(mb_text_t *text, int n,mb_textstyle_t *style);
 extern void mb_text_set_text(mb_text_t *text, char *string,int begin,int end);
 extern void mb_text_get_text(mb_text_t *text, int begin,int end, char *string);
-
 
 /* @} */
 

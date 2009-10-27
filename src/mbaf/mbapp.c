@@ -4,21 +4,21 @@
 mbaf_t *mbaf_init(const char *module, const char *module_dir)
 {
     mbaf_t *app = (mbaf_t *) malloc(sizeof(mbaf_t));
-    X_MB_runtime_t *rt;
+    void *rt;
 
-    rt = X_MB_new(":0.0", 800, 600);
+    rt = backend.init(":0.0", 800, 600);
     if(rt == NULL)
 	return NULL;
 
     sprite_set_search_path(module_dir);
 
     app->rt = rt;
-    app->rdman =  X_MB_rdman(rt);
-    app->kbevents = X_MB_kbevents(rt);
+    app->rdman =  backend.rdman(rt);
+    app->kbevents = backend.kbevents(rt);
     
     app->rootsprite= sprite_load(module,app->rdman, app->rdman->root_coord);
     if(app->rootsprite == NULL) {
-	X_MB_free(rt);
+	backend.free(rt);
 	free(app);
 	return NULL;
     }
@@ -36,7 +36,7 @@ void mbaf_set_data(mbaf_t *app,void *data)
 
 mb_tman_t *mbaf_get_timer(mbaf_t *app)
 {
-    return X_MB_tman(app->rt);
+    return backend.tman(app->rt);
 }
 
 void mbaf_loop(mbaf_t *app)
@@ -45,11 +45,11 @@ void mbaf_loop(mbaf_t *app)
      * Start handle connections, includes one to X server.
      * User start to interact with the application.
      */
-    X_MB_handle_connection(app->rt);
+    backend.loop(app->rt);
 
     /*
      * Clean
      */
-    X_MB_free(app->rt);
+    backend.free(app->rt);
     free(app);
 }
