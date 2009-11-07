@@ -51,7 +51,6 @@
 #define mbe_reset_clip cairo_reset_clip
 #define mbe_get_target cairo_get_target
 #define mbe_close_path cairo_close_path
-#define mbe_translate cairo_translate
 #define mbe_text_path cairo_text_path
 #define mbe_show_text cairo_show_text
 #define mbe_rectangle cairo_rectangle
@@ -64,9 +63,7 @@
 #define mbe_in_fill cairo_in_fill
 #define mbe_destroy cairo_destroy
 #define mbe_stroke cairo_stroke
-#define mbe_rotate cairo_rotate
 #define mbe_create cairo_create
-#define mbe_scale cairo_scale
 #define mbe_paint cairo_paint
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
