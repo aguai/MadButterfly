@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <string.h>
 #include "mb_graph_engine.h"
-#include <cairo-ft.h>
 #include "mb_shapes.h"
 #include "mb_tools.h"
 
