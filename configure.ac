@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([foreign])
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_CXX
 LT_INIT
 AC_PROG_LIBTOOL
 
