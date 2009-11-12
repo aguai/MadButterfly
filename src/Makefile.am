@@ -31,8 +31,12 @@ if X_SUPP
 libmbfly_la_SOURCES += X_supp.c
 endif
 
+if CAIRO_BACKEND
+libmbfly_la_SOURCES += graph_engine_cairo.c
+
 libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ @pangocairo_CFLAGS@
 libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
+endif
 
 X_main_SOURCES = X_main.c
 X_main_LDADD = $(top_builddir)/src/libmbfly.la
