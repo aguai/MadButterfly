@@ -11,7 +11,6 @@
 #include "mb_types.h"
 #include "mb_redraw_man.h"
 #include "mb_img_ldr.h"
-#include <pango/pangocairo.h>
 
 /*! \page define_shape How to Define Shapes
  *
@@ -71,6 +70,7 @@ extern void sh_path_transform(shape_t *shape);
 extern void sh_path_draw(shape_t *shape, mbe_t *cr);
 /* @} */
 
+#ifdef SH_TEXT
 /*! \defgroup shape_text Shape of Text
  * @{
  */
@@ -92,6 +92,7 @@ extern void sh_text_set_text(shape_t *shape, const char *txt);
 extern void sh_text_transform(shape_t *shape);
 extern void sh_text_draw(shape_t *shape, mbe_t *cr);
 /* @} */
+#endif
 
 /*! \defgroup mb_text_t Shape of Text
  * @{
