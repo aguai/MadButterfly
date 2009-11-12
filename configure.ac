@@ -94,8 +94,8 @@ AC_DEFINE([SH_TEXT])
 
 # Define AM and AC variable for X_supp
 AM_CONDITIONAL([X_SUPP],
-	 [test \( x$X_supp = xtrue \) -a \( x$cairo = xtrue \)])
-[if [ \( x"${X_supp}" = xtrue \) -a \( x"${cairo}" = xture \) ]; then]
+	 [test x$X_supp = xtrue -a x$cairo = xtrue])
+[if [ x"${X_supp}" = xtrue -a x"${cairo}" = xtrue ]; then]
 AC_DEFINE([X_SUPP])
 [fi]
 
