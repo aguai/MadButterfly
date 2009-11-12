@@ -39,7 +39,7 @@ libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
 endif
 
 if SKIA_GRAPH_ENGINE
-libmbfly_la_SOURCES += graph_engine_skia.c
+libmbfly_la_SOURCES += graph_engine_skia.cpp
 endif
 
 X_main_SOURCES = X_main.c
