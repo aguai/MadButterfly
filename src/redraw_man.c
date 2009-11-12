@@ -1865,12 +1865,7 @@ static void draw_shape(redraw_man_t *rdman, mbe_t *cr, shape_t *shape) {
 
 #ifndef UNITTEST
 static void clear_canvas(canvas_t *canvas) {
-    mbe_operator_t old_op;
-
-    old_op = mbe_get_operator(canvas);
-    mbe_set_operator(canvas, MBE_OPERATOR_CLEAR);
-    mbe_paint(canvas);
-    mbe_set_operator(canvas, old_op);
+    mbe_clear(canvas);
 }
 
 static void make_clip(mbe_t *cr, int n_dirty_areas,
@@ -1892,15 +1887,10 @@ static void reset_clip(canvas_t *cr) {
 
 static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 			      area_t **dirty_areas) {
-    mbe_operator_t saved_op;
-    
     if(n_dirty_areas)
 	make_clip(rdman->backend, n_dirty_areas, dirty_areas);
     
-    saved_op = mbe_get_operator(rdman->backend);
-    mbe_set_operator(rdman->backend, MBE_OPERATOR_SOURCE);
-    mbe_paint(rdman->backend);
-    mbe_set_operator(rdman->backend, saved_op);
+    mbe_copy_source(rdman->backend);
 }
 #else /* UNITTEST */
 static void make_clip(mbe_t *cr, int n_dirty_areas,
