@@ -13,8 +13,8 @@ C_START
 
 struct _mbe_scaled_font_t {
     struct _mb_font_face_t *face;
-    mbe_matrix_t fnt_mtx;
-    mbe_matrix_t ctm;
+    co_aix fnt_mtx[6];
+    co_aix ctm[6];
 }
 struct _mbe_font_face_t {};
 struct _mbe_t {
@@ -39,7 +39,7 @@ mbe_pattern_t *mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
 mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						co_aix x1, co_aix y1) {}
 void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
-				   const mbe_matrix_t *matrix) {}
+				   const co_aix matrix[6]) {}
 void mbe_pattern_destroy(mbe_pattern_t *canvas) {}
 
 int mbe_image_surface_get_stride(mbe_surface_t *surface) {}
@@ -60,8 +60,8 @@ mbe_scaled_font_t *mbe_scaled_font_reference(mbe_scaled_font_t *scaled) {}
 void mbe_scaled_font_destroy(mbe_scaled_font_t *scaled) {}
 mbe_font_face_t *mbe_font_face_reference(mbe_font_face_t *face) {}
 mbe_scaled_font_t *
-mbe_scaled_font_create(mbe_font_face_t *face, mbe_matrix_t *fnt_mtx,
-		       mbe_matrix_t *ctm) {}
+mbe_scaled_font_create(mbe_font_face_t *face, co_aix fnt_mtx[6],
+		       co_aix ctm[6]) {}
 mbe_scaled_font_t *mbe_get_scaled_font(mbe_t *canvas) {}
 void mbe_scaled_font_text_extents(mbe_scaled_font_t *scaled,
 					 const char *txt,
@@ -128,7 +128,7 @@ void mbe_free_font_face(mbe_font_face_t *face) {}
 
 void mbe_clear(mbe_t *canvas) {}
 void mbe_copy_source(mbe_t *canvas) {}
-void mbe_transform(mbe_t *mbe, mbe_matrix_t *matrix) {}
+void mbe_transform(mbe_t *mbe, co_aix matrix[6]) {}
 void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
 		    co_aix angle_start, co_aix angle_stop) {}
 

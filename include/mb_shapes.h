@@ -7,6 +7,12 @@
 #ifndef __SHAPES_H_
 #define __SHAPES_H_
 
+#include "mb_config.h"
+
+#ifdef SH_TEXT
+#include <pango/pangocairo.h>
+#endif
+
 #include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_redraw_man.h"

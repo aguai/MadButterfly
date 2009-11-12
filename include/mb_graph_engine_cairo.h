@@ -27,7 +27,6 @@
 #define mbe_xlib_surface_create cairo_xlib_surface_create
 #define mbe_scaled_font_destroy cairo_scaled_font_destroy
 #define mbe_font_face_reference cairo_font_face_reference
-#define mbe_pattern_set_matrix cairo_pattern_set_matrix
 #define mbe_font_face_destroy cairo_font_face_destroy
 #define mbe_paint_with_alpha cairo_paint_with_alpha
 #define mbe_surface_destroy cairo_surface_destroy
@@ -65,15 +64,32 @@ typedef cairo_scaled_font_t mbe_scaled_font_t;
 typedef cairo_font_face_t mbe_font_face_t;
 typedef cairo_surface_t mbe_surface_t;
 typedef cairo_pattern_t mbe_pattern_t;
-typedef cairo_matrix_t mbe_matrix_t;
 typedef cairo_t mbe_t;
 typedef float co_aix;
+
+#define MB_MATRIX_2_CAIRO(cmtx, mtx) {		\
+	(cmtx).xx = (mtx)[0];			\
+	(cmtx).xy = (mtx)[1];			\
+	(cmtx).x0 = (mtx)[2];			\
+	(cmtx).yx = (mtx)[3];			\
+	(cmtx).yy = (mtx)[4];			\
+	(cmtx).y0 = (mtx)[5];			\
+}
+
 
 
 extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);
 extern void mbe_free_font_face(mbe_font_face_t *face);
 
+
+static void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
+				   const co_aix matrix[6]) {
+    cairo_matrix_t cmtx;
+
+    MB_MATRIX_2_CAIRO(cmtx, matrix);
+    cairo_pattern_set_matrix(ptn, &cmtx);
+}
 
 static void mbe_clear(mbe_t *canvas) {
     cairo_operator_t old_op;
@@ -94,16 +110,19 @@ static void mbe_copy_source(mbe_t *canvas) {
 }
 
 static mbe_scaled_font_t *
-mbe_scaled_font_create(mbe_font_face_t *face, mbe_matrix_t *fnt_mtx,
-		       mbe_matrix_t *ctm) {
+mbe_scaled_font_create(mbe_font_face_t *face, co_aix fnt_mtx[6],
+		       co_aix ctm[6]) {
     cairo_font_options_t *options;
     mbe_scaled_font_t *scaled;
+    cairo_matrix_t cfnt_mtx, cctm;
 
     options = cairo_font_options_create();
     if(options == NULL)
 	return NULL;
     
-    scaled = cairo_scaled_font_create(face, fnt_mtx, ctm, options);
+    MB_MATRIX_2_CAIRO(cfnt_mtx, fnt_mtx);
+    MB_MATRIX_2_CAIRO(cctm, ctm);
+    scaled = cairo_scaled_font_create(face, &cfnt_mtx, &cctm, options);
 
     cairo_font_options_destroy(options);
     

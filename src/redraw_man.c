@@ -1913,7 +1913,6 @@ static void update_cached_canvas_2_parent(redraw_man_t *rdman,
     mbe_t *pcanvas, *canvas;
     mbe_surface_t *surface;
     mbe_pattern_t *pattern;
-    mbe_matrix_t cr_matrix;
     co_aix reverse[6];
     co_aix canvas2pdev_matrix[6];
 
@@ -1923,18 +1922,11 @@ static void update_cached_canvas_2_parent(redraw_man_t *rdman,
     compute_cached_2_pdev_matrix(coord, canvas2pdev_matrix);
     compute_reverse(canvas2pdev_matrix, reverse);
     
-    cr_matrix.xx = reverse[0];
-    cr_matrix.xy = reverse[1];
-    cr_matrix.x0 = reverse[2];
-    cr_matrix.yx = reverse[3];
-    cr_matrix.yy = reverse[4];
-    cr_matrix.y0 = reverse[5];
-
     canvas = _coord_get_canvas(coord);
     pcanvas = _coord_get_canvas(coord->parent);
     surface = mbe_get_target(canvas);
     pattern = mbe_pattern_create_for_surface(surface);
-    mbe_pattern_set_matrix(pattern, &cr_matrix);
+    mbe_pattern_set_matrix(pattern, reverse);
     mbe_set_source(pcanvas, pattern);
     mbe_paint_with_alpha(pcanvas, coord->opacity);
 }
