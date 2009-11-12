@@ -11,7 +11,6 @@
 #define MBE_OPERATOR_SOURCE CAIRO_OPERATOR_SOURCE
 #define MBE_STATUS_SUCCESS CAIRO_STATUS_SUCCESS
 
-#define mbe_ft_font_face_create_for_pattern
 #define mbe_image_surface_create_from_png
 #define mbe_pattern_add_color_stop_rgba
 #define mbe_pattern_create_for_surface
@@ -23,7 +22,6 @@
 #define mbe_scaled_font_reference
 #define mbe_pattern_create_radial
 #define mbe_pattern_create_linear
-#define mbe_xlib_surface_create
 #define mbe_scaled_font_destroy
 #define mbe_font_face_reference
 #define mbe_set_source_surface
@@ -42,14 +40,11 @@
 #define mbe_set_line_width
 #define mbe_get_font_face
 #define mbe_fill_preserve
-#define mbe_set_operator
-#define mbe_get_operator
 #define mbe_set_source
 #define mbe_reset_clip
 #define mbe_get_target
 #define mbe_close_path
 #define mbe_text_path
-#define mbe_show_text
 #define mbe_rectangle
 #define mbe_in_stroke
 #define mbe_new_path
@@ -69,7 +64,6 @@
 typedef cairo_text_extents_t mbe_text_extents_t;
 typedef cairo_scaled_font_t mbe_scaled_font_t;
 typedef cairo_font_face_t mbe_font_face_t;
-typedef cairo_operator_t mbe_operator_t;
 typedef cairo_surface_t mbe_surface_t;
 typedef cairo_pattern_t mbe_pattern_t;
 typedef cairo_status_t mbe_status_t;
@@ -80,6 +74,24 @@ typedef float co_aix;
 extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);
 extern void mbe_free_font_face(mbe_font_face_t *face);
+
+static void mbe_clear(mbe_t *canvas) {
+    cairo_operator_t old_op;
+    
+    old_op = mbe_get_operator(canvas);
+    mbe_set_operator(canvas, MBE_OPERATOR_CLEAR);
+    mbe_paint(canvas);
+    mbe_set_operator(canvas, old_op);
+}
+
+static void mbe_copy_source(mbe_t *canvas) {
+    mbe_operator_t saved_op;
+    
+    saved_op = mbe_get_operator(canvas);
+    mbe_set_operator(canvas, MBE_OPERATOR_SOURCE);
+    mbe_paint(canvas);
+    mbe_set_operator(canvas, saved_op);
+}
 
 static mbe_surface_t *
 mbe_image_surface_create_for_data(unsigned char *data,

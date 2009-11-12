@@ -95,7 +95,7 @@ mbe_query_font_face(const char *family, int slant, int weight) {
     FcPattern *ptn;
     
     ptn = query_font_pattern(family, slant, weight);
-    cface = mbe_ft_font_face_create_for_pattern(ptn);
+    cface = cairo_ft_font_face_create_for_pattern(ptn);
     FcPatternDestroy(ptn);
     
     return cface;

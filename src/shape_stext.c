@@ -58,8 +58,6 @@ NO_DOX(static int move_cnt = 0);
 	move_xys[move_cnt][0] = x;		\
 	move_xys[move_cnt++][1] = y;		\
     } while(0)
-#undef mbe_show_text
-#define mbe_show_text(cr, txt)
 #undef mbe_scaled_font_destroy
 #define mbe_scaled_font_destroy(scaled)
 #undef mbe_text_path

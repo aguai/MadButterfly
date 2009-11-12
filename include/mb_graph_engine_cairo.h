@@ -13,7 +13,6 @@
 #define MBE_OPERATOR_SOURCE CAIRO_OPERATOR_SOURCE
 #define MBE_STATUS_SUCCESS CAIRO_STATUS_SUCCESS
 
-#define mbe_ft_font_face_create_for_pattern cairo_ft_font_face_create_for_pattern
 #define mbe_image_surface_create_from_png cairo_image_surface_create_from_png
 #define mbe_pattern_add_color_stop_rgba cairo_pattern_add_color_stop_rgba
 #define mbe_pattern_create_for_surface cairo_pattern_create_for_surface
@@ -43,14 +42,11 @@
 #define mbe_set_line_width cairo_set_line_width
 #define mbe_get_font_face cairo_get_font_face
 #define mbe_fill_preserve cairo_fill_preserve
-#define mbe_set_operator cairo_set_operator
-#define mbe_get_operator cairo_get_operator
 #define mbe_set_source cairo_set_source
 #define mbe_reset_clip cairo_reset_clip
 #define mbe_get_target cairo_get_target
 #define mbe_close_path cairo_close_path
 #define mbe_text_path cairo_text_path
-#define mbe_show_text cairo_show_text
 #define mbe_rectangle cairo_rectangle
 #define mbe_in_stroke cairo_in_stroke
 #define mbe_new_path cairo_new_path
@@ -70,7 +66,6 @@
 typedef cairo_text_extents_t mbe_text_extents_t;
 typedef cairo_scaled_font_t mbe_scaled_font_t;
 typedef cairo_font_face_t mbe_font_face_t;
-typedef cairo_operator_t mbe_operator_t;
 typedef cairo_surface_t mbe_surface_t;
 typedef cairo_pattern_t mbe_pattern_t;
 typedef cairo_status_t mbe_status_t;
@@ -83,6 +78,24 @@ extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);
 extern void mbe_free_font_face(mbe_font_face_t *face);
 
+
+static void mbe_clear(mbe_t *canvas) {
+    cairo_operator_t old_op;
+    
+    old_op = cairo_get_operator(canvas);
+    cairo_set_operator(canvas, MBE_OPERATOR_CLEAR);
+    cairo_paint(canvas);
+    cairo_set_operator(canvas, old_op);
+}
+
+static void mbe_copy_source(mbe_t *canvas) {
+    cairo_operator_t saved_op;
+    
+    saved_op = cairo_get_operator(canvas);
+    cairo_set_operator(canvas, MBE_OPERATOR_SOURCE);
+    cairo_paint(canvas);
+    cairo_set_operator(canvas, saved_op);
+}
 
 static mbe_scaled_font_t *
 mbe_scaled_font_create(mbe_font_face_t *face, mbe_matrix_t *fnt_mtx,
