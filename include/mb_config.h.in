@@ -13,4 +13,7 @@
 /* Enable sh_stext */
 #undef SH_STEXT
 
+/* Enable X backend */
+#undef X_SUPP
+
 #endif /* __MB_CONFIG_H_ */
