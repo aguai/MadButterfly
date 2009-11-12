@@ -31,11 +31,15 @@ if X_SUPP
 libmbfly_la_SOURCES += X_supp.c
 endif
 
-if CAIRO_BACKEND
+if CAIRO_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_cairo.c
 
 libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ @pangocairo_CFLAGS@
 libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
+endif
+
+if SKIA_GRAPH_ENGINE
+libmbfly_la_SOURCES += graph_engine_skia.c
 endif
 
 X_main_SOURCES = X_main.c
