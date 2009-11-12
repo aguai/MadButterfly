@@ -207,7 +207,6 @@ static int get_extents(sh_text_t *text, PangoRectangle *extents) {
     mbe_matrix_t fmatrix;
     mbe_matrix_t ctm;
     mbe_scaled_font_t *new_scaled;
-    mbe_font_options_t *fopt;
 
     pango_layout_get_extents(text->layout, NULL, extents);
     pango_extents_to_pixels(extents,NULL);
