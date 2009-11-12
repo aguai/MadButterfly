@@ -604,12 +604,9 @@ int sh_stext_set_style(shape_t *shape,
 static
 void test_query_font_face(void) {
     mb_font_face_t *face;
-    mbe_status_t status;
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = mbe_font_face_status((mbe_font_face_t *)face);
-    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     free_font_face(face);
 }
@@ -619,17 +616,12 @@ void test_make_scaled_font_face_matrix(void) {
     co_aix matrix[6] = {5, 0, 0, 0, 5, 0};
     mb_font_face_t *face;
     mb_scaled_font_t *scaled;
-    mbe_status_t status;
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = mbe_font_face_status((mbe_font_face_t *)face);
-    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     scaled = make_scaled_font_face_matrix(face, matrix);
     CU_ASSERT(scaled != NULL);
-    status = mbe_scaled_font_status((mbe_scaled_font_t *)scaled);
-    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     scaled_font_free(scaled);
     free_font_face(face);

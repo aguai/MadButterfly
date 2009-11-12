@@ -25,12 +25,10 @@
 #define mbe_scaled_font_destroy
 #define mbe_font_face_reference
 #define mbe_set_source_surface
-#define mbe_scaled_font_status
 #define mbe_scaled_font_create
 #define mbe_pattern_set_matrix
 #define mbe_font_face_destroy
 #define mbe_paint_with_alpha
-#define mbe_font_face_status
 #define mbe_surface_destroy
 #define mbe_set_source_rgba
 #define mbe_set_scaled_font
@@ -66,7 +64,6 @@ typedef cairo_scaled_font_t mbe_scaled_font_t;
 typedef cairo_font_face_t mbe_font_face_t;
 typedef cairo_surface_t mbe_surface_t;
 typedef cairo_pattern_t mbe_pattern_t;
-typedef cairo_status_t mbe_status_t;
 typedef cairo_matrix_t mbe_matrix_t;
 typedef cairo_t mbe_t;
 typedef float co_aix;
