@@ -37,6 +37,7 @@ struct _X_MB_runtime {
     Window win;
     Visual *visual;
     mbe_surface_t *surface, *backend_surface;
+    mbe_pattern_t *surface_ptn;
     mbe_t *cr, *backend_cr;
     redraw_man_t *rdman;
     mb_tman_t *tman;
@@ -466,6 +467,9 @@ static int X_MB_init(const char *display_name,
 
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
+
+    xmb_rt->surface_ptn =
+	mbe_pattern_create_for_surface(xmb_rt->surface);
     
     xmb_rt->backend_surface =
 	mbe_xlib_surface_create(xmb_rt->display,
@@ -476,7 +480,7 @@ static int X_MB_init(const char *display_name,
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
 
-    mbe_set_source_surface(xmb_rt->backend_cr, xmb_rt->surface, 0, 0);
+    mbe_set_source(xmb_rt->backend_cr, xmb_rt->surface_ptn);
 
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
@@ -522,6 +526,8 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 
     if(xmb_rt->surface)
 	mbe_surface_destroy(xmb_rt->surface);
+    if(xmb_rt->surface_ptn)
+	mbe_pattern_destroy(xmb_rt->surface_ptn);
     if(xmb_rt->backend_surface)
 	mbe_surface_destroy(xmb_rt->backend_surface);
 
