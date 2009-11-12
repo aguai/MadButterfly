@@ -27,7 +27,6 @@
 #define mbe_xlib_surface_create cairo_xlib_surface_create
 #define mbe_scaled_font_destroy cairo_scaled_font_destroy
 #define mbe_font_face_reference cairo_font_face_reference
-#define mbe_set_source_surface cairo_set_source_surface
 #define mbe_pattern_set_matrix cairo_pattern_set_matrix
 #define mbe_font_face_destroy cairo_font_face_destroy
 #define mbe_paint_with_alpha cairo_paint_with_alpha
