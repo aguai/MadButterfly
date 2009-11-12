@@ -9,7 +9,7 @@
 #include "mb_redraw_man.h"
 #include "mb_observer.h"
 #include "mb_prop.h"
-#include "../config.h"
+#include "mb_config.h"
 
 /* required by rdman_img_ldr_load_paint() */
 #include "mb_paint.h"

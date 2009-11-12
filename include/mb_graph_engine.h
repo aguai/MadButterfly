@@ -2,11 +2,11 @@
 #define __MBE_H_
 #include <mb_config.h>
 
-#ifdef CAIRO_BACKEND
+#ifdef CAIRO_GRAPH_ENGINE
 #include <mb_graph_engine_cairo.h>
 #endif
 
-#ifdef SKAI_BACKEND
+#ifdef SKAI_GRAPH_ENGINE
 #include <mb_graph_engine_skia.h>
 #endif
 

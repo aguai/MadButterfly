@@ -75,13 +75,13 @@ AC_ARG_ENABLE([skia],
   no) skia=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-skia]) ;;
 esac],[skia=false])
-AM_CONDITIONAL([SKIA_BACKEND], [test x$skia = xtrue])
-AM_CONDITIONAL([CAIRO_BACKEND], [test x$skia != xtrue])
+AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x$skia = xtrue])
+AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x$skia != xtrue])
 [if [ x"${skia}" = xtrue ]; then ]
-AC_DEFINE([SKIA_BACKEND])
+AC_DEFINE([SKIA_GRAPH_ENGINE])
 cairo=false
 [else]
-AC_DEFINE([CAIRO_BACKEND])
+AC_DEFINE([CAIRO_GRAPH_ENGINE])
 cairo=true
 [fi]
 
@@ -121,8 +121,8 @@ AC_CONFIG_FILES([Makefile
 
 AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
 AH_TEMPLATE([SH_STEXT],[Enable sh_stext object])
-AH_TEMPLATE([SKIA_BACKEND], [Enable Skia Graphic Engine])
-AH_TEMPLATE([CAIRO_BACKEND], [Enable Cairo Graphic Engine])
+AH_TEMPLATE([SKIA_GRAPH_ENGINE], [Enable Skia Graphic Engine])
+AH_TEMPLATE([CAIRO_GRAPH_ENGINE], [Enable Cairo Graphic Engine])
 AH_TEMPLATE([X_SUPP], [Enable X backend])
 
 AC_OUTPUT
