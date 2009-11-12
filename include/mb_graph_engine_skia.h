@@ -7,189 +7,118 @@
 /*! \defgroup mb_ge_skia MadButterfly Graphic Engine with Skia
  * @{
  */
-#define MBE_OPERATOR_CLEAR CAIRO_OPERATOR_CLEAR
-#define MBE_OPERATOR_SOURCE CAIRO_OPERATOR_SOURCE
-#define MBE_STATUS_SUCCESS CAIRO_STATUS_SUCCESS
+#define MBE_OPERATOR_CLEAR 2
+#define MBE_OPERATOR_SOURCE 1
+#define MBE_STATUS_SUCCESS 0
 
-#define mbe_image_surface_create_from_png
-#define mbe_pattern_add_color_stop_rgba
-#define mbe_pattern_create_for_surface
-#define mbe_scaled_font_text_extents
-#define mbe_image_surface_get_stride
-#define mbe_image_surface_get_height
-#define mbe_image_surface_get_width
-#define mbe_image_surface_get_data
-#define mbe_scaled_font_reference
-#define mbe_pattern_create_radial
-#define mbe_pattern_create_linear
-#define mbe_scaled_font_destroy
-#define mbe_font_face_reference
-#define mbe_set_source_surface
-#define mbe_scaled_font_create
-#define mbe_pattern_set_matrix
-#define mbe_font_face_destroy
-#define mbe_paint_with_alpha
-#define mbe_surface_destroy
-#define mbe_set_source_rgba
-#define mbe_set_scaled_font
-#define mbe_pattern_destroy
-#define mbe_get_scaled_font
-#define mbe_set_source_rgb
-#define mbe_set_line_width
-#define mbe_get_font_face
-#define mbe_fill_preserve
-#define mbe_set_source
-#define mbe_reset_clip
-#define mbe_get_target
-#define mbe_close_path
-#define mbe_text_path
-#define mbe_rectangle
-#define mbe_in_stroke
-#define mbe_new_path
-#define mbe_curve_to
-#define mbe_restore
-#define mbe_move_to
-#define mbe_line_to
-#define mbe_in_fill
-#define mbe_destroy
-#define mbe_stroke
-#define mbe_create
-#define mbe_paint
-#define mbe_save
-#define mbe_fill
-#define mbe_clip
-
-typedef cairo_text_extents_t mbe_text_extents_t;
-typedef cairo_scaled_font_t mbe_scaled_font_t;
-typedef cairo_font_face_t mbe_font_face_t;
-typedef cairo_surface_t mbe_surface_t;
-typedef cairo_pattern_t mbe_pattern_t;
-typedef cairo_matrix_t mbe_matrix_t;
-typedef cairo_t mbe_t;
 typedef float co_aix;
+
+struct _mbe_text_extents_t {
+    co_aix x_bearing;
+    co_aix y_bearing;
+    co_aix width;
+    co_aix height;
+    co_aix x_advance;
+    co_aix y_advance;
+};
+struct _mbe_scaled_font_t;
+struct _mbe_font_face_t;
+struct _mbe_surface_t;
+struct _mbe_pattern_t;
+struct _mbe_t;
+
+typedef struct _mbe_text_extents_t mbe_text_extents_t;
+typedef struct _mbe_scaled_font_t mbe_scaled_font_t;
+typedef struct _mbe_font_face_t mbe_font_face_t;
+typedef struct _mbe_surface_t mbe_surface_t;
+typedef struct _mbe_pattern_t mbe_pattern_t;
+typedef struct {
+    co_aix xx; co_aix yx;
+    co_aix xy; co_aix yy;
+    co_aix x0; co_aix y0;
+} mbe_matrix_t;
+typedef struct _mbe_t mbe_t;
+
+extern void mbe_pattern_add_color_stop_rgba(mbe_pattern_t *ptn,
+					    co_aix offset,
+					    co_aix r, co_aix g, co_aix b,
+					    co_aix a);
+#define mbe_pattern_create_for_surface
+extern void mbe_scaled_font_text_extents(mbe_scaled_font_t *scaled,
+					 const char *txt,
+					 mbe_text_extents_t *extents);
+extern int mbe_image_surface_get_stride(mbe_surface_t *surface);
+extern int mbe_image_surface_get_height(mbe_surface_t *surface);
+extern int mbe_image_surface_get_width(mbe_surface_t *surface);
+extern unsigned char *mbe_image_surface_get_data(mbe_surface_t *surface);
+extern mbe_scaled_font_t *mbe_scaled_font_reference(mbe_scaled_font_t *scaled);
+extern mbe_pattern_t *mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
+						co_aix radius0,
+						co_aix cx1, co_aix cy1,
+						co_aix radius1);
+extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
+						co_aix x1, co_aix y1);
+extern void mbe_scaled_font_destroy(mbe_scaled_font_t *scaled);
+extern mbe_font_face_t *mbe_font_face_reference(mbe_font_face_t *face);
+extern void mbe_set_source_surface(mbe_t *canvas, mbe_surface_t *surface,
+				   co_aix x, co_aix y);
+extern mbe_scaled_font_t *
+mbe_scaled_font_create(mbe_font_face_t *face, mbe_matrix_t *fnt_mtx,
+		       mbe_matrix_t *ctm);
+extern void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
+				   const mbe_matrix_t *matrix);
+extern void mbe_font_face_destroy(mbe_font_face_t *face);
+extern void mbe_paint_with_alpha(mbe_t *canvas, co_aix alpha);
+extern void mbe_surface_destroy(mbe_surface_t *surface);
+extern void mbe_set_source_rgba(mbe_t *canvas,
+				co_aix r, co_aix g, co_aix b, co_aix a);
+extern void mbe_set_scaled_font(mbe_t *canvas,
+				const mbe_scaled_font_t *scaled);
+extern void mbe_set_source_rgb(mbe_t *canvas, co_aix r, co_aix g, co_aix b);
+extern void mbe_set_line_width(mbe_t *canvas, co_aix width);
+extern mbe_font_face_t *mbe_get_font_face(mbe_t *canvas);
+extern void mbe_fill_preserve(mbe_t *canvas);
+extern void mbe_set_source(mbe_t *canvas, mbe_pattern_t *source);
+extern void mbe_reset_clip(mbe_t *canvas);
+extern mbe_surface_t *mbe_get_target(mbe_t *canvas);
+extern void mbe_close_path(mbe_t *canvas);
+extern void mbe_text_path(mbe_t *canvas, const char *txt);
+extern void mbe_rectangle(mbe_t *canvas, co_aix x, co_aix y,
+			  co_aix width, co_aix height);
+extern int mbe_in_stroke(mbe_t *canvas, co_aix x, co_aix y);
+extern void mbe_new_path(mbe_t *canvas);
+extern void mbe_curve_to(mbe_t *canvas, co_aix x1, co_aix y1,
+			 co_aix x2, co_aix y2,
+			 co_aix x3, co_aix y3);
+extern void mbe_restore(mbe_t *canvas);
+extern void mbe_move_to(mbe_t *canvas, co_aix x, co_aix y);
+extern void mbe_line_to(mbe_t *canvas, co_aix x, co_aix y);
+extern int mbe_in_fill(mbe_t *canvas, co_aix x, co_aix y);
+extern void mbe_stroke(mbe_t *canvas);
+extern mbe_t *mbe_create(mbe_surface_t *target);
+extern void mbe_destroy(mbe_t *canvas);
+extern void mbe_paint(mbe_t *canvas);
+extern void mbe_save(mbe_t *canvas);
+extern void mbe_fill(mbe_t *canvas);
+extern void mbe_clip(mbe_t *canvas);
 
 extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);
 extern void mbe_free_font_face(mbe_font_face_t *face);
 
-static void mbe_clear(mbe_t *canvas) {
-    cairo_operator_t old_op;
-    
-    old_op = mbe_get_operator(canvas);
-    mbe_set_operator(canvas, MBE_OPERATOR_CLEAR);
-    mbe_paint(canvas);
-    mbe_set_operator(canvas, old_op);
-}
-
-static void mbe_copy_source(mbe_t *canvas) {
-    mbe_operator_t saved_op;
-    
-    saved_op = mbe_get_operator(canvas);
-    mbe_set_operator(canvas, MBE_OPERATOR_SOURCE);
-    mbe_paint(canvas);
-    mbe_set_operator(canvas, saved_op);
-}
-
-static mbe_surface_t *
+extern void mbe_clear(mbe_t *canvas);
+extern void mbe_copy_source(mbe_t *canvas);
+extern mbe_surface_t *
 mbe_image_surface_create_for_data(unsigned char *data,
 				  mb_img_fmt_t fmt,
 				  int width, int height,
-				  int stride) {
-    cairo_format_t _fmt;
-    
-    switch(fmt) {
-    case MB_IFMT_ARGB32:
-	_fmt = CAIRO_FORMAT_ARGB32;
-	break;
-    case MB_IFMT_RGB24:
-	_fmt = CAIRO_FORMAT_RGB24;
-	break;
-    case MB_IFMT_A8:
-	_fmt = CAIRO_FORMAT_A8;
-	break;
-    case MB_IFMT_A1:
-	_fmt = CAIRO_FORMAT_A1;
-	break;
-    default:
-	return NULL;
-    }
-    return cairo_image_surface_create_for_data(data, _fmt,
-					       width, height, stride);
-}
-
-static mb_img_fmt_t
-mbe_image_surface_get_format(mbe_surface_t *surface) {
-    cairo_format_t _fmt;
-    mb_img_fmt_t fmt;
-
-    _fmt = cairo_image_surface_get_format(surface);
-    switch(_fmt) {
-    case CAIRO_FORMAT_ARGB32:
-	fmt = MB_IFMT_ARGB32;
-	break;
-    case CAIRO_FORMAT_RGB24:
-	fmt = MB_IFMT_RGB24;
-	break;
-    case CAIRO_FORMAT_A8:
-	fmt = MB_IFMT_A8;
-	break;
-    case CAIRO_FORMAT_A1:
-	fmt = MB_IFMT_A1;
-	break;
-    default:
-	fmt = MB_IFMT_DUMMY;
-	break;
-    }
-
-    return fmt;
-}
-
-static mbe_surface_t *
-mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height) {
-    cairo_format_t _fmt;
-    
-    switch(fmt) {
-    case MB_IFMT_ARGB32:
-	_fmt = CAIRO_FORMAT_ARGB32;
-	break;
-    case MB_IFMT_RGB24:
-	_fmt = CAIRO_FORMAT_RGB24;
-	break;
-    case MB_IFMT_A8:
-	_fmt = CAIRO_FORMAT_A8;
-	break;
-    case MB_IFMT_A1:
-	_fmt = CAIRO_FORMAT_A1;
-	break;
-    default:
-	return NULL;
-    }
-    
-    return cairo_image_surface_create(_fmt, width, height);
-}
-
-static void
-mbe_transform(mbe_t *mbe, const co_aix matrix[6]) {
-    cairo_matrix_t cmtx;
-
-    cmtx.xx = matrix[0];
-    cmtx.xy = matrix[1];
-    cmtx.x0 = matrix[2];
-    cmtx.yx = matrix[3];
-    cmtx.yy = matrix[4];
-    cmtx.y0 = matrix[5];
-
-    cairo_transform(mbe, &cmtx);
-}
-
-static void
-mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
-	co_aix angle_start, co_aix angle_stop) {
-    if(angle_start <= angle_stop)
-	cairo_arc(mbe, x, y, radius, angle_start, angle_stop);
-    else
-	cairo_arc_negative(mbe, x, y, radius, angle_start, angle_stop);
-}
+				  int stride);
+extern mb_img_fmt_t mbe_image_surface_get_format(mbe_surface_t *surface);
+extern mbe_surface_t *
+mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height);
+extern void mbe_transform(mbe_t *mbe, mbe_matrix_t *matrix);
+extern void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
+		    co_aix angle_start, co_aix angle_stop);
 /* @} */
 
 #endif /* __MB_GE_SKIA_H_ */

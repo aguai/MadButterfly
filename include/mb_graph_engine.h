@@ -6,7 +6,7 @@
 #include <mb_graph_engine_cairo.h>
 #endif
 
-#ifdef SKAI_GRAPH_ENGINE
+#ifdef SKIA_GRAPH_ENGINE
 #include <mb_graph_engine_skia.h>
 #endif
 
