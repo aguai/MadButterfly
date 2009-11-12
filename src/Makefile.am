@@ -12,7 +12,12 @@ if TESTCASE
 noinst_PROGRAMS += testcase
 endif
 
+if X_SUPP
 MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c mbaf/animated_menu.c
+else
+MBAF_SOURCES=
+endif
+
 libmbfly_la_SOURCES= animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
 	shape_rect.c shift.c subtree_free.c timer.c 			\
