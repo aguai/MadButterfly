@@ -149,23 +149,13 @@ static
 mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
 					       co_aix *matrix) {
     mbe_scaled_font_t *scaled_font;
-    mbe_matrix_t font_matrix;
-    static mbe_matrix_t id = {
-	1, 0,
-	0, 1,
-	0, 0
-    };
+    static co_aix id[6] = { 1, 0, 0,
+			    0, 1, 0 };
     
     ASSERT(matrix != NULL);
     
-    font_matrix.xx = *matrix++;
-    font_matrix.xy = *matrix++;
-    font_matrix.x0 = *matrix++;
-    font_matrix.yx = *matrix++;
-    font_matrix.yy = *matrix++;
-    font_matrix.y0 = *matrix;
     scaled_font = mbe_scaled_font_create((mbe_font_face_t *)face,
-					 &font_matrix, &id);
+					 matrix, &id);
 
     return (mb_scaled_font_t *)scaled_font;
 }

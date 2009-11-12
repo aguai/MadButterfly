@@ -328,15 +328,8 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
  */
 void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     paint_image_t *img_paint = (paint_image_t *)paint;
-    mbe_matrix_t cmatrix;
     
-    cmatrix.xx = matrix[0];
-    cmatrix.xy = matrix[1];
-    cmatrix.x0 = matrix[2];
-    cmatrix.yx = matrix[3];
-    cmatrix.yy = matrix[4];
-    cmatrix.y0 = matrix[5];
-    mbe_pattern_set_matrix(img_paint->ptn, &cmatrix);
+    mbe_pattern_set_matrix(img_paint->ptn, matrix);
 }
 
 void paint_image_get_size(paint_t *paint, int *w, int *h) {

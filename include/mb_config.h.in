@@ -7,4 +7,10 @@
 /* Enable Skia Graphic Engine */
 #undef SKIA_GRAPH_ENGINE
 
+/* Enable sh_text */
+#undef SH_TEXT
+
+/* Enable sh_stext */
+#undef SH_STEXT
+
 #endif /* __MB_CONFIG_H_ */

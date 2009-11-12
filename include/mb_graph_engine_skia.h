@@ -32,11 +32,6 @@ typedef struct _mbe_scaled_font_t mbe_scaled_font_t;
 typedef struct _mbe_font_face_t mbe_font_face_t;
 typedef struct _mbe_surface_t mbe_surface_t;
 typedef struct _mbe_pattern_t mbe_pattern_t;
-typedef struct {
-    co_aix xx; co_aix yx;
-    co_aix xy; co_aix yy;
-    co_aix x0; co_aix y0;
-} mbe_matrix_t;
 typedef struct _mbe_t mbe_t;
 
 extern void mbe_pattern_add_color_stop_rgba(mbe_pattern_t *ptn,
@@ -63,10 +58,10 @@ extern mbe_font_face_t *mbe_font_face_reference(mbe_font_face_t *face);
 extern void mbe_set_source_surface(mbe_t *canvas, mbe_surface_t *surface,
 				   co_aix x, co_aix y);
 extern mbe_scaled_font_t *
-mbe_scaled_font_create(mbe_font_face_t *face, mbe_matrix_t *fnt_mtx,
-		       mbe_matrix_t *ctm);
+mbe_scaled_font_create(mbe_font_face_t *face, co_aix fnt_mtx[6],
+		       co_aix ctm[6]);
 extern void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
-				   const mbe_matrix_t *matrix);
+				   const co_aix matrix[6]);
 extern void mbe_font_face_destroy(mbe_font_face_t *face);
 extern void mbe_paint_with_alpha(mbe_t *canvas, co_aix alpha);
 extern void mbe_surface_destroy(mbe_surface_t *surface);
@@ -116,7 +111,7 @@ mbe_image_surface_create_for_data(unsigned char *data,
 extern mb_img_fmt_t mbe_image_surface_get_format(mbe_surface_t *surface);
 extern mbe_surface_t *
 mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height);
-extern void mbe_transform(mbe_t *mbe, mbe_matrix_t *matrix);
+extern void mbe_transform(mbe_t *mbe, co_aix matrix[6]);
 extern void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
 		    co_aix angle_start, co_aix angle_stop);
 /* @} */

@@ -204,8 +204,6 @@ void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format)
 }
 
 static int get_extents(sh_text_t *text, PangoRectangle *extents) {
-    mbe_matrix_t fmatrix;
-    mbe_matrix_t ctm;
     mbe_scaled_font_t *new_scaled;
 
     pango_layout_get_extents(text->layout, NULL, extents);
