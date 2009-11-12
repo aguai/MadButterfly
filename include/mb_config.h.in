@@ -1,0 +1,10 @@
+#ifndef __MB_CONFIG_H_
+#define __MB_CONFIG_H_
+
+/* Enable Cairo Graphic Engine */
+#undef CAIRO_GRAPH_ENGINE
+
+/* Enable Skia Graphic Engine */
+#undef SKIA_GRAPH_ENGINE
+
+#endif /* __MB_CONFIG_H_ */

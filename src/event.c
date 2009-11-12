@@ -9,7 +9,7 @@
 #include "mb_redraw_man.h"
 #include "mb_shapes.h"
 #endif
-#include "mb_config.h"
+#include "config.h"
 
 #define OK 0
 #define ERR -1
