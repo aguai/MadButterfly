@@ -12,10 +12,6 @@ AC_PROG_CC
 LT_INIT
 AC_PROG_LIBTOOL
 
-# Checks for libraries.
-PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
-PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
-
 # Checks for header files.
 AC_PATH_X
 AC_HEADER_STDC
@@ -36,7 +32,7 @@ AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
 
 AC_ARG_ENABLE([testcase],
-	[--enable-testcase	Enable testcase],
+	[  --enable-testcase	Enable testcase],
 [case "${enableval}" in
   yes) testcase=true ;;
   no) testcase=false ;;
@@ -45,19 +41,15 @@ esac],[testcase=false])
 AM_CONDITIONAL([TESTCASE], [test x$testcase = xtrue])
 
 AC_ARG_ENABLE([sh_text],
-	[--disable-sh_text	Turn off sh_text],
+	[  --disable-sh_text	Turn off sh_text],
 [case "${enableval}" in
   yes) sh_text=true ;;
   no) sh_text=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_text]) ;;
 esac],[sh_text=true])
-AM_CONDITIONAL([SH_TEXT], [test x$sh_text = xtrue])
-[if [ x"${sh_text}" = xtrue ]; then]
-AC_DEFINE([SH_TEXT])
-[fi]
 
 AC_ARG_ENABLE([sh_stext],
-	[--disable-sh_stext	Turn off sh_stext],
+	[  --disable-sh_stext	Turn off sh_stext],
 [case "${enableval}" in
   yes) sh_stext=true ;;
   no) sh_stext=false ;;
@@ -66,6 +58,50 @@ esac],[sh_stext=true])
 AM_CONDITIONAL([SH_STEXT], [test x$sh_stext = xtrue])
 [if [ x"${sh_stext}" = xtrue ]; then]
 AC_DEFINE([SH_STEXT])
+[fi]
+
+AC_ARG_ENABLE([X_supp],
+	[  --disable-X_supp	Turn off X backend],
+[case "${enableval}" in
+  yes) X_supp=true ;;
+  no) X_supp=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --disable-X_supp]) ;;
+esac],[X_supp=true])
+
+AC_ARG_ENABLE([skia],
+	[  --enable-skia	Turn on Skia instead of Cairo],
+[case "${enableval}" in
+  yes) skia=true ;;
+  no) skia=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-skia]) ;;
+esac],[skia=false])
+AM_CONDITIONAL([SKIA_BACKEND], [test x$skia = xtrue])
+AM_CONDITIONAL([CAIRO_BACKEND], [test x$skia != xtrue])
+[if [ x"${skia}" = xtrue ]; then ]
+AC_DEFINE([SKIA_BACKEND])
+cairo=false
+[else]
+AC_DEFINE([CAIRO_BACKEND])
+cairo=true
+[fi]
+
+# Define AM and AC variable for sh_text
+AM_CONDITIONAL([SH_TEXT], [test x$sh_text = xtrue -a x$cairo = xtrue])
+[if [ x"${sh_text}" = xtrue -a x$cairo = xtrue ]; then]
+AC_DEFINE([SH_TEXT])
+[fi]
+
+# Define AM and AC variable for X_supp
+AM_CONDITIONAL([X_SUPP],
+	 [test \( x$X_supp = xtrue \) -a \( x$cairo = xtrue \)])
+[if [ \( x"${X_supp}" = xtrue \) -a \( x"${cairo}" = xture \) ]; then]
+AC_DEFINE([X_SUPP])
+[fi]
+
+# Checks for libraries.
+[if [ x"${cairo}" = xtrue ]; then]
+PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
+PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
 [fi]
 
 AC_CONFIG_FILES([Makefile
@@ -85,5 +121,8 @@ AC_CONFIG_FILES([Makefile
 
 AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
 AH_TEMPLATE([SH_STEXT],[Enable sh_stext object])
+AH_TEMPLATE([SKIA_BACKEND], [Enable Skia Graphic Engine])
+AH_TEMPLATE([CAIRO_BACKEND], [Enable Cairo Graphic Engine])
+AH_TEMPLATE([X_SUPP], [Enable X backend])
 
 AC_OUTPUT
