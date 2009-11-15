@@ -2,6 +2,7 @@
 #define __MB_GE_SKIA_H_
 
 #include <stdio.h>
+#include "mb_basic_types.h"
 #include "mb_img_ldr.h"
 
 /*! \defgroup mb_ge_skia MadButterfly Graphic Engine with Skia
@@ -10,8 +11,6 @@
 #define MBE_OPERATOR_CLEAR 2
 #define MBE_OPERATOR_SOURCE 1
 #define MBE_STATUS_SUCCESS 0
-
-typedef float co_aix;
 
 struct _mbe_text_extents_t {
     co_aix x_bearing;
@@ -34,20 +33,20 @@ typedef struct _mbe_surface_t mbe_surface_t;
 typedef struct _mbe_pattern_t mbe_pattern_t;
 typedef struct _mbe_t mbe_t;
 
-extern void mbe_pattern_add_color_stop_rgba(mbe_pattern_t *ptn,
-					    co_aix offset,
-					    co_aix r, co_aix g, co_aix b,
-					    co_aix a);
 extern mbe_pattern_t *mbe_pattern_create_for_surface(mbe_surface_t *surface);
 extern mbe_pattern_t *mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
 						co_aix radius0,
 						co_aix cx1, co_aix cy1,
-						co_aix radius1);
+						co_aix radius1,
+						grad_stop_t *stops,
+						int stop_cnt);
 extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
-						co_aix x1, co_aix y1);
+						co_aix x1, co_aix y1,
+						grad_stop_t *stops,
+						int stop_cnt);
 extern void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
 				   const co_aix matrix[6]);
-extern void mbe_pattern_destroy(mbe_pattern_t *canvas);
+extern void mbe_pattern_destroy(mbe_pattern_t *ptn);
 
 extern int mbe_image_surface_get_stride(mbe_surface_t *surface);
 extern int mbe_image_surface_get_height(mbe_surface_t *surface);
