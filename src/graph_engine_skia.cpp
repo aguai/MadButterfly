@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <SkCanva.h>
+#include <SkCanvas.h>
 #include <SkBitmap.h>
 #include <SkShader.h>
 
@@ -15,7 +15,7 @@ struct _mbe_scaled_font_t {
     struct _mb_font_face_t *face;
     co_aix fnt_mtx[6];
     co_aix ctm[6];
-}
+};
 struct _mbe_font_face_t {};
 struct _mbe_t {
     SkCanvas *canvas;
@@ -98,12 +98,18 @@ void mbe_stroke(mbe_t *canvas) {}
 
 mbe_t *mbe_create(mbe_surface_t *target) {
     mbe_t *mbe;
+    SkBitmap *bitmap = (SkBitmap *)target;
 
-    mbe = malloc(sizeof(_mbe_t));
+    mbe = (mbe_t *)malloc(sizeof(mbe_t));
     if(mbe == NULL)
 	return NULL;
     
-    mbe->canvas = new SkCanvas(target);
+    mbe->canvas = new SkCanvas(*bitmap);
+    if(mbe->canvas == NULL) {
+	free(mbe);
+	return NULL;
+    }
+    
     mbe->shader = NULL;
     mbe->shader_owned = 0;
 
@@ -111,9 +117,9 @@ mbe_t *mbe_create(mbe_surface_t *target) {
 }
 
 void mbe_destroy(mbe_t *canvas) {
-    delete cnavas->canvas;
-    if(cnavas->shader && cnavas->shader_owned)
-	delete cnavas->shader;
+    delete canvas->canvas;
+    if(canvas->shader && canvas->shader_owned)
+	delete canvas->shader;
     free(canvas);
 }
 
