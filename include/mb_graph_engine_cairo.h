@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <cairo.h>
 #include <cairo-xlib.h>
+#include "mb_basic_types.h"
 #include "mb_img_ldr.h"
 
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
@@ -14,7 +15,6 @@
 #define MBE_STATUS_SUCCESS CAIRO_STATUS_SUCCESS
 
 #define mbe_image_surface_create_from_png cairo_image_surface_create_from_png
-#define mbe_pattern_add_color_stop_rgba cairo_pattern_add_color_stop_rgba
 #define mbe_pattern_create_for_surface cairo_pattern_create_for_surface
 #define mbe_scaled_font_text_extents cairo_scaled_font_text_extents
 #define mbe_image_surface_get_stride cairo_image_surface_get_stride
@@ -22,8 +22,6 @@
 #define mbe_image_surface_get_width cairo_image_surface_get_width
 #define mbe_image_surface_get_data cairo_image_surface_get_data
 #define mbe_scaled_font_reference cairo_scaled_font_reference
-#define mbe_pattern_create_radial cairo_pattern_create_radial
-#define mbe_pattern_create_linear cairo_pattern_create_linear
 #define mbe_xlib_surface_create cairo_xlib_surface_create
 #define mbe_scaled_font_destroy cairo_scaled_font_destroy
 #define mbe_font_face_reference cairo_font_face_reference
@@ -65,7 +63,6 @@ typedef cairo_font_face_t mbe_font_face_t;
 typedef cairo_surface_t mbe_surface_t;
 typedef cairo_pattern_t mbe_pattern_t;
 typedef cairo_t mbe_t;
-typedef float co_aix;
 
 #define MB_MATRIX_2_CAIRO(cmtx, mtx) {		\
 	(cmtx).xx = (mtx)[0];			\
@@ -77,10 +74,19 @@ typedef float co_aix;
 }
 
 
-
 extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);
 extern void mbe_free_font_face(mbe_font_face_t *face);
+extern mbe_pattern_t *mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
+						co_aix radius0,
+						co_aix cx1, co_aix cy1,
+						co_aix radius1,
+						grad_stop_t *stops,
+						int stop_cnt);
+extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
+						co_aix x1, co_aix y1,
+						grad_stop_t *stops,
+						int stop_cnt);
 
 
 static void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
