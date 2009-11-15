@@ -1,4 +1,5 @@
 #include <fontconfig/fontconfig.h>
+#include <cairo-ft.h>
 #include "mb_graph_engine_cairo.h"
 #include "mb_shapes.h"
 
@@ -108,3 +109,46 @@ mbe_free_font_face(mbe_font_face_t *face) {
     mbe_font_face_destroy(face);
 }
 
+mbe_pattern_t *
+mbe_pattern_create_radial(co_aix cx0, co_aix cy0, co_aix radius0,
+			  co_aix cx1, co_aix cy1, co_aix radius1,
+			  grad_stop_t *stops, int stop_cnt) {
+    cairo_pattern_t *ptn;
+    grad_stop_t *stop;
+    int i;
+
+    ptn = cairo_pattern_create_radial(cx0, cy0, radius0,
+				      cx1, cy1, radius1);
+    if(ptn == NULL)
+	return NULL;
+    
+    stop = stops;
+    for(i = 0; i < stop_cnt; i++) {
+	cairo_pattern_add_color_stop_rgba(ptn, stop->offset,
+					  stop->r, stop->g, stop->b, stop->a);
+	stop++;
+    }
+
+    return ptn;
+}
+
+mbe_pattern_t *
+mbe_pattern_create_linear(co_aix x0, co_aix y0, co_aix x1, co_aix y1,
+			  grad_stop_t *stops, int stop_cnt) {
+    cairo_pattern_t *ptn;
+    grad_stop_t *stop;
+    int i;
+
+    ptn = cairo_pattern_create_linear(x0, y0, x1, y1);
+    if(ptn == NULL)
+	return NULL;
+
+    stop = stops;
+    for(i = 0; i < stop_cnt; i++) {
+	cairo_pattern_add_color_stop_rgba(ptn, stop->offset,
+					  stop->r, stop->g, stop->b, stop->a);
+	stop++;
+    }
+
+    return ptn;
+}
