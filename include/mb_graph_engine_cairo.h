@@ -101,7 +101,7 @@ static void mbe_clear(mbe_t *canvas) {
     cairo_operator_t old_op;
     
     old_op = cairo_get_operator(canvas);
-    cairo_set_operator(canvas, MBE_OPERATOR_CLEAR);
+    cairo_set_operator(canvas, CAIRO_OPERATOR_CLEAR);
     cairo_paint(canvas);
     cairo_set_operator(canvas, old_op);
 }
@@ -110,7 +110,7 @@ static void mbe_copy_source(mbe_t *canvas) {
     cairo_operator_t saved_op;
     
     saved_op = cairo_get_operator(canvas);
-    cairo_set_operator(canvas, MBE_OPERATOR_SOURCE);
+    cairo_set_operator(canvas, CAIRO_OPERATOR_SOURCE);
     cairo_paint(canvas);
     cairo_set_operator(canvas, saved_op);
 }
