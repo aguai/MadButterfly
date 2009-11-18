@@ -98,8 +98,8 @@ struct _mbe_states_t {
 
 #define PI 3.1415926535897931
 
-#define CO_AIX_2_SKSCALAR(a) ((a) * 65536)
-#define SKSCALAR_2_CO_AIX(a) ((co_aix)(a) / 65536)
+#define CO_AIX_2_SKSCALAR(a) ((SkScalar)a)
+#define SKSCALAR_2_CO_AIX(a) ((co_aix)(a))
 #define MB_MATRIX_2_SKMATRIX(sk, mb) {			\
 	(sk).setScaleX(CO_AIX_2_SKSCALAR((mb)[0]));	\
 	(sk).setSkewX(CO_AIX_2_SKSCALAR((mb)[1]));	\
