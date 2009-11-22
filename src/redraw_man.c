@@ -710,6 +710,12 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     free_free_objs(rdman);
     free_objs_destroy(rdman);
 
+    /* Mark rdman clean that shapes and coords can be freed
+     *  successfully.
+     */
+    DARRAY_CLEAN(&rdman->dirty_coords);
+    DARRAY_CLEAN(&rdman->dirty_geos);
+
     coord = postorder_coord_subtree(rdman->root_coord, NULL);
     while(coord) {
 	saved_coord = coord;
