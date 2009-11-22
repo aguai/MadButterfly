@@ -82,11 +82,13 @@
  * memory and calling initial function.  For example, redraw_man_new()
  * is defined as a JNI method instead of redraw_man_init().
  * \code
- *   native static int redraw_man_new(int cr, int backend);
+ *   native static int redraw_man_new(Canvas cr, Canvas backend);
  * \endcode
  * First argument, rdman, of redraw_man_init() is replaced by a int
  * returned value of redraw_man_new().  cr and backend, mbe_t type by
- * MadButterfly, are, now, int type by the JNI native method.
+ * MadButterfly, are, now, Canvas type by the JNI native method.  The
+ * implementation of the JNI native mothod would retrieves the
+ * SkCanvas object, and casts it to mbe_t type.
  *
  * \section android_java_mb Java Likes MadButterfly
  *
