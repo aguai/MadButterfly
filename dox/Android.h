@@ -50,4 +50,55 @@
  * the tracing life-cycle of MadButterfly objects.  The namespace of
  * the framework should be 'org.madbutterfly'.
  *
+ * \section android_jni _jni
+ * 
+ * org.madbutterfly._jni class is the placeholder to collect JNI APIs
+ * for all MadButterfly functions.  All methods of _jni are static.  A
+ * method usually maps to a MadButterfly function.  For example,
+ * rdman_coord_new() mapes to a MadButterfly function.
+ *
+ * The object returned by a MadButterfly function, for
+ * ex. rdman_coord_new(), is casted to a int, the address of the
+ * object.  So, type of an argument or return value of an object is
+ * declared as a int.  For example,
+ * \code
+ * class _jni {
+ *   native static int rdman_coord_new(void);
+ * }
+ * \endcode
+ * Java code should keep these integers carefully for maintaining
+ * life-cycle of objects.
+ *
+ * MadButterfly provides only initial function for some objects,
+ * application should allocate memory for these function by them-self.
+ * For these function, a new JNI interface are used instead of
+ * initiali function.  The new JNI interface is responsible for
+ * allocating memory and call initial function.  For example,
+ * redraw_man_new() is defined as a JNI interface instead of
+ * redraw_man_init().
+ * \code
+ *   native static int redraw_man_new(int cr, int backend);
+ * \endcode
+ * First argument, rdman, of redraw_man_init() is replaced by a int
+ * returned value.  cr and backend, mbe_t type by MadButterfly, are
+ * now int type by JNI interface.
+ *
+ * \section android_java_mb Java Likes MadButterfly
+ *
+ * To manage life-cycle for MadButterfly objects is not Java likes.
+ * To provie a Java style interface for MadButterfly, a framework to
+ * hide underlying life-cycle management is requried.  Life-cycle is
+ * one major responsibility of the framework, it should keep integers
+ * of addresses of objects and free the associated resources with
+ * correct JNI methods and at right time.
+ *
+ * For example, org.madbutterfly.redraw_man is the respective Java
+ * class of redraw_man_t of MadButterfly engine.  redraw_man has a
+ * private member variable redraw_man._rdman_addr.  It is the address
+ * of the resptive redraw_man_t object of MadButterfly.  redraw_man
+ * would call _jni.redraw_man_destroy() to release associated
+ * resources and free the memory before it is recycled.  So,
+ * redraw_man.finalize() is defined for releasing resources.  It would
+ * be called before the redraw_man object being recycled.
+ *
  */
