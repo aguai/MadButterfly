@@ -746,6 +746,10 @@ void redraw_man_destroy(redraw_man_t *rdman) {
 	rdman_shape_free(rdman, saved_shape);
     
     coord_canvas_info_free(rdman, rdman->root_coord->canvas_info);
+
+    /* XXX: paints are not freed, here.  All resources of paints would
+     * be reclaimed by freeing elmpools.
+     */
     
     elmpool_free(rdman->coord_pool);
     elmpool_free(rdman->geo_pool);
@@ -841,6 +845,11 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
 	return OK;
     }
 
+    if(shape->stroke != NULL)
+	rdman_paint_stroke(rdman, (paint_t *)NULL, shape);
+    if(shape->fill != NULL)
+	rdman_paint_fill(rdman, (paint_t *)NULL, shape);
+    
     if(geo != NULL) {
 	subject_free(geo->mouse_event);
 	geo_detach_coord(geo, shape->coord);
@@ -854,6 +863,7 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
 
     if(rdman->last_mouse_over == (mb_obj_t *)shape)
 	rdman->last_mouse_over = NULL;
+
     
     return OK;
 }
@@ -871,6 +881,7 @@ shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape) {
 
 int rdman_paint_free(redraw_man_t *rdman, paint_t *paint) {
     shnode_t *shnode, *saved_shnode;
+    shape_t *shape;
 
     if(rdman_is_dirty(rdman)) {
 	if(!(paint->flags & PNTF_FREE))
@@ -885,12 +896,26 @@ int rdman_paint_free(redraw_man_t *rdman, paint_t *paint) {
     FORPAINTMEMBERS(paint, shnode) {
 	if(saved_shnode) {
 	    RM_PAINTMEMBER(paint, saved_shnode);
+	    
+	    shape = saved_shnode->shape;
+	    if(shape->stroke == paint)
+		rdman_paint_stroke(rdman, (paint_t *)NULL, shape);
+	    if(shape->fill == paint)
+		rdman_paint_fill(rdman, (paint_t *)NULL, shape);
+	    
 	    shnode_free(rdman, saved_shnode);
 	}
 	saved_shnode = shnode;
     }
     if(saved_shnode) {
 	RM_PAINTMEMBER(paint, saved_shnode);
+	
+	shape = saved_shnode->shape;
+	if(shape->stroke == paint)
+	    rdman_paint_stroke(rdman, (paint_t *)NULL, shape);
+	if(shape->fill == paint)
+	    rdman_paint_fill(rdman, (paint_t *)NULL, shape);
+	
 	shnode_free(rdman, saved_shnode);
     }
 
