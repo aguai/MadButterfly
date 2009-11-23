@@ -109,8 +109,6 @@ extern int rdman_add_shape(redraw_man_t *rdman,
     } while(0)
 extern int rdman_shape_free(redraw_man_t *rdman, shape_t *shape);
 
-#define rdman_paint_man(rdman, paint)		\
-    STAILQ_INS_TAIL(rdman->paints, paint_t, pnt_next, shape)
 extern int rdman_paint_free(redraw_man_t *rdman, paint_t *paint);
 
 extern coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent);
