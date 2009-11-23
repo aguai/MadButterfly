@@ -157,25 +157,31 @@ extern void _rdman_paint_real_remove_child(redraw_man_t *rdman,
 #define _rdman_paint_remove_child(rdman, paint, shape)		\
     do {							\
 	if((shape)->fill == (shape)->stroke &&			\
-	   (shape)->stroke == paint)				\
+	   (shape)->stroke == (paint))				\
 	    break;						\
 	_rdman_paint_real_remove_child(rdman, paint, shape);	\
     } while(0)
-#define rdman_paint_fill(rdman, paint, shape)		\
-    do {						\
-	if((shape)->fill == paint)			\
-	    break;					\
-	_rdman_paint_remove_child(rdman, paint, shape);	\
-	_rdman_paint_child(rdman, paint, shape);	\
-	(shape)->fill = paint;				\
+#define rdman_paint_fill(rdman, paint, shape)			\
+    do {							\
+	if((shape)->fill == paint)				\
+	    break;						\
+	if((shape)->fill)					\
+	    _rdman_paint_remove_child(rdman, (shape)->fill,	\
+				      shape);			\
+	if(paint)						\
+	    _rdman_paint_child(rdman, paint, shape);		\
+	(shape)->fill = paint;					\
     } while(0)
-#define rdman_paint_stroke(rdman, paint, shape)		\
-    do {						\
-	if((shape)->stroke == paint)			\
-	    break;					\
-	_rdman_paint_remove_child(rdman, paint, shape);	\
-	_rdman_paint_child(rdman, paint, shape);	\
-	(shape)->stroke = paint;			\
+#define rdman_paint_stroke(rdman, paint, shape)			\
+    do {							\
+	if((shape)->stroke == paint)				\
+	    break;						\
+	if((shape)->stroke)					\
+	    _rdman_paint_remove_child(rdman, (shape)->stroke,	\
+				      shape);			\
+	if(paint)						\
+	    _rdman_paint_child(rdman, paint, shape);		\
+	(shape)->stroke = paint;				\
     } while(0)
 extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
 
