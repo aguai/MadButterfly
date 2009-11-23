@@ -370,8 +370,6 @@ static subject_t *ob_get_parent_subject(ob_factory_t *factory,
 	(member) = STAILQ_NEXT(paint_t, next, member))
 #define RM_PAINTMEMBER(paint, member)				\
     STAILQ_REMOVE((paint)->members, shnode_t, next, member)
-#define RM_PAINT(rdman, paint)					\
-    STAILQ_REMOVE((rdman)->paints, paint_t, pnt_next, paint)
 
 /*! \brief Sort a list of element by a unsigned integer.
  *
@@ -663,7 +661,6 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     rdman->backend = backend;
 
     STAILQ_INIT(rdman->shapes);
-    STAILQ_INIT(rdman->paints);
     
     /* \note To make root coord always have at leat one observer.
      * It triggers mouse interpreter to be installed on root.
@@ -919,7 +916,6 @@ int rdman_paint_free(redraw_man_t *rdman, paint_t *paint) {
 	shnode_free(rdman, saved_shnode);
     }
 
-    RM_PAINT(rdman, paint);
     paint->free(rdman, paint);
     return OK;
 }
