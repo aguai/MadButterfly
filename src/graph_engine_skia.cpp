@@ -757,7 +757,7 @@ void mbe_copy_source(mbe_t *canvas) {
     _prepare_paint(canvas, SkPaint::kFill_Style);
     mode = SkPorterDuff::CreateXfermode(SkPorterDuff::kSrc_Mode);
     paint->setXfermode(mode);
-    mode->unref();
+    /* mode->unref(); */
 
     canvas->canvas->drawPaint(*paint);
 
