@@ -1,16 +1,24 @@
 LOCAL_PATH:= $(call my-dir)
+MB_LOCAL_PATH := $(LOCAL_PATH)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := MadButterfly
 LOCAL_CONFIGURE := $(LOCAL_PATH)/../../configure
-LOCAL_CONFIGURE_ARGS := --enable-skia
+LOCAL_CONFIGURE_ARGS := --enable-skia --config-cache
 LOCAL_CFLAGS := -I$(shell pwd)/$(call include-path-for,corecg) \
 	-I$(shell pwd)/$(call include-path-for,corecg)/../effects/ \
 	-I$(shell pwd)/$(call include-path-for,frameworks-base)
+LOCAL_CONFIGURE_CACHE := config.cache
 
 include $(BUILD_AUTOCONF)
 
 MB_INTERMEDIATES:=$(strip $(intermediates))
+
+$(LOCAL_BUILT_MODULE): $(MB_INTERMEDIATES)/build/config.cache
+
+$(MB_INTERMEDIATES)/build/config.cache:
+	$(hide) mkdir -p $(MB_INTERMEDIATES)/build/;
+	cp $(strip $(MB_LOCAL_PATH))/config.cache $(MB_INTERMEDIATES)/build/
 
 include $(CLEAR_VARS)
 
@@ -49,3 +57,4 @@ $(eval $(call copy-one-header,$(MB_INTERMEDIATES)/build/include/mb_config.h,$(TA
 all_copied_headers: $(TARGET_OUT_HEADERS)/$(LOCAL_COPY_HEADERS_TO)/mb_config.h
 
 $(MB_INTERMEDIATES)/build/src/.libs/libmbfly.a: MadButterfly
+
