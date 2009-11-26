@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <SkCanvas.h>
 #include <SkBitmap.h>
+#include <SkRegion.h>
 #include <SkShader.h>
 #include <SkDevice.h>
 #include <SkGradientShader.h>
