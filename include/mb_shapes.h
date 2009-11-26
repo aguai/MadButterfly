@@ -65,7 +65,7 @@
 /*! \defgroup shape_path Shape of Path
  * @{
  */
-extern shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data);
+extern shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data);
 extern shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
 						 char *commands,
 						 co_aix *pnts,
