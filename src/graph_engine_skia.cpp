@@ -584,7 +584,8 @@ int mbe_in_stroke(mbe_t *canvas, co_aix x, co_aix y) {
 }
 
 void mbe_new_path(mbe_t *canvas) {
-    canvas->subpath->reset();
+    canvas->subpath->rewind();
+    canvas->path->rewind();
 }
 
 void mbe_curve_to(mbe_t *canvas, co_aix x1, co_aix y1,
@@ -650,7 +651,8 @@ void mbe_stroke(mbe_t *canvas) {
 
     _finish_paint(canvas);
 
-    path->reset();
+    path->rewind();
+    canvas->subpath->rewind();
 }
 
 /*! \brief Create a mbe from a SkCanvas.
@@ -771,7 +773,8 @@ void mbe_save(mbe_t *canvas) {
 
 void mbe_fill(mbe_t *canvas) {
     mbe_fill_preserve(canvas);
-    canvas->path->reset();
+    canvas->path->rewind();
+    canvas->subpath->rewind();
 }
 
 void mbe_clip(mbe_t *canvas) {
@@ -779,7 +782,8 @@ void mbe_clip(mbe_t *canvas) {
 	_update_path(canvas);
     
     canvas->canvas->clipPath(*canvas->path, SkRegion::kIntersect_Op);
-    canvas->path->reset();
+    canvas->path->rewind();
+    canvas->subpath->rewind();
 }
 
 mbe_font_face_t * mbe_query_font_face(const char *family,
@@ -794,24 +798,19 @@ void mbe_clear(mbe_t *canvas) {
 
 void mbe_copy_source(mbe_t *src, mbe_t *dst) {
     SkPaint *paint = dst->paint;
-    SkShader *shader;
-    SkBitmap *bmap;
+    const SkBitmap *bmap;
     SkXfermode *mode;
 
-    _prepare_paint(dst, SkPaint::kFill_Style);
+    /* _prepare_paint(dst, SkPaint::kFill_Style); */
     mode = SkPorterDuff::CreateXfermode(SkPorterDuff::kSrc_Mode);
     paint->setXfermode(mode);
-    mode->unref();
     bmap = &src->canvas->getDevice()->accessBitmap(false);
-    shader = SkShader::CreateBitmapShader(*bmap,
-					  SkShader::kClamp_TileMode ,
-					  SkShader::kClamp_TileMode);
-    paint->setShader(shader);
-    shader->unref();
 
-    dst->canvas->drawPaint(*paint);
+    dst->canvas->drawBitmap(*bmap, 0, 0, paint);
     
-    _finish_paint(canvas);
+    paint->reset();
+    mode->unref();
+    /* _finish_paint(dst); */
 }
 
 void mbe_transform(mbe_t *mbe, co_aix matrix[6]) {
