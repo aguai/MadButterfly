@@ -19,20 +19,12 @@ ac_cv_c_uint64_t=${ac_cv_c_uint64_t=yes}
 ac_cv_cxx_compiler_gnu=${ac_cv_cxx_compiler_gnu=yes}
 ac_cv_env_CCC_set=''
 ac_cv_env_CCC_value=''
-ac_cv_env_CC_set=set
-ac_cv_env_CC_value=/home/thinker/progm/Android/prebuilt/freebsd-x86/toolchain/arm-eabi-4.4.0/bin/arm-unknown-eabi-gcc
-ac_cv_env_CFLAGS_set=set
-ac_cv_env_CFLAGS_value='-specs /home/thinker/progm/Android/build/core/combo/linux-arm.specs -mandroid --sysroot=/home/thinker/progm/Android/out/target/product/generic/obj/ -I/home/thinker/progm/Android/external/skia/include/core -I/home/thinker/progm/Android/external/skia/include/core/../effects/ -I/home/thinker/progm/Android/frameworks/base/include'
 ac_cv_env_CPPFLAGS_set=''
 ac_cv_env_CPPFLAGS_value=''
 ac_cv_env_CPP_set=''
 ac_cv_env_CPP_value=''
 ac_cv_env_CXXCPP_set=''
 ac_cv_env_CXXCPP_value=''
-ac_cv_env_CXXFLAGS_set=set
-ac_cv_env_CXXFLAGS_value='-specs /home/thinker/progm/Android/build/core/combo/linux-arm.specs -mandroid --sysroot=/home/thinker/progm/Android/out/target/product/generic/obj/ -I/home/thinker/progm/Android/external/skia/include/core -I/home/thinker/progm/Android/external/skia/include/core/../effects/ -I/home/thinker/progm/Android/frameworks/base/include'
-ac_cv_env_CXX_set=set
-ac_cv_env_CXX_value=/home/thinker/progm/Android/prebuilt/freebsd-x86/toolchain/arm-eabi-4.4.0/bin/arm-unknown-eabi-g++
 ac_cv_env_LDFLAGS_set=set
 ac_cv_env_LDFLAGS_value=''
 ac_cv_env_LIBS_set=''
