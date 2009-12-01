@@ -15,9 +15,19 @@ LOCAL_SRC_FILES := \
 
 include $(BUILD_JAVA_LIBRARY)
 
-MBFLY_JAVA:= $(strip $(intermediates))/classes.jar
-MADBUTTERFLY_ATREE:= $(strip $(LOCAL_PATH))/madbutterfly.atree
+########################
+include $(CLEAR_VARS)
 
-ALL_SDK_FILES += $(MBFLY_JAVA)
+LOCAL_MODULE := mbfly-permissions.xml
 
-ADDITIONAL_ATREE_FILES += $(MADBUTTERFLY_ATREE)
+LOCAL_MODULE_TAGS := user
+
+LOCAL_MODULE_CLASS := ETC
+
+# This will install the file in /system/etc/permissions
+#
+LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/permissions
+
+LOCAL_SRC_FILES := $(LOCAL_MODULE)
+
+include $(BUILD_PREBUILT)
