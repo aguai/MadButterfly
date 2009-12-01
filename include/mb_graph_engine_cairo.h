@@ -106,13 +106,19 @@ static void mbe_clear(mbe_t *canvas) {
     cairo_set_operator(canvas, old_op);
 }
 
-static void mbe_copy_source(mbe_t *canvas) {
+static void mbe_copy_source(mbe_t *src, mbe_t *dst) {
     cairo_operator_t saved_op;
+    cairo_surface_t *surf;
+    cairo_pattern_t *ptn;
     
-    saved_op = cairo_get_operator(canvas);
-    cairo_set_operator(canvas, CAIRO_OPERATOR_SOURCE);
-    cairo_paint(canvas);
-    cairo_set_operator(canvas, saved_op);
+    surf = cairo_get_target(src);
+    ptn = cairo_pattern_create_for_surface(surf);
+    cairo_set_source(src, ptn);
+    cairo_pattern_destroy(ptn);
+    saved_op = cairo_get_operator(dst);
+    cairo_set_operator(dst, CAIRO_OPERATOR_SOURCE);
+    cairo_paint(dst);
+    cairo_set_operator(dst, saved_op);
 }
 
 static mbe_scaled_font_t *
