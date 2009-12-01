@@ -2,7 +2,7 @@ package org.madbutterfly;
 
 import java.util.ArrayList;
 
-class paint {
+public class paint {
     protected int addr;
     redraw_man rdman;
     ArrayList members;

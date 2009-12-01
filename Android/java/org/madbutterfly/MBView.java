@@ -10,7 +10,7 @@ import android.graphics.Xfermode;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 
-class MBView extends SurfaceView {
+public class MBView extends SurfaceView {
     redraw_man rdman;
     Canvas cr, backend;
     Bitmap cr_bmap, backend_bmap;
