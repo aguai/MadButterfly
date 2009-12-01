@@ -28,27 +28,27 @@ LOCAL_SRC_FILES:= $(MB_INTERMEDIATES)/build/src/.libs/libmbfly.a
 LOCAL_MODULE_CLASS:= STATIC_LIBRARIES
 LOCAL_REQUIRED_MODULES:= MadButterfly
 LOCAL_COPY_HEADERS:= \
-		../../src/include/mb_prop.h \
-		../../src/include/mb_graph_engine.h \
-		../../src/include/mb_redraw_man.h \
-		../../src/include/mb.h \
-		../../src/include/mb_graph_engine_cairo.h \
-		../../src/include/mb_shapes.h \
-		../../src/include/mb_X_supp.h \
-		../../src/include/mb_graph_engine_skia.h \
-		../../src/include/mb_so.h \
-		../../src/include/mb_af.h \
-		../../src/include/mb_img_ldr.h \
-		../../src/include/mb_timer.h \
-		../../src/include/mb_ani_menu.h \
-		../../src/include/mb_obj.h \
-		../../src/include/mb_tools.h \
-		../../src/include/mb_animate.h \
-		../../src/include/mb_observer.h \
-		../../src/include/mb_types.h \
-		../../src/include/mb_basic_types.h \
-		../../src/include/mb_paint.h \
-		../../src/include/mbbutton.h
+		../../include/mb_prop.h \
+		../../include/mb_graph_engine.h \
+		../../include/mb_redraw_man.h \
+		../../include/mb.h \
+		../../include/mb_graph_engine_cairo.h \
+		../../include/mb_shapes.h \
+		../../include/mb_X_supp.h \
+		../../include/mb_graph_engine_skia.h \
+		../../include/mb_so.h \
+		../../include/mb_af.h \
+		../../include/mb_img_ldr.h \
+		../../include/mb_timer.h \
+		../../include/mb_ani_menu.h \
+		../../include/mb_obj.h \
+		../../include/mb_tools.h \
+		../../include/mb_animate.h \
+		../../include/mb_observer.h \
+		../../include/mb_types.h \
+		../../include/mb_basic_types.h \
+		../../include/mb_paint.h \
+		../../include/mbbutton.h
 LOCAL_COPY_HEADERS_TO:= libmbfly
 
 include $(BUILD_DUMMY)
