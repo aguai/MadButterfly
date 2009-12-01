@@ -21,4 +21,8 @@ public class shape {
 	if(addr != 0)
 	    _jni.rdman_shape_free(rdman._rdman_addr, addr);
     }
+
+    public void set_stroke_width(float w) {
+	_jni.sh_set_stroke_width(addr, w);
+    }
 }

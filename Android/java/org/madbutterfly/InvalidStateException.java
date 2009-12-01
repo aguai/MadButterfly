@@ -2,7 +2,7 @@ package org.madbutterfly;
 
 import java.lang.Exception;
 
-class InvalidStateException extends Exception {
+public class InvalidStateException extends Exception {
     public InvalidStateException() {
 	super();
     }

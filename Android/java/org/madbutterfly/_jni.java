@@ -23,6 +23,7 @@ class _jni {
     native static void rdman_shape_changed(int rdman, int shape);
     native static void rdman_shape_free(int rdman, int shape);
     native static int rdman_shape_path_new(int rdman, String data);
+    native static void sh_set_stroke_width(int shape, float w);
 
     /* paint_t */
     native static int rdman_paint_color_new(int rdman, float r, float g,

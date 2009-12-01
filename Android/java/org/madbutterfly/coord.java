@@ -28,5 +28,7 @@ public class coord {
 	_jni.rdman_add_shape(rdman._rdman_addr, member.addr, addr);
 	members.add(member);
 	member.parent = this;
+	_jni.rdman_coord_changed(rdman._rdman_addr, addr);
+	_jni.rdman_shape_changed(rdman._rdman_addr, member.addr);
     }
 }

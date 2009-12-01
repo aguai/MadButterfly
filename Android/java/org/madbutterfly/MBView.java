@@ -29,6 +29,8 @@ public class MBView extends SurfaceView {
 	mode = new PorterDuffXfermode(PorterDuff.Mode.SRC);
 	copy_pnt = new Paint();
 	copy_pnt.setXfermode(mode);
+	w = 100;
+	h = 100;
     }
     
     public redraw_man get_rdman() {
@@ -51,6 +53,12 @@ public class MBView extends SurfaceView {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 	this.w = w;
 	this.h = h;
+
+	if(rdman == null) {
+	    get_rdman();
+	    return;
+	}
+	
 	cr_bmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
 	cr.setBitmap(cr_bmap);
 	backend_bmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
@@ -64,5 +72,6 @@ public class MBView extends SurfaceView {
 	holder = getHolder();
 	canvas = holder.lockCanvas();
 	canvas.drawBitmap(backend_bmap, 0, 0, copy_pnt);
+	holder.unlockCanvasAndPost(canvas);
     }
 }
