@@ -53,8 +53,9 @@ LOCAL_COPY_HEADERS_TO:= libmbfly
 
 include $(BUILD_DUMMY)
 
-$(eval $(call copy-one-header,$(MB_INTERMEDIATES)/build/include/mb_config.h,$(TARGET_OUT_HEADERS)/$(LOCAL_COPY_HEADERS_TO)/mb_config.h))
-all_copied_headers: $(TARGET_OUT_HEADERS)/$(LOCAL_COPY_HEADERS_TO)/mb_config.h
+MB_LOCAL_COPY_HEADERS_TO:= $(LOCAL_COPY_HEADERS_TO)
+$(eval $(call copy-one-header,$(MB_INTERMEDIATES)/build/include/mb_config.h,$(TARGET_OUT_HEADERS)/$(MB_LOCAL_COPY_HEADERS_TO)/mb_config.h))
+all_copied_headers: $(TARGET_OUT_HEADERS)/$(MB_LOCAL_COPY_HEADERS_TO)/mb_config.h
 
 $(MB_INTERMEDIATES)/build/src/.libs/libmbfly.a: MadButterfly
-
+$(MB_INTERMEDIATES)/build/include/mb_config.h: MadButterfly
