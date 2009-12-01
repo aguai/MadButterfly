@@ -7,7 +7,9 @@ LOCAL_CONFIGURE := $(LOCAL_PATH)/../../configure
 LOCAL_CONFIGURE_ARGS := --enable-skia --config-cache
 LOCAL_CFLAGS := -I$(shell pwd)/$(call include-path-for,corecg) \
 	-I$(shell pwd)/$(call include-path-for,corecg)/../effects/ \
-	-I$(shell pwd)/$(call include-path-for,frameworks-base)
+	-I$(shell pwd)/$(call include-path-for,frameworks-base) \
+	-I$(shell pwd)/$(call include-path-for,system-core)
+# LOCAL_CFLAGS += -O0 -g
 LOCAL_CONFIGURE_CACHE := config.cache
 
 include $(BUILD_AUTOCONF)
