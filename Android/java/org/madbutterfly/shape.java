@@ -1,6 +1,6 @@
 package org.madbutterfly;
 
-class shape {
+public class shape {
     protected int addr;
     redraw_man rdman;
     protected coord parent;

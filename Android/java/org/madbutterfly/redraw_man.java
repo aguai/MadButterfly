@@ -4,7 +4,7 @@ import android.graphics.Canvas;
 import android.view.SurfaceHolder;
 import java.util.ArrayList;
 
-class redraw_man {
+public class redraw_man {
     Canvas _cr, _backend;
     int _rdman_addr;		// address of redraw_man_t
     coord root;

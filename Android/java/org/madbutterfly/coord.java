@@ -2,7 +2,7 @@ package org.madbutterfly;
 
 import java.util.ArrayList;
 
-class coord {
+public class coord {
     protected int addr;
     redraw_man rdman;
     public ArrayList children;
