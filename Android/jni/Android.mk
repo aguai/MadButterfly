@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libmbfly-jni
 LOCAL_SRC_FILES := mbfly.cpp
-LOCAL_SHARED_LIBRARIES := libcorecg libsgl libnativehelper
+LOCAL_SHARED_LIBRARIES := libcorecg libsgl libnativehelper libcutils
 LOCAL_STATIC_LIBRARIES := libmbfly
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/libmbfly \
 	$(call include-path-for,corecg) \
