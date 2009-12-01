@@ -9,6 +9,10 @@ DECL_C
 #include <mb.h>
 #include <jni.h>
 
+#define ASSERT(x)
+
+
+extern mbe_t *skia_mbe_create_by_canvas(SkCanvas *canvas);
 
 jint Java_org_madbutterfly__1jni_redraw_1man_1new(JNIEnv *env,
 						  jobject cls,
@@ -18,6 +22,7 @@ jint Java_org_madbutterfly__1jni_redraw_1man_1new(JNIEnv *env,
     jfieldID fid;
     SkCanvas *_cr, *_backend;
     redraw_man_t *rdman;
+    mbe_t *mbe1, *mbe2;
     
     canvas_cls = env->GetObjectClass(cr);
     fid = env->GetFieldID(canvas_cls, "mNativeCanvas", "I");
@@ -25,9 +30,15 @@ jint Java_org_madbutterfly__1jni_redraw_1man_1new(JNIEnv *env,
     canvas_cls = env->GetObjectClass(backend);
     fid = env->GetFieldID(canvas_cls, "mNativeCanvas", "I");
     _backend = (SkCanvas *)env->GetIntField(backend, fid);
-    rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
-    redraw_man_init(rdman, (mbe_t *)_cr, (mbe_t *)_backend);
 
+    mbe1 = skia_mbe_create_by_canvas(_cr);
+    mbe2 = skia_mbe_create_by_canvas(_backend);
+    ASSERT(mbe1 != NULL && mbe2 != NULL);
+    
+    rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
+    ASSERT(rdman != NULL);
+    redraw_man_init(rdman, mbe1, mbe2);
+    
     return (jint)rdman;
 }
 
@@ -152,6 +163,13 @@ jint Java_org_madbutterfly__1jni_rdman_1shape_1path_1new(JNIEnv *env,
     env->ReleaseStringUTFChars(data, str);
 
     return shape;
+}
+
+void Java_org_madbutterfly__1jni_sh_1set_1stroke_1width(JNIEnv *env,
+							       jobject cls,
+							       jint shape,
+							       jfloat w) {
+    sh_set_stroke_width((shape_t *)shape, w);
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1paint_1color_1new(JNIEnv *env,
