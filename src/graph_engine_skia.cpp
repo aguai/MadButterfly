@@ -192,25 +192,28 @@ static void
 _prepare_paint(mbe_t *mbe, SkPaint::Style style) {
     SkPaint *paint = mbe->paint;
     mbe_pattern_t *ptn = mbe->states->ptn;
-    SkShader *shader = ptn->shader;
+    SkShader *shader;
     co_aix matrix[6];
     SkMatrix skmatrix;
 
     paint->setStyle(style);
     
-    /* Local matrix of SkShader is a mapping from source pattern to
-     * user space.  Unlikely, for Cairo is a mapping from user space
-     * to source pattern.
-     */
-    matrix_mul(mbe->states->matrix, ptn->matrix, matrix);
-    MB_MATRIX_2_SKMATRIX(skmatrix, matrix);
-    shader->setLocalMatrix(skmatrix);
-    paint->setShader(shader);
+    if(ptn != NULL) {
+	/* Local matrix of SkShader is a mapping from source pattern to
+	 * user space.  Unlikely, for Cairo is a mapping from user space
+	 * to source pattern.
+	 */
+	shader = ptn->shader;
+	matrix_mul(mbe->states->matrix, ptn->matrix, matrix);
+	MB_MATRIX_2_SKMATRIX(skmatrix, matrix);
+	shader->setLocalMatrix(skmatrix);
+	paint->setShader(shader);
+    }
 
     if(style == SkPaint::kStroke_Style)
 	paint->setStrokeWidth(CO_AIX_2_SKSCALAR(mbe->states->line_width));
 
-    if(ptn->has_size)
+    if(ptn != NULL && ptn->has_size)
 	_prepare_sized_pattern(mbe, ptn);
 }
 
@@ -219,7 +222,7 @@ _finish_paint(mbe_t *mbe) {
     mbe_pattern_t *ptn = mbe->states->ptn;
     
     mbe->paint->reset();
-    if(ptn->has_size)
+    if(ptn != NULL && ptn->has_size)
 	_finish_sized_pattern(mbe);
 }
 
@@ -512,6 +515,7 @@ void mbe_set_source_rgba(mbe_t *canvas,
 			   MB_CO_COMP_2_SK(r),
 			   MB_CO_COMP_2_SK(g),
 			   MB_CO_COMP_2_SK(b));
+    canvas->paint->ptn = NULL;
 }
 
 void mbe_set_scaled_font(mbe_t *canvas,
