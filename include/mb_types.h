@@ -377,6 +377,7 @@ struct _shape {
 #define sh_get_aggr_matrix(sh) (coord_get_aggr_matrix(sh_get_coord(sh)))
 #define sh_get_fill(sh) ((sh)->fill)
 #define sh_get_stroke(sh) ((sh)->stroke)
+#define sh_set_stroke_width(sh, v) do { (sh)->stroke_width = (v); } while(0)
 
 
 /*! \brief A sprite is a set of graphics that being an object in animation.

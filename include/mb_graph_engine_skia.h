@@ -113,7 +113,7 @@ extern mbe_font_face_t * mbe_query_font_face(const char *family,
 extern void mbe_free_font_face(mbe_font_face_t *face);
 
 extern void mbe_clear(mbe_t *canvas);
-extern void mbe_copy_source(mbe_t *canvas);
+extern void mbe_copy_source(mbe_t *src, mbe_t *dst);
 extern void mbe_transform(mbe_t *mbe, co_aix matrix[6]);
 extern void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
 		    co_aix angle_start, co_aix angle_stop);

@@ -515,7 +515,7 @@ void mbe_set_source_rgba(mbe_t *canvas,
 			   MB_CO_COMP_2_SK(r),
 			   MB_CO_COMP_2_SK(g),
 			   MB_CO_COMP_2_SK(b));
-    canvas->paint->ptn = NULL;
+    canvas->states->ptn = NULL;
 }
 
 void mbe_set_scaled_font(mbe_t *canvas,
@@ -653,10 +653,14 @@ void mbe_stroke(mbe_t *canvas) {
     path->reset();
 }
 
-mbe_t *mbe_create(mbe_surface_t *target) {
+/*! \brief Create a mbe from a SkCanvas.
+ *
+ * It is only used for Android JNI.  It is used to create mbe_t from a
+ * SkCanvas created by Canvas class of Android Java application.
+ */
+mbe_t *skia_mbe_create_by_canvas(SkCanvas *canvas) {
     mbe_t *mbe;
     struct _mbe_states_t *states;
-    SkBitmap *bitmap = (SkBitmap *)target;
 
     mbe = (mbe_t *)malloc(sizeof(mbe_t));
     if(mbe == NULL)
@@ -670,7 +674,8 @@ mbe_t *mbe_create(mbe_surface_t *target) {
 	return NULL;
     }
     
-    mbe->canvas = new SkCanvas(*bitmap);
+    canvas->ref();
+    mbe->canvas = canvas;
     mbe->path = new SkPath();
     mbe->subpath = new SkPath();
     mbe->saved_region = new SkRegion();
@@ -680,7 +685,7 @@ mbe_t *mbe_create(mbe_surface_t *target) {
     states->line_width = 0;
     states->next = NULL;
 
-    if(mbe->canvas == NULL || mbe->path == NULL ||
+    if(mbe->path == NULL ||
        mbe->subpath == NULL || mbe->paint == NULL ||
        mbe->saved_region == NULL)
 	goto fail;
@@ -690,7 +695,7 @@ mbe_t *mbe_create(mbe_surface_t *target) {
     return mbe;
 
  fail:
-    if(mbe->canvas) delete mbe->canvas;
+    canvas->unref();
     if(mbe->path) delete mbe->path;
     if(mbe->subpath) delete mbe->subpath;
     if(mbe->paint) delete mbe->paint;
@@ -701,10 +706,31 @@ mbe_t *mbe_create(mbe_surface_t *target) {
     return NULL;
 }
 
+mbe_t *mbe_create(mbe_surface_t *target) {
+    mbe_t *mbe;
+    SkBitmap *bitmap = (SkBitmap *)target;
+    SkCanvas *canvas;
+
+    canvas = new SkCanvas(*bitmap);
+    if(canvas == NULL) {
+	delete bitmap;
+	return NULL;
+    }
+	
+    mbe = skia_mbe_create_by_canvas(canvas);
+    canvas->unref();
+    
+    if(mbe == NULL) {
+	delete bitmap;
+    }
+    
+    return mbe;
+}
+
 void mbe_destroy(mbe_t *canvas) {
     struct _mbe_states_t *states;
     
-    delete canvas->canvas;
+    canvas->canvas->unref();
     delete canvas->path;
     delete canvas->subpath;
     delete canvas->paint;
@@ -766,17 +792,25 @@ void mbe_clear(mbe_t *canvas) {
     canvas->canvas->drawColor(color, SkPorterDuff::kClear_Mode);
 }
 
-void mbe_copy_source(mbe_t *canvas) {
-    SkPaint *paint = canvas->paint;
+void mbe_copy_source(mbe_t *src, mbe_t *dst) {
+    SkPaint *paint = dst->paint;
+    SkShader *shader;
+    SkBitmap *bmap;
     SkXfermode *mode;
 
-    _prepare_paint(canvas, SkPaint::kFill_Style);
+    _prepare_paint(dst, SkPaint::kFill_Style);
     mode = SkPorterDuff::CreateXfermode(SkPorterDuff::kSrc_Mode);
     paint->setXfermode(mode);
-    /* mode->unref(); */
+    mode->unref();
+    bmap = &src->canvas->getDevice()->accessBitmap(false);
+    shader = SkShader::CreateBitmapShader(*bmap,
+					  SkShader::kClamp_TileMode ,
+					  SkShader::kClamp_TileMode);
+    paint->setShader(shader);
+    shader->unref();
 
-    canvas->canvas->drawPaint(*paint);
-
+    dst->canvas->drawPaint(*paint);
+    
     _finish_paint(canvas);
 }
 

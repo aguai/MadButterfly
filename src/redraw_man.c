@@ -1917,7 +1917,7 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
     if(n_dirty_areas)
 	make_clip(rdman->backend, n_dirty_areas, dirty_areas);
     
-    mbe_copy_source(rdman->backend);
+    mbe_copy_source(rdman->cr, rdman->backend);
 }
 #else /* UNITTEST */
 static void make_clip(mbe_t *cr, int n_dirty_areas,
