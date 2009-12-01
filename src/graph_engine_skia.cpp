@@ -108,6 +108,9 @@ struct _mbe_states_t {
 	(sk).setSkewY(CO_AIX_2_SKSCALAR((mb)[3]));	\
 	(sk).setScaleY(CO_AIX_2_SKSCALAR((mb)[4]));	\
 	(sk).setTranslateY(CO_AIX_2_SKSCALAR((mb)[5]));	\
+	(sk).setPerspX(0);				\
+	(sk).setPerspY(0);				\
+	(sk).set(SkMatrix::kMPersp2, 1);		\
     }
 #define SKMATRIX_2_MB_MATRIX(mb, sk) {				\
 	(mb)[0] = SKSCALAR_2_CO_AIX((sk).getScaleX());		\
