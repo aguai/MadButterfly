@@ -11,16 +11,19 @@ DECL_C
 
 
 jint Java_org_madbutterfly__1jni_redraw_1man_1new(JNIEnv *env,
+						  jobject cls,
 						  jobject cr,
 						  jobject backend) {
-    jclass cls;
+    jclass canvas_cls;
     jfieldID fid;
     SkCanvas *_cr, *_backend;
     redraw_man_t *rdman;
     
-    cls = env->GetObjectClass(cr);
-    fid = env->GetFieldID(cls, "mNativeCanvas", "I");
+    canvas_cls = env->GetObjectClass(cr);
+    fid = env->GetFieldID(canvas_cls, "mNativeCanvas", "I");
     _cr = (SkCanvas *)env->GetIntField(cr, fid);
+    canvas_cls = env->GetObjectClass(backend);
+    fid = env->GetFieldID(canvas_cls, "mNativeCanvas", "I");
     _backend = (SkCanvas *)env->GetIntField(backend, fid);
     rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(rdman, (mbe_t *)_cr, (mbe_t *)_backend);
@@ -29,12 +32,14 @@ jint Java_org_madbutterfly__1jni_redraw_1man_1new(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_redraw_1man_1free(JNIEnv *env,
+						   jobject cls,
 						   jint rdman) {
     redraw_man_destroy((redraw_man_t *)rdman);
     free((redraw_man_t *)rdman);
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1add_1shape(JNIEnv *env,
+						   jobject cls,
 						   jint rdman,
 						   jint shape,
 						   jint coord) {
@@ -47,6 +52,7 @@ jint Java_org_madbutterfly__1jni_rdman_1add_1shape(JNIEnv *env,
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1get_1root(JNIEnv *env,
+						  jobject cls,
 						  jint rdman) {
     jint root;
 
@@ -55,6 +61,7 @@ jint Java_org_madbutterfly__1jni_rdman_1get_1root(JNIEnv *env,
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1redraw_1all(JNIEnv *env,
+						    jobject cls,
 						    jint rdman) {
     jint r;
 
@@ -63,6 +70,7 @@ jint Java_org_madbutterfly__1jni_rdman_1redraw_1all(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_rdman_1paint_1fill(JNIEnv *env,
+						    jobject cls,
 						    jint rdman,
 						    jint paint,
 						    jint shape) {
@@ -72,6 +80,7 @@ void Java_org_madbutterfly__1jni_rdman_1paint_1fill(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_rdman_1paint_1stroke(JNIEnv *env,
+						      jobject cls,
 						      jint rdman,
 						      jint paint,
 						      jint shape) {
@@ -81,6 +90,7 @@ void Java_org_madbutterfly__1jni_rdman_1paint_1stroke(JNIEnv *env,
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1coord_1new(JNIEnv *env,
+						   jobject cls,
 						   jint rdman,
 						   jint parent) {
     jint coord;
@@ -91,6 +101,7 @@ jint Java_org_madbutterfly__1jni_rdman_1coord_1new(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_rdman_1coord_1free(JNIEnv *env,
+						    jobject cls,
 						    jint rdman,
 						    jint coord) {
     rdman_coord_free((redraw_man_t *)rdman,
@@ -98,6 +109,7 @@ void Java_org_madbutterfly__1jni_rdman_1coord_1free(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_rdman_1coord_1subtree_1free(JNIEnv *env,
+							     jobject cls,
 							     jint rdman,
 							     jint coord) {
     rdman_coord_subtree_free((redraw_man_t *)rdman,
@@ -105,6 +117,7 @@ void Java_org_madbutterfly__1jni_rdman_1coord_1subtree_1free(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_rdman_1coord_1changed(JNIEnv *env,
+						       jobject cls,
 						       jint rdman,
 						       jint coord) {
     rdman_coord_changed((redraw_man_t *)rdman,
@@ -112,6 +125,7 @@ void Java_org_madbutterfly__1jni_rdman_1coord_1changed(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_rdman_1shape_1changed(JNIEnv *env,
+						       jobject cls,
 						       jint rdman,
 						       jint shape) {
     rdman_shape_changed((redraw_man_t *)rdman,
@@ -119,6 +133,7 @@ void Java_org_madbutterfly__1jni_rdman_1shape_1changed(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_rdman_1shape_1free(JNIEnv *env,
+						    jobject cls,
 						    jint rdman,
 						    jint shape) {
     rdman_shape_free((redraw_man_t *)rdman,
@@ -126,6 +141,7 @@ void Java_org_madbutterfly__1jni_rdman_1shape_1free(JNIEnv *env,
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1shape_1path_1new(JNIEnv *env,
+							 jobject cls,
 							 jint rdman,
 							 jstring data) {
     const char *str;
@@ -139,6 +155,7 @@ jint Java_org_madbutterfly__1jni_rdman_1shape_1path_1new(JNIEnv *env,
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1paint_1color_1new(JNIEnv *env,
+							  jobject cls,
 							  jint rdman,
 							  jfloat r, jfloat g,
 							  jfloat b, jfloat a) {
@@ -150,6 +167,7 @@ jint Java_org_madbutterfly__1jni_rdman_1paint_1color_1new(JNIEnv *env,
 }
 
 jint Java_org_madbutterfly__1jni_rdman_1paint_1free(JNIEnv *env,
+						    jobject cls,
 						    jint rdman,
 						    jint paint) {
     jint r;
@@ -160,6 +178,7 @@ jint Java_org_madbutterfly__1jni_rdman_1paint_1free(JNIEnv *env,
 }
 
 void Java_org_madbutterfly__1jni_paint_1color_1set(JNIEnv *env,
+						   jobject cls,
 						   jint paint,
 						   jfloat r, jfloat g,
 						   jfloat b, jfloat a) {
@@ -167,6 +186,7 @@ void Java_org_madbutterfly__1jni_paint_1color_1set(JNIEnv *env,
 }
 
 jfloatArray Java_org_madbutterfly__1jni_paint_1color_1get(JNIEnv *env,
+							  jobject cls,
 							  jint paint) {
     co_comp_t r, g, b, a;
     jfloat color[4];
