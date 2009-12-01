@@ -11,6 +11,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-	<uses-library android:name="libmbfly-jni" />
+	<uses-library android:name="org.madbutterfly" />
     </application>
 </manifest> 
