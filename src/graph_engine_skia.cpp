@@ -122,6 +122,7 @@ struct _mbe_states_t {
      (((int)((c)->r * 255)) << 16) |		\
      (((int)((c)->g * 255)) << 8) |		\
      (((int)((c)->b * 255))))
+#define MB_CO_COMP_2_SK(c) (((int)((c) * 255)) & 0xff)
 
 static const co_aix id_matrix[6] = { 1, 0, 0, 0, 1, 0 };
 
@@ -499,9 +500,20 @@ void mbe_paint_with_alpha(mbe_t *canvas, co_aix alpha) {
     
 }
 
-void mbe_surface_destroy(mbe_surface_t *surface) {}
+void mbe_surface_destroy(mbe_surface_t *surface) {
+    SkBitmap *bmap = (SkBitmap *)surface;
+    
+    delete bmap;
+}
+
 void mbe_set_source_rgba(mbe_t *canvas,
-				co_aix r, co_aix g, co_aix b, co_aix a) {}
+			 co_aix r, co_aix g, co_aix b, co_aix a) {
+    canvas->paint->setARGB(MB_CO_COMP_2_SK(a),
+			   MB_CO_COMP_2_SK(r),
+			   MB_CO_COMP_2_SK(g),
+			   MB_CO_COMP_2_SK(b));
+}
+
 void mbe_set_scaled_font(mbe_t *canvas,
 				const mbe_scaled_font_t *scaled) {}
 void mbe_set_source_rgb(mbe_t *canvas, co_aix r, co_aix g, co_aix b) {}
