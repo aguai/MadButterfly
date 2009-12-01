@@ -14,3 +14,10 @@ LOCAL_SRC_FILES := \
 	org/madbutterfly/InvalidStateException.java
 
 include $(BUILD_JAVA_LIBRARY)
+
+MBFLY_JAVA:= $(strip $(intermediates))/classes.jar
+MADBUTTERFLY_ATREE:= $(strip $(LOCAL_PATH))/madbutterfly.atree
+
+ALL_SDK_FILES += $(MBFLY_JAVA)
+
+ADDITIONAL_ATREE_FILES += $(MADBUTTERFLY_ATREE)
