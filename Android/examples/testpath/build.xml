@@ -42,7 +42,6 @@
         <pathelement path="${sdk-location}/tools/lib/androidprefs.jar" />
         <pathelement path="${sdk-location}/tools/lib/apkbuilder.jar" />
         <pathelement path="${sdk-location}/tools/lib/jarutils.jar" />
-        <pathelement path="${sdk-location}/tools/lib/mbfly-java.jar" />
     </path>
 
     <taskdef name="setup"
