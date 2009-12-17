@@ -229,12 +229,12 @@
  *
  * \section cache_imp Implementation of Cache
  * Both cached coords and coords that opacity != 1 need a canvas to
- * draw descendants on.  Both cases are traded in the same way.
- * Every of them own a canvas_info to describe canvas and related
+ * draw descendants on.  Both cases are traded in the same way.  Every
+ * of them own a canvas_info to describe canvas and related
  * information.  aggr_matrix of descendants must be adjusted to make
- * left-top of range just at origin of canvas.  It can save space by setting
- * just large enough to hold rendering result of descendants.  The process
- * of adjusting is zeroing.
+ * left-top of bounding box just at origin (0, 0) of canvas.  It saves
+ * space to give a canvas just enough for rending descadants.  The
+ * process of adjusting left-top of bounding box is zeroing.
  *
  * Following is rules.
  * - zeroing on a cached coord is performed by adjust coord_t::aggr_matrix 
@@ -242,18 +242,20 @@
  * - Clean coords works just like before without change.
  *   - in preorder
  * - never perform zeroing on root_coord.
- * - zeroing on cached coords marked with \ref COF_MUST_ZEROING.
+ * - do zeroing on cached coords marked with \ref COF_MUST_ZEROING.
  *   - when clean a descendant that moves out-side of it's canvas,
  *     respective cached coord is marked with \ref COF_MUST_ZEROING.
  *   - zeroing is performed immediately after clean coords.
- *   - zeroing will not propagate acrossing boundary of cached coord.
- *     - It will be stopped at descendants which are cached coords.
+ *   - zeroing will not be propagated to ancestors of a cached coord.
+ *     - It will be stopped once a cached coord being found.
  *     - coord_t::cur_area and coord_t::aggr_matrix of cached coords
  *       must be ajdusted.
  * - the area of a cached coord is defined in parent space.
  *   - areas of descendants are defined in space defined by aggr_matrix of
  *     cached coord.
- *   - parent know the area in where cached coord and descendnats will
+ *     - coord_t::aggr_matrix of cached coord defines coordination of
+ *       descendants.
+ *   - the parent knows the area in where cached coord and descendnats will
  *     be draw.
  * - cached coords keep their private dirty area list.
  *   - private dirty areas of a cached coord are transformed and added to
@@ -1492,7 +1494,7 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     add_dirty_area(rdman, coord, area);
 }
 
-/*! \brief Add canvas owner of dirty geos to coord_t::zeroing_coords.
+/*! \brief Add canvas owner of dirty geos to redraw_man_t::zeroing_coords.
  *
  * All possible coords that need a zeroing have at least one dirty geo.
  */
@@ -1503,6 +1505,7 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
     int n_dirty_coords;
     coord_t **dirty_coords, *coord;
 
+    /* Mark all cached ancestor coords of dirty geos */
     n_dirty_geos = rdman->dirty_geos.num;
     dirty_geos = rdman->dirty_geos.ds;
     for(i = 0; i < n_dirty_geos; i++) {
@@ -1516,6 +1519,7 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 	}
     }
     
+    /* Mark all cached ancestor coords of dirty coords */
     n_dirty_coords = rdman->dirty_coords.num;
     dirty_coords = rdman->dirty_coords.ds;
     for(i = 0; i < n_dirty_coords; i++) {
@@ -1528,12 +1532,14 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 	}
     }
     
+    /* Add all marked coords into redraw_man_t::zeroing_coords list */
     FOR_COORDS_PREORDER(rdman->root_coord, coord) {
 	if(!coord_get_flags(coord, COF_TEMP_MARK)) {
 	    preorder_coord_skip_subtree(coord);
 	    continue;
 	}
 	add_zeroing_coord(rdman, coord);
+	
 	coord_clear_flags(coord, COF_TEMP_MARK);
     }
     
@@ -2110,6 +2116,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	rdman->n_dirty_areas = 0;
     }
 
+    /* clear COF_MUST_ZEROING flag for coords */
     coords = rdman->zeroing_coords.ds;
     for(i = 0; i < rdman->zeroing_coords.num; i++) {
 	coord = coords[i];
