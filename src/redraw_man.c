@@ -1534,6 +1534,9 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
     
     /* Add all marked coords into redraw_man_t::zeroing_coords list */
     FOR_COORDS_PREORDER(rdman->root_coord, coord) {
+	if(!coord_get_flags(coord, COF_OWN_CANVAS))
+	    continue;		/* skip coords that is not cached */
+	
 	if(!coord_get_flags(coord, COF_TEMP_MARK)) {
 	    preorder_coord_skip_subtree(coord);
 	    continue;
