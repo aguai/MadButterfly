@@ -292,6 +292,7 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
     do { (co)->flags &= ~(_flags); } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
 #define coord_get_aggr_matrix(coord) ((coord)->aggr_matrix)
+#define coord_get_matrix(coord) ((coord)->matrix)
 #define FOR_COORDS_POSTORDER(coord, cur)			\
     for((cur) = postorder_coord_subtree((coord), NULL);		\
 	(cur) != NULL;						\
