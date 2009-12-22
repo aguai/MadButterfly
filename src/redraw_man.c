@@ -1802,7 +1802,7 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 	add_dirty_area(rdman, pcached_coord, coord->last_area);
 }
 
-/* Aggregate dirty areas and propgate them to ancestor cached coord.
+/* Aggregate dirty areas and propagate them to ancestor cached coord.
  *
  * The aggregation is performed from leaves to root.  But, this
  * function do not aggregate dirty areas for root coord.  The dirty
@@ -1859,7 +1859,7 @@ static int clean_rdman_dirties(redraw_man_t *rdman) {
 
     /* coord_t::cur_area of coords are temporary pointed to
      * coord_canvas_info_t::owner_mems_area for store area
-     * by clean_coor().
+     * by clean_coord().
      */
     coords = rdman->dirty_coords.ds;
     for(i = 0; i < rdman->dirty_coords.num; i++) {
