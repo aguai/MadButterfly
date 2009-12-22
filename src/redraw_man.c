@@ -2039,6 +2039,8 @@ static void make_clip(mbe_t *cr, int n_dirty_areas,
     mbe_new_path(cr);
     for(i = 0; i < n_dirty_areas; i++) {
 	area = dirty_areas[i];
+	if(area->w < 0.1 || area->h < 0.1)
+	    continue;
 	mbe_rectangle(cr, area->x, area->y, area->w, area->h);
     }
     mbe_clip(cr);
