@@ -1638,9 +1638,9 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 	geo = dirty_geos[i];
 	coord = geo_get_coord(geo)->canvas_info->owner;
 	while(!coord_get_flags(coord, COF_MUST_ZEROING | COF_TEMP_MARK)) {
-	    coord_set_flags(coord, COF_TEMP_MARK);
 	    if(coord_is_root(coord))
 		break;
+	    coord_set_flags(coord, COF_TEMP_MARK);
 	    coord = coord->parent->canvas_info->owner;
 	}
     }
@@ -1651,9 +1651,9 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
     for(i = 0; i < n_dirty_coords; i++) {
 	coord = dirty_coords[i]->canvas_info->owner;
 	while(!coord_get_flags(coord, COF_MUST_ZEROING | COF_TEMP_MARK)) {
-	    coord_set_flags(coord, COF_TEMP_MARK);
 	    if(coord_is_root(coord))
 		break;
+	    coord_set_flags(coord, COF_TEMP_MARK);
 	    coord = coord->parent->canvas_info->owner;
 	}
     }
@@ -1687,8 +1687,6 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
     all_zeroing = &rdman->zeroing_coords;
     for(i = all_zeroing->num - 1; i >= 0; i--) {
 	coord = all_zeroing->ds[i];
-	if(coord_is_root(coord))
-	    continue;
 	zeroing_coord(rdman, coord);
     }
 
