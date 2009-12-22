@@ -1349,6 +1349,7 @@ static int coord_update_area_4_cached_children(coord_t *coord) {
 	    return ERR;
     }
     
+    pos_cnt = 0;
     FORCHILDREN(coord, child) {
 	if(child->flags & COF_OWN_CANVAS) {
 	    area_to_positions(coord_get_area(child), poses + pos_cnt);
