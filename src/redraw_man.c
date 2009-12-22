@@ -1864,23 +1864,21 @@ static int clean_rdman_dirties(redraw_man_t *rdman) {
     coords = rdman->dirty_coords.ds;
     for(i = 0; i < rdman->dirty_coords.num; i++) {
 	coord = coords[i];
-	if(coord->flags & COF_DIRTY) {
-	    if(!coord_get_flags(coord, COF_OWN_CANVAS))
-		SWAP(coord->cur_area, coord->last_area, area_t *);
-	    else {
-		coord->last_area = coord->cur_area;
-		coord->cur_area = &coord->canvas_info->owner_mems_area;
-		/* coord->cur_area are reseted to another area at
-		 * #RST.
-		 *
-		 * coord->cur_area of a cached coord is aggregated
-		 * area.  But, its meaning is changed back to be area
-		 * of members to compute.  It can avoid specialized
-		 * code for cached coords to change meaning of
-		 * cur_area temporary when computing area of a cached
-		 * coord.
-		 */
-	    }
+	if(!coord_get_flags(coord, COF_OWN_CANVAS))
+	    SWAP(coord->cur_area, coord->last_area, area_t *);
+	else {
+	    coord->last_area = coord->cur_area;
+	    coord->cur_area = &coord->canvas_info->owner_mems_area;
+	    /* coord->cur_area are reseted to another area at
+	     * #RST.
+	     *
+	     * coord->cur_area of a cached coord is aggregated
+	     * area.  But, its meaning is changed back to be area
+	     * of members to compute.  It can avoid specialized
+	     * code for cached coords to change meaning of
+	     * cur_area temporary when computing area of a cached
+	     * coord.
+	     */
 	}
     }
     
