@@ -2180,6 +2180,8 @@ static void draw_shapes_in_dirty_areas(redraw_man_t *rdman) {
 	coord = rdman->zeroing_coords.ds[i];
 	draw_dirty_cached_coord(rdman, coord);
     }
+
+    draw_dirty_cached_coord(rdman, rdman->root_coord);
 }
 
 
@@ -2241,6 +2243,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	    coord = rdman->zeroing_coords.ds[i];
 	    DARRAY_CLEAN(_coord_get_dirty_areas(coord));
 	}
+	DARRAY_CLEAN(_coord_get_dirty_areas(rdman->root_coord));
 	rdman->n_dirty_areas = 0;
     }
 

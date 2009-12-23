@@ -546,8 +546,10 @@ void *X_MB_new(const char *display_name, int w, int h) {
 	return NULL;
 
     r = X_MB_init(display_name, w, h, rt);
-    if(r != OK)
+    if(r != OK) {
+	free(rt);
 	return NULL;
+    }
 
     return rt;
 }
