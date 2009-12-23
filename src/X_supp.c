@@ -202,6 +202,10 @@ static void handle_x_event(X_MB_runtime_t *rt) {
     int in_stroke;
     int r;
 
+    /* XXX: For some unknown reason, it causes a segmentation fault to
+     *      called XEventsQueued() after receiving first Expose event
+     *      and before redraw for the event.
+     */
     while(XEventsQueued(display, QueuedAfterReading) > 0) {
 	r = XNextEvent(display, &evt);
 	if(r == -1)
