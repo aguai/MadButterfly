@@ -456,6 +456,9 @@ static int add_dirty_geo(redraw_man_t *rdman, geo_t *geo) {
 static int add_dirty_area(redraw_man_t *rdman, coord_t *coord, area_t *area) {
     int r;
     
+    if(area->w < 0.01 || area->h < 0.01)
+	return OK;
+    
     rdman->n_dirty_areas++;
     r = areas_add(_coord_get_dirty_areas(coord), area);
     return r == 0? OK: ERR;
