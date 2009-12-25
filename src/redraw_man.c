@@ -1721,6 +1721,10 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
     area0 = coord->canvas_info->aggr_dirty_areas;
     area1 = area0 + 1;
 
+    /* TODO: Since both cur & last area of coords are added into dirty
+     *       area list, position of both areas shoud be adjusted for
+     *       all descendants when zeroing a cached coord.
+     */
     for(i = 0; i < n_areas; i++) {
 	area = areas[i];
 	if(area->w != 0 || area->h != 0)
@@ -1786,7 +1790,8 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
     pcached_coord = parent->canvas_info->owner;
     
     compute_cached_2_pdev_matrix(coord, canvas2pdev_matrix);
-    
+
+    /* Add dirty areas to parent cached coord. */
     matrix_trans_pos(canvas2pdev_matrix, poses0[0], poses0[0] + 1);
     matrix_trans_pos(canvas2pdev_matrix, poses0[1], poses0[1] + 1);
     area_init(area0, 2, poses0);
