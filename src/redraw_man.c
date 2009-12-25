@@ -1845,9 +1845,10 @@ static int add_rdman_cached_dirty_areas(redraw_man_t *rdman) {
     dirty_coords = rdman->dirty_coords.ds;
     for(i = 0; i < n_dirty_coords; i++) {
 	coord = dirty_coords[i];
-	if(coord_get_flags(coord, COF_OWN_CANVAS)) {
-	    add_dirty_area(rdman, coord, coord->cur_area);
-	    add_dirty_area(rdman, coord, coord->last_area);
+	if(coord_get_flags(coord, COF_OWN_CANVAS) &&
+	   !coord_is_root(coord)) {
+	    add_dirty_area(rdman, coord->parent, coord->cur_area);
+	    add_dirty_area(rdman, coord->parent, coord->last_area);
 	}
     }
 
@@ -1915,6 +1916,9 @@ static int clean_rdman_dirties(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
 
+    /* Zeroing must be performed after clearing to get latest position
+     * of shapes for computing new bounding box
+     */
     r = add_rdman_zeroing_coords(rdman);
     if(r != OK)
 	return ERR;
