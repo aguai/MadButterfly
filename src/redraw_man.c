@@ -1418,7 +1418,7 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 	compute_aggr_of_coord(coord);
 
     /* Areas of cached coords are computed in two phase.
-     * Phase 1 works like other normal ones.  Phase 2, is collect
+     * Phase 1 works like other normal ones.  Phase 2, collects
      * all areas of descendants to compute a minimum covering area.
      * Phase 2 is performed by zeroing_coord().
      */
@@ -1860,6 +1860,34 @@ static int add_rdman_cached_dirty_areas(redraw_man_t *rdman) {
     return OK;
 }
 
+/* \brief Clean dirty coords and shapes.
+ *
+ * The procedure of clean dirty coords and shapes include 3 major steps.
+ *
+ *   - Add dirty coords and shapes to rdman.
+ *     - All descendants of a dirty coord are also dirty, except
+ *       descent coords and their descendants.
+ *   - Recompute aggregated transformation matrix from root to leaves
+ *     for dirty coords.
+ *     - The aggregated transformation matrix for a cached coord is
+ *       different from other coords.
+ *   - Compute new area for every dirty coord.
+ *     - Area of a dirty coord is an aggregation of areas of all members.
+ *     - A cached coord has two type of areas, one is for members of the cached
+ *       coord, another one is for the block that cached coord and descendants
+ *       will be mapped in parent cached coord.
+ *       - Areas, for parent cached coord, of non-dirty cached coord
+ *         would be recomputed when cleaning parent coord.
+ *       - Areas, for members, of dirty cached coord would only be
+ *         recomputed when cleaning the coord.
+ *   - Propagate dirty areas to dirty area list of parent cached coord
+ *     for every cached coords, not only for dirty cached coords.
+ *
+ * The cur_area of a cached coord is where members of the coord will
+ * be draw in cache buffer, i.e. surface.  The area of the cached
+ * coord and descendants is described by cached_cur_area and
+ * cached_last_area in coord_canvas_info_t.
+ */
 static int clean_rdman_dirties(redraw_man_t *rdman) {
     int r;
     int i;
