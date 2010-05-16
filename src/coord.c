@@ -105,6 +105,14 @@ void compute_aggr_of_cached_coord(coord_t *coord) {
     compute_transform_function_cached(coord);
 }
 
+void
+compute_aggr(coord_t *coord) {
+    if(coord->flags & COF_OWN_CANVAS)
+	compute_transform_function_cached(coord);
+    else
+	compute_transform_function(coord);
+}
+
 void compute_reverse(co_aix *orig, co_aix *reverse) {
     co_aix working[6];
     co_aix factor;
