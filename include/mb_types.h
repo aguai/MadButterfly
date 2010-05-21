@@ -242,6 +242,13 @@ struct _coord {
 				 * It is used by clean_rdman_dirties().
 				 */
 #define COF_TEMP_MARK 0x400	/*!< \brief Temporary mark a coord. */
+#define COF_JUST_ZERO 0x800	/*!< \brief The coord is real peformed zeroing.
+				 * 
+				 * It's canvas is changed by zeroing.
+				 */
+#define COF_DIRTY_PCACHE_AREA 0x1000 /*!< \brief pcache_area shoud be
+                                      *  updated.
+				      */
 /* @} */
 
 extern void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst);
@@ -279,7 +286,7 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	(co)->flags &= ~COF_CACHE_MASK;				\
     } while(0)
 #define coord_is_root(co) ((co)->parent == NULL)
-#define coord_is_cached(co) ((co)->flags & COF_CACHE_MASK)
+#define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
 #define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
 #define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
 #define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
