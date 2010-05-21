@@ -55,6 +55,7 @@ struct _redraw_man {
     elmpool_t *coord_canvas_pool;
 
     coords_t dirty_coords;
+    coords_t dirty_pcache_area_coords;
     geos_t dirty_geos;
     int n_dirty_areas;		/*!< \brief Number of all dirty areas. */
 
