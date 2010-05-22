@@ -249,6 +249,9 @@ struct _coord {
 #define COF_DIRTY_PCACHE_AREA 0x1000 /*!< \brief pcache_area shoud be
                                       *  updated.
 				      */
+#define COF_SKIP_ZERO 0x2000	/*!< \brief The coord just skip zeroing.
+				 * No real zeroing was performed.
+				 */
 /* @} */
 
 extern void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst);
