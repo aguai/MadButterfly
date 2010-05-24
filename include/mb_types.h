@@ -123,6 +123,7 @@ struct _geo {
 #define GEF_HIDDEN 0x2		/*!< The geo is hidden. */
 #define GEF_FREE 0x4
 #define GEF_OV_DRAW 0x8		/*!< To flag drawed for a overlay testing. */
+#define GEF_SWAP 0x10
 
 extern int areas_are_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
