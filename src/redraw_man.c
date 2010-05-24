@@ -1448,7 +1448,6 @@ static int clean_rdman_coords(redraw_man_t *rdman) {
 	    coord = dirty_coords[i];
 	    if(!coord_get_flags(coord, COF_DIRTY | COF_JUST_CLEAN))
 		continue;
-	    SWAP(coord->cur_area, coord->last_area, area_t *);
 	    r = clean_coord(rdman, coord);
 	    if(r != OK)
 		return ERR;
