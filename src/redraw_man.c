@@ -1989,7 +1989,7 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
 	return ERR;
 
     /*
-     * Clear all flags setted by this function
+     * Clear all flags setted by zeroing.
      */
     coords = rdman->dirty_coords.ds;
     for(i = 0; i < rdman->dirty_coords.num; i++)
@@ -2216,11 +2216,28 @@ static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
 static int draw_dirty_cached_coord(redraw_man_t *rdman,
 				   coord_t *coord) {
     area_t **areas, *area;
+    area_t full_area;
     int n_areas;
     mbe_t *canvas;
+    mbe_surface_t *surface;
     int i;
     int r;
     
+    canvas = _coord_get_canvas(coord);
+    
+    if(IS_CACHE_REDRAW_ALL(coord)) {
+	/*
+	 * full_area covers all dirty areas of the cached coord.
+	 */
+	DARRAY_CLEAN(_coord_get_dirty_areas(coord));
+	surface = mbe_get_target(canvas);
+	full_area.x = 0;
+	full_area.y = 0;
+	full_area.w = mbe_image_surface_get_width(surface);
+	full_area.h = mbe_image_surface_get_height(surface);
+	add_dirty_area(rdman, coord, &full_area);
+    }
+
     areas = _coord_get_dirty_areas(coord)->ds;
     n_areas = _coord_get_dirty_areas(coord)->num;
     
@@ -2232,7 +2249,6 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
 	area->h = ceilf(area->h);
     }
 
-    canvas = _coord_get_canvas(coord);
     make_clip(canvas, n_areas, areas);
     clear_canvas(canvas);
 
@@ -2251,10 +2267,18 @@ static void draw_shapes_in_dirty_areas(redraw_man_t *rdman) {
 
     zeroings = rdman->zeroing_coords.ds;
     num = rdman->zeroing_coords.num;
+    /* Draw cached ones from leaves to root.
+     * Since content of cached ones depend on descendants.
+     */
     for(i = num - 1; i >= 0; i--) {
 	coord = zeroings[i];
+	if(coord_get_flags(coord, COF_TEMP_MARK))
+	    continue;
 	draw_dirty_cached_coord(rdman, coord);
+	coord_set_flags(coord, COF_TEMP_MARK);
     }
+    for(i = 0; i < num; i++)
+	coord_clear_flags(coord, COF_TEMP_MARK);
 
     draw_dirty_cached_coord(rdman, rdman->root_coord);
 }
@@ -2320,13 +2344,6 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	}
 	DARRAY_CLEAN(_coord_get_dirty_areas(rdman->root_coord));
 	rdman->n_dirty_areas = 0;
-    }
-
-    /* clear COF_MUST_ZEROING flag for coords */
-    coords = rdman->zeroing_coords.ds;
-    for(i = 0; i < rdman->zeroing_coords.num; i++) {
-	coord = coords[i];
-	coord_clear_flags(coord, COF_MUST_ZEROING);
     }
 
     DARRAY_CLEAN(&rdman->dirty_coords);
