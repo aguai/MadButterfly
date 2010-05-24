@@ -1658,7 +1658,9 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 
 /*! \brief Zeroing coords in redraw_man_t::zeroing_coords.
  *
- * \note redraw_man_t::zeroing_coords must in ascent partial order of tree.
+ * \note redraw_man_t::zeroing_coords must in descent partial order of
+ *	 tree.  The size of a cached coord is effected by cached
+ *	 descendants.
  */
 static int zeroing_rdman_coords(redraw_man_t *rdman) {
     int i;
@@ -1666,8 +1668,16 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
     coord_t *coord;
    
     all_zeroing = &rdman->zeroing_coords;
-    /* From leaft to root.
-     * REASON: The size of canvas is also effected by cached descedants.
+    /*! Zeroing is performed from leaves to root.
+     *
+     * REASON: The size of canvas is also effected by cached
+     *         descedants.  A cached coord is only effected by parent
+     *         cached coord when it-self is dirty.  When a cached
+     *         coord is dirty, it is clean (compute aggregated matrix)
+     *         by recomputing a scale for x and y-axis from aggregated
+     *         matrix of parent coord.  And, cleaning coord is
+     *         performed before zeroing.  It means ancestors of a
+     *         cached coord would not effect it when zeroing.
      */
     for(i = all_zeroing->num - 1; i >= 0; i--) {
 	coord = all_zeroing->ds[i];
@@ -1679,6 +1689,13 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
 }
 
 /*! \brief Compute pcache_area for coords whoes pcache_area is dirty.
+ *
+ * coord_t::dirty_pcache_area_coords also includes part of coords in
+ * coord_t::zeroing_coords.  The pcache_area of coords that is in
+ * coord_t::dirty_pcache_area_coords, but is not in
+ * coord_t::zeroing_coords should be computed here.
+ * zeroing_rdman_coords() is responsible for computing pcache_area for
+ * zeroing ones.
  */
 static int
 compute_rdman_coords_pcache_area(redraw_man_t *rdman) {
@@ -1874,34 +1891,10 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
 
     /* Remove temporary mark */
     for(i = 0; i < n_zeroing; i++) {
-	coord_clear_flags(zeroing[i], COF_TEMP_MARK);
+	coord_clear_flags(zeroings[i], COF_TEMP_MARK);
     }
     for(i = 0; i < n_dpca_coords; i++) {
 	coord_clear_flags(dpca_coords[i], COF_TEMP_MARK);
-    }
-
-    return OK;
-}
-
-/* Aggregate dirty areas for root coord.
- *
- * Because, root coord has no parent coord, so its aggregation dirty
- * areas are not added into dirty_areas of ancestral cached coord.
- * So, it is aggregated in a separated function.
- */
-static int add_rdman_cached_dirty_areas(redraw_man_t *rdman) {
-    int i;
-    coord_t *coord, **dirty_coords;
-    int n_dirty_coords;
-
-    n_dirty_coords = rdman->dirty_coords.num;
-    dirty_coords = rdman->dirty_coords.ds;
-    for(i = 0; i < n_dirty_coords; i++) {
-	coord = dirty_coords[i];
-	if(coord_is_cached(coord) && !coord_is_root(coord)) {
-	    add_dirty_area(rdman, coord->parent, coord->cur_area);
-	    add_dirty_area(rdman, coord->parent, coord->last_area);
-	}
     }
 
     return OK;
@@ -1995,13 +1988,20 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
 
-    r = add_rdman_cached_dirty_areas(rdman);
-    if(r != OK)
-	return ERR;
-
+    /*
+     * Clear all flags setted by this function
+     */
     coords = rdman->dirty_coords.ds;
     for(i = 0; i < rdman->dirty_coords.num; i++)
 	coord_clear_flags(coords[i], COF_JUST_CLEAN);
+    coords = rdman->zeroing_coords.ds;
+    for(i = 0; i < rdman->zeroing_coords.num; i++)
+	coord_clear_flags(coords[i],
+			  COF_JUST_CLEAN | COF_JUST_ZERO | COF_SKIP_ZERO);
+    coords = rdman->dirty_pcache_area_coords.ds;
+    for(i = 0; i < rdman->dirty_pcache_area_coords.num; i++)
+	coord_clear_flags(coords[i],
+			  COF_JUST_CLEAN | COF_JUST_ZERO | COF_SKIP_ZERO);
     
     return OK;
 }
@@ -2244,11 +2244,15 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
 }
 
 static void draw_shapes_in_dirty_areas(redraw_man_t *rdman) {
-    int i;
+    int num;
+    coord_t **zeroings;
     coord_t *coord;
+    int i;
 
-    for(i = rdman->zeroing_coords.num - 1; i >= 0; i--) {
-	coord = rdman->zeroing_coords.ds[i];
+    zeroings = rdman->zeroing_coords.ds;
+    num = rdman->zeroing_coords.num;
+    for(i = num - 1; i >= 0; i--) {
+	coord = zeroings[i];
 	draw_dirty_cached_coord(rdman, coord);
     }
 
@@ -2328,6 +2332,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     DARRAY_CLEAN(&rdman->dirty_coords);
     DARRAY_CLEAN(&rdman->dirty_geos);
     DARRAY_CLEAN(&rdman->zeroing_coords);
+    DARRAY_CLEAN(&rdman->dirty_pcache_area_coords);
     
     /* Free postponsed removing */
     free_free_objs(rdman);
