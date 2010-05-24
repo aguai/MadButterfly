@@ -1490,6 +1490,7 @@ static
 void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     coord_t *cur;
     area_t *area, *saved_area;
+    geo_t *geo;
     co_aix min_x, min_y;
     co_aix max_x, max_y;
     co_aix x, y;
@@ -1579,6 +1580,11 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 	aggr[3] -= min_x;
 	aggr[5] -= min_y;
 	
+	FOR_COORD_MEMBERS(coord, geo) {
+	    /* \see GEO_SWAP() */
+	    if(!geo_get_flags(geo, GEF_SWAP))
+		SWAP(geo->cur_area, geo->last_area, area_t *);
+	}
 	coord_clean_members_n_compute_area(cur);
     }
     
@@ -1899,6 +1905,27 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
     return OK;
 }
 
+/*! \brief Swap geo_t::cur_area and geo_t::last_area for a geo_t.
+ *
+ * It is call by rdman_clean_dirties() to swap areas for members of
+ * dirty coord in redraw_man_t::dirty_coords and dirty geos in
+ * redraw_man_t::dirty_geos.
+ *
+ * zeroing_coord() would also swap some areas for members of
+ * descendants of a cached coord.  But, only members that was not
+ * swapped, without GEF_SWAP flag, in this round of redrawing.
+ * zeroing_coord() would not mark geos with GEF_SWAP since it not not
+ * referenced later.  We don't mark geos in zeroing_coord() because we
+ * don't want to unmark it later.  To unmark it, we should re-travel
+ * forest of cached coords in redraw_man_t::zeroing_coords.  It is
+ * expansive.
+ */
+#define GEO_SWAP(g)					\
+    if(!geo_get_flags((g), GEF_SWAP)) {			\
+	SWAP((g)->cur_area, (g)->last_area, area_t *);	\
+	geo_set_flags((g), GEF_SWAP);			\
+    }
+
 /* \brief Clean dirty coords and shapes.
  *
  * The procedure of clean dirty coords and shapes include 3 major steps.
@@ -1940,6 +1967,7 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     int i;
     coord_t **coords, *coord;
     geo_t **geos;
+    geo_t *geo;
 
     /* coord_t::cur_area of coords are temporary pointed to
      * coord_canvas_info_t::owner_mems_area for store area
@@ -1949,13 +1977,17 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     for(i = 0; i < rdman->dirty_coords.num; i++) {
 	coord = coords[i];
 	SWAP(coord->cur_area, coord->last_area, area_t *);
+	FOR_COORD_MEMBERS(coord, geo) {
+	    GEO_SWAP(geo);
+	}
     }
     
     geos = rdman->dirty_geos.ds;
-    for(i = 0; i < rdman->dirty_geos.num; i++)
-	if(geos[i]->flags & GEF_DIRTY)
-	    SWAP(geos[i]->cur_area, geos[i]->last_area, area_t *);
-
+    for(i = 0; i < rdman->dirty_geos.num; i++) {
+	geo = geos[i];
+	GEO_SWAP(geo);
+    }
+    
     r = clean_rdman_coords(rdman);
     if(r != OK)
 	return ERR;
@@ -1991,8 +2023,14 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
      * Clear all flags setted by zeroing.
      */
     coords = rdman->dirty_coords.ds;
-    for(i = 0; i < rdman->dirty_coords.num; i++)
-	coord_clear_flags(coords[i], COF_JUST_CLEAN);
+    for(i = 0; i < rdman->dirty_coords.num; i++) {
+	coord = coords[i];
+	coord_clear_flags(coord, COF_JUST_CLEAN);
+	/* \see GEO_SWAP() */
+	FOR_COORD_MEMBERS(coord, geo) {
+	    geo_clear_flags(geo, GEF_SWAP);
+	}
+    }
     coords = rdman->zeroing_coords.ds;
     for(i = 0; i < rdman->zeroing_coords.num; i++)
 	coord_clear_flags(coords[i],
@@ -2001,6 +2039,12 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     for(i = 0; i < rdman->dirty_pcache_area_coords.num; i++)
 	coord_clear_flags(coords[i],
 			  COF_JUST_CLEAN | COF_JUST_ZERO | COF_SKIP_ZERO);
+    
+    /* \see GEO_SWAP() */
+    for(i = 0; i < rdman->dirty_geos.num; i++) {
+	geo = geos[i];
+	geo_clear_flags(geo, GEF_SWAP);
+    }
     
     return OK;
 }
