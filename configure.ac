@@ -94,6 +94,7 @@ AC_ARG_ENABLE([nodejs],
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-nodejs]) ;;
 esac],[nodejs=false])
 [if [ x"${nodejs}" = xtrue ]; then ]
+  AC_PATH_PROG([NODE_WAF], [node-waf])
   AC_CHECK_PROG([has_node], [node], [true], [false])
 [fi]
 AM_CONDITIONAL([NODEJS], [test x"${nodejs}-${has_node}" = xtrue-true])

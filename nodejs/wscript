@@ -1,0 +1,20 @@
+srcdir = '.'
+blddir = 'build'
+VERSION = '0.0.1'
+
+def set_options(opt):
+    opt.tool_options('compiler_cxx')
+    pass
+
+def configure(conf):
+    import Options
+    conf.check_tool('compiler_cxx')
+    conf.check_tool('node_addon')
+    conf.env.SRCDIR = Options.options.srcdir
+    pass
+
+def build(conf):
+    obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
+    obj.target = 'mbfly'
+    obj.source = 'hello.cc'
+    pass
