@@ -86,6 +86,18 @@ AC_DEFINE([CAIRO_GRAPH_ENGINE])
 cairo=true
 [fi]
 
+AC_ARG_ENABLE([nodejs],
+	[  --enable-nodejs	Turn on nodejs support],
+[case "${enableval}" in
+  yes) nodejs=true ;;
+  no) nodejs=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-nodejs]) ;;
+esac],[nodejs=false])
+[if [ x"${nodejs}" = xtrue ]; then ]
+  AC_CHECK_PROG([has_node], [node], [true], [false])
+[fi]
+AM_CONDITIONAL([NODEJS], [test x"${nodejs}-${has_node}" = xtrue-true])
+
 # Define AM and AC variable for sh_text
 AM_CONDITIONAL([SH_TEXT], [test x$sh_text = xtrue -a x$cairo = xtrue])
 [if [ x"${sh_text}" = xtrue -a x$cairo = xtrue ]; then]
@@ -118,6 +130,7 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  include/Makefile
                  inkscape/Makefile
+		 nodejs/Makefile
                  tools/Makefile])
 
 AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
