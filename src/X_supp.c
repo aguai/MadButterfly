@@ -48,6 +48,8 @@ struct _X_MB_runtime {
     monitor_t monitors[MAX_MONITORS];
     int n_monitor;
 
+    void *nodejs_data;
+
 #ifndef ONLY_MOUSE_MOVE_RAW
     /* States */
     shape_t *last;
@@ -595,7 +597,7 @@ mb_img_ldr_t *X_MB_img_ldr(void *rt) {
     return img_ldr;
 }
 
-void X_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
+void X_MB_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     int i;
@@ -625,7 +627,7 @@ void X_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
     xmb_rt->n_monitor=i;
 }
 
-void X_remove_event(void *rt, int type, int fd)
+void X_MB_remove_event(void *rt, int type, int fd)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     int i;
@@ -638,8 +640,8 @@ void X_remove_event(void *rt, int type, int fd)
 }
 mb_backend_t backend = { X_MB_new,
 			 X_MB_free,
-			 X_add_event,
-			 X_remove_event,
+			 X_MB_add_event,
+			 X_MB_remove_event,
 			 X_MB_handle_connection,
 			 X_MB_kbevents,
 			 X_MB_rdman,
@@ -647,4 +649,39 @@ mb_backend_t backend = { X_MB_new,
 			 X_MB_ob_factory,
 			 X_MB_img_ldr
 		};
-			 
+/*! \defgroup x_supp_nodejs_sup Export functions for supporting nodejs plugin.
+ *
+ * These functions are for internal using.
+ * @{
+ */			 
+/*! \brief Exported for nodejs plugin to call handle_x_event.
+ */
+void _X_MB_handle_x_event_for_nodejs(X_MB_runtime_t *rt) {
+    handle_x_event(rt);
+}
+
+/*! \brief Get X connect for nodejs plugin.
+ */
+int _X_MB_get_x_conn_for_nodejs(X_MB_runtime_t *rt) {
+    return XConnectionNumber(rt->display);
+}
+
+/*! \brief Flush buffer for the X connection of a runtime object.
+ */
+int _X_MB_flush_x_conn_nodejs(X_MB_runtime_t *rt) {
+    return XFlush(rt->display);
+}
+
+/*! \brief Keep data for nodejs plugin.
+ */
+void _X_MB_set_data_nodejs(X_MB_runtime_t *rt, void *data) {
+    rt->nodejs_data = data;
+}
+
+/*! \brief Get data for nodejs plugin.
+ */
+void *_X_MB_get_data_nodejs(X_MB_runtime_t *rt) {
+    return rt->nodejs_data;
+}
+
+/* @} */
