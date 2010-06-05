@@ -1,5 +1,5 @@
 
-mbfly_node_SRCS = hello.cc
+mbfly_node_SRCS = mbfly_njs.cc X_supp_njs.c
 mbfly_node_CFLAGS= -I$(abs_top_srcdir)/include -I$(prefix)/include \
 	@pangocairo_CFLAGS@ $(CFLAGS)
 
