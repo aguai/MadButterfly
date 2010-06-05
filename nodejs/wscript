@@ -19,7 +19,7 @@ def build(conf):
     import os
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'hello.cc mbfly_njs.cc'
+    obj.source = 'mbfly_njs.cc'
     obj.add_objects = 'X_supp_njs.o'
     
     obj = conf.new_task_gen('cc', 'shlib', 'node_addon')
