@@ -4,17 +4,25 @@ VERSION = '0.0.1'
 
 def set_options(opt):
     opt.tool_options('compiler_cxx')
+    opt.tool_options('compiler_cc')
     pass
 
 def configure(conf):
     import Options
     conf.check_tool('compiler_cxx')
+    conf.check_tool('compiler_cc')
     conf.check_tool('node_addon')
     conf.env.SRCDIR = Options.options.srcdir
     pass
 
 def build(conf):
+    import os
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'hello.cc'
+    obj.source = 'hello.cc mbfly_njs.cc'
+    obj.add_objects = 'X_supp_njs.o'
+    
+    obj = conf.new_task_gen('cc', 'shlib', 'node_addon')
+    obj.target = 'X_supp_njs.o'
+    obj.source = 'X_supp_njs.c'
     pass
