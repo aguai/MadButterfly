@@ -27,57 +27,57 @@ static void timer_cb(EV_P_ ev_timer *tmwatcher, int revent);
 /*! \brief Register next timeout with libev.
  */
 static void
-set_next_timeout(njs_runtime_t *ev_data) {
+set_next_timeout(njs_runtime_t *rt) {
     mb_tman_t *tman;
     mb_timeval_t now, tmo;
     ev_tstamp tout;
     int r;
     
-    tman = X_MB_tman(ev_data->xrt);
+    tman = X_MB_tman(rt->xrt);
     get_now(&now);
     r = mb_tman_next_timeout(tman, &now, &tmo);
     if(r == 0) {
 	MB_TIMEVAL_DIFF(&tmo, &now);
 	tout = (ev_tstamp)MB_TIMEVAL_SEC(&tmo) +
 	    (ev_tstamp)MB_TIMEVAL_USEC(&tmo) / 1000000;
-	ev_timer_init(&ev_data->tmwatcher, timer_cb, tout, 0);
-	ev_timer_start(&ev_data->tmwatcher);
-	ev_data->enable_timer = 1;
+	ev_timer_init(&rt->tmwatcher, timer_cb, tout, 0);
+	ev_timer_start(&rt->tmwatcher);
+	rt->enable_timer = 1;
     } else
-	ev_data->enable_timer = 0;
+	rt->enable_timer = 0;
 }
 
 static void
 x_conn_cb(EV_P_ ev_io *iowatcher, int revent) {
-    njs_runtime_t *ev_data = MEM2OBJ(iowatcher, njs_runtime_t, iowatcher);
+    njs_runtime_t *rt = MEM2OBJ(iowatcher, njs_runtime_t, iowatcher);
     redraw_man_t *rdman;
     extern void _X_MB_handle_x_event_for_nodejs(void *rt);
 
-    rdman = X_MB_rdman(ev_data->xrt);
-    _X_MB_handle_x_event_for_nodejs(ev_data->xrt);
+    rdman = X_MB_rdman(rt->xrt);
+    _X_MB_handle_x_event_for_nodejs(rt->xrt);
     rdman_redraw_changed(rdman);
     
-    if(ev_data->enable_timer == 0) /* no installed timeout */
-	set_next_timeout(ev_data);
+    if(rt->enable_timer == 0) /* no installed timeout */
+	set_next_timeout(rt);
 }
 
 static void
 timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
-    njs_runtime_t *ev_data = MEM2OBJ(tmwatcher, njs_runtime_t, tmwatcher);
+    njs_runtime_t *rt = MEM2OBJ(tmwatcher, njs_runtime_t, tmwatcher);
     mb_tman_t *tman;
     redraw_man_t *rdman;
     mb_timeval_t now;
     extern int _X_MB_flush_x_conn_nodejs(void *rt);
     
-    tman = X_MB_tman(ev_data->xrt);
+    tman = X_MB_tman(rt->xrt);
     get_now(&now);
     mb_tman_handle_timeout(tman, &now);
 
-    rdman = X_MB_rdman(ev_data->xrt);
+    rdman = X_MB_rdman(rt->xrt);
     rdman_redraw_changed(rdman);
-    _X_MB_flush_x_conn_nodejs(ev_data->xrt);
+    _X_MB_flush_x_conn_nodejs(rt->xrt);
     
-    set_next_timeout(ev_data);
+    set_next_timeout(rt);
 }
 
 /*! \brief Handle connection coming data and timeout of timers.
@@ -85,8 +85,8 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
  * \param rt is a runtime object for X.
  */
 void
-X_njs_MB_handle_connection(njs_runtime_t *ev_data) {
-    void *xrt = ev_data->xrt;
+X_njs_MB_handle_connection(njs_runtime_t *rt) {
+    void *xrt = rt->xrt;
     mb_tman_t *tman;
     mb_timeval_t now, tmo;
     ev_tstamp tout;
@@ -98,41 +98,41 @@ X_njs_MB_handle_connection(njs_runtime_t *ev_data) {
      * Setup watcher for X connection.
      */
     fd = _X_MB_get_x_conn_for_nodejs(xrt);
-    ev_io_init(&ev_data->iowatcher, x_conn_cb, fd, EV_READ);
-    ev_io_start(&ev_data->iowatcher);
+    ev_io_init(&rt->iowatcher, x_conn_cb, fd, EV_READ);
+    ev_io_start(&rt->iowatcher);
 
-    set_next_timeout(ev_data);
+    set_next_timeout(rt);
 }
 
 /*! \brief Free njs_runtime_t.
  */
 void
-X_njs_MB_free(njs_runtime_t *ev_data) {
+X_njs_MB_free(njs_runtime_t *rt) {
     /*
      * stop IO and timer watcher
      */
-    ev_io_stop(&ev_data->iowatcher);
-    if(ev_data->enable_timer)
-	ev_timer_stop(&ev_data->tmwatcher);
+    ev_io_stop(&rt->iowatcher);
+    if(rt->enable_timer)
+	ev_timer_stop(&rt->tmwatcher);
 }
 
 njs_runtime_t *
 X_njs_MB_new(char *display_name, int w, int h) {
-    njs_runtime_t *ev_data;
+    njs_runtime_t *rt;
     void *xrt;
     
-    ev_data = (njs_runtime_t *)malloc(sizeof(njs_runtime_t));
-    ASSERT(ev_data != NULL);
+    rt = (njs_runtime_t *)malloc(sizeof(njs_runtime_t));
+    ASSERT(rt != NULL);
 
     xrt = X_MB_new(display_name, w, h);
 
-    ev_data->xrt = xrt;
-    ev_data->enable_timer = 0;	/* no timer, now */
+    rt->xrt = xrt;
+    rt->enable_timer = 0;	/* no timer, now */
     
-    return ev_data;
+    return rt;
 }
 
 void *
-_X_njs_MB_get_runtime(njs_runtime_t *ev_data) {
-    return ev_data->xrt;
+_X_njs_MB_get_runtime(njs_runtime_t *rt) {
+    return rt->xrt;
 }
