@@ -1,5 +1,5 @@
 
-mbfly_node_SRCS = mbfly_njs.cc X_supp_njs.c
+mbfly_node_SRCS = mbfly_njs.cc X_supp_njs.c coord.cc
 mbfly_node_CFLAGS= -I$(abs_top_builddir)/include \
 	-I$(abs_top_srcdir)/include \
 	-I$(prefix)/include \
@@ -12,6 +12,7 @@ clean: clean-mbfly-node
 mbfly.node: wscript $(mbfly_node_SRCS)
 	cd $(srcdir); \
 	CFLAGS="$(mbfly_node_CFLAGS)" \
+		CXXFLAGS="$(mbfly_node_CFLAGS)" \
 		LDFLAGS="$(mbfly_node_LDFLAGS)" \
 		TOP_BUILDDIR="$(abs_top_builddir)" \
 		WAFLOCK=$(abs_builddir)/.lock-wscript \

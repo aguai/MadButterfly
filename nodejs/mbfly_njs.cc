@@ -21,6 +21,7 @@ using namespace v8;
  */
 static Handle<Value>
 xnjsmb_new(const Arguments &args) {
+    HandleScope scope;
     int argc;
     Handle<Value> exc;
     njs_runtime_t *rt;
