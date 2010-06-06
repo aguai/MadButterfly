@@ -68,7 +68,7 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
     mb_tman_t *tman;
     redraw_man_t *rdman;
     mb_timeval_t now;
-    extern int _X_MB_flush_x_conn_nodejs(void *rt);
+    extern int _X_MB_flush_x_conn_for_nodejs(void *rt);
     
     tman = X_MB_tman(rt->xrt);
     get_now(&now);
@@ -76,7 +76,7 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
 
     rdman = X_MB_rdman(rt->xrt);
     rdman_redraw_changed(rdman);
-    _X_MB_flush_x_conn_nodejs(rt->xrt);
+    _X_MB_flush_x_conn_for_nodejs(rt->xrt);
     
     set_next_timeout(rt);
 }
@@ -86,7 +86,7 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
  * \param rt is a runtime object for X.
  */
 void
-X_njs_MB_handle_connection(njs_runtime_t *rt) {
+X_njs_MB_init_handle_connection(njs_runtime_t *rt) {
     void *xrt = rt->xrt;
     mb_tman_t *tman;
     mb_timeval_t now, tmo;
