@@ -3,9 +3,18 @@
 
 using namespace v8;
 
+Handle<Value>
+hello_func(const Arguments &args) {
+    HandleScope scope;
+
+    return String::Concat(String::New("World"), args[0]->ToString());
+}
+
 extern "C" void
 init(Handle<Object> target) {
     HandleScope scope;
+    Handle<FunctionTemplate> func;
 
-    target->Set(String::New("Hello"), String::New("World"));
+    func = FunctionTemplate::New(hello_func);
+    target->Set(String::New("Hello"), func->GetFunction());
 }
