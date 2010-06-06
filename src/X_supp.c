@@ -666,7 +666,7 @@ int _X_MB_get_x_conn_for_nodejs(void *rt) {
 
 /*! \brief Flush buffer for the X connection of a runtime object.
  */
-int _X_MB_flush_x_conn_nodejs(void *rt) {
+int _X_MB_flush_x_conn_for_nodejs(void *rt) {
     return XFlush(((X_MB_runtime_t *)rt)->display);
 }
 
