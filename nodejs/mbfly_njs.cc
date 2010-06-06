@@ -50,6 +50,8 @@ xnjsmb_new(const Arguments &args) {
     self->Set(String::New("_njs_rt"), External::Wrap(rt));
     
     X_njs_MB_init_handle_connection(rt);
+
+    return Null();
 }
 
 static Handle<Value>
