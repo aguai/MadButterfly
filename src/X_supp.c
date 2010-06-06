@@ -48,8 +48,6 @@ struct _X_MB_runtime {
     monitor_t monitors[MAX_MONITORS];
     int n_monitor;
 
-    void *nodejs_data;
-
 #ifndef ONLY_MOUSE_MOVE_RAW
     /* States */
     shape_t *last;
@@ -656,32 +654,20 @@ mb_backend_t backend = { X_MB_new,
  */			 
 /*! \brief Exported for nodejs plugin to call handle_x_event.
  */
-void _X_MB_handle_x_event_for_nodejs(X_MB_runtime_t *rt) {
-    handle_x_event(rt);
+void _X_MB_handle_x_event_for_nodejs(void *rt) {
+    handle_x_event((X_MB_runtime_t *)rt);
 }
 
 /*! \brief Get X connect for nodejs plugin.
  */
-int _X_MB_get_x_conn_for_nodejs(X_MB_runtime_t *rt) {
-    return XConnectionNumber(rt->display);
+int _X_MB_get_x_conn_for_nodejs(void *rt) {
+    return XConnectionNumber(((X_MB_runtime_t *)rt)->display);
 }
 
 /*! \brief Flush buffer for the X connection of a runtime object.
  */
-int _X_MB_flush_x_conn_nodejs(X_MB_runtime_t *rt) {
-    return XFlush(rt->display);
-}
-
-/*! \brief Keep data for nodejs plugin.
- */
-void _X_MB_set_data_nodejs(X_MB_runtime_t *rt, void *data) {
-    rt->nodejs_data = data;
-}
-
-/*! \brief Get data for nodejs plugin.
- */
-void *_X_MB_get_data_nodejs(X_MB_runtime_t *rt) {
-    return rt->nodejs_data;
+int _X_MB_flush_x_conn_nodejs(void *rt) {
+    return XFlush(((X_MB_runtime_t *)rt)->display);
 }
 
 /* @} */
