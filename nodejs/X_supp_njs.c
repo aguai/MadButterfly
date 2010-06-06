@@ -132,7 +132,9 @@ X_njs_MB_new(char *display_name, int w, int h) {
     return rt;
 }
 
+/*! \brief Get X runtime that is backend of this njs runtime.
+ */
 void *
-_X_njs_MB_get_runtime(njs_runtime_t *rt) {
+_X_njs_MB_get_X_runtime(njs_runtime_t *rt) {
     return rt->xrt;
 }
