@@ -18,6 +18,7 @@
 typedef struct _njs_runtime {
     ev_io iowatcher;
     ev_timer tmwatcher;
+    int enable_io;
     int enable_timer;
     void *xrt;
 } njs_runtime_t;
@@ -100,6 +101,7 @@ X_njs_MB_handle_connection(njs_runtime_t *rt) {
     fd = _X_MB_get_x_conn_for_nodejs(xrt);
     ev_io_init(&rt->iowatcher, x_conn_cb, fd, EV_READ);
     ev_io_start(&rt->iowatcher);
+    rt->enable_io = 1;
 
     set_next_timeout(rt);
 }
@@ -111,9 +113,13 @@ X_njs_MB_free(njs_runtime_t *rt) {
     /*
      * stop IO and timer watcher
      */
-    ev_io_stop(&rt->iowatcher);
+    if(rt->enable_io)
+	ev_io_stop(&rt->iowatcher);
     if(rt->enable_timer)
 	ev_timer_stop(&rt->tmwatcher);
+    
+    X_MB_free(rt->xrt);
+    free(rt);
 }
 
 njs_runtime_t *
@@ -127,6 +133,7 @@ X_njs_MB_new(char *display_name, int w, int h) {
     xrt = X_MB_new(display_name, w, h);
 
     rt->xrt = xrt;
+    rt->enable_io = 0;
     rt->enable_timer = 0;	/* no timer, now */
     
     return rt;
