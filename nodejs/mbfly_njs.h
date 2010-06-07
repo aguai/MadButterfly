@@ -23,4 +23,8 @@ redraw_man_t *xnjsmb_rt_rdman(v8::Handle<v8::Object> mbrt);
 v8::Handle<v8::Value> xnjsmb_coord_new(const v8::Arguments &args);
 void xnjsmb_coord_mkroot(v8::Handle<v8::Object> js_rt);
 
+/* From shapes.cc */
+void xnjsmb_shapes_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> rt_temp);
+
+
 #endif /* __MBFLY_NJS_H_ */

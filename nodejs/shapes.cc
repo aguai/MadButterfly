@@ -7,7 +7,7 @@ extern "C" {
 
 using namespace v8;
 
-/*! \defgroup shape_temp Templates for shape and derive.
+/*! \defgroup shape_temp Templates for shape and derivations.
  *
  * @{
  */
@@ -56,3 +56,103 @@ xnjsmb_init_shape_temp(void) {
 
 /* @} */
 
+/*! \defgroup path_temp Templates for path objects.
+ *
+ * @{
+ */
+static Persistent<FunctionTemplate> xnjsmb_path_temp;
+
+/*! \brief Callback of constructor of path objects for Javascript.
+ */
+static Handle<Value>
+xnjsmb_shape_path(const Arguments &args) {
+    shape_t *sh;
+    redraw_man_t *rdman;
+    Handle<Object> self = args.This(); // path object
+    Handle<Object> rt;
+    char *dstr;
+    int argc;
+
+    argc = args.Length();
+    if(argc != 2)
+	THROW("Invalid number of arugments (!= 1)");
+    if(!args[0]->IsString())
+	THROW("Invalid argument type (should be a string)");
+    if(!args[1]->IsObject())
+	THROW("Invalid argument type (should be an object)");
+
+    String::Utf8Value dutf8(args[0]->ToString());
+    dstr = *dutf8;
+
+    rt = args[1]->ToObject();
+    rdman = xnjsmb_rt_rdman(rt);
+    sh = rdman_shape_path_new(rdman, dstr);
+
+    WRAP(self, sh);
+
+    return Null();
+}
+
+/*! \brief Initial function template for constructor of path objects.
+ */
+static void
+xnjsmb_init_path_temp(void) {
+    Handle<FunctionTemplate> temp;
+    Handle<ObjectTemplate> inst_temp;
+
+    temp = FunctionTemplate::New(xnjsmb_shape_path);
+    temp->Inherit(xnjsmb_shape_temp);
+    temp->SetClassName(String::New("path"));
+
+    inst_temp = temp->InstanceTemplate();
+    inst_temp->SetInternalFieldCount(1);
+
+    xnjsmb_path_temp = Persistent<FunctionTemplate>::New(temp);
+}
+
+/*! \brief Callback function of mb_rt.path_new().
+ */
+static Handle<Value>
+xnjsmb_shape_path_new(const Arguments &args) {
+    HandleScope scope;
+    Handle<Object> self = args.This(); // runtime object
+    Handle<Object> path_obj;
+    Handle<Value> path_args[2];
+    int argc;
+
+    argc = args.Length();
+    if(argc != 1)
+	THROW("Invalid number of arugments (!= 1)");
+    if(!args[0]->IsString())
+	THROW("Invalid argument type (shoud be a string)");
+
+    path_args[0] = args[0];
+    path_args[1] = self;
+    
+    path_obj = xnjsmb_path_temp->GetFunction()->NewInstance(2, path_args);
+    
+    scope.Close(path_obj);
+    return path_obj;
+}
+
+/* @} */
+
+/*! \brief Set properties of template of mb_rt.
+ */
+void
+xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
+    Handle<FunctionTemplate> path_new_temp;
+    Handle<ObjectTemplate> rt_proto_temp;
+    static int temp_init_flag = 0;
+
+    if(temp_init_flag == 0) {
+	xnjsmb_init_shape_temp();
+	xnjsmb_init_path_temp();
+	temp_init_flag = 1;
+    }
+
+    rt_proto_temp = rt_temp->PrototypeTemplate();
+    
+    path_new_temp = FunctionTemplate::New(xnjsmb_shape_path_new);
+    SET(rt_proto_temp, "path_new", path_new_temp);
+}
