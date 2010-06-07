@@ -1,8 +1,15 @@
 #ifndef __X_SUPP_NJS_H_
 #define __X_SUPP_NJS_H_
 
-struct _njs_runtime;
-typedef struct _njs_runtime njs_runtime_t;
+#include <ev.h>
+
+typedef struct _njs_runtime {
+    ev_io iowatcher;
+    ev_timer tmwatcher;
+    int enable_io;
+    int enable_timer;
+    void *xrt;
+} njs_runtime_t;
 
 extern void X_njs_MB_init_handle_connection(njs_runtime_t *rt);
 extern void X_njs_MB_free(njs_runtime_t *rt);

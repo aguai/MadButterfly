@@ -10,18 +10,11 @@
 #include <ev.h>
 #include "mb_X_supp.h"
 #include "mb_tools.h"
+#include "X_supp_njs.h"
 
 #ifndef ASSERT
 #define ASSERT(x)
 #endif
-
-typedef struct _njs_runtime {
-    ev_io iowatcher;
-    ev_timer tmwatcher;
-    int enable_io;
-    int enable_timer;
-    void *xrt;
-} njs_runtime_t;
 
 static void timer_cb(EV_P_ ev_timer *tmwatcher, int revent);
 
