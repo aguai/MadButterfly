@@ -5,6 +5,8 @@ extern "C" {
 #include "X_supp_njs.h"
 }
 
+#include "mbfly_njs.h"
+
 using namespace v8;
 
 /*! \defgroup njs_template_cb Callback functions for v8 engine and nodejs.
@@ -47,7 +49,7 @@ xnjsmb_new(const Arguments &args) {
     rt = X_njs_MB_new(display_name, width, height);
 
     self = args.This();
-    self->Set(String::New("_njs_rt"), External::Wrap(rt));
+    WRAP(self, rt);
     
     X_njs_MB_init_handle_connection(rt);
 
@@ -59,6 +61,18 @@ xnjsmb_handle_connection(const Arguments &args) {
 }
 
 /* @} */
+
+redraw_man_t *
+xnjsmb_rt_rdman(Handle<Object> mbrt) {
+    HandleScope scope;
+    njs_runtime_t *rt;
+    redraw_man_t *rdman;
+
+    rt = (njs_runtime_t *)UNWRAP(mbrt);
+    rdman = X_njs_MB_rdman(rt);
+    
+    return rdman;
+}
 
 Handle<Value>
 hello_func(const Arguments &args) {
@@ -77,4 +91,5 @@ init(Handle<Object> target) {
 
     func = FunctionTemplate::New(xnjsmb_new);
     target->Set(String::New("mb_rt"), func->GetFunction());
+    func->PrototypeTemplate()->SetInternalFieldCount(1);
 }
