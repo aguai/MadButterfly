@@ -71,6 +71,28 @@ xnjsmb_init_temp(void) {
     coord_obj_temp->SetInternalFieldCount(1);
 }
 
+static Handle<Object>
+xnjsmb_coord_new_jsobj(coord_t *coord, Handle<Object> parent_obj,
+		       Handle<Object> js_rt) {
+    Handle<Object> coord_obj;
+    static int init_temp = 0;
+    
+    if(!init_temp) {
+	xnjsmb_init_temp();
+	init_temp = 1;
+    }
+
+    coord_obj = coord_obj_temp->NewInstance();
+    ASSERT(coord_obj != NULL);
+    WRAP(coord_obj, coord);
+
+    if(!parent_obj.IsEmpty())
+	SET(coord_obj, "parent", parent_obj);
+    SET(coord_obj, "mbrt", js_rt);
+
+    return coord_obj;
+}
+
 /*! \brief Create a coord object associated with the rdman of the runtime.
  *
  * Two internal fields, coord and rdman.
@@ -84,12 +106,6 @@ xnjsmb_coord_new(const Arguments &args) {
     redraw_man_t *rdman;
     coord_t *coord, *parent = NULL;
     int argc;
-    static int init_temp = 0;
-
-    if(!init_temp) {
-	xnjsmb_init_temp();
-	init_temp = 1;
-    }
 
     argc = args.Length();
     if(argc > 1)
@@ -104,19 +120,29 @@ xnjsmb_coord_new(const Arguments &args) {
 	parent = (coord_t *)UNWRAP(parent_obj);
     }
     
-    /*
-     * Set Javascript object
-     */
     coord = rdman_coord_new(rdman, parent);
     ASSERT(coord != NULL);
+    coord_obj = xnjsmb_coord_new_jsobj(coord, parent_obj, js_rt);
     
-    coord_obj = coord_obj_temp->NewInstance();
-    ASSERT(coord_obj != NULL);
-    WRAP(coord_obj, coord);
-
-    if(parent != NULL)
-	SET(coord_obj, "parent", parent_obj);
-    SET(coord_obj, "mbrt", js_rt);
-
     return coord_obj;
+}
+
+/*! \brief Initialize Javascript object for root coord of a runtime.
+ *
+ * \param js_rt is the runtime object to create the root object for.
+ *
+ * After the function, js_rt.root is the object for root coord in
+ * Javascript.
+ */
+void
+xnjsmb_coord_mkroot(Handle<Object> js_rt) {
+    redraw_man_t *rdman;
+    coord_t *root;
+    Handle<Object> obj;
+    
+    rdman = xnjsmb_rt_rdman(js_rt);
+    root = rdman_get_root(rdman);
+    obj = xnjsmb_coord_new_jsobj(root, Handle<Object>(NULL), js_rt);
+
+    SET(js_rt, "root", obj);
 }

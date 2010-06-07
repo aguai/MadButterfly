@@ -50,6 +50,7 @@ xnjsmb_new(const Arguments &args) {
 
     self = args.This();
     WRAP(self, rt);
+    xnjsmb_coord_mkroot(self);
     
     X_njs_MB_init_handle_connection(rt);
 
@@ -62,6 +63,8 @@ xnjsmb_handle_connection(const Arguments &args) {
 
 /* @} */
 
+/*! \brief Get rdman associated with the runtime.
+ */
 redraw_man_t *
 xnjsmb_rt_rdman(Handle<Object> mbrt) {
     HandleScope scope;
@@ -84,17 +87,24 @@ hello_func(const Arguments &args) {
 extern "C" void
 init(Handle<Object> target) {
     HandleScope scope;
-    Handle<FunctionTemplate> func;
-    Handle<ObjectTemplate> rt_obj_temp;
+    Handle<FunctionTemplate> func, mb_rt_func;
+    Handle<ObjectTemplate> rt_instance_temp, rt_proto_temp;
 
     func = FunctionTemplate::New(hello_func);
     target->Set(String::New("Hello"), func->GetFunction());
 
-    func = FunctionTemplate::New(xnjsmb_new);
-    target->Set(String::New("mb_rt"), func->GetFunction());
-    rt_obj_temp = func->PrototypeTemplate();
-    rt_obj_temp->SetInternalFieldCount(1);
+    /*
+     * Initialize template for MadButterfly runtime objects.
+     */
+    mb_rt_func = FunctionTemplate::New(xnjsmb_new);
+    mb_rt_func->SetClassName(String::New("mb_rt"));
     
+    rt_instance_temp = mb_rt_func->InstanceTemplate();
+    rt_instance_temp->SetInternalFieldCount(1);
+    
+    rt_proto_temp = mb_rt_func->PrototypeTemplate();
     func = FunctionTemplate::New(xnjsmb_coord_new);
-    SET(rt_obj_temp, "coord_new", func);
+    SET(rt_proto_temp, "coord_new", func);
+    
+    target->Set(String::New("mb_rt"), mb_rt_func->GetFunction());    
 }
