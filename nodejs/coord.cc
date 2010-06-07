@@ -65,12 +65,14 @@ static Persistent<ObjectTemplate> coord_obj_temp;
 
 static void
 xnjsmb_init_temp(void) {
-    coord_obj_temp = Persistent<ObjectTemplate>(ObjectTemplate::New());
+    coord_obj_temp = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
     coord_obj_temp->SetIndexedPropertyHandler(xnjsmb_coord_get_index,
 					      xnjsmb_coord_set_index);
     coord_obj_temp->SetInternalFieldCount(1);
 }
 
+/*! \brief Create and initialize a Javascript object for a coord.
+ */
 static Handle<Object>
 xnjsmb_coord_new_jsobj(coord_t *coord, Handle<Object> parent_obj,
 		       Handle<Object> js_rt) {
@@ -123,6 +125,8 @@ xnjsmb_coord_new(const Arguments &args) {
     coord = rdman_coord_new(rdman, parent);
     ASSERT(coord != NULL);
     coord_obj = xnjsmb_coord_new_jsobj(coord, parent_obj, js_rt);
+
+    scope.Close(coord_obj);
     
     return coord_obj;
 }
