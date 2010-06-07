@@ -11,4 +11,8 @@ var coord = mb_rt.coord_new(root);
 sys.puts("coord matrix: " + 
 	 [coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]]);
 
+sys.puts(mb_rt.path_new);
+var path = mb_rt.path_new("m 100,100 L 200,200");
+sys.puts(path);
+
 setTimeout(function() { sys.puts("timeout"); }, 1000);

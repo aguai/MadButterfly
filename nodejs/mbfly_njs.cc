@@ -105,6 +105,8 @@ init(Handle<Object> target) {
     rt_proto_temp = mb_rt_func->PrototypeTemplate();
     func = FunctionTemplate::New(xnjsmb_coord_new);
     SET(rt_proto_temp, "coord_new", func);
+
+    xnjsmb_shapes_init_mb_rt_temp(mb_rt_func);
     
     target->Set(String::New("mb_rt"), mb_rt_func->GetFunction());    
 }
