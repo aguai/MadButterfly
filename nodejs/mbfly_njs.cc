@@ -85,11 +85,16 @@ extern "C" void
 init(Handle<Object> target) {
     HandleScope scope;
     Handle<FunctionTemplate> func;
+    Handle<ObjectTemplate> rt_obj_temp;
 
     func = FunctionTemplate::New(hello_func);
     target->Set(String::New("Hello"), func->GetFunction());
 
     func = FunctionTemplate::New(xnjsmb_new);
     target->Set(String::New("mb_rt"), func->GetFunction());
-    func->PrototypeTemplate()->SetInternalFieldCount(1);
+    rt_obj_temp = func->PrototypeTemplate();
+    rt_obj_temp->SetInternalFieldCount(1);
+    
+    func = FunctionTemplate::New(xnjsmb_coord_new);
+    SET(rt_obj_temp, "coord_new", func);
 }

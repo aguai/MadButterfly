@@ -18,5 +18,6 @@ extern "C" {
 #define GET(o, n) (o)->Get(v8::String::New(n))
 
 redraw_man_t *xnjsmb_rt_rdman(v8::Handle<v8::Object> mbrt);
+v8::Handle<v8::Value> xnjsmb_coord_new(const v8::Arguments &args);
 
 #endif /* __MBFLY_NJS_H_ */
