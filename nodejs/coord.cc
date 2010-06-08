@@ -61,14 +61,56 @@ xnjsmb_coord_set_index(uint32_t index, Local<Value> value,
     return value;
 }
 
+/*! \brief Callback functio to add a shape to a coord in Javascript.
+ *
+ * coord.add_shape(shape)
+ */
+static Handle<Value>
+xnjsmb_coord_add_shape(const Arguments &args) {
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    Handle<Object> shape_obj;
+    Handle<Object> rt_obj;
+    Handle<Value> rt_val;
+    redraw_man_t *rdman;
+    coord_t *coord;
+    shape_t *sh;
+    int r;
+
+    if(argc != 1)
+	THROW("Invalid number of arguments (!= 1)");
+    
+    shape_obj = args[0]->ToObject();
+    sh = (shape_t *)UNWRAP(shape_obj);
+    ASSERT(sh != NULL);
+    
+    coord = (coord_t *)UNWRAP(self);
+    ASSERT(coord != NULL);
+
+    rt_val = GET(self, "mbrt");
+    rt_obj = rt_val->ToObject();
+    rdman = xnjsmb_rt_rdman(rt_obj);
+    
+    r = rdman_add_shape(rdman, sh, coord);
+    if(r != 0)
+	THROW("Unknown error");
+
+    return Null();
+}
+
 static Persistent<ObjectTemplate> coord_obj_temp;
 
 static void
 xnjsmb_init_temp(void) {
+    Handle<FunctionTemplate> add_shape_temp;
+    
     coord_obj_temp = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
     coord_obj_temp->SetIndexedPropertyHandler(xnjsmb_coord_get_index,
 					      xnjsmb_coord_set_index);
     coord_obj_temp->SetInternalFieldCount(1);
+
+    add_shape_temp = FunctionTemplate::New(xnjsmb_coord_add_shape);
+    SET(coord_obj_temp, "add_shape", add_shape_temp);
 }
 
 /*! \brief Create and initialize a Javascript object for a coord.
