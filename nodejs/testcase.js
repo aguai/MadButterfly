@@ -14,5 +14,7 @@ sys.puts("coord matrix: " +
 sys.puts(mb_rt.path_new);
 var path = mb_rt.path_new("m 100,100 L 200,200");
 sys.puts(path);
+sys.puts(coord.add_shape);
+coord.add_shape(path);
 
 setTimeout(function() { sys.puts("timeout"); }, 1000);
