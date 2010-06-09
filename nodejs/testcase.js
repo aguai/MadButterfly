@@ -12,7 +12,7 @@ sys.puts("coord matrix: " +
 	 [coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]]);
 
 sys.puts(mb_rt.path_new);
-var path = mb_rt.path_new("m 100,50 L 120,50 L 200,150 L 150,150 z");
+var path = mb_rt.path_new("m 100,50 L 120,50 L 200,150 L 180,150 z");
 sys.puts(path);
 sys.puts(coord.add_shape);
 coord.add_shape(path);
@@ -26,4 +26,12 @@ sys.puts(path.stroke_width);
 path.stroke_width = 2;
 sys.puts(path.stroke_width);
 
+mb_rt.redraw_all();
+
+var i = 0;
+setInterval(function() {
+	var deg = (i++) * 0.1;
+	coord[2] = (i % 20) * 10;
+	mb_rt.redraw_changed();
+    }, 50);
 setTimeout(function() { sys.puts("timeout"); }, 1000);

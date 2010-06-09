@@ -115,6 +115,17 @@ X_njs_MB_free(njs_runtime_t *rt) {
     free(rt);
 }
 
+int
+X_njs_MB_flush(njs_runtime_t *rt) {
+    void *xrt = rt->xrt;
+    int r;
+    extern int _X_MB_flush_x_conn_for_nodejs(void *rt);
+
+    _X_MB_flush_x_conn_for_nodejs(xrt);
+    
+    return r;
+}
+
 njs_runtime_t *
 X_njs_MB_new(char *display_name, int w, int h) {
     njs_runtime_t *rt;
