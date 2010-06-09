@@ -26,5 +26,7 @@ void xnjsmb_coord_mkroot(v8::Handle<v8::Object> js_rt);
 /* From shapes.cc */
 void xnjsmb_shapes_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> rt_temp);
 
+/* From paints.cc */
+void xnjsmb_paints_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> rt_temp);
 
 #endif /* __MBFLY_NJS_H_ */
