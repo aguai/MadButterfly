@@ -7,11 +7,16 @@
 #ifndef __SHAPES_H_
 #define __SHAPES_H_
 
+#include "mb_config.h"
+
+#ifdef SH_TEXT
+#include <pango/pangocairo.h>
+#endif
+
 #include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_redraw_man.h"
 #include "mb_img_ldr.h"
-#include <pango/pangocairo.h>
 
 /*! \page define_shape How to Define Shapes
  *
@@ -60,7 +65,7 @@
 /*! \defgroup shape_path Shape of Path
  * @{
  */
-extern shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data);
+extern shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data);
 extern shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
 						 char *commands,
 						 co_aix *pnts,
@@ -71,6 +76,7 @@ extern void sh_path_transform(shape_t *shape);
 extern void sh_path_draw(shape_t *shape, mbe_t *cr);
 /* @} */
 
+#ifdef SH_TEXT
 /*! \defgroup shape_text Shape of Text
  * @{
  */
@@ -92,6 +98,7 @@ extern void sh_text_set_text(shape_t *shape, const char *txt);
 extern void sh_text_transform(shape_t *shape);
 extern void sh_text_draw(shape_t *shape, mbe_t *cr);
 /* @} */
+#endif
 
 /*! \defgroup mb_text_t Shape of Text
  * @{

@@ -385,9 +385,9 @@ static void sh_path_free(shape_t *shape) {
  *
  * \todo Notify programmers that syntax or value error of path data.
  */
-static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *pnt_cntp,
+static int sh_path_cmd_arg_cnt(const char *data, int *cmd_cntp, int *pnt_cntp,
 			       int *float_arg_cntp) {
-    char *p, *old;
+    const char *p, *old;
     int cmd_cnt, pnt_cnt, float_arg_cnt;
     int i;
 
@@ -564,8 +564,8 @@ static int sh_path_cmd_arg_cnt(char *data, int *cmd_cntp, int *pnt_cntp,
 #define TO_ABSX islower(cmd)? x + atof(old): atof(old)
 #define TO_ABSY islower(cmd)? y + atof(old): atof(old)
 
-static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
-    char *p, *old;
+static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
+    const char *p, *old;
     char *cmds;
     char cmd;
     co_aix *pnts;
@@ -738,7 +738,7 @@ static int sh_path_cmd_arg_fill(char *data, sh_path_t *path) {
 
 /*! \brief Create a path from value of 'data' of SVG path.
  */
-shape_t *rdman_shape_path_new(redraw_man_t *rdman, char *data) {
+shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
     sh_path_t *path;
     int cmd_cnt, pnt_cnt, float_arg_cnt;
     int msz;

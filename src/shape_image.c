@@ -104,7 +104,6 @@ void sh_image_transform(shape_t *shape) {
     co_aix img_matrix[6];
     co_aix x_factor, y_factor;
     int img_w, img_h;
-    mbe_matrix_t cmatrix;
     int i;
     
     poses = img->poses;
@@ -158,7 +157,6 @@ void sh_image_transform(shape_t *shape) {
 void sh_image_draw(shape_t *shape, mbe_t *cr) {
     sh_image_t *img = (sh_image_t *)shape;
     mbe_pattern_t *saved_source;
-    mbe_matrix_t matrix, saved_matrix;
     co_aix *aggr;
     
     mbe_move_to(cr, img->poses[0][0], img->poses[0][1]);

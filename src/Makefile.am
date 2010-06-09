@@ -12,11 +12,16 @@ if TESTCASE
 noinst_PROGRAMS += testcase
 endif
 
+if X_SUPP
 MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c mbaf/animated_menu.c
+else
+MBAF_SOURCES=
+endif
+
 libmbfly_la_SOURCES= animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
 	shape_rect.c shift.c subtree_free.c timer.c 			\
-	timertool.c tools.c visibility.c X_supp.c prop.c sprite.c	\
+	timertool.c tools.c visibility.c prop.c sprite.c	\
 	mouse.c shape_image.c img_ldr.c $(MBAF_SOURCES)
 
 if SH_TEXT
@@ -27,8 +32,20 @@ if SH_STEXT
 libmbfly_la_SOURCES += shape_stext.c
 endif
 
+if X_SUPP
+libmbfly_la_SOURCES += X_supp.c
+endif
+
+if CAIRO_GRAPH_ENGINE
+libmbfly_la_SOURCES += graph_engine_cairo.c
+
 libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ @pangocairo_CFLAGS@
 libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
+endif
+
+if SKIA_GRAPH_ENGINE
+libmbfly_la_SOURCES += graph_engine_skia.cpp
+endif
 
 X_main_SOURCES = X_main.c
 X_main_LDADD = $(top_builddir)/src/libmbfly.la

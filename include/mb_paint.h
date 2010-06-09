@@ -7,8 +7,6 @@
 #include "mb_img_ldr.h"
 #include "mb_tools.h"
 
-typedef float co_comp_t;
-
 extern paint_t *rdman_paint_color_new(redraw_man_t *rdman,
 				      co_comp_t r, co_comp_t g,
 				      co_comp_t b, co_comp_t a);
@@ -29,11 +27,6 @@ extern void paint_color_get(paint_t *paint,
     } while(0)
 #define paint_destroy(_paint)
 
-
-typedef struct _grad_stop {
-    co_aix offset;
-    co_comp_t r, g, b, a;
-} grad_stop_t;
 
 extern paint_t *rdman_paint_linear_new(redraw_man_t *rdman,
 				       co_aix x1, co_aix y1,

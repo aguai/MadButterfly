@@ -122,6 +122,7 @@ void handle_connection(Display *display, mb_tman_t *tman,
 void draw_path(mbe_t *cr, int w, int h) {
     mbe_t *tmpcr;
     mbe_surface_t *tmpsuf;
+    mbe_pattern_t *tmpptn;
     redraw_man_t rdman;
     shape_t *path1, *path2, *rect;
     coord_t *coord1, *coord2, *coord3;
@@ -141,9 +142,10 @@ void draw_path(mbe_t *cr, int w, int h) {
     PangoAttrList *attrs = pango_attr_list_new();
 
     tmpsuf = mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
+    tmpptn = mbe_pattern_create_for_surface(tmpsuf);
     tmpcr = mbe_create(tmpsuf);
 
-    mbe_set_source_surface(cr, tmpsuf, 0, 0);
+    mbe_set_source(cr, tmpptn);
     redraw_man_init(&rdman, tmpcr, cr);
     coord1 = rdman_coord_new(&rdman, rdman.root_coord);
     coord2 = rdman_coord_new(&rdman, rdman.root_coord);

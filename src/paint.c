@@ -92,13 +92,9 @@ static void paint_linear_prepare(paint_t *paint, mbe_t *cr) {
 	    mbe_pattern_destroy(ptn);
 	linear->flags &= ~LIF_DIRTY;
 	ptn = mbe_pattern_create_linear(linear->x1, linear->y1,
-					  linear->x2, linear->y2);
-	for(i = 0; i < linear->n_stops; i++) {
-	    stop = &linear->stops[i];
-	    mbe_pattern_add_color_stop_rgba(ptn, stop->offset,
-					      stop->r, stop->g, stop->b,
-					      stop->a);
-	}
+					linear->x2, linear->y2,
+					linear->stops, linear->n_stops);
+	ASSERT(ptn != NULL);
 	linear->ptn = ptn;
     }
 
@@ -177,20 +173,15 @@ typedef struct _paint_radial {
 static void paint_radial_prepare(paint_t *paint, mbe_t *cr) {
     paint_radial_t *radial = (paint_radial_t *)paint;
     mbe_pattern_t *ptn;
-    grad_stop_t *stop;
     int i;
 
     if(radial->flags & RDF_DIRTY) {
 	ptn = mbe_pattern_create_radial(radial->cx, radial->cy, 0,
 					  radial->cx, radial->cy,
-					  radial->r);
+					radial->r,
+					radial->stops,
+					radial->n_stops);
 	ASSERT(ptn != NULL);
-	stop = radial->stops;
-	for(i = 0; i < radial->n_stops; i++, stop++) {
-	    mbe_pattern_add_color_stop_rgba(ptn, stop->offset,
-					      stop->r, stop->g,
-					      stop->b, stop->a);
-	}
 	mbe_pattern_destroy(radial->ptn);
 	radial->ptn = ptn;
     }
@@ -328,15 +319,8 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
  */
 void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     paint_image_t *img_paint = (paint_image_t *)paint;
-    mbe_matrix_t cmatrix;
     
-    cmatrix.xx = matrix[0];
-    cmatrix.xy = matrix[1];
-    cmatrix.x0 = matrix[2];
-    cmatrix.yx = matrix[3];
-    cmatrix.yy = matrix[4];
-    cmatrix.y0 = matrix[5];
-    mbe_pattern_set_matrix(img_paint->ptn, &cmatrix);
+    mbe_pattern_set_matrix(img_paint->ptn, matrix);
 }
 
 void paint_image_get_size(paint_t *paint, int *w, int *h) {
