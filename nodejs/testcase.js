@@ -18,7 +18,7 @@ sys.puts(coord.add_shape);
 coord.add_shape(path);
 
 sys.puts(mb_rt.paint_color_new);
-var paint = mb_rt.paint_color_new(1.0, 1.0, 1.0, 1.0);
+var paint = mb_rt.paint_color_new(1, 1, 1, 1);
 sys.puts(paint);
 paint.stroke(path);
 

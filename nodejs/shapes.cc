@@ -192,17 +192,112 @@ xnjsmb_shape_path_new(const Arguments &args) {
 
 /* @} */
 
+/*! \defgroup stext_path Template for stext objects.
+ *
+ * @{
+ */
+
+/*! \brief Constructor for stext objects.
+ *
+ * 4 arguments
+ * \param rt is a runtime object.
+ * \param data is a text to be showed.
+ * \param x is postion in x-axis.
+ * \param y is position in y-axis.
+ */
+static Handle<Value>
+xnjsmb_shape_stext(const Arguments &args) {
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    Handle<Object> rt;
+    float x, y;
+    char *data;
+    redraw_man_t *rdman;
+    shape_t *stext;
+    
+    if(argc != 4)
+	THROW("Invalid number of arguments (!= 4)");
+    if(!args[0]->IsObject() || !args[1]->IsString() ||
+       !args[2]->IsNumber() || !args[3]->IsNumber())
+	THROW("Invalid argument type");
+
+    rt = args[0]->ToObject();
+    String::Utf8Value data_utf8(args[1]);
+    data = *data_utf8;
+    x = args[2]->ToNumber()->Value();
+    y = args[3]->ToNumber()->Value();
+
+    rdman = xnjsmb_rt_rdman(rt);
+    ASSERT(rdman != NULL);
+
+    stext = rdman_shape_stext_new(rdman, data, x, y);
+
+    WRAP(self, stext);
+    SET(self, "mbrt", rt);
+
+    return Null();
+}
+
+static Persistent<FunctionTemplate> xnjsmb_shape_stext_temp;
+
+/*! \brief Create a stext and return it.
+ */
+static Handle<Value>
+xnjsmb_shape_stext_new(const Arguments &args) {
+    HandleScope scope;
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    Handle<Value> stext_args[4];
+    Handle<Object> stext_obj;
+    Handle<Function> func;
+
+    if(argc != 3)
+	THROW("Invalid number of arguments (!= 3)");
+
+    stext_args[0] = self;
+    stext_args[1] = args[0];
+    stext_args[2] = args[1];
+    stext_args[3] = args[2];
+
+    func = xnjsmb_shape_stext_temp->GetFunction();
+    stext_obj = func->NewInstance(4, stext_args);
+    ASSERT(stext_obj != NULL);
+
+    return stext_obj;
+}
+
+/*! \brief Initialize function template for stext objects.
+ */
+void
+xnjsmb_init_stext_temp(void) {
+    Handle<FunctionTemplate> func_temp;
+    Handle<ObjectTemplate> inst_temp;
+    
+    func_temp = FunctionTemplate::New(xnjsmb_shape_stext);
+    func_temp->Inherit(xnjsmb_shape_temp);
+    func_temp->SetClassName(String::New("stext"));
+    
+    inst_temp = func_temp->InstanceTemplate();
+    inst_temp->SetInternalFieldCount(1);
+    
+    xnjsmb_shape_stext_temp = Persistent<FunctionTemplate>::New(func_temp);
+}
+
+/* @} */
+
 /*! \brief Set properties of template of mb_rt.
  */
 void
 xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
-    Handle<FunctionTemplate> path_new_temp;
+    HandleScope scope;
+    Handle<FunctionTemplate> path_new_temp, stext_new_temp;
     Handle<ObjectTemplate> rt_proto_temp;
     static int temp_init_flag = 0;
 
     if(temp_init_flag == 0) {
 	xnjsmb_init_shape_temp();
 	xnjsmb_init_path_temp();
+	xnjsmb_init_stext_temp();
 	temp_init_flag = 1;
     }
 
@@ -210,4 +305,7 @@ xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
     
     path_new_temp = FunctionTemplate::New(xnjsmb_shape_path_new);
     SET(rt_proto_temp, "path_new", path_new_temp);
+
+    stext_new_temp = FunctionTemplate::New(xnjsmb_shape_stext_new);
+    SET(rt_proto_temp, "stext_new", stext_new_temp);
 }
