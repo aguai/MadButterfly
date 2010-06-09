@@ -41,7 +41,9 @@ xnjsmb_paint_fill(const Arguments &args) {
     rdman = xnjsmb_rt_rdman(rt);
     
     rdman_paint_fill(rdman, paint, sh);
-
+    
+    rdman_shape_changed(rdman, sh);
+    
     return Null();
 }
 
@@ -74,7 +76,9 @@ xnjsmb_paint_stroke(const Arguments &args) {
     rdman = xnjsmb_rt_rdman(rt);
     
     rdman_paint_stroke(rdman, paint, sh);
-
+    
+    rdman_shape_changed(rdman, sh);
+    
     return Null();
 }
 

@@ -5,6 +5,10 @@ extern "C" {
 #include <mb.h>
 }
 
+#ifndef ASSERT
+#define ASSERT(x)
+#endif
+
 using namespace v8;
 
 /*! \defgroup shape_temp Templates for shape and derivations.
@@ -37,6 +41,52 @@ xnjsmb_shape_hide(const Arguments &args) {
     return Null();
 }
 
+/*! \brief Get stroke width of a shape.
+ */
+static Handle<Value>
+xnjsmb_shape_stroke_width_getter(Local<String> property,
+				 const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    shape_t *sh;
+    float w;
+    Handle<Value> w_val;
+    
+    sh = (shape_t *)UNWRAP(self);
+    w = sh_get_stroke_width(sh);
+    w_val = Number::New(w);
+    
+    return w_val;
+}
+
+/*! \brief Set stroke width of a shape.
+ */
+static void
+xnjsmb_shape_stroke_width_setter(Local<String> property,
+				 Local<Value> value,
+				 const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    Handle<Object> rt;
+    shape_t *sh;
+    redraw_man_t *rdman;
+    float w;
+    Handle<Number> w_num;
+    
+    sh = (shape_t *)UNWRAP(self);
+    w_num = value->ToNumber();
+    w = w_num->Value();
+
+    sh_set_stroke_width(sh, w);
+
+    /*
+     * Mark changed.
+     */
+    rt = GET(self, "mbrt")->ToObject();
+    ASSERT(rt != NULL);
+    rdman = xnjsmb_rt_rdman(rt);
+    
+    rdman_shape_changed(rdman, sh);
+}
+
 static void
 xnjsmb_init_shape_temp(void) {
     Handle<FunctionTemplate> temp;
@@ -52,6 +102,10 @@ xnjsmb_init_shape_temp(void) {
     SET(proto_temp, "show", method_temp);
     method_temp = FunctionTemplate::New(xnjsmb_shape_hide);
     SET(proto_temp, "hide", method_temp);
+
+    proto_temp->SetAccessor(String::New("stroke_width"),
+			    xnjsmb_shape_stroke_width_getter,
+			    xnjsmb_shape_stroke_width_setter);
 }
 
 /* @} */
