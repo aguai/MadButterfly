@@ -89,6 +89,7 @@ xnjsmb_shape_path(const Arguments &args) {
     sh = rdman_shape_path_new(rdman, dstr);
 
     WRAP(self, sh);
+    SET(self, "mbrt", rt);
 
     return Null();
 }

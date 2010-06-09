@@ -12,13 +12,14 @@ sys.puts("coord matrix: " +
 	 [coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]]);
 
 sys.puts(mb_rt.path_new);
-var path = mb_rt.path_new("m 100,100 L 200,200");
+var path = mb_rt.path_new("m 100,50 L 120,50 L 200,150 L 150,150 z");
 sys.puts(path);
 sys.puts(coord.add_shape);
 coord.add_shape(path);
 
 sys.puts(mb_rt.paint_color_new);
-var paint = mb_rt.paint_color_new(1, 1, 1, 1);
+var paint = mb_rt.paint_color_new(1.0, 1.0, 1.0, 1.0);
 sys.puts(paint);
+paint.stroke(path);
 
 setTimeout(function() { sys.puts("timeout"); }, 1000);

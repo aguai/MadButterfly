@@ -13,6 +13,71 @@ using namespace v8;
 #endif
 
 
+/*! \brief Fill a shape with the paint.
+ */
+static Handle<Value>
+xnjsmb_paint_fill(const Arguments &args) {
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    Handle<Object> sh_obj;
+    Handle<Object> rt;
+    Handle<Value> rt_val;
+    paint_t *paint;
+    shape_t *sh;
+    redraw_man_t *rdman;
+
+    if(argc != 1)
+	THROW("Invalid number of arguments (!= 1)");
+    if(!args[0]->IsObject())
+	THROW("Invalid argument type (shape)");
+
+    paint = (paint_t *)UNWRAP(self);
+    
+    sh_obj = args[0]->ToObject();
+    sh = (shape_t *)UNWRAP(sh_obj);
+
+    rt_val = GET(self, "mbrt");
+    rt = rt_val->ToObject();
+    rdman = xnjsmb_rt_rdman(rt);
+    
+    rdman_paint_fill(rdman, paint, sh);
+
+    return Null();
+}
+
+/*! \brief Stroke a shape with the paint.
+ */
+static Handle<Value>
+xnjsmb_paint_stroke(const Arguments &args) {
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    Handle<Object> sh_obj;
+    Handle<Object> rt;
+    Handle<Value> rt_val, sh_val;
+    paint_t *paint;
+    shape_t *sh;
+    redraw_man_t *rdman;
+
+    if(argc != 1)
+	THROW("Invalid number of arguments (!= 1)");
+    if(!args[0]->IsObject())
+	THROW("Invalid argument type (shape)");
+
+    paint = (paint_t *)UNWRAP(self);
+    
+    sh_val = args[0];
+    sh_obj = sh_val->ToObject();
+    sh = (shape_t *)UNWRAP(sh_obj);
+
+    rt_val = GET(self, "mbrt");
+    rt = rt_val->ToObject();
+    rdman = xnjsmb_rt_rdman(rt);
+    
+    rdman_paint_stroke(rdman, paint, sh);
+
+    return Null();
+}
+
 /*! \brief Constructor of color paint_color_t object for Javascript.
  */
 static Handle<Value>
@@ -42,6 +107,7 @@ xnjsmb_paint_color(const Arguments &args) {
     ASSERT(sh != NULL);
 
     WRAP(self, paint);
+    SET(self, "mbrt", rt);
 
     return Null();
 }
@@ -88,8 +154,9 @@ static Persistent<FunctionTemplate> xnjsmb_paint_color_new_temp;
  */
 static void
 xnjsmb_init_paints(void) {
-    Handle<FunctionTemplate> temp;
+    Handle<FunctionTemplate> temp, meth;
     Handle<ObjectTemplate> inst_temp;
+    Handle<ObjectTemplate> proto_temp;
     
     /*
      * Base type of paint types.
@@ -97,6 +164,14 @@ xnjsmb_init_paints(void) {
     temp = FunctionTemplate::New();
     xnjsmb_paint_temp = Persistent<FunctionTemplate>::New(temp);
     xnjsmb_paint_temp->SetClassName(String::New("paint"));
+    
+    meth = FunctionTemplate::New(xnjsmb_paint_fill);
+    proto_temp = xnjsmb_paint_temp->PrototypeTemplate();
+    SET(proto_temp, "fill", meth);
+
+    meth = FunctionTemplate::New(xnjsmb_paint_stroke);
+    proto_temp = xnjsmb_paint_temp->PrototypeTemplate();
+    SET(proto_temp, "stroke", meth);
 
     /*
      * Paint color
