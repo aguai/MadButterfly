@@ -1,4 +1,5 @@
 include_HEADERS = 	\
+	mb_config.h	\
 	mb_animate.h 	\
 	mb.h	 	\
 	mb_timer.h 	\

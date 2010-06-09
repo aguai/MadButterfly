@@ -1,7 +1,6 @@
 #include <stdio.h>
+#include <string.h>
 #include "mb_graph_engine.h"
-#include <cairo-ft.h>
-#include <fontconfig/fontconfig.h>
 #include "mb_shapes.h"
 #include "mb_tools.h"
 
@@ -59,8 +58,6 @@ NO_DOX(static int move_cnt = 0);
 	move_xys[move_cnt][0] = x;		\
 	move_xys[move_cnt++][1] = y;		\
     } while(0)
-#undef mbe_show_text
-#define mbe_show_text(cr, txt)
 #undef mbe_scaled_font_destroy
 #define mbe_scaled_font_destroy(scaled)
 #undef mbe_text_path
@@ -128,106 +125,16 @@ typedef mbe_text_extents_t mb_text_extents_t;
 #define MBE_SET_WIDTH(ext, v) do { ((ext)->width) = v; } while(0)
 #define MBE_SET_HEIGHT(ext, v) do { ((ext)->height) = v; } while(0)
 
-/*! \brief Find out a font pattern.
- *
- * This function use fontconfig to decide a font file in pattern.  It can
- * replaced by other mechanism if you think it is not what you want.
- *
- * \param slant make font prune if it it non-zero.
- * \param weight make font normal if it is 100.
- */
-static
-FcPattern *query_font_pattern(const char *family, int slant, int weight) {
-    FcPattern *ptn, *p, *fn_ptn;
-    FcValue val;
-    FcConfig *cfg;
-    FcBool r;
-    FcResult result;
-    static int slant_map[] = {	/* from MB_FONT_SLANT_* to FC_SLANT_* */
-	FC_SLANT_ROMAN,
-	FC_SLANT_ROMAN,
-	FC_SLANT_ITALIC,
-	FC_SLANT_OBLIQUE};
-
-    cfg = FcConfigGetCurrent();
-    ptn = FcPatternCreate();
-    p = FcPatternCreate();
-    if(ptn == NULL || p == NULL)
-	goto err;
-
-    val.type = FcTypeString;
-    val.u.s = family;
-    FcPatternAdd(ptn, "family", val, FcTrue);
-    
-    val.type = FcTypeInteger;
-    val.u.i = slant_map[slant];
-    FcPatternAdd(ptn, "slant", val, FcTrue);
-    
-    val.type = FcTypeInteger;
-    val.u.i = weight;
-    FcPatternAdd(ptn, "weight", val, FcTrue);
-
-    r = FcConfigSubstituteWithPat(cfg, ptn, NULL, FcMatchPattern);
-    if(!r)
-	goto err;
-    
-    r = FcConfigSubstituteWithPat(cfg, p, ptn, FcMatchFont);
-    if(!r)
-	goto err;
-
-    FcDefaultSubstitute(p);
-
-    fn_ptn = FcFontMatch(cfg, p, &result);
-
-    /* It is supposed to return FcResultMatch.  But, it is no, now.
-     * I don't know why.  Someone should figure out the issue.
-     */
-#if 0
-    if(result != FcResultMatch) {
-	printf("%d %d\n", result, FcResultMatch);
-	goto err;
-    }
-#endif
-    if(fn_ptn == NULL)
-	goto err;
-
-    FcPatternDestroy(ptn);
-    FcPatternDestroy(p);
-    
-    return fn_ptn;
-    
-err:
-    if(ptn)
-	FcPatternDestroy(ptn);
-    if(p)
-	FcPatternDestroy(p);
-    return NULL;
-
+static mb_font_face_t *
+query_font_face(const char *family, int slant, int weight) {
+    return (mb_font_face_t *)mbe_query_font_face(family, slant, weight);
 }
 
-/*! \brief Find out a font face for a pattern specified.
- *
- * The pattern, here, is a vector of family, slant, and weight.
- * This function base on fontconfig and cairo FreeType font supporting.
- * You can replace this function with other font mechanisms.
- */
-static
-mb_font_face_t *query_font_face(const char *family, int slant, int weight) {
-    mbe_font_face_t *cface;
-    FcPattern *ptn;
-    
-    ptn = query_font_pattern(family, slant, weight);
-    cface = mbe_ft_font_face_create_for_pattern(ptn);
-    FcPatternDestroy(ptn);
-    
-    return (mb_font_face_t *)cface;
-}
-
-static
-void free_font_face(mb_font_face_t *face) {
+static void
+free_font_face(mb_font_face_t *face) {
     ASSERT(face == NULL);
 
-    mbe_font_face_destroy((mbe_font_face_t *)face);
+    mbe_free_font_face((mbe_font_face_t *)face);
 }
 
 /*! \brief This is scaled font for specified size and extent.
@@ -242,31 +149,13 @@ static
 mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
 					       co_aix *matrix) {
     mbe_scaled_font_t *scaled_font;
-    mbe_matrix_t font_matrix;
-    static mbe_matrix_t id = {
-	1, 0,
-	0, 1,
-	0, 0
-    };
-    static mbe_font_options_t *opt = NULL;
+    static co_aix id[6] = { 1, 0, 0,
+			    0, 1, 0 };
     
     ASSERT(matrix != NULL);
     
-    if(opt == NULL) {
-	opt = mbe_font_options_create();
-	if(opt == NULL)
-	    return NULL;
-    }
-
-    font_matrix.xx = *matrix++;
-    font_matrix.xy = *matrix++;
-    font_matrix.x0 = *matrix++;
-    font_matrix.yx = *matrix++;
-    font_matrix.yy = *matrix++;
-    font_matrix.y0 = *matrix;
     scaled_font = mbe_scaled_font_create((mbe_font_face_t *)face,
-					   &font_matrix,
-					   &id, opt);
+					 matrix, &id);
 
     return (mb_scaled_font_t *)scaled_font;
 }
@@ -705,12 +594,9 @@ int sh_stext_set_style(shape_t *shape,
 static
 void test_query_font_face(void) {
     mb_font_face_t *face;
-    mbe_status_t status;
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = mbe_font_face_status((mbe_font_face_t *)face);
-    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     free_font_face(face);
 }
@@ -720,17 +606,12 @@ void test_make_scaled_font_face_matrix(void) {
     co_aix matrix[6] = {5, 0, 0, 0, 5, 0};
     mb_font_face_t *face;
     mb_scaled_font_t *scaled;
-    mbe_status_t status;
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    status = mbe_font_face_status((mbe_font_face_t *)face);
-    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     scaled = make_scaled_font_face_matrix(face, matrix);
     CU_ASSERT(scaled != NULL);
-    status = mbe_scaled_font_status((mbe_scaled_font_t *)scaled);
-    CU_ASSERT(status == MBE_STATUS_SUCCESS);
     
     scaled_font_free(scaled);
     free_font_face(face);

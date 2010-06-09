@@ -63,7 +63,7 @@ void matrix_trans_pos(co_aix *matrix, co_aix *x, co_aix *y) {
  * matrix as aggregated matrix. 
  */
 static void compute_transform_function(coord_t *visit) {
-    if(visit->parent)
+    if(!coord_is_root(visit))
 	mul_matrix(visit->parent->aggr_matrix,
 		   visit->matrix, visit->aggr_matrix);
     else
@@ -83,7 +83,7 @@ static void compute_transform_function_cached(coord_t *visit) {
     co_aix cache_p_matrix[6];
     co_aix cache_scale_x, cache_scale_y;
     
-    if(visit->parent) {
+    if(!coord_is_root(visit)) {
 	p_matrix = coord_get_aggr_matrix(visit->parent);
 	cache_scale_x =
 	    sqrtf(p_matrix[0] * p_matrix[0] + p_matrix[3] * p_matrix[3]);
@@ -103,6 +103,14 @@ static void compute_transform_function_cached(coord_t *visit) {
 
 void compute_aggr_of_cached_coord(coord_t *coord) {
     compute_transform_function_cached(coord);
+}
+
+void
+compute_aggr(coord_t *coord) {
+    if(coord->flags & COF_OWN_CANVAS)
+	compute_transform_function_cached(coord);
+    else
+	compute_transform_function(coord);
 }
 
 void compute_reverse(co_aix *orig, co_aix *reverse) {

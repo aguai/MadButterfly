@@ -123,6 +123,7 @@ struct _geo {
 #define GEF_HIDDEN 0x2		/*!< The geo is hidden. */
 #define GEF_FREE 0x4
 #define GEF_OV_DRAW 0x8		/*!< To flag drawed for a overlay testing. */
+#define GEF_SWAP 0x10
 
 extern int areas_are_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
@@ -161,9 +162,10 @@ typedef struct _coord_canvas_info {
 				 */
     area_t aggr_dirty_areas[2];	/*!< Used to aggregate updates to parent. */
     area_t cached_dirty_area;	/*!< Used to dirty an area in cached space. */
-    area_t owner_mems_area;	/*!< \brief The area is covered by members
-				 * of owner.
-				 */
+    area_t pcache_areas[2];	/*!< The area in the space of parent
+                                 *   cached. */
+    area_t *pcache_cur_area;	/*!< Current area for parent cached. */
+    area_t *pcache_last_area;	/*!< Last area for parent cached. */
 } coord_canvas_info_t;
 
 /*! \brief A coordination system.
@@ -241,6 +243,16 @@ struct _coord {
 				 * It is used by clean_rdman_dirties().
 				 */
 #define COF_TEMP_MARK 0x400	/*!< \brief Temporary mark a coord. */
+#define COF_JUST_ZERO 0x800	/*!< \brief The coord is real peformed zeroing.
+				 * 
+				 * It's canvas is changed by zeroing.
+				 */
+#define COF_DIRTY_PCACHE_AREA 0x1000 /*!< \brief pcache_area shoud be
+                                      *  updated.
+				      */
+#define COF_SKIP_ZERO 0x2000	/*!< \brief The coord just skip zeroing.
+				 * No real zeroing was performed.
+				 */
 /* @} */
 
 extern void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst);
@@ -251,6 +263,7 @@ extern void coord_trans_pos(coord_t *co, co_aix *x, co_aix *y);
 extern co_aix coord_trans_size(coord_t *co, co_aix size);
 extern void compute_aggr_of_coord(coord_t *coord);
 extern void compute_aggr_of_cached_coord(coord_t *coord);
+extern void compute_aggr(coord_t *coord);
 extern void compute_reverse(co_aix *orig, co_aix *reverse);
 extern void update_aggr_matrix(coord_t *start);
 extern coord_t *preorder_coord_subtree(coord_t *root, coord_t *last);
@@ -277,7 +290,7 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	(co)->flags &= ~COF_CACHE_MASK;				\
     } while(0)
 #define coord_is_root(co) ((co)->parent == NULL)
-#define coord_is_cached(co) ((co)->flags & COF_CACHE_MASK)
+#define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
 #define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
 #define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
 #define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
@@ -287,11 +300,13 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
     do { (co)->flags &= ~COF_MUST_ZEROING; } while(0)
 #define coord_set_flags(co, _flags)		\
     do { (co)->flags |= (_flags); } while(0)
+#define coord_get_parent(co) ((co)->parent)
 #define coord_get_flags(co, _flags) ((co)->flags & (_flags))
 #define coord_clear_flags(co, _flags)		\
     do { (co)->flags &= ~(_flags); } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
 #define coord_get_aggr_matrix(coord) ((coord)->aggr_matrix)
+#define coord_get_matrix(coord) ((coord)->matrix)
 #define FOR_COORDS_POSTORDER(coord, cur)			\
     for((cur) = postorder_coord_subtree((coord), NULL);		\
 	(cur) != NULL;						\
@@ -323,12 +338,19 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	shape = geo_get_shape_safe(STAILQ_NEXT(geo_t, coord_next,	\
 					       sh_get_geo(shape))))
 #define coord_get_area(coord) ((coord)->cur_area)
+#define coord_get_last_area(coord) ((coord)->last_area)
+#define coord_get_pcache_area(coord) ((coord)->canvas_info->pcache_cur_area)
+#define coord_get_pcache_last_area(coord)	\
+    ((coord)->canvas_info->pcache_last_area)
+#define coord_get_cached(coord) ((coord)->canvas_info->owner)
 #define _coord_get_canvas(coord) ((coord)->canvas_info->canvas)
 #define _coord_set_canvas(coord, _canvas)		\
     do {						\
 	(coord)->canvas_info->canvas = _canvas;		\
     } while(0)
 #define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
+#define _coord_get_aggr_dirty_areas(coord)	\
+    ((coord)->canvas_info->aggr_dirty_areas)
 
 /* @} */
 
@@ -377,6 +399,8 @@ struct _shape {
 #define sh_get_aggr_matrix(sh) (coord_get_aggr_matrix(sh_get_coord(sh)))
 #define sh_get_fill(sh) ((sh)->fill)
 #define sh_get_stroke(sh) ((sh)->stroke)
+#define sh_set_stroke_width(sh, v) do { (sh)->stroke_width = (v); } while(0)
+#define sh_get_stroke_width(sh) (sh)->stroke_width
 
 
 /*! \brief A sprite is a set of graphics that being an object in animation.

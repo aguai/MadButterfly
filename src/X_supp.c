@@ -37,6 +37,7 @@ struct _X_MB_runtime {
     Window win;
     Visual *visual;
     mbe_surface_t *surface, *backend_surface;
+    mbe_pattern_t *surface_ptn;
     mbe_t *cr, *backend_cr;
     redraw_man_t *rdman;
     mb_tman_t *tman;
@@ -201,6 +202,10 @@ static void handle_x_event(X_MB_runtime_t *rt) {
     int in_stroke;
     int r;
 
+    /* XXX: For some unknown reason, it causes a segmentation fault to
+     *      called XEventsQueued() after receiving first Expose event
+     *      and before redraw for the event.
+     */
     while(XEventsQueued(display, QueuedAfterReading) > 0) {
 	r = XNextEvent(display, &evt);
 	if(r == -1)
@@ -466,6 +471,9 @@ static int X_MB_init(const char *display_name,
 
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
+
+    xmb_rt->surface_ptn =
+	mbe_pattern_create_for_surface(xmb_rt->surface);
     
     xmb_rt->backend_surface =
 	mbe_xlib_surface_create(xmb_rt->display,
@@ -476,7 +484,7 @@ static int X_MB_init(const char *display_name,
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
 
-    mbe_set_source_surface(xmb_rt->backend_cr, xmb_rt->surface, 0, 0);
+    mbe_set_source(xmb_rt->backend_cr, xmb_rt->surface_ptn);
 
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
@@ -522,6 +530,8 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 
     if(xmb_rt->surface)
 	mbe_surface_destroy(xmb_rt->surface);
+    if(xmb_rt->surface_ptn)
+	mbe_pattern_destroy(xmb_rt->surface_ptn);
     if(xmb_rt->backend_surface)
 	mbe_surface_destroy(xmb_rt->backend_surface);
 
@@ -540,8 +550,10 @@ void *X_MB_new(const char *display_name, int w, int h) {
 	return NULL;
 
     r = X_MB_init(display_name, w, h, rt);
-    if(r != OK)
+    if(r != OK) {
+	free(rt);
 	return NULL;
+    }
 
     return rt;
 }
@@ -583,7 +595,7 @@ mb_img_ldr_t *X_MB_img_ldr(void *rt) {
     return img_ldr;
 }
 
-void X_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
+void X_MB_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     int i;
@@ -613,7 +625,7 @@ void X_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
     xmb_rt->n_monitor=i;
 }
 
-void X_remove_event(void *rt, int type, int fd)
+void X_MB_remove_event(void *rt, int type, int fd)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     int i;
@@ -626,8 +638,8 @@ void X_remove_event(void *rt, int type, int fd)
 }
 mb_backend_t backend = { X_MB_new,
 			 X_MB_free,
-			 X_add_event,
-			 X_remove_event,
+			 X_MB_add_event,
+			 X_MB_remove_event,
 			 X_MB_handle_connection,
 			 X_MB_kbevents,
 			 X_MB_rdman,
@@ -635,4 +647,27 @@ mb_backend_t backend = { X_MB_new,
 			 X_MB_ob_factory,
 			 X_MB_img_ldr
 		};
-			 
+/*! \defgroup x_supp_nodejs_sup Export functions for supporting nodejs plugin.
+ *
+ * These functions are for internal using.
+ * @{
+ */			 
+/*! \brief Exported for nodejs plugin to call handle_x_event.
+ */
+void _X_MB_handle_x_event_for_nodejs(void *rt) {
+    handle_x_event((X_MB_runtime_t *)rt);
+}
+
+/*! \brief Get X connect for nodejs plugin.
+ */
+int _X_MB_get_x_conn_for_nodejs(void *rt) {
+    return XConnectionNumber(((X_MB_runtime_t *)rt)->display);
+}
+
+/*! \brief Flush buffer for the X connection of a runtime object.
+ */
+int _X_MB_flush_x_conn_for_nodejs(void *rt) {
+    return XFlush(((X_MB_runtime_t *)rt)->display);
+}
+
+/* @} */

@@ -69,21 +69,20 @@ void mypreview(app_data_t *data, char *path)
 {
     redraw_man_t *rdman = MBAF_RDMAN(app);
     paint_t *paint, *old_paint;
-    paint_t *previewimg_paint;
     shape_t *obj = (shape_t *) MB_SPRITE_GET_OBJ(app->rootsprite, "previewimg");
     int w, h;
 
-    previewimg_paint =
-	(paint_t *)MB_SPRITE_GET_OBJ(app->rootsprite,
-					   "previewimg_paint_img");
     printf("Preview %s\n",path);
-    paint = rdman_img_ldr_load_paint(rdman, path);
+    paint = rdman_img_ldr_load_paint(rdman, path); /* return a cached
+						    * paint if the
+						    * path was loaded
+						    * before */
     if (paint) {
 	paint_image_get_size(paint, &w, &h);
 	printf("image %d %d\n",w, h);
 	old_paint = sh_get_fill(obj);
 	rdman_paint_fill(rdman, paint, obj);
-	if(old_paint != previewimg_paint)
+	if(old_paint != paint)
 	    rdman_paint_free(rdman, old_paint);
 	    
 	rdman_shape_changed(MBAF_RDMAN(app),obj);
