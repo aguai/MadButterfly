@@ -1,5 +1,5 @@
 
-mbfly_node_SRCS = mbfly_njs.cc X_supp_njs.c coord.cc shapes.cc
+mbfly_node_SRCS = mbfly_njs.cc X_supp_njs.c coord.cc shapes.cc paints.cc
 mbfly_node_CFLAGS= -I$(abs_top_builddir)/include \
 	-I$(abs_top_srcdir)/include \
 	-I$(prefix)/include \

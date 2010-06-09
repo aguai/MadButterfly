@@ -17,4 +17,6 @@ sys.puts(path);
 sys.puts(coord.add_shape);
 coord.add_shape(path);
 
+sys.puts(mb_rt.paint_color_new);
+
 setTimeout(function() { sys.puts("timeout"); }, 1000);

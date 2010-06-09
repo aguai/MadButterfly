@@ -106,7 +106,11 @@ init(Handle<Object> target) {
     func = FunctionTemplate::New(xnjsmb_coord_new);
     SET(rt_proto_temp, "coord_new", func);
 
+    /*
+     * Add properties to mb_rt templates for other modules.
+     */
     xnjsmb_shapes_init_mb_rt_temp(mb_rt_func);
+    xnjsmb_paints_init_mb_rt_temp(mb_rt_func);
     
     target->Set(String::New("mb_rt"), mb_rt_func->GetFunction());    
 }

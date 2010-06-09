@@ -23,7 +23,7 @@ def build(conf):
     
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'mbfly_njs.cc coord.cc shapes.cc'
+    obj.source = 'mbfly_njs.cc coord.cc shapes.cc paints.cc'
     obj.add_objects = 'X_supp_njs.o'
     obj.staticlib = 'mbfly'
     
