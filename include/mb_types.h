@@ -400,6 +400,7 @@ struct _shape {
 #define sh_get_fill(sh) ((sh)->fill)
 #define sh_get_stroke(sh) ((sh)->stroke)
 #define sh_set_stroke_width(sh, v) do { (sh)->stroke_width = (v); } while(0)
+#define sh_get_stroke_width(sh) (sh)->stroke_width
 
 
 /*! \brief A sprite is a set of graphics that being an object in animation.

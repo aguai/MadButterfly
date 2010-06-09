@@ -22,4 +22,8 @@ var paint = mb_rt.paint_color_new(1.0, 1.0, 1.0, 1.0);
 sys.puts(paint);
 paint.stroke(path);
 
+sys.puts(path.stroke_width);
+path.stroke_width = 2;
+sys.puts(path.stroke_width);
+
 setTimeout(function() { sys.puts("timeout"); }, 1000);
