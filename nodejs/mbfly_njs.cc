@@ -61,6 +61,36 @@ static Handle<Value>
 xnjsmb_handle_connection(const Arguments &args) {
 }
 
+static Handle<Value>
+xnjsmb_rt_redraw_changed(const Arguments &args) {
+    Handle<Object> self = args.This();
+    njs_runtime_t *rt;
+    redraw_man_t *rdman;
+    
+    rdman = xnjsmb_rt_rdman(self);
+    rdman_redraw_changed(rdman);
+    
+    rt = (njs_runtime_t *)UNWRAP(self);
+    X_njs_MB_flush(rt);
+    
+    return Null();
+}
+
+static Handle<Value>
+xnjsmb_rt_redraw_all(const Arguments &args) {
+    Handle<Object> self = args.This();
+    njs_runtime_t *rt;
+    redraw_man_t *rdman;
+    
+    rdman = xnjsmb_rt_rdman(self);
+    rdman_redraw_all(rdman);
+    
+    rt = (njs_runtime_t *)UNWRAP(self);
+    X_njs_MB_flush(rt);
+    
+    return Null();
+}
+
 /* @} */
 
 /*! \brief Get rdman associated with the runtime.
@@ -105,6 +135,12 @@ init(Handle<Object> target) {
     rt_proto_temp = mb_rt_func->PrototypeTemplate();
     func = FunctionTemplate::New(xnjsmb_coord_new);
     SET(rt_proto_temp, "coord_new", func);
+
+    func = FunctionTemplate::New(xnjsmb_rt_redraw_changed);
+    SET(rt_proto_temp, "redraw_changed", func);
+
+    func = FunctionTemplate::New(xnjsmb_rt_redraw_all);
+    SET(rt_proto_temp, "redraw_all", func);
 
     /*
      * Add properties to mb_rt templates for other modules.
