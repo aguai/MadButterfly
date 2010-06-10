@@ -26,6 +26,13 @@ sys.puts(path.stroke_width);
 path.stroke_width = 2;
 sys.puts(path.stroke_width);
 
+var face = mb_rt.font_face_query("courier", 2, 100);
+var blks = [[5, face, 20]];
+var stext = mb_rt.stext_new("Hello", 100, 50);
+stext.set_style(blks);
+paint.fill(stext);
+coord.add_shape(stext);
+
 mb_rt.redraw_all();
 
 var i = 0;

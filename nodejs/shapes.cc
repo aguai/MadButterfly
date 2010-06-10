@@ -84,7 +84,8 @@ xnjsmb_shape_stroke_width_setter(Local<String> property,
     ASSERT(rt != NULL);
     rdman = xnjsmb_rt_rdman(rt);
     
-    rdman_shape_changed(rdman, sh);
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
 }
 
 static void
@@ -266,12 +267,58 @@ xnjsmb_shape_stext_new(const Arguments &args) {
     return stext_obj;
 }
 
+/*! \brief Setup style blocks for a stext.
+ *
+ * It defines font style and size for blocks of text message.
+ *
+ * \param blks is a list (n_char, face, font size) tuples.
+ */
+static Handle<Value>
+xnjsmb_shape_stext_set_style(const Arguments &args) {
+    HandleScope scope;
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    shape_t *sh;
+    Array *blksobj;
+    Array *blkobj;
+    mb_style_blk_t *blks;
+    int nblks;
+    int i;
+    int r;
+
+    if(argc != 1)
+	THROW("Invalid number of arguments (!= 1)");
+    if(!args[0]->IsArray())
+	THROW("Invalid type of the argument");
+
+    blksobj = Array::Cast(*args[0]);
+    nblks = blksobj->Length();
+    blks = new mb_style_blk_t[nblks];
+    for(i = 0; i < nblks; i++) {
+	blkobj = Array::Cast(*blksobj->Get(i));
+	blks[i].n_chars = blkobj->Get(0)->ToInt32()->Value();
+	blks[i].face = (mb_font_face_t *)UNWRAP(blkobj->Get(1)->ToObject());
+	blks[i].font_sz = blkobj->Get(2)->ToNumber()->Value();
+    }
+    
+    sh = (shape_t *)UNWRAP(self);
+    r = sh_stext_set_style(sh, blks, nblks);
+    if(r != 0)
+	THROW("Unknown error");
+    
+    delete blks;
+    
+    return Null();
+}
+
 /*! \brief Initialize function template for stext objects.
  */
 void
 xnjsmb_init_stext_temp(void) {
     Handle<FunctionTemplate> func_temp;
+    Handle<FunctionTemplate> meth_temp;
     Handle<ObjectTemplate> inst_temp;
+    Handle<ObjectTemplate> proto_temp;
     
     func_temp = FunctionTemplate::New(xnjsmb_shape_stext);
     func_temp->Inherit(xnjsmb_shape_temp);
@@ -279,6 +326,10 @@ xnjsmb_init_stext_temp(void) {
     
     inst_temp = func_temp->InstanceTemplate();
     inst_temp->SetInternalFieldCount(1);
+
+    proto_temp = func_temp->PrototypeTemplate();
+    meth_temp = FunctionTemplate::New(xnjsmb_shape_stext_set_style);
+    SET(proto_temp, "set_style", meth_temp);
     
     xnjsmb_shape_stext_temp = Persistent<FunctionTemplate>::New(func_temp);
 }

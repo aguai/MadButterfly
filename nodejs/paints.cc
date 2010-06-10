@@ -42,7 +42,8 @@ xnjsmb_paint_fill(const Arguments &args) {
     
     rdman_paint_fill(rdman, paint, sh);
     
-    rdman_shape_changed(rdman, sh);
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
     
     return Null();
 }
@@ -77,7 +78,8 @@ xnjsmb_paint_stroke(const Arguments &args) {
     
     rdman_paint_stroke(rdman, paint, sh);
     
-    rdman_shape_changed(rdman, sh);
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
     
     return Null();
 }
