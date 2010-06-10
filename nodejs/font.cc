@@ -69,6 +69,8 @@ xnjsmb_font_face_init_temp(void) {
     xnjsmb_font_face_temp = Persistent<FunctionTemplate>::New(temp);
 }
 
+/*! \brief Add properties to the template of runtime objects.
+ */
 void
 xnjsmb_font_init_mb_rt_temp(Handle<FunctionTemplate> mb_rt_temp) {
     HandleScope scope;
@@ -83,5 +85,5 @@ xnjsmb_font_init_mb_rt_temp(Handle<FunctionTemplate> mb_rt_temp) {
 
     rt_proto_temp = mb_rt_temp->PrototypeTemplate();
     query_func_temp = FunctionTemplate::New(xnjsmb_font_face_query);
-    SET(rt_proto_temp, "font_fact_query", query_func_temp);
+    SET(rt_proto_temp, "font_face_query", query_func_temp);
 }
