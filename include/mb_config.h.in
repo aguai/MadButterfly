@@ -7,6 +7,9 @@
 /* Enable Skia Graphic Engine */
 #undef SKIA_GRAPH_ENGINE
 
+/* Enable OpenVG Graphic Engine */
+#undef OPENVG_GRAPH_ENGINE
+
 /* Enable sh_text */
 #undef SH_TEXT
 

@@ -76,15 +76,33 @@ AC_ARG_ENABLE([skia],
   no) skia=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-skia]) ;;
 esac],[skia=false])
-AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x$skia = xtrue])
-AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x$skia != xtrue])
+
+AC_ARG_ENABLE([openvg],
+	[  --enable-openvg	Turn on OpenVG instead of Cairo or Skia],
+[case "${enableval}" in
+  yes) openvg=true ;;
+  no) openvg=false ;;
+  *)  AC_MSG_ERROR([bad value ${enableval} for --enable-openvg]) ;;
+esac],[openvg=false])
+
+[if [ x"$skia-%openvg" = xtrue-true ]; then]
+   AC_MSG_ERROR([confliction on --enable-skia and --enable-openvg])
+[fi]
+
 [if [ x"${skia}" = xtrue ]; then ]
 AC_DEFINE([SKIA_GRAPH_ENGINE])
+cairo=false
+[elif [ x"${openvg}" = xtrue ]; then ]
+AC_DEFINE([OPENVG_GRAPH_ENGINE])
 cairo=false
 [else]
 AC_DEFINE([CAIRO_GRAPH_ENGINE])
 cairo=true
 [fi]
+
+AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x$skia = xtrue])
+AM_CONDITIONAL([OPENVG_GRAPH_ENGINE], [test x$openvg = xtrue])
+AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x"$cairo" = xtrue])
 
 AC_ARG_ENABLE([nodejs],
 	[  --enable-nodejs	Turn on nodejs support],
@@ -113,6 +131,10 @@ AC_DEFINE([X_SUPP])
 [fi]
 
 # Checks for libraries.
+[if [ x"${openvg}" = xtrue ]; then]
+AC_CHECK_HEADERS([GL/glut.h],, [AC_MSG_ERROR([can not find GL/glut.h])])
+[fi]
+
 [if [ x"${cairo}" = xtrue ]; then]
 PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
 PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
@@ -137,6 +159,7 @@ AC_CONFIG_FILES([Makefile
 AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
 AH_TEMPLATE([SH_STEXT],[Enable sh_stext object])
 AH_TEMPLATE([SKIA_GRAPH_ENGINE], [Enable Skia Graphic Engine])
+AH_TEMPLATE([OPENVG_GRAPH_ENGINE], [Enable OpenVG Graphic Engine])
 AH_TEMPLATE([CAIRO_GRAPH_ENGINE], [Enable Cairo Graphic Engine])
 AH_TEMPLATE([X_SUPP], [Enable X backend])
 
