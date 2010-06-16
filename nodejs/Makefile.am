@@ -16,8 +16,8 @@ mbfly.node: wscript $(mbfly_node_SRCS)
 		CXXFLAGS="$(mbfly_node_CFLAGS)" \
 		LDFLAGS="$(mbfly_node_LDFLAGS)" \
 		TOP_BUILDDIR="$(abs_top_builddir)" \
-		WAFLOCK=$(abs_builddir)/.lock-wscript \
-		$(NODE_WAF) configure build --blddir=$(abs_builddir)
+		WAFLOCK=$(abs_builddir)/objs/.lock-wscript \
+		$(NODE_WAF) configure build --blddir=$(abs_builddir)/objs
 
 clean-mbfly-node:
 	cd $(srcdir); \
