@@ -75,6 +75,13 @@
 #define mbe_clip(canvas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
+typedef struct _mbe_text_extents_t mbe_text_extents_t;
+typedef int mbe_scaled_font_t;
+typedef int mbe_font_face_t;
+typedef struct _ge_openvg_surface mbe_surface_t;
+typedef struct _ge_openvg_pattern mbe_pattern_t;
+typedef struct _ge_openvg_mbe mbe_t;
+
 struct _mbe_text_extents_t {
     co_aix x_bearing;
     co_aix y_bearing;
@@ -83,12 +90,22 @@ struct _mbe_text_extents_t {
     co_aix x_advance;
     co_aix y_advance;
 };
-typedef struct _mbe_text_extents_t mbe_text_extents_t;
-typedef int mbe_scaled_font_t;
-typedef int mbe_font_face_t;
-typedef int mbe_surface_t;
-typedef int mbe_pattern_t;
-typedef int mbe_t;
+
+struct _ge_openvg_mbe {
+    mbe_pattern_t *src;
+    mbe_surface_t *tgt;
+    void *ctx;
+};
+
+struct _ge_openvg_surface {
+    void *surface;
+    mbe_t *asso_mbe;
+};
+
+struct _ge_openvg_pattern {
+    void *pattern;
+    void *asso_img;
+};
 
 #define MB_MATRIX_2_OPENVG(vgmtx, mtx) do {	\
 	(vgmtx)[0] = (mtx)[0];			\
