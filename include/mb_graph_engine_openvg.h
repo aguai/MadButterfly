@@ -54,7 +54,6 @@
 #define mbe_get_target(canvas) ((mbe_surface_t *)(canvas)->tgt)
 #define mbe_close_path(canvas)
 #define mbe_text_path(canvas, utf8)
-#define mbe_transform(canvas, mtx)
 #define mbe_rectangle(canvas, x, y, w, h)
 #define mbe_in_stroke(canvas, x, y) (0)
 #define mbe_new_path(canvas)
@@ -106,17 +105,29 @@ struct _ge_openvg_pattern {
 
 #define MB_MATRIX_2_OPENVG(vgmtx, mtx) do {	\
 	(vgmtx)[0] = (mtx)[0];			\
-	(vgmtx)[1] = (mtx)[3];			\
-	(vgmtx)[2] = 0;				\
-	(vgmtx)[3] = (mtx)[1];			\
+	(vgmtx)[1] = (mtx)[1];			\
+	(vgmtx)[2] = (mtx)[2];			\
+	(vgmtx)[3] = (mtx)[3];			\
 	(vgmtx)[4] = (mtx)[4];			\
-	(vgmtx)[5] = 0;				\
-	(vgmtx)[6] = (mtx)[2];			\
-	(vgmtx)[7] = (mtx)[5];			\
+	(vgmtx)[5] = (mtx)[5];			\
+	(vgmtx)[6] = 0;				\
+	(vgmtx)[7] = 0;				\
 	(vgmtx)[8] = 1;				\
     } while(0)
 
 extern EGLNativeDisplayType _ge_openvg_disp_id;
+
+#define _MK_CURRENT_CTX(canvas)	/* TODO: Make the context of a canvas
+				 * as current context */
+
+static void
+mbe_transform(mbe_t *canvas, co_aix *mtx) {
+    VGfloat vg_mtx[9];
+    
+    _MK_CURRENT_CTX(canvas);
+    MB_MATRIX_2_OPENVG(vg_mtx, mtx);
+    vgLoadMatrix(vg_mtx);
+}
 
 #define _VG_DISPLAY() eglGetDisplay(_ge_openvg_disp_id)
 
