@@ -202,7 +202,7 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     EGLSurface surface;
     EGLDisplay display;
     EGLConfig config;
-    EGLint attrib_list[2] = {EGL_NONE};
+    EGLint attrib_list[5];
     mbe_surface_t *mbe_surface;
     int r;
 
@@ -212,6 +212,11 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
 	return NULL;
     
     display = _VG_DISPLAY();
+    attrib_list[0] = EGL_WIDTH;
+    attrib_list[1] = w;
+    attrib_list[2] = EGL_HEIGHT;
+    attrib_list[3] = h;
+    attrib_list[4] = EGL_NONE;
     /* Some implementation does not support pbuffer.
      * We need use some other surface to replace this one.
      */
@@ -226,6 +231,8 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     }
     mbe_surface->surface = surface;
     mbe_surface->asso_mbe = NULL;
+    mbe_surface->w = w;
+    mbe_surface->h = h;
 
     return mbe_surface;
 }
