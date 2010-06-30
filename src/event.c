@@ -693,6 +693,12 @@ void _release_mbe_for_testing(mbe_t *cr) {
     mbe_destroy(cr);
 }
 
+#ifdef OVERLAY_DRAW_TEST
+/*
+ * Since we remove mbe_clip(), mb_objs_are_overlay() should not use
+ * clip for testing overlay anymore.
+ */
+
 static
 void _draw_to_mask(shape_t *shape, mbe_t *cr) {
     if(sh_get_flags(shape, GEF_OV_DRAW))
@@ -728,6 +734,7 @@ int _fill_and_check(shape_t *shape, mbe_t *cr) {
 
     return FALSE;
 }
+#endif
 
 /*! \brief Is a mb_obj_t overlaid with another mb_obj_t and
  *	descendants.
@@ -765,13 +772,17 @@ int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
 	if(!r)
 	    return FALSE;
 	
+#ifdef OVERLAY_DRAW_TEST
 	if(!obj_is_shape)
 	    return TRUE;
-	
+
 	_draw_to_mask(candi_shape, cr);
 	r = _fill_and_check(shape, cr);
 	
 	return r;
+#else
+	return TRUE;
+#endif
     }
     
     ASSERT(IS_MBO_COORD(others_root));
@@ -790,7 +801,8 @@ int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
 	    r = areas_are_overlay(area, candi_area);
 	    if(!r)
 		continue;
-	    
+
+#ifdef OVERLAY_DRAW_TEST
 	    if(!obj_is_shape)
 		return TRUE;
 	    
@@ -798,6 +810,9 @@ int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
 	    r = _fill_and_check(shape, cr);
 	    if(r)
 		return TRUE;
+#else
+	    return TRUE;
+#endif
 	}
     }
     
@@ -934,6 +949,7 @@ void test_mb_obj_pos_is_in(void) {
     _free_fake_rdman(rdman);
 }
 
+#ifdef OVERLAY_DRAW_TEST
 static
 void test_is_obj_objs_overlay(void) {
     redraw_man_t *rdman;
@@ -1135,14 +1151,17 @@ void test_mb_objs_are_overlay(void) {
 
     _free_fake_rdman(rdman);
 }
+#endif
 
 CU_pSuite get_event_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_event", NULL, NULL);
     CU_ADD_TEST(suite, test_mb_obj_pos_is_in);
+#ifdef OVERLAY_DRAW_TEST
     CU_ADD_TEST(suite, test_is_obj_objs_overlay);
     CU_ADD_TEST(suite, test_mb_objs_are_overlay);
+#endif
 
     return suite;
 }
