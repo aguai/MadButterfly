@@ -284,3 +284,4 @@ mbe_destroy(mbe_t *canvas) {
     canvas->tgt->asso_mbe = NULL; /* remove association */
     free(canvas);
 }
+

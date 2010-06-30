@@ -62,11 +62,9 @@
 #define mbe_move_to(canvas, x, y)
 #define mbe_line_to(canvas, x, y)
 #define mbe_in_fill(canvas, x, y) (0)
-#define mbe_stroke(canvas)
 #define mbe_clear(canvas)
 #define mbe_paint(canvas)
 #define mbe_save(canvas)
-#define mbe_fill(canvas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
 typedef struct _mbe_text_extents_t mbe_text_extents_t;
@@ -172,6 +170,21 @@ mbe_surface_destroy(mbe_surface_t *surface) {
 
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
+static void
+mbe_stroke(mbe_t *canvas) {
+    _MK_CURRENT_CTX(canvas);
+
+    vgDrawPath(canvas->path, VG_STROKE_PATH);
+    vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
+}
+
+static void
+mbe_fill(mbe_t *canvas) {
+    _MK_CURRENT_CTX(canvas);
+
+    vgDrawPath(canvas->path, VG_FILL_PATH);
+    vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
+}
 
 /* @} */
 
