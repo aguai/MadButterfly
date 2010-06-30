@@ -221,7 +221,7 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     
     mbe_surface = (mbe_surface_t *)malloc(sizeof(mbe_surface_t));
     if(mbe_surface == NULL) {
-	eglDestroySurface(surface);
+	eglDestroySurface(display, surface);
 	return NULL;
     }
     mbe_surface->surface = surface;
@@ -274,6 +274,6 @@ mbe_destroy(mbe_t *canvas) {
     
     vgDestroyPath(canvas->path);
     eglDestroyContext(display, canvas->ctx);
-    canvas->tgt->asso_mbe = NULL;
-    free(ctx);
+    canvas->tgt->asso_mbe = NULL; /* remove association */
+    free(canvas);
 }
