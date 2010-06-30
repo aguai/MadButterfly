@@ -263,8 +263,8 @@ _get_img_fmt_from_xvisual(Display *display, Visual *visual) {
  * This function is compiled only for GLX enabled.
  */
 static mbe_surface_t *
-mbe_xlib_surface_create(Display *display, Drawable drawable,
-			Visual *visual, int width, int height) {
+mbe_vg_win_surface_create(Display *display, Drawable drawable,
+			  Visual *visual, int width, int height) {
     EGLDisplay egl_disp;
     EGLSurface egl_surface;
     mbe_surface_t *surface;
@@ -282,7 +282,7 @@ mbe_xlib_surface_create(Display *display, Drawable drawable,
 	return NULL;
 
     egl_disp = eglGetDisplay(display);
-    if(egl_disp == EGL_NO_DISPLAY)
+    if(egl_disp == EGL_NO_DISPLAY || egl_disp != _VG_DISPLAY())
 	return NULL;
 
     egl_surface = eglCreateWindowSurface(egl_disp, config, drawable,
