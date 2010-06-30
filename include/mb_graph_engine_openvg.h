@@ -96,6 +96,7 @@ struct _ge_openvg_surface {
     void *surface;
     mbe_t *asso_mbe;		/* There is a association between
 				 * surface and mbe */
+    int w, h;
 };
 
 struct _ge_openvg_pattern {
