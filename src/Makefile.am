@@ -47,6 +47,10 @@ if SKIA_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_skia.cpp
 endif
 
+if OPENVG_GRAPH_ENGINE
+libmbfly_la_SOURCES += graph_engine_openvg.c
+endif
+
 X_main_SOURCES = X_main.c
 X_main_LDADD = $(top_builddir)/src/libmbfly.la
 X_main_CPPFLAGS = @pangocairo_CFLAGS@ -I$(top_builddir)/include
