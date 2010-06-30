@@ -556,7 +556,7 @@ void mbe_set_source(mbe_t *canvas, mbe_pattern_t *source) {
     canvas->states->ptn = source;
 }
 
-void mbe_reset_clip(mbe_t *canvas) {
+void mbe_reset_scissoring(mbe_t *canvas) {
     SkRegion clip;
 
     _canvas_device_region(canvas->canvas, &clip);
@@ -780,13 +780,23 @@ void mbe_fill(mbe_t *canvas) {
     canvas->subpath->rewind();
 }
 
-void mbe_clip(mbe_t *canvas) {
-    if(!canvas->subpath->isEmpty())
-	_update_path(canvas);
+void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
+    int i;
+    area_t *area;
+    SkPath *path;
+
+    mbe_new_path(canvas);
     
-    canvas->canvas->clipPath(*canvas->path, SkRegion::kIntersect_Op);
-    canvas->path->rewind();
-    canvas->subpath->rewind();
+    path = canvas->path;
+    for(i = 0; i < n_areas; i++) {
+	area = areas[i];
+	path->addRect(CO_AIX_2_SKSCALAR(area->x), CO_AIX_2_SKSCALAR(area->y),
+		      CO_AIX_2_SKSCALAR(area->x + area->width),
+		      CO_AIX_2_SKSCALAR(area->y + area->height));
+    }
+
+    canvas->canvas->clipPath(*path, SkRegion::kIntersect_Op);
+    path->rewind();
 }
 
 mbe_font_face_t * mbe_query_font_face(const char *family,

@@ -85,7 +85,7 @@ extern void mbe_set_line_width(mbe_t *canvas, co_aix width);
 extern mbe_font_face_t *mbe_get_font_face(mbe_t *canvas);
 extern void mbe_fill_preserve(mbe_t *canvas);
 extern void mbe_set_source(mbe_t *canvas, mbe_pattern_t *source);
-extern void mbe_reset_clip(mbe_t *canvas);
+extern void mbe_reset_scissoring(mbe_t *canvas);
 extern mbe_surface_t *mbe_get_target(mbe_t *canvas);
 extern void mbe_close_path(mbe_t *canvas);
 extern void mbe_text_path(mbe_t *canvas, const char *txt);
@@ -106,7 +106,7 @@ extern void mbe_destroy(mbe_t *canvas);
 extern void mbe_paint(mbe_t *canvas);
 extern void mbe_save(mbe_t *canvas);
 extern void mbe_fill(mbe_t *canvas);
-extern void mbe_clip(mbe_t *canvas);
+extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 
 extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);
