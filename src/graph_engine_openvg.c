@@ -220,8 +220,10 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
 	return NULL;
     
     mbe_surface = (mbe_surface_t *)malloc(sizeof(mbe_surface_t));
-    if(mbe_surface == NULL)
+    if(mbe_surface == NULL) {
+	eglDestroySurface(surface);
 	return NULL;
+    }
     mbe_surface->surface = surface;
     mbe_surface->asso_mbe = NULL;
 
@@ -233,6 +235,7 @@ mbe_create(mbe_surface_t *surface) {
     EGLDisplay display;
     EGLConfig config;
     EGLContext ctx, shared;
+    VGPath path;
     EGLint attrib_list[2] = {EGL_NONE};
     mbe_t *canvas;
 
@@ -241,13 +244,36 @@ mbe_create(mbe_surface_t *surface) {
     if(ctx == EGL_NO_CONTEXT)
 	return NULL;
 
-    canvas = (mbe_t *)malloc(sizeof(mbe_t));
-    if(canvas == NULL)
+    path = vgCreatePath(VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
+			1, 0, 0, 0, VG_PATH_CAPABILITY_ALL);
+    if(path == VG_INVALID_HANDLE) {
+	eglDestroyContext(display, ctx);
 	return NULL;
+    }
+    
+    canvas = (mbe_t *)malloc(sizeof(mbe_t));
+    if(canvas == NULL) {
+	eglDestroyContext(display, ctx);
+	vgDestroyPath(path);
+	return NULL;
+    }
     
     canvas->src = NULL;
     canvas->tgt = surface;
     canvas->ctx = ctx;
+    canvas->path = path;
 
     return canvas;
+}
+
+void
+mbe_destroy(mbe_t *canvas) {
+    EGLDisplay display;
+
+    display = _VG_DISPLAY();
+    
+    vgDestroyPath(canvas->path);
+    eglDestroyContext(display, canvas->ctx);
+    canvas->tgt->asso_mbe = NULL;
+    free(ctx);
 }
