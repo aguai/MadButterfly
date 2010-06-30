@@ -116,9 +116,19 @@ struct _ge_openvg_pattern {
     } while(0)
 
 extern EGLNativeDisplayType _ge_openvg_disp_id;
+extern mbe_t *_ge_openvg_current_canvas;
 
-#define _MK_CURRENT_CTX(canvas)	/* TODO: Make the context of a canvas
-				 * as current context */
+#define _VG_DISPLAY() eglGetDisplay(_ge_openvg_disp_id)
+
+/* \brief Make the context of a canvas to be current context.
+ */
+#define _MK_CURRENT_CTX(canvas) do {				\
+	if(_ge_openvg_current_canvas != (canvas)) {		\
+	    _ge_openvg_current_canvas = canvas;			\
+	    eglMakeCurrent(_VG_DISPLAY(), (canvas)->tgt,	\
+			   (canvas)->tgt, (canvas)->ctx);	\
+	}							\
+    } while(0)
 
 static void
 mbe_transform(mbe_t *canvas, co_aix *mtx) {
@@ -128,8 +138,6 @@ mbe_transform(mbe_t *canvas, co_aix *mtx) {
     MB_MATRIX_2_OPENVG(vg_mtx, mtx);
     vgLoadMatrix(vg_mtx);
 }
-
-#define _VG_DISPLAY() eglGetDisplay(_ge_openvg_disp_id)
 
 static int
 _openvg_find_confg(mb_img_fmt_t fmt, int w, int h,
