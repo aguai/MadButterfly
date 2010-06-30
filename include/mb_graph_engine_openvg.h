@@ -62,7 +62,6 @@
 #define mbe_move_to(canvas, x, y)
 #define mbe_line_to(canvas, x, y)
 #define mbe_in_fill(canvas, x, y) (0)
-#define mbe_destroy(canvas)
 #define mbe_stroke(canvas)
 #define mbe_clear(canvas)
 #define mbe_paint(canvas)
@@ -90,11 +89,13 @@ struct _ge_openvg_mbe {
     mbe_pattern_t *src;
     mbe_surface_t *tgt;
     EGLContext ctx;
+    VGPath path;
 };
 
 struct _ge_openvg_surface {
     void *surface;
-    mbe_t *asso_mbe;
+    mbe_t *asso_mbe;		/* There is a association between
+				 * surface and mbe */
 };
 
 struct _ge_openvg_pattern {
@@ -169,6 +170,7 @@ mbe_surface_destroy(mbe_surface_t *surface) {
 }
 
 extern mbe_t *mbe_create(mbe_surface_t *surface);
+extern void mbe_destroy(mbe_t *canvas);
 
 /* @} */
 
