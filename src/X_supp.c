@@ -484,6 +484,10 @@ static int X_MB_init(const char *display_name,
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
 
+    /* TODO: Remove this line.  Since we use mbe_copy_source(), it
+     * will set source for the backend.  So, this line is redundants.
+     * It can be removed.  sourface_ptn can be removed, too.
+     */
     mbe_set_source(xmb_rt->backend_cr, xmb_rt->surface_ptn);
 
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
