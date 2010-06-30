@@ -68,7 +68,6 @@
 #define mbe_paint(canvas)
 #define mbe_save(canvas)
 #define mbe_fill(canvas)
-#define mbe_scissoring(canvas, n_areas, areas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
 typedef struct _mbe_text_extents_t mbe_text_extents_t;
@@ -117,6 +116,9 @@ struct _ge_openvg_pattern {
 
 extern EGLNativeDisplayType _ge_openvg_disp_id;
 extern mbe_t *_ge_openvg_current_canvas;
+
+extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
+
 
 #define _VG_DISPLAY() eglGetDisplay(_ge_openvg_disp_id)
 
