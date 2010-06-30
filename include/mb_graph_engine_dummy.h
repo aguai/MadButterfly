@@ -54,7 +54,7 @@
 #define mbe_fill_preserve(canvas)
 #define mbe_copy_source(src_canvas, dst_canvas)
 #define mbe_set_source(canvas, pattern)
-#define mbe_reset_clip(canvas)
+#define mbe_reset_scissoring(canvas)
 #define mbe_get_target(canvas) ((mbe_surface_t *)NULL)
 #define mbe_close_path(canvas)
 #define mbe_text_path(canvas, utf8)
@@ -74,7 +74,11 @@
 #define mbe_paint(canvas)
 #define mbe_save(canvas)
 #define mbe_fill(canvas)
-#define mbe_clip(canvas)
+/*! \brief Make scissoring rectangles.
+ *
+ * It would reset all previous pathes.
+ */
+#define mbe_scissoring(canvas, n_areas, areas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
 typedef struct _mbe_text_extents_t mbe_text_extents_t;

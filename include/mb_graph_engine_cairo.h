@@ -37,7 +37,7 @@
 #define mbe_get_font_face cairo_get_font_face
 #define mbe_fill_preserve cairo_fill_preserve
 #define mbe_set_source cairo_set_source
-#define mbe_reset_clip cairo_reset_clip
+#define mbe_reset_scissoring cairo_reset_clip
 #define mbe_get_target cairo_get_target
 #define mbe_close_path cairo_close_path
 #define mbe_text_path cairo_text_path
@@ -55,7 +55,6 @@
 #define mbe_paint cairo_paint
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
-#define mbe_clip cairo_clip
 
 typedef cairo_text_extents_t mbe_text_extents_t;
 typedef cairo_scaled_font_t mbe_scaled_font_t;
@@ -87,6 +86,7 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						co_aix x1, co_aix y1,
 						grad_stop_t *stops,
 						int stop_cnt);
+extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 
 
 static void mbe_pattern_set_matrix(mbe_pattern_t *ptn,

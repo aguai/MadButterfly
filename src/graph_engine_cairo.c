@@ -152,3 +152,18 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0, co_aix x1, co_aix y1,
 
     return ptn;
 }
+
+void
+mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
+    area_t *area;
+    int i;
+    
+    cairo_new_path(canvas);
+    
+    for(i = 0; i < n_areas; i++) {
+	area = areas[i];
+	cairo_rectangle(canvas, area->x, area->y, area->w, area->h);
+    }
+
+    cairo_clip(canvas);
+}
