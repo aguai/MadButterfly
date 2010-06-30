@@ -113,7 +113,7 @@ static void mbe_copy_source(mbe_t *src, mbe_t *dst) {
     
     surf = cairo_get_target(src);
     ptn = cairo_pattern_create_for_surface(surf);
-    cairo_set_source(src, ptn);
+    cairo_set_source(dst, ptn);
     cairo_pattern_destroy(ptn);
     saved_op = cairo_get_operator(dst);
     cairo_set_operator(dst, CAIRO_OPERATOR_SOURCE);
