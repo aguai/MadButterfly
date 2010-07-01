@@ -62,7 +62,6 @@
 #define mbe_move_to(canvas, x, y)
 #define mbe_line_to(canvas, x, y)
 #define mbe_in_fill(canvas, x, y) (0)
-#define mbe_clear(canvas)
 #define mbe_save(canvas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
@@ -177,6 +176,7 @@ mbe_surface_destroy(mbe_surface_t *surface) {
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
 extern void mbe_paint(mbe_t *canvas);
+extern void mbe_clear(mbe_t *canvas);
 
 static void
 mbe_stroke(mbe_t *canvas) {
