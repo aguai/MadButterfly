@@ -63,7 +63,6 @@
 #define mbe_line_to(canvas, x, y)
 #define mbe_in_fill(canvas, x, y) (0)
 #define mbe_clear(canvas)
-#define mbe_paint(canvas)
 #define mbe_save(canvas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
@@ -85,6 +84,9 @@ struct _mbe_text_extents_t {
 
 struct _ge_openvg_mbe {
     mbe_pattern_t *src;
+    VGPaint paint;		/*!< \brief The paint associated with
+				 * the src pattern */
+    int paint_installed;
     mbe_surface_t *tgt;
     EGLContext ctx;
     VGPath path;
@@ -100,6 +102,7 @@ struct _ge_openvg_surface {
 struct _ge_openvg_pattern {
     void *pattern;
     void *asso_img;
+    VGPaint paint;
 };
 
 #define MB_MATRIX_2_OPENVG(vgmtx, mtx) do {	\
@@ -131,6 +134,9 @@ extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 			   (canvas)->tgt, (canvas)->ctx);	\
 	}							\
     } while(0)
+#define _MK_CURRENT_PAINT(canvas)					\
+    if((canvas)->paint_installed)					\
+	vgSetPaint((canvas)->paint, VG_FILL_PATH|VG_STROKE_PATH)
 
 static void
 mbe_transform(mbe_t *canvas, co_aix *mtx) {
@@ -170,9 +176,12 @@ mbe_surface_destroy(mbe_surface_t *surface) {
 
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
+extern void mbe_paint(mbe_t *canvas);
+
 static void
 mbe_stroke(mbe_t *canvas) {
     _MK_CURRENT_CTX(canvas);
+    _MK_CURRENT_PAINT(canvas);
 
     vgDrawPath(canvas->path, VG_STROKE_PATH);
     vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
@@ -181,6 +190,7 @@ mbe_stroke(mbe_t *canvas) {
 static void
 mbe_fill(mbe_t *canvas) {
     _MK_CURRENT_CTX(canvas);
+    _MK_CURRENT_PAINT(canvas);
 
     vgDrawPath(canvas->path, VG_FILL_PATH);
     vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
