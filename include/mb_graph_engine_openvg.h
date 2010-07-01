@@ -37,7 +37,6 @@
 #define mbe_pattern_set_matrix(ptn, mtx)
 #define mbe_font_face_destroy(face)
 #define mbe_paint_with_alpha(canvas, alpha)
-#define mbe_set_source_rgba(canvas, r, g, b, a)
 #define mbe_set_scaled_font(canvas, scaled)
 #define mbe_pattern_destroy(pattern)
 #define mbe_get_scaled_font(canvas) ((mbe_scaled_font_t *)NULL)
@@ -119,6 +118,8 @@ struct _ge_openvg_pattern {
 extern EGLNativeDisplayType _ge_openvg_disp_id;
 extern mbe_t *_ge_openvg_current_canvas;
 
+extern void mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
+				co_comp_t b, co_comp_t a);
 extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 
 

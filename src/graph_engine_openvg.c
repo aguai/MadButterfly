@@ -7,6 +7,30 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 #define ASSERT(x)
 #endif
 
+#define MB_2_VG_COLOR(r, g, b, a) ((((int)(0xf * r) & 0xf) << 24) |	\
+				   (((int)(0xf * g) & 0xf) << 16) |	\
+				   (((int)(0xf * b) & 0xf) << 16) |	\
+				   ((int)(0xf * a) & 0xf))
+
+void mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
+			 co_comp_t b, co_comp_t a) {
+    VGPaint paint;
+    VGuint color;
+
+    if(paint != VG_INVALID_HANDLE && canvas->src == NULL)
+	paint = canvas->paint;	/* previous one is also a color paint */
+    else {
+	paint = vgCreatePaint();
+	ASSERT(paint != VG_INVALID_HANDLE);
+	canvas->paint = paint;
+	canvas->src = NULL;
+    }
+    
+    color = MB_2_VG_COLOR(r, g, b, a);
+    vgSetColor(paint, color);
+    canvas->paint_installed = 0;
+}
+
 void
 mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
     static VGint *scissors = NULL;
