@@ -9,22 +9,22 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 
 void
 mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
-    static VGint *coords = NULL;
-    static int coords_sz = 0;
+    static VGint *scissors = NULL;
+    static int n_scissors = 0;
     VGint *coord;
     area_t *area;
     int i;
 
     _MK_CURRENT_CTX(canvas);
 
-    if(n_areas > coords_sz) {
-	if(coords) free(coords);
-	coords_sz = (n_areas + 0xf) & 0xf;
-	coords = (VGint *)malloc(sizeof(VGint) * coords_sz * 4);
-	ASSERT(coords != NULL);
+    if(n_areas > n_scissors) {
+	if(scissors) free(scissors);
+	n_scissors = (n_areas + 0xf) & 0xf;
+	scissors = (VGint *)malloc(sizeof(VGint) * n_scissors * 4);
+	ASSERT(scissors != NULL);
     }
     
-    coord = coords;
+    coord = scissors;
     for(i = 0; i < n_areas; i++) {
 	area = areas[i];
 	*coord++ = area->x;
@@ -33,7 +33,7 @@ mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
 	*coord++ = area->h;
     }
 
-    vgSetiv(VG_SCISSOR_RECTS, n_areas * 4, coords);
+    vgSetiv(VG_SCISSOR_RECTS, n_areas * 4, scissors);
 }
 
 static int
@@ -266,6 +266,7 @@ mbe_create(mbe_surface_t *surface) {
     }
     
     canvas->src = NULL;
+    canvas->paint = VG_INVALID_HANDLE;
     canvas->tgt = surface;
     canvas->ctx = ctx;
     canvas->path = path;
@@ -283,5 +284,10 @@ mbe_destroy(mbe_t *canvas) {
     eglDestroyContext(display, canvas->ctx);
     canvas->tgt->asso_mbe = NULL; /* remove association */
     free(canvas);
+}
+
+void
+mbe_paint(mbe_t *canvas) {
+    
 }
 
