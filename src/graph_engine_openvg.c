@@ -288,6 +288,29 @@ mbe_destroy(mbe_t *canvas) {
 
 void
 mbe_paint(mbe_t *canvas) {
+    EGLDisplay display;
+    EGLint w, h;
+    EGLBoolean r;
+    VGPath path;
     
+    _MK_CURRENT_CTX(canvas);
+    _MK_CURRENT_PAINT(canvas);
+    
+    display = _VG_DISPLAY();
+    
+    r = eglQuerySurface(display, canvas->tgt, EGL_WIDTH, &w);
+    ASSERT(r == EGL_TRUE);
+    r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
+    ASSERT(r == EGL_TRUE);
+
+    vgSeti(VG_SCISSORING, VG_FALSE);
+    
+    path = vgCreatePath(VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
+			1, 0, 0, 0, VG_PATH_CAPABILITY_ALL);
+    vguRect(path, 0, 0, w, h);
+    vgDrawPath(path, VG_FILL_PATH);
+    vgDestroyPath(path);
+    
+    vgSeti(VG_SCISSORING, VG_TRUE);
 }
 
