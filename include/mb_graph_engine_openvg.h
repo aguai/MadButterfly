@@ -39,12 +39,17 @@
 #define mbe_query_font_face(family, slant, weight) ((mbe_font_face_t *)NULL)
 #define mbe_free_font_face(face)
 #define mbe_set_line_width(canvas, w)
-#define mbe_set_source_rgb(canvas, r, g, b)
+#define mbe_set_source_rgb(canvas, r, g, b)	\
+    mbe_set_source_rgba(canvas, r, g, b, 1)
 #define mbe_get_font_face(canvas) ((mbe_font_face_t *)NULL)
 #define mbe_fill_preserve(canvas)
 #define mbe_copy_source(src_canvas, dst_canvas)
 #define mbe_set_source(canvas, pattern)		\
-    do { (canvas)->src = (pattern); } while(0)
+    do {					\
+	(canvas)->src = (pattern);		\
+	(canvas)->paint = (pattern)->paint;	\
+	(canvas)->paint_installed = 0;		\
+    } while(0)
 #define mbe_reset_scissoring(canvas)
 #define mbe_get_target(canvas) ((mbe_surface_t *)(canvas)->tgt)
 #define mbe_close_path(canvas)

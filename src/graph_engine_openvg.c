@@ -12,8 +12,9 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 				   (((int)(0xf * b) & 0xf) << 16) |	\
 				   ((int)(0xf * a) & 0xf))
 
-void mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
-			 co_comp_t b, co_comp_t a) {
+void
+mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
+		    co_comp_t b, co_comp_t a) {
     VGPaint paint;
     VGuint color;
 
