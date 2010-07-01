@@ -267,6 +267,7 @@ mbe_create(mbe_surface_t *surface) {
     
     canvas->src = NULL;
     canvas->paint = VG_INVALID_HANDLE;
+    canvas->paint_installed = 0;
     canvas->tgt = surface;
     canvas->ctx = ctx;
     canvas->path = path;
@@ -314,3 +315,22 @@ mbe_paint(mbe_t *canvas) {
     vgSeti(VG_SCISSORING, VG_TRUE);
 }
 
+void
+mbe_clear(mbe_t *canvas) {
+    VGPaint paint;
+
+    _MK_CURRENT_CTX(canvas);
+
+    paint = vgCreatePaint();
+    ASSERT(paint != VG_INVALID_HANDLE);
+    vgSetColor(paint, 0);
+    
+    vgSetPaint(paint, VG_FILL_PATH);
+    vgSeti(VG_BLEND_MODE, VG_BLEND_SRC);
+    vgDrawPath(canvas->path, VG_FILL_PATH);
+    vgSeti(VG_BLEND_MODE, VG_BLEND_SRC_OVER);
+
+    vgDestroyPaint(paint);
+
+    canvas->paint_installed = 0;
+}
