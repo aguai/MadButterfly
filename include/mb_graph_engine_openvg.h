@@ -11,10 +11,6 @@
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
  * @{
  */
-#define MBE_OPERATOR_CLEAR OPENVG_OPERATOR_CLEAR
-#define MBE_OPERATOR_SOURCE OPENVG_OPERATOR_SOURCE
-#define MBE_STATUS_SUCCESS OPENVG_STATUS_SUCCESS
-
 #define mbe_image_surface_create_from_png(fn) ((mbe_surface_t *)NULL)
 #define mbe_image_surface_create_for_data(data, fmt, w, h, stride)	\
     ((mbe_surface_t *)NULL)

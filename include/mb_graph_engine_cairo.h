@@ -10,10 +10,6 @@
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
  * @{
  */
-#define MBE_OPERATOR_CLEAR CAIRO_OPERATOR_CLEAR
-#define MBE_OPERATOR_SOURCE CAIRO_OPERATOR_SOURCE
-#define MBE_STATUS_SUCCESS CAIRO_STATUS_SUCCESS
-
 #define mbe_image_surface_create_from_png cairo_image_surface_create_from_png
 #define mbe_pattern_create_for_surface cairo_pattern_create_for_surface
 #define mbe_scaled_font_text_extents cairo_scaled_font_text_extents

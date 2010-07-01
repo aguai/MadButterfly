@@ -8,10 +8,6 @@
 /*! \defgroup mb_ge_skia MadButterfly Graphic Engine with Skia
  * @{
  */
-#define MBE_OPERATOR_CLEAR 2
-#define MBE_OPERATOR_SOURCE 1
-#define MBE_STATUS_SUCCESS 0
-
 struct _mbe_text_extents_t {
     co_aix x_bearing;
     co_aix y_bearing;
