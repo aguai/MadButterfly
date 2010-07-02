@@ -10,7 +10,6 @@
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
  * @{
  */
-#define mbe_image_surface_create_from_png cairo_image_surface_create_from_png
 #define mbe_pattern_create_for_surface cairo_pattern_create_for_surface
 #define mbe_scaled_font_text_extents cairo_scaled_font_text_extents
 #define mbe_image_surface_get_stride cairo_image_surface_get_stride
@@ -82,6 +81,7 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						co_aix x1, co_aix y1,
 						grad_stop_t *stops,
 						int stop_cnt);
+extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
 extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 
 

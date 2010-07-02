@@ -40,6 +40,7 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						co_aix x1, co_aix y1,
 						grad_stop_t *stops,
 						int stop_cnt);
+extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
 extern void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
 				   const co_aix matrix[6]);
 extern void mbe_pattern_destroy(mbe_pattern_t *ptn);
@@ -48,7 +49,6 @@ extern int mbe_image_surface_get_stride(mbe_surface_t *surface);
 extern int mbe_image_surface_get_height(mbe_surface_t *surface);
 extern int mbe_image_surface_get_width(mbe_surface_t *surface);
 extern unsigned char *mbe_image_surface_get_data(mbe_surface_t *surface);
-extern mbe_surface_t *mbe_image_surface_create_from_png(const char *filename);
 extern mbe_surface_t *
 mbe_image_surface_create_for_data(unsigned char *data,
 				  mb_img_fmt_t fmt,

@@ -351,6 +351,11 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0,
     return NULL;
 }
 
+mbe_pattern_t *
+mbe_pattern_create_image(mb_img_data_t *img) {
+    return NULL;
+}
+
 void mbe_pattern_set_matrix(mbe_pattern_t *ptn, const co_aix matrix[6]) {
     SkMatrix skmatrix;
 
@@ -380,8 +385,6 @@ int mbe_image_surface_get_width(mbe_surface_t *surface) {
 unsigned char *mbe_image_surface_get_data(mbe_surface_t *surface) {
     return (unsigned char *)((SkBitmap *)surface)->getPixels();
 }
-
-mbe_surface_t *mbe_image_surface_create_from_png(const char *filename) {}
 
 mbe_surface_t *
 mbe_image_surface_create_for_data(unsigned char *data,

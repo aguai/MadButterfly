@@ -11,7 +11,6 @@
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
  * @{
  */
-#define mbe_image_surface_create_from_png(fn) ((mbe_surface_t *)NULL)
 #define mbe_image_surface_create_for_data(data, fmt, w, h, stride)	\
     ((mbe_surface_t *)NULL)
 #define mbe_pattern_create_for_surface(canvas) ((mbe_pattern_t *)NULL)
@@ -27,6 +26,7 @@
     ((mbe_pattern_t *)NULL)
 #define mbe_pattern_create_linear(x0, y0, x1, y1, stops, stop_cnt)	\
     ((mbe_pattern_t *)NULL)
+#define mbe_pattern_create_image(img) ((mbe_pattern_t *)NULL)
 #define mbe_scaled_font_destroy(scaled)
 #define mbe_font_face_reference(face) ((mbe_font_face_t *)NULL)
 #define mbe_scaled_font_create(face, fnt_mtx, ctm) ((mbe_scaled_font_t *)NULL)
