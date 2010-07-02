@@ -23,6 +23,8 @@ libmbfly_la_SOURCES= animate.c chgcolor.c coord.c event.c geo.c	\
 	shape_rect.c shift.c subtree_free.c timer.c 			\
 	timertool.c tools.c visibility.c prop.c sprite.c	\
 	mouse.c shape_image.c img_ldr.c $(MBAF_SOURCES)
+libmbfly_la_CPPFLAGS = @imlib2_CFLAGS@
+libmbfly_la_LDFLAGS = @imlib2_LIBS@
 
 if SH_TEXT
 libmbfly_la_SOURCES += shape_text.c
@@ -39,8 +41,8 @@ endif
 if CAIRO_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_cairo.c
 
-libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ @pangocairo_CFLAGS@
-libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
+libmbfly_la_CPPFLAGS += @cairo_CFLAGS@ @pangocairo_CFLAGS@
+libmbfly_la_LDFLAGS += @cairo_LIBS@ @pangocairo_LIBS@
 endif
 
 if SKIA_GRAPH_ENGINE
