@@ -112,7 +112,8 @@ void myupdate(mb_animated_menu_t *m, int select)
 
     printf("check %s\n",s);
 
-    if (endWith(s,".png")) {
+    if (endWith(s,".png") || endWith(s, ".jpg") ||
+	endWith(s, ".PNG") || endWith(s, ".JPG")) {
     	    snprintf(path,1024,"%s%s", data->curDir,data->titles[select]);
 	    mypreview(data,path);
     }
