@@ -137,33 +137,6 @@ mbe_scaled_font_create(mbe_font_face_t *face, co_aix fnt_mtx[6],
     return scaled;
 }
 
-static mbe_surface_t *
-mbe_image_surface_create_for_data(unsigned char *data,
-				  mb_img_fmt_t fmt,
-				  int width, int height,
-				  int stride) {
-    cairo_format_t _fmt;
-    
-    switch(fmt) {
-    case MB_IFMT_ARGB32:
-	_fmt = CAIRO_FORMAT_ARGB32;
-	break;
-    case MB_IFMT_RGB24:
-	_fmt = CAIRO_FORMAT_RGB24;
-	break;
-    case MB_IFMT_A8:
-	_fmt = CAIRO_FORMAT_A8;
-	break;
-    case MB_IFMT_A1:
-	_fmt = CAIRO_FORMAT_A1;
-	break;
-    default:
-	return NULL;
-    }
-    return cairo_image_surface_create_for_data(data, _fmt,
-					       width, height, stride);
-}
-
 static mb_img_fmt_t
 mbe_image_surface_get_format(mbe_surface_t *surface) {
     cairo_format_t _fmt;

@@ -11,8 +11,6 @@
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
  * @{
  */
-#define mbe_image_surface_create_for_data(data, fmt, w, h, stride)	\
-    ((mbe_surface_t *)NULL)
 #define mbe_pattern_create_for_surface(canvas) ((mbe_pattern_t *)NULL)
 #define mbe_scaled_font_text_extents(scaled, utf8, extents)
 #define mbe_image_surface_get_stride(surface) (20)
@@ -71,6 +69,7 @@ typedef int mbe_font_face_t;
 typedef struct _ge_openvg_surface mbe_surface_t;
 typedef struct _ge_openvg_pattern mbe_pattern_t;
 typedef struct _ge_openvg_mbe mbe_t;
+typedef struct _ge_openvg_img _ge_openvg_img_t;
 
 struct _mbe_text_extents_t {
     co_aix x_bearing;
@@ -95,13 +94,33 @@ struct _ge_openvg_surface {
     void *surface;
     mbe_t *asso_mbe;		/* There is a association between
 				 * surface and mbe */
+    _ge_openvg_img_t *asso_img;
     int w, h;
 };
 
 struct _ge_openvg_pattern {
-    void *pattern;
-    void *asso_img;
+    _ge_openvg_img_t *asso_img;
     VGPaint paint;
+};
+
+/*! \brief Information associated with VGImage.
+ *
+ * A VGImage can associated one of pattern or surface.  This type is
+ * used to make sure previous associated pattern or surface being
+ * released before new association.
+ *
+ * Functions must release assocation specified by
+ * _ge_openvg_img::asso_pattern or _ge_openvg_img::asso_surface before
+ * new association, and record new association as one of thes two
+ * vairables.
+ *
+ * \sa _ge_openvg_img_t
+ * \note This is type is for internal using of OpenVG graphic engine.
+ */
+struct _ge_openvg_img {
+    VGImage img;
+    mbe_pattern_t *asso_pattern;
+    mbe_surface_t *asso_surface;
 };
 
 #define MB_MATRIX_2_OPENVG(vgmtx, mtx) do {	\
@@ -171,6 +190,9 @@ mbe_surface_destroy(mbe_surface_t *surface) {
     
     if(surface->asso_mbe)
 	surface->asso_mbe->tgt = NULL;
+
+    if(surface->asso_img)
+	surface->asso_img->asso_surface = NULL;
     
     free(surface);
 }

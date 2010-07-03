@@ -50,10 +50,6 @@ extern int mbe_image_surface_get_height(mbe_surface_t *surface);
 extern int mbe_image_surface_get_width(mbe_surface_t *surface);
 extern unsigned char *mbe_image_surface_get_data(mbe_surface_t *surface);
 extern mbe_surface_t *
-mbe_image_surface_create_for_data(unsigned char *data,
-				  mb_img_fmt_t fmt,
-				  int width, int height,
-				  int stride);
 extern mb_img_fmt_t mbe_image_surface_get_format(mbe_surface_t *surface);
 extern mbe_surface_t *
 mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height);

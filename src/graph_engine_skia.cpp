@@ -386,42 +386,6 @@ unsigned char *mbe_image_surface_get_data(mbe_surface_t *surface) {
     return (unsigned char *)((SkBitmap *)surface)->getPixels();
 }
 
-mbe_surface_t *
-mbe_image_surface_create_for_data(unsigned char *data,
-				  mb_img_fmt_t fmt,
-				  int width, int height,
-				  int stride) {
-    SkBitmap *bitmap;
-    SkBitmap::Config cfg;
-
-    switch(fmt) {
-    case MB_IFMT_ARGB32:
-	cfg = SkBitmap::kARGB_8888_Config; break;
-	
-    case MB_IFMT_A8:
-	cfg = SkBitmap::kA8_Config; break;
-	
-    case MB_IFMT_A1:
-	cfg = SkBitmap::kA1_Config; break;
-	
-    case MB_IFMT_RGB16_565:
-	cfg = SkBitmap::kRGB_565_Config; break;
-	
-    case MB_IFMT_RGB24:
-    default:
-	return NULL;
-    }
-    
-    bitmap = new SkBitmap();
-    if(bitmap == NULL)
-	return NULL;
-    
-    bitmap->setConfig(cfg, width, height, stride);
-    bitmap->setPixels(data);
-
-    return (mbe_surface_t *)bitmap;
-}
-
 mb_img_fmt_t mbe_image_surface_get_format(mbe_surface_t *surface) {
     SkBitmap *bitmap = (SkBitmap *)surface;
     mb_img_fmt_t fmt;
