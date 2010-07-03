@@ -135,11 +135,11 @@ AC_DEFINE([X_SUPP])
 AC_CHECK_HEADERS([GL/glut.h],, [AC_MSG_ERROR([can not find GL/glut.h])])
 [fi]
 
+PKG_CHECK_MODULES([imlib2], [imlib2 >= 1.4.1], , AC_MSG_ERROR([imlib2 >= 1.4.1 not found]))
 [if [ x"${cairo}" = xtrue ]; then]
 PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
 PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
 [fi]
-PKG_CHECK_MODULES([imlib2], [imlib2 >= 1.4.1], , AC_MSG_ERROR([imlib2 >= 1.4.1 not found]))
 
 AC_CONFIG_FILES([Makefile
                  libmbfly.pc
