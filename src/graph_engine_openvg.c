@@ -1,4 +1,5 @@
 #include "mb_graph_engine_openvg.h"
+#include "mb_tools.h"
 
 EGLNativeDisplayType _ge_openvg_disp_id = EGL_DEFAULT_DISPLAY;
 mbe_t *_ge_openvg_current_canvas = NULL;
@@ -11,6 +12,60 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 				   (((int)(0xf * g) & 0xf) << 16) |	\
 				   (((int)(0xf * b) & 0xf) << 16) |	\
 				   ((int)(0xf * a) & 0xf))
+
+mbe_pattern_t *
+mbe_pattern_create_linear(co_aix x0, co_aix y0,
+			  co_aix x1, co_aix y1,
+			  grad_stop_t *stops, int stop_cnt) {
+    VGPaint paint;
+    mbe_pattern_t *pattern;
+    VGfloat gradient[] = {x0, y0, x1, y1};
+    static VGfloat *ov_stops = 0;
+    static int max_stop_cnt = 0;
+    VGfloat *cur_ov_stop;
+    grad_stop_t *cur_stop;
+    int i;
+
+    /* Make sure there is enough space */
+    if(max_stop_cnt < stop_cnt) {
+	max_stop_cnt = (stop_cnt + 0xf) & ~0xf;
+	cur_ov_stop = (VGfloat *)realloc(stops,
+					 max_stop_cnt * sizeof(VGfloat) * 5);
+	if(cur_ov_stop == NULL) {
+	    max_stop_cnt = 0;
+	    return NULL;
+	}
+	ov_stops = cur_ov_stop;
+    }
+    cur_ov_stop = ov_stops;
+
+    cur_stop = stops;
+    for(i = 0; i < stop_cnt; i++) {
+	*cur_ov_stop++ = cur_stop->offset;
+	*cur_ov_stop++ = cur_stop->r;
+	*cur_ov_stop++ = cur_stop->g;
+	*cur_ov_stop++ = cur_stop->b;
+	*cur_ov_stop++ = cur_stop->a;
+    }
+    
+    paint = vgCreatePaint();
+    if(paint == VG_INVALID_HANDLE)
+	return NULL;
+    vgSetParameteri(paint, VG_PAINT_TYPE, VG_PAINT_TYPE_LINEAR_GRADIENT);
+    vgSetParameterfv(paint, VG_PAINT_LINEAR_GRADIENT, 4, gradient);
+    vgSetParameterfv(paint, VG_PAINT_COLOR_RAMP_STOPS, 5 * stop_cnt, ov_stops);
+
+    pattern = O_ALLOC(mbe_pattern_t);
+    if(pattern == NULL) {
+	vgPaintDestroy(paint);
+	return NULL;
+    }
+
+    pattern->paint = paint;
+    pattern->asso_img = NULL;
+    
+    return pattern;
+}
 
 void
 mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
@@ -44,7 +99,7 @@ mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
 
     if(n_areas > n_scissors) {
 	if(scissors) free(scissors);
-	n_scissors = (n_areas + 0xf) & 0xf;
+	n_scissors = (n_areas + 0xf) & ~0xf;
 	scissors = (VGint *)malloc(sizeof(VGint) * n_scissors * 4);
 	ASSERT(scissors != NULL);
     }
