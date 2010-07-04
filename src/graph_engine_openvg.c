@@ -264,7 +264,7 @@ mbe_vg_win_surface_create(Display *display, Drawable drawable,
     egl_surface = eglCreateWindowSurface(egl_disp, config, drawable,
 					 attrib_list);
 
-    surface = (mbe_surface_t *)malloc(sizeof(mbe_surface_t));
+    surface = O_ALLOC(mbe_surface_t);
     if(surface == NULL) {
 	eglDestroySurface(egl_disp, egl_surface);
 	return NULL;
@@ -304,7 +304,7 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     if(surface == EGL_NO_SURFACE)
 	return NULL;
     
-    mbe_surface = (mbe_surface_t *)malloc(sizeof(mbe_surface_t));
+    mbe_surface = O_ALLOC(mbe_surface_t);
     if(mbe_surface == NULL) {
 	eglDestroySurface(display, surface);
 	return NULL;
@@ -338,7 +338,7 @@ mbe_create(mbe_surface_t *surface) {
 	return NULL;
     }
     
-    canvas = (mbe_t *)malloc(sizeof(mbe_t));
+    canvas = O_ALLOC(mbe_t);
     if(canvas == NULL) {
 	eglDestroyContext(display, ctx);
 	vgDestroyPath(path);
