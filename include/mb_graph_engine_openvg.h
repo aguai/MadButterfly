@@ -19,9 +19,6 @@
 #define mbe_image_surface_get_width(surface) (1)
 #define mbe_image_surface_get_data(surface) ((unsigned char *)NULL)
 #define mbe_scaled_font_reference(scaled) ((mbe_scaled_font_t *)NULL)
-#define mbe_pattern_create_radial(cx0, cy0, radius0,			\
-				  cx1, cy1, radius1, stops, stop_cnt)	\
-    ((mbe_pattern_t *)NULL)
 #define mbe_pattern_create_image(img) ((mbe_pattern_t *)NULL)
 #define mbe_scaled_font_destroy(scaled)
 #define mbe_font_face_reference(face) ((mbe_font_face_t *)NULL)
@@ -136,6 +133,12 @@ struct _ge_openvg_img {
 extern EGLNativeDisplayType _ge_openvg_disp_id;
 extern mbe_t *_ge_openvg_current_canvas;
 
+extern mbe_pattern_t *mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
+						co_aix radius0,	
+						co_aix cx1, co_aix cy1,
+						co_aix radius1,
+						grad_stop_t *stops,
+						int stop_cnt);
 extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						co_aix x1, co_aix y1,
 						grad_stop_t *stops,
