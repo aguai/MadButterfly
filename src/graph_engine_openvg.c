@@ -98,6 +98,54 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0,
     return pattern;
 }
 
+mbe_pattern_t *
+mbe_pattern_create_image(mb_img_data_t *img) {
+    VGPaint paint;
+    mbe_pattern_t *pattern;
+    _ge_openvg_img_t *ge_img;
+    VGImage vg_img;
+    VGImageFormat fmt = VG_sARGB_8888;
+    
+    /* \note OpenVG implementation supports one \ref MB_IFMT_ARGB32
+     * image.
+     */
+    if(img->fmt != MB_IFMT_ARGB32)
+	return NULL;
+    
+    /* Create and copy pixels into VGImage */
+    vg_img = vgCreateImage(fmt, img->w, img->h,
+			   VG_IMAGE_QUALITY_NONANTIALIASED);
+    if(vg_img == VG_INVALID_HANDLE)
+	return NULL;
+    vgImageSubData(vg_img, img->content, img->stride, fmt,
+		   0, 0, img->w, img->h);
+
+    /* Allocate objects */
+    ge_img = O_ALLOC(_ge_openvg_img_t);
+    pattern = O_ALLOC(mbe_pattern_t);
+    paint = vgCreatePaint();
+    if(ge_img == NULL || pattern == NULL || paint == VG_INVALID_HANDLE)
+	goto err;
+	
+
+    /* Initialize objects */
+    ge_img->img = vg_img;
+    ge_img->asso_pattern = NULL;
+    ge_img->asso_surface = NULL;
+
+    pattern->paint = paint;
+    pattern->asso_img = ge_img;
+
+    return pattern;
+
+ err:
+    if(ge_img) free(ge_img);
+    if(pattern) free(pattern);
+    if(paint != VG_INVALID_HANDLE) vgDestroyPaint(paint);
+    vgDestroyImage(vg_img);
+    return NULL;
+}
+
 void
 mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
 		    co_comp_t b, co_comp_t a) {
