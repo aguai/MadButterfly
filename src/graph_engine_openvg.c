@@ -13,13 +13,12 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 				   (((int)(0xf * b) & 0xf) << 16) |	\
 				   ((int)(0xf * a) & 0xf))
 
-mbe_pattern_t *
-mbe_pattern_create_linear(co_aix x0, co_aix y0,
-			  co_aix x1, co_aix y1,
-			  grad_stop_t *stops, int stop_cnt) {
+static mbe_pattern_t *
+_mbe_pattern_create_gradient(VGfloat *gradient, int grad_len,
+			     int grad_type,
+			     grad_stop_t *stops, int stop_cnt) {
     VGPaint paint;
     mbe_pattern_t *pattern;
-    VGfloat gradient[] = {x0, y0, x1, y1};
     static VGfloat *ov_stops = 0;
     static int max_stop_cnt = 0;
     VGfloat *cur_ov_stop;
@@ -51,8 +50,8 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0,
     paint = vgCreatePaint();
     if(paint == VG_INVALID_HANDLE)
 	return NULL;
-    vgSetParameteri(paint, VG_PAINT_TYPE, VG_PAINT_TYPE_LINEAR_GRADIENT);
-    vgSetParameterfv(paint, VG_PAINT_LINEAR_GRADIENT, 4, gradient);
+    vgSetParameteri(paint, VG_PAINT_TYPE, grad_type);
+    vgSetParameterfv(paint, VG_PAINT_RADIAL_GRADIENT, grad_len, gradient);
     vgSetParameterfv(paint, VG_PAINT_COLOR_RAMP_STOPS, 5 * stop_cnt, ov_stops);
 
     pattern = O_ALLOC(mbe_pattern_t);
@@ -64,6 +63,38 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0,
     pattern->paint = paint;
     pattern->asso_img = NULL;
     
+    return pattern;
+}
+
+/*
+ * \note OpenVG does not support start circle, it supports only focal
+ * point.  It means radius0 is not working.
+ */
+mbe_pattern_t *
+mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
+			  co_aix radius0,	
+			  co_aix cx1, co_aix cy1,
+			  co_aix radius1, grad_stop_t *stops,
+			  int stop_cnt) {
+    mbe_pattern_t *pattern;
+    VGfloat gradient[] = {cx0, cy0, cx1, cy1, radius1};
+
+    pattern = _mbe_pattern_create_gradient(gradient, 5,
+					   VG_PAINT_TYPE_RADIAL_GRADIENT,
+					   stops, stop_cnt);
+    return pattern;
+}
+
+mbe_pattern_t *
+mbe_pattern_create_linear(co_aix x0, co_aix y0,
+			  co_aix x1, co_aix y1,
+			  grad_stop_t *stops, int stop_cnt) {
+    mbe_pattern_t *pattern;
+    VGfloat gradient[] = {x0, y0, x1, y1};
+
+    pattern = _mbe_pattern_create_gradient(gradient, 4,
+					   VG_PAINT_TYPE_LINEAR_GRADIENT,
+					   stops, stop_cnt);
     return pattern;
 }
 
