@@ -15,11 +15,10 @@
 #define mbe_scaled_font_text_extents(scaled, utf8, extents)
 #define mbe_image_surface_get_stride(surface) (20)
 #define mbe_image_surface_get_format(surface) ((mb_img_fmt_t)0)
-#define mbe_image_surface_get_height(surface) (1)
-#define mbe_image_surface_get_width(surface) (1)
+#define mbe_image_surface_get_height(surface) (surface)->h
+#define mbe_image_surface_get_width(surface) (surface)->w
 #define mbe_image_surface_get_data(surface) ((unsigned char *)NULL)
 #define mbe_scaled_font_reference(scaled) ((mbe_scaled_font_t *)NULL)
-#define mbe_pattern_create_image(img) ((mbe_pattern_t *)NULL)
 #define mbe_scaled_font_destroy(scaled)
 #define mbe_font_face_reference(face) ((mbe_font_face_t *)NULL)
 #define mbe_scaled_font_create(face, fnt_mtx, ctm) ((mbe_scaled_font_t *)NULL)
@@ -143,6 +142,7 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						co_aix x1, co_aix y1,
 						grad_stop_t *stops,
 						int stop_cnt);
+extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
 extern void mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
 				co_comp_t b, co_comp_t a);
 /* TODO: rename n_areas to areas_cnt and make it after areas */
