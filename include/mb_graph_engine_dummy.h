@@ -8,7 +8,7 @@
 #include "mb_basic_types.h"
 #include "mb_img_ldr.h"
 
-/*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
+/*! \defgroup mb_ge_dummy Dummy Implementation of MadButterfly Graphic Engine
  * @{
  */
 #define mbe_pattern_create_for_surface(surface) ((mbe_pattern_t *)NULL)
