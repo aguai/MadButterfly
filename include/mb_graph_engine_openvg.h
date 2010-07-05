@@ -8,7 +8,7 @@
 #include "mb_basic_types.h"
 #include "mb_img_ldr.h"
 
-/*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
+/*! \defgroup mb_ge_openvg MadButterfly Graphic Engine with OpenVG
  * @{
  */
 #define mbe_scaled_font_text_extents(scaled, utf8, extents)
