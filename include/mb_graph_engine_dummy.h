@@ -11,7 +11,7 @@
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
  * @{
  */
-#define mbe_pattern_create_for_surface(canvas) ((mbe_pattern_t *)NULL)
+#define mbe_pattern_create_for_surface(surface) ((mbe_pattern_t *)NULL)
 #define mbe_scaled_font_text_extents(scaled, utf8, extents)
 #define mbe_image_surface_get_stride(surface) (20)
 #define mbe_image_surface_get_format(surface) ((mb_img_fmt_t)0)

@@ -11,7 +11,6 @@
 /*! \defgroup mb_ge_cairo MadButterfly Graphic Engine with Cairo
  * @{
  */
-#define mbe_pattern_create_for_surface(canvas) ((mbe_pattern_t *)NULL)
 #define mbe_scaled_font_text_extents(scaled, utf8, extents)
 #define mbe_image_surface_get_stride(surface) (20)
 #define mbe_image_surface_get_format(surface) ((mb_img_fmt_t)0)
@@ -131,6 +130,7 @@ struct _ge_openvg_img {
 extern EGLNativeDisplayType _ge_openvg_disp_id;
 extern mbe_t *_ge_openvg_current_canvas;
 
+extern mbe_pattern_t *mbe_pattern_create_for_surface(mbe_surface_t *surface);
 extern mbe_pattern_t *mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
 						co_aix radius0,	
 						co_aix cx1, co_aix cy1,
