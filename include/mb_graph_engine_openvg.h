@@ -24,7 +24,6 @@
 #define mbe_scaled_font_create(face, fnt_mtx, ctm) ((mbe_scaled_font_t *)NULL)
 #define mbe_pattern_set_matrix(ptn, mtx)
 #define mbe_font_face_destroy(face)
-#define mbe_paint_with_alpha(canvas, alpha)
 #define mbe_set_scaled_font(canvas, scaled)
 #define mbe_pattern_destroy(pattern)
 #define mbe_get_scaled_font(canvas) ((mbe_scaled_font_t *)NULL)
@@ -210,6 +209,7 @@ mbe_surface_destroy(mbe_surface_t *surface) {
 
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
+extern void mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha);
 extern void mbe_paint(mbe_t *canvas);
 extern void mbe_clear(mbe_t *canvas);
 

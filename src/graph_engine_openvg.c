@@ -446,6 +446,25 @@ mbe_destroy(mbe_t *canvas) {
     free(canvas);
 }
 
+/*
+ * This implementation support only paint with image paint.  OpenVG
+ * does not support paint path with an alpha value.  But, it supports
+ * to draw image with an alpha value.
+ */
+void
+mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha) {
+    VGImage vg_img;
+    _ge_openvg_img_t *ge_img;
+    
+    _MK_CURRENT_CTX(canvas);
+
+    ASSERT(canvas->src != NULL && canvas->src->asso_img != NULL);
+    ge_img = canvas->src->asso_img;
+    vg_img = ge_img->img;
+
+    vgDrawImage(vg_img);
+}
+
 void
 mbe_paint(mbe_t *canvas) {
     EGLDisplay display;
