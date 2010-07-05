@@ -13,6 +13,31 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 				   (((int)(0xf * b) & 0xf) << 16) |	\
 				   ((int)(0xf * a) & 0xf))
 
+/*
+ * This implementation supports only from image surface.
+ */
+mbe_pattern_t *
+mbe_pattern_create_for_surface(mbe_surface_t *surface) {
+    mbe_pattern_t *pattern;
+    _ge_openvg_img_t *ge_img;
+    VGPaint paint;
+
+    /* Support only from image surface */
+    if(surface->asso_img == NULL)
+	return NULL;
+
+    paint = vgCreatePaint();
+    if(paint == VG_INVALID_HANDLE)
+	return NULL;
+
+    ge_img = surface->asso_img;
+    pattern = O_ALLOC(mbe_pattern_t);
+    pattern->asso_img = ge_img;
+    pattern->paint = paint;
+
+    return pattern;
+}
+
 static mbe_pattern_t *
 _mbe_pattern_create_gradient(VGfloat *gradient, int grad_len,
 			     int grad_type,
