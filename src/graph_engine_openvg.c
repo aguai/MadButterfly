@@ -13,6 +13,19 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 				   (((int)(0xf * b) & 0xf) << 16) |	\
 				   ((int)(0xf * a) & 0xf))
 
+#define MK_ID(mtx)				\
+    do {					\
+	(mtx)[0] = 1;				\
+	(mtx)[1] = 0;				\
+	(mtx)[2] = 0;				\
+	(mtx)[3] = 0;				\
+	(mtx)[4] = 1;				\
+	(mtx)[5] = 0;				\
+	(mtx)[6] = 0;				\
+	(mtx)[7] = 0;				\
+	(mtx)[8] = 1;				\
+    } while(0)
+
 /*
  * This implementation supports only from image surface.
  */
@@ -20,6 +33,7 @@ mbe_pattern_t *
 mbe_pattern_create_for_surface(mbe_surface_t *surface) {
     mbe_pattern_t *pattern;
     _ge_openvg_img_t *ge_img;
+    VGfloat *mtx;
     VGPaint paint;
 
     /* Support only from image surface */
@@ -35,7 +49,20 @@ mbe_pattern_create_for_surface(mbe_surface_t *surface) {
     pattern->asso_img = ge_img;
     pattern->paint = paint;
 
+    mtx = pattern->mtx;
+    MK_ID(mtx);
+
     return pattern;
+}
+
+void
+_mbe_load_pattern_mtx(VGfloat *mtx1, VGfloat *mtx2, int mode) {
+    VGfloat affine;
+
+    vgSeti(VG_MATRIX_MODE, mode);
+    vgLoadMatrix(mtx1);
+    if(mtx2)
+	vgMultMatrix(mtx2);
 }
 
 static mbe_pattern_t *
@@ -87,6 +114,8 @@ _mbe_pattern_create_gradient(VGfloat *gradient, int grad_len,
 
     pattern->paint = paint;
     pattern->asso_img = NULL;
+
+    MK_ID(pattern->mtx);
     
     return pattern;
 }
@@ -172,6 +201,22 @@ mbe_pattern_create_image(mb_img_data_t *img) {
 }
 
 void
+mbe_pattern_set_matrix(mbe_pattern_t *ptn, co_aix *mtx) {
+    co_aix rev[6];
+
+    compute_reverse(mtx, rev);
+    ptn->mtx[0] = rev[0];
+    ptn->mtx[1] = rev[3];
+    ptn->mtx[2] = 0;
+    ptn->mtx[3] = rev[1];
+    ptn->mtx[4] = rev[4];
+    ptn->mtx[5] = 0;
+    ptn->mtx[6] = rev[2];
+    ptn->mtx[7] = rev[5];
+    ptn->mtx[8] = 1;
+}
+
+void
 mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
 		    co_comp_t b, co_comp_t a) {
     VGPaint paint;
@@ -224,7 +269,7 @@ static int
 _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 		   EGLConfig *config) {
     EGLDisplay display;
-    EGLint attrib_list[16];
+    EGLint attrib_list[32];
     EGLConfig configs[1];
     EGLint nconfigs;
     int i = 0;
@@ -240,6 +285,8 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 	attrib_list[i++] = 8;
 	attrib_list[i++] = EGL_ALPHA_SIZE;
 	attrib_list[i++] = 8;
+	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
+	attrib_list[i++] = 8;
 	break;
 	
     case MB_IFMT_RGB24:
@@ -249,15 +296,21 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 	attrib_list[i++] = 8;
 	attrib_list[i++] = EGL_BLUE_SIZE;
 	attrib_list[i++] = 8;
+	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
+	attrib_list[i++] = 8;
 	break;
 	
     case MB_IFMT_A8:
 	attrib_list[i++] = EGL_ALPHA_SIZE;
 	attrib_list[i++] = 8;
+	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
+	attrib_list[i++] = 8;
 	break;
 	
     case MB_IFMT_A1:
 	attrib_list[i++] = EGL_ALPHA_SIZE;
+	attrib_list[i++] = 1;
+	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
 	attrib_list[i++] = 1;
 	break;
 	
@@ -267,6 +320,8 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 	attrib_list[i++] = EGL_GREEN_SIZE;
 	attrib_list[i++] = 6;
 	attrib_list[i++] = EGL_BLUE_SIZE;
+	attrib_list[i++] = 5;
+	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
 	attrib_list[i++] = 5;
 	break;
 	
@@ -471,23 +526,33 @@ mbe_destroy(mbe_t *canvas) {
     free(canvas);
 }
 
-/*
- * This implementation support only paint with image paint.  OpenVG
- * does not support paint path with an alpha value.  But, it supports
- * to draw image with an alpha value.
- */
 void
 mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha) {
-    VGImage vg_img;
-    _ge_openvg_img_t *ge_img;
+    EGLDisplay display;
+    VGHandle mask;
+    EGLint w, h;
+    EGLBoolean r;
     
     _MK_CURRENT_CTX(canvas);
 
-    ASSERT(canvas->src != NULL && canvas->src->asso_img != NULL);
-    ge_img = canvas->src->asso_img;
-    vg_img = ge_img->img;
+    display = _VG_DISPLAY();
+    
+    r = eglQuerySurface(display, canvas->tgt, EGL_WIDTH, &w);
+    ASSERT(r == EGL_TRUE);
+    r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
+    ASSERT(r == EGL_TRUE);
+    
+    /* enable and fill mask layer with alpha value */
+    vgSeti(VG_MASKING, VG_TRUE);
+    mask = vgCreateMaskLayer(w, h);
+    ASSERT(mask != VG_INVALID_HANDLE);
+    vgFillMaskLayer(mask, 0, 0, w, h, alpha);
+    vgMask(mask, VG_SET_MASK, 0, 0, w, h);
+    vgDestroyMaskLayer(mask);
+    
+    mbe_paint(canvas);
 
-    vgDrawImage(vg_img);
+    vgSeti(VG_MASKING, VG_FALSE);
 }
 
 void
@@ -499,6 +564,9 @@ mbe_paint(mbe_t *canvas) {
     
     _MK_CURRENT_CTX(canvas);
     _MK_CURRENT_PAINT(canvas);
+    if(canvas->src)
+	_mbe_load_pattern_mtx(canvas->src->mtx, NULL,
+			      VG_MATRIX_FILL_PAINT_TO_USER);
     
     display = _VG_DISPLAY();
     
@@ -507,7 +575,10 @@ mbe_paint(mbe_t *canvas) {
     r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
     ASSERT(r == EGL_TRUE);
 
+    /* disable scissoring and identity transform matrix */
     vgSeti(VG_SCISSORING, VG_FALSE);
+    vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
+    vgLoadIdentity();
     
     path = vgCreatePath(VG_PATH_FORMAT_STANDARD, VG_PATH_DATATYPE_F,
 			1, 0, 0, 0, VG_PATH_CAPABILITY_ALL);
@@ -515,6 +586,8 @@ mbe_paint(mbe_t *canvas) {
     vgDrawPath(path, VG_FILL_PATH);
     vgDestroyPath(path);
     
+    /* re-enable scissoring and restore transform matrix */
+    vgLoadMatrix(canvas->mtx);
     vgSeti(VG_SCISSORING, VG_TRUE);
 }
 

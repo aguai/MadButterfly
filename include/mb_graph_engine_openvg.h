@@ -21,7 +21,6 @@
 #define mbe_scaled_font_destroy(scaled)
 #define mbe_font_face_reference(face) ((mbe_font_face_t *)NULL)
 #define mbe_scaled_font_create(face, fnt_mtx, ctm) ((mbe_scaled_font_t *)NULL)
-#define mbe_pattern_set_matrix(ptn, mtx)
 #define mbe_font_face_destroy(face)
 #define mbe_set_scaled_font(canvas, scaled)
 #define mbe_pattern_destroy(pattern)
@@ -80,6 +79,8 @@ struct _ge_openvg_mbe {
     mbe_surface_t *tgt;
     EGLContext ctx;
     VGPath path;
+
+    VGfloat mtx[9];
 };
 
 struct _ge_openvg_surface {
@@ -92,6 +93,7 @@ struct _ge_openvg_surface {
 
 struct _ge_openvg_pattern {
     _ge_openvg_img_t *asso_img;
+    VGfloat mtx[9];
     VGPaint paint;
 };
 
@@ -129,6 +131,7 @@ struct _ge_openvg_img {
 
 extern EGLNativeDisplayType _ge_openvg_disp_id;
 extern mbe_t *_ge_openvg_current_canvas;
+extern void _mbe_load_pattern_mtx(VGfloat *mtx1, VGfloat *mtx2, int mode);
 
 extern mbe_pattern_t *mbe_pattern_create_for_surface(mbe_surface_t *surface);
 extern mbe_pattern_t *mbe_pattern_create_radial(co_aix cx0, co_aix cy0,
@@ -142,6 +145,7 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						grad_stop_t *stops,
 						int stop_cnt);
 extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
+extern void mbe_pattern_set_matrix(mbe_pattern_t *ptn, co_aix *mtx);
 extern void mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
 				co_comp_t b, co_comp_t a);
 /* TODO: rename n_areas to areas_cnt and make it after areas */
@@ -165,17 +169,17 @@ extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
     } while(0)
 /* TODO: switch VGImage between VGPaint and surface. */
 #define _MK_CURRENT_PAINT(canvas)					\
-    if((canvas)->paint_installed)					\
-	vgSetPaint((canvas)->paint, VG_FILL_PATH|VG_STROKE_PATH)
+    if((canvas)->paint_installed) {					\
+	vgSetPaint((canvas)->paint, VG_FILL_PATH|VG_STROKE_PATH);	\
+    }
 
-static void
-mbe_transform(mbe_t *canvas, co_aix *mtx) {
-    VGfloat vg_mtx[9];
-    
-    _MK_CURRENT_CTX(canvas);
-    MB_MATRIX_2_OPENVG(vg_mtx, mtx);
-    vgLoadMatrix(vg_mtx);
-}
+#define mbe_transform(canvas, _mtx)				\
+    do {							\
+	MB_MATRIX_2_OPENVG((canvas)->mtx, _mtx);		\
+	_mbe_load_pattern_mtx(_mtx, NULL,			\
+			      VG_MATRIX_PATH_USER_TO_SURFACE);	\
+    } while(0)
+
 
 #define EGL_GLX 1
 #ifdef EGL_GLX
@@ -217,6 +221,9 @@ static void
 mbe_stroke(mbe_t *canvas) {
     _MK_CURRENT_CTX(canvas);
     _MK_CURRENT_PAINT(canvas);
+    if(canvas->src)
+	_mbe_load_pattern_mtx(canvas->src->mtx, NULL,
+			      VG_MATRIX_STROKE_PAINT_TO_USER);
 
     vgDrawPath(canvas->path, VG_STROKE_PATH);
     vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
@@ -226,6 +233,9 @@ static void
 mbe_fill(mbe_t *canvas) {
     _MK_CURRENT_CTX(canvas);
     _MK_CURRENT_PAINT(canvas);
+    if(canvas->src)
+	_mbe_load_pattern_mtx(canvas->src->mtx, NULL,
+			      VG_MATRIX_FILL_PAINT_TO_USER);
 
     vgDrawPath(canvas->path, VG_FILL_PATH);
     vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
