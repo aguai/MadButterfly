@@ -483,6 +483,7 @@ mbe_create(mbe_surface_t *surface) {
     EGLContext ctx, shared;
     VGPath path;
     EGLint attrib_list[2] = {EGL_NONE};
+    static VGfloat clear_color[4] = {0, 0, 0, 1};
     mbe_t *canvas;
 
     display = _VG_DISPLAY();
@@ -510,6 +511,10 @@ mbe_create(mbe_surface_t *surface) {
     canvas->tgt = surface;
     canvas->ctx = ctx;
     canvas->path = path;
+    
+    /* Set clear color for the context */
+    _MK_CURRENT_CTX(canvas);
+    vgSetfv(VG_CLEAR_COLOR, 4, clear_color);
 
     return canvas;
 }
@@ -593,20 +598,19 @@ mbe_paint(mbe_t *canvas) {
 
 void
 mbe_clear(mbe_t *canvas) {
-    VGPaint paint;
+    EGLDisplay display;
+    EGLint w, h;
+    EGLBoolean r;
 
     _MK_CURRENT_CTX(canvas);
 
-    paint = vgCreatePaint();
-    ASSERT(paint != VG_INVALID_HANDLE);
-    vgSetColor(paint, 0);
+    display = _VG_DISPLAY();
     
-    vgSetPaint(paint, VG_FILL_PATH);
-    vgSeti(VG_BLEND_MODE, VG_BLEND_SRC);
-    vgDrawPath(canvas->path, VG_FILL_PATH);
-    vgSeti(VG_BLEND_MODE, VG_BLEND_SRC_OVER);
-
-    vgDestroyPaint(paint);
-
-    canvas->paint_installed = 0;
+    r = eglQuerySurface(display, canvas->tgt, EGL_WIDTH, &w);
+    ASSERT(r == EGL_TRUE);
+    r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
+    ASSERT(r == EGL_TRUE);
+    
+    /* Clear regions to the color specified by mbe_create() */
+    vgClear(0, 0, w, h);
 }
