@@ -580,7 +580,13 @@ mbe_paint(mbe_t *canvas) {
     r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
     ASSERT(r == EGL_TRUE);
 
-    /* disable scissoring and identity transform matrix */
+    /*
+     * Disable scissoring and identity transform matrix.
+     *
+     * Transform matrix from path to surface is assigned by
+     * mbe_transform().  Here, we temporary set it to identity, and
+     * restore it after paint.
+     */
     vgSeti(VG_SCISSORING, VG_FALSE);
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE);
     vgLoadIdentity();

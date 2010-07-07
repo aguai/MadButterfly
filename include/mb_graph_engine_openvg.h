@@ -175,6 +175,7 @@ extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 
 #define mbe_transform(canvas, _mtx)				\
     do {							\
+	_MK_CURRENT_CTX(canvas);				\
 	MB_MATRIX_2_OPENVG((canvas)->mtx, _mtx);		\
 	_mbe_load_pattern_mtx(_mtx, NULL,			\
 			      VG_MATRIX_PATH_USER_TO_SURFACE);	\
