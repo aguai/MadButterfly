@@ -26,6 +26,75 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 	(mtx)[8] = 1;				\
     } while(0)
 
+/*! \brief Convert mb_img_fmt_t to VGImageFormat */
+static VGImageFormat
+_mb_ifmt_2_vgifmt(mb_img_fmt_t fmt) {
+    VGImageFormat vgifmt;
+    
+    switch(fmt) {
+    case MB_IFMT_ARGB32:
+	vgifmt = VG_sARGB_8888;
+	break;
+	
+    case MB_IFMT_RGB24:
+	vgifmt = -1;
+	break;
+	
+    case MB_IFMT_A8:
+	vgifmt = VG_A_8;
+	break;
+	
+    case MB_IFMT_A1:
+	vgifmt = -1;
+	break;
+	
+    case MB_IFMT_RGB16_565:
+	vgifmt = VG_sRGB_565;
+	break;
+	
+    default:
+	return -1;
+    }
+
+    return vgifmt;
+}
+
+/*! \brief create image object for OpenVG */
+static _ge_openvg_img_t *
+_alloc_vgimage(mb_img_fmt_t fmt, int w, int h) {
+    VGImage vg_img;
+    VGImageFormat vgifmt;
+    _ge_openvg_img_t *ge_img;
+    
+    vgifmt = _mb_ifmt_2_vgifmt(fmt);
+    if(vgifmt == -1)
+	return NULL;
+    vg_img = vgCreateImage(vgifmt, w, h,
+			   VG_IMAGE_QUALITY_NONANTIALIASED);
+    if(vg_img == VG_INVALID_HANDLE)
+	return NULL;
+    ge_img = O_ALLOC(_ge_openvg_img_t);
+    if(ge_img == NULL) {
+	vgDestroyImage(vg_img);
+	return NULL;
+    }
+    ge_img->ref = 1;
+    ge_img->img = vg_img;
+    ge_img->asso_pattern = NULL;
+    ge_img->asso_surface = NULL;
+
+    return ge_img;
+}
+
+/*! \brief Free image object for OpenVG */
+static void
+_free_vgimage(_ge_openvg_img_t *ge_img) {
+    if(--ge_img->ref > 0)
+	return;
+    vgDestroyImage(ge_img->img);
+    free(ge_img);
+}
+
 /*
  * This implementation supports only from image surface.
  */
@@ -47,6 +116,7 @@ mbe_pattern_create_for_surface(mbe_surface_t *surface) {
     ge_img = surface->asso_img;
     pattern = O_ALLOC(mbe_pattern_t);
     pattern->asso_img = ge_img;
+    ge_img->ref++;		/* increase reference count */
     pattern->paint = paint;
 
     mtx = pattern->mtx;
@@ -166,38 +236,35 @@ mbe_pattern_create_image(mb_img_data_t *img) {
     if(img->fmt != MB_IFMT_ARGB32)
 	return NULL;
     
-    /* Create and copy pixels into VGImage */
-    vg_img = vgCreateImage(fmt, img->w, img->h,
-			   VG_IMAGE_QUALITY_NONANTIALIASED);
-    if(vg_img == VG_INVALID_HANDLE)
-	return NULL;
-    vgImageSubData(vg_img, img->content, img->stride, fmt,
-		   0, 0, img->w, img->h);
-
     /* Allocate objects */
-    ge_img = O_ALLOC(_ge_openvg_img_t);
+    ge_img = _alloc_vgimage(MB_IFMT_ARGB32, img->w, img->h);
     pattern = O_ALLOC(mbe_pattern_t);
     paint = vgCreatePaint();
     if(ge_img == NULL || pattern == NULL || paint == VG_INVALID_HANDLE)
 	goto err;
-	
-
-    /* Initialize objects */
-    ge_img->img = vg_img;
-    ge_img->asso_pattern = NULL;
-    ge_img->asso_surface = NULL;
-
+    
+    /* Create and copy pixels into VGImage */
+    vg_img = ge_img->img;
+    vgImageSubData(vg_img, img->content, img->stride, fmt,
+		   0, 0, img->w, img->h);
+    
     pattern->paint = paint;
     pattern->asso_img = ge_img;
 
     return pattern;
 
  err:
-    if(ge_img) free(ge_img);
+    if(ge_img) _free_vgimage(ge_img);
     if(pattern) free(pattern);
     if(paint != VG_INVALID_HANDLE) vgDestroyPaint(paint);
     vgDestroyImage(vg_img);
     return NULL;
+}
+
+void
+mbe_pattern_destroy(mbe_pattern_t *ptn) {
+    if(ptn->asso_img) {
+    }
 }
 
 void
@@ -443,6 +510,7 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     EGLDisplay display;
     EGLConfig config;
     EGLint attrib_list[5];
+    _ge_openvg_img_t *ge_img;
     mbe_surface_t *mbe_surface;
     int r;
 
@@ -450,7 +518,11 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     r = _openvg_find_config(fmt, w, h, &config);
     if(r != 0)
 	return NULL;
-    
+
+    ge_img = _alloc_vgimage(fmt, w, h);
+    if(ge_img == NULL)
+	return NULL;
+
     display = _VG_DISPLAY();
     attrib_list[0] = EGL_WIDTH;
     attrib_list[1] = w;
@@ -460,21 +532,45 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     /* Some implementation does not support pbuffer.
      * We need use some other surface to replace this one.
      */
-    surface = eglCreatePbufferSurface(display, config, attrib_list);
-    if(surface == EGL_NO_SURFACE)
+    surface = eglCreatePbufferFromClientBuffer(display, EGL_OPENVG_IMAGE,
+					       (EGLClientBuffer)ge_img->img,
+					       config, attrib_list);
+    if(surface == EGL_NO_SURFACE) {
+	_free_vgimage(ge_img);
 	return NULL;
+    }
     
     mbe_surface = O_ALLOC(mbe_surface_t);
     if(mbe_surface == NULL) {
+	_free_vgimage(ge_img);
 	eglDestroySurface(display, surface);
 	return NULL;
     }
     mbe_surface->surface = surface;
     mbe_surface->asso_mbe = NULL;
+    mbe_surface->asso_img = ge_img;
     mbe_surface->w = w;
     mbe_surface->h = h;
 
     return mbe_surface;
+}
+
+void
+mbe_surface_destroy(mbe_surface_t *surface) {
+    EGLDisplay display;
+
+    display = _VG_DISPLAY();
+    eglDestroySurface(display, surface->surface);
+    
+    if(surface->asso_mbe)
+	surface->asso_mbe->tgt = NULL;
+
+    if(surface->asso_img) {
+	surface->asso_img->asso_surface = NULL;
+	_free_vgimage(surface->asso_img);
+    }
+    
+    free(surface);
 }
 
 mbe_t *
