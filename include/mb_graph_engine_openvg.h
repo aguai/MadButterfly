@@ -27,7 +27,11 @@
 #define mbe_get_scaled_font(canvas) ((mbe_scaled_font_t *)NULL)
 #define mbe_query_font_face(family, slant, weight) ((mbe_font_face_t *)NULL)
 #define mbe_free_font_face(face)
-#define mbe_set_line_width(canvas, w)
+#define mbe_set_line_width(canvas, w)		\
+    do {					\
+	_MK_CURRENT_CTX(canvas);		\
+	vgSetf(VG_STROKE_LINE_WIDTH, w);	\
+    } while(0)
 #define mbe_set_source_rgb(canvas, r, g, b)	\
     mbe_set_source_rgba(canvas, r, g, b, 1)
 #define mbe_get_font_face(canvas) ((mbe_font_face_t *)NULL)
