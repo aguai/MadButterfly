@@ -45,7 +45,8 @@
 #define mbe_text_path(canvas, utf8)
 #define mbe_rectangle(canvas, x, y, w, h)
 #define mbe_in_stroke(canvas, x, y) (0)
-#define mbe_new_path(canvas)
+#define mbe_new_path(canvas)				\
+    vgClearPath((canvas)->path, VG_PATH_CAPABILITY_ALL)
 #define mbe_curve_to(canvas, x1, y1, x2, y2, x3, y3)
 #define mbe_restore(canvas)
 #define mbe_move_to(canvas, x, y)
