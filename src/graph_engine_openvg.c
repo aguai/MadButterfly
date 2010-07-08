@@ -80,8 +80,8 @@ _alloc_vgimage(mb_img_fmt_t fmt, int w, int h) {
     }
     ge_img->ref = 1;
     ge_img->img = vg_img;
-    ge_img->asso_pattern = NULL;
-    ge_img->asso_surface = NULL;
+    ge_img->activated_for = NULL;
+    ge_img->deactivate_func = NULL;
 
     return ge_img;
 }
@@ -89,10 +89,87 @@ _alloc_vgimage(mb_img_fmt_t fmt, int w, int h) {
 /*! \brief Free image object for OpenVG */
 static void
 _free_vgimage(_ge_openvg_img_t *ge_img) {
-    if(--ge_img->ref > 0)
+    if(--ge_img->ref > 0) {
+	if(ge_img->activated_for) {
+	    ge_img->deactivate_func(ge_img->activated_for);
+	    ge_img->activated_for = NULL;
+	}
 	return;
+    }
+    
     vgDestroyImage(ge_img->img);
     free(ge_img);
+}
+
+static void
+_ge_vg_img_deactivate_for_pattern(void *obj) {
+    mbe_pattern_t *ptn = (mbe_pattern_t *)obj;
+    VGPaint vg_paint;
+
+    vg_paint = ptn->paint;
+    vgPaintPattern(vg_paint, VG_INVALID_HANDLE);
+}
+
+/*! \brief Activate a VGImage for a pattern paint.
+ * 
+ * \sa _ge_openvg_img
+ */
+void
+_ge_vg_img_activate_for_pattern(mbe_pattern_t *ptn) {
+    _ge_openvg_img_t *ge_img;
+    VGPaint vg_paint;
+    VGImage vg_img;
+
+    ge_img = ptn->asso_img;
+    if(ge_img == NULL)
+	return;
+
+    if(ge_img->activated_for == (void *)ptn)
+	return;
+
+    if(ge_img->activated_for)
+	ge_img->deactivate_func(ge_img->activated_for);
+
+    ge_img->activated_for = ptn;
+    ge_img->deactivate_func = _ge_vg_img_deactivate_for_pattern;
+    
+    vg_img = ge_img->img;
+    vg_paint = ptn->paint;
+
+    vgPaintPattern(vg_paint, vg_img);
+}
+
+/*! \brief Deactivate a VGImage for a VGSurface.
+ *
+ * A VGImage can not deatached from VGSurface.  But, it is not clear
+ * in the document of EGL.  We assume that a VGImage can be used as
+ * pattern of a paint, once associated surface is not current
+ * rendering context.
+ */
+static void
+_ge_vg_img_deactivate_for_surface(void *obj) {
+}
+
+/*! \brief Activate a VGImage for a surface
+ * 
+ * \sa _ge_openvg_img
+ */
+void
+_ge_vg_img_activate_for_surface(mbe_surface_t *surf) {
+    _ge_openvg_img_t *ge_img;
+    
+    ge_img = surf->asso_img;
+    if(ge_img == NULL)
+	return;
+    
+    if(ge_img->activated_for == (void *)surf)
+	return;
+
+    if(ge_img->activated_for)
+	ge_img->deactivate_func(ge_img->activated_for);
+    
+    ge_img->activated_for = surf;
+    ge_img->deactivate_func = _ge_vg_img_deactivate_for_surface;
 }
 
 /*
@@ -263,8 +340,10 @@ mbe_pattern_create_image(mb_img_data_t *img) {
 
 void
 mbe_pattern_destroy(mbe_pattern_t *ptn) {
-    if(ptn->asso_img) {
-    }
+    if(ptn->asso_img)
+	_free_vgimage(ptn->asso_img);
+    vgDestroyPaint(ptn->paint);
+    free(ptn);
 }
 
 void
@@ -498,6 +577,7 @@ mbe_vg_win_surface_create(Display *display, Drawable drawable,
     }
 
     surface->surface = egl_surface;
+    surface->asso_img = NULL;
 
     return surface;
 }
@@ -565,10 +645,8 @@ mbe_surface_destroy(mbe_surface_t *surface) {
     if(surface->asso_mbe)
 	surface->asso_mbe->tgt = NULL;
 
-    if(surface->asso_img) {
-	surface->asso_img->asso_surface = NULL;
+    if(surface->asso_img)
 	_free_vgimage(surface->asso_img);
-    }
     
     free(surface);
 }
