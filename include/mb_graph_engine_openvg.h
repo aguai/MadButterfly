@@ -23,7 +23,6 @@
 #define mbe_scaled_font_create(face, fnt_mtx, ctm) ((mbe_scaled_font_t *)NULL)
 #define mbe_font_face_destroy(face)
 #define mbe_set_scaled_font(canvas, scaled)
-#define mbe_pattern_destroy(pattern)
 #define mbe_get_scaled_font(canvas) ((mbe_scaled_font_t *)NULL)
 #define mbe_query_font_face(family, slant, weight) ((mbe_font_face_t *)NULL)
 #define mbe_free_font_face(face)
@@ -120,6 +119,7 @@ struct _ge_openvg_pattern {
  * \note This is type is for internal using of OpenVG graphic engine.
  */
 struct _ge_openvg_img {
+    int ref;
     VGImage img;
     mbe_pattern_t *asso_pattern;
     mbe_surface_t *asso_surface;
@@ -153,6 +153,7 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						grad_stop_t *stops,
 						int stop_cnt);
 extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
+extern void mbe_pattern_destroy(mbe_pattern_t *ptn);
 extern void mbe_pattern_set_matrix(mbe_pattern_t *ptn, co_aix *mtx);
 extern void mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
 				co_comp_t b, co_comp_t a);
@@ -203,22 +204,7 @@ extern mbe_surface_t *mbe_vg_win_surface_create(Display *display,
 
 extern mbe_surface_t *mbe_image_surface_create(mb_img_fmt_t fmt,
 					       int w, int h);
-
-static void
-mbe_surface_destroy(mbe_surface_t *surface) {
-    EGLDisplay display;
-
-    display = _VG_DISPLAY();
-    eglDestroySurface(display, surface->surface);
-    
-    if(surface->asso_mbe)
-	surface->asso_mbe->tgt = NULL;
-
-    if(surface->asso_img)
-	surface->asso_img->asso_surface = NULL;
-    
-    free(surface);
-}
+extern void mbe_surface_destroy(mbe_surface_t *surface);
 
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
