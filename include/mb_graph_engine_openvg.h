@@ -31,7 +31,6 @@
 #define mbe_set_source_rgb(canvas, r, g, b)	\
     mbe_set_source_rgba(canvas, r, g, b, 1)
 #define mbe_get_font_face(canvas) ((mbe_font_face_t *)NULL)
-#define mbe_fill_preserve(canvas)
 #define mbe_copy_source(src_canvas, dst_canvas)
 #define mbe_set_source(canvas, pattern)		\
     do {					\
@@ -39,7 +38,11 @@
 	(canvas)->paint = (pattern)->paint;	\
 	(canvas)->paint_installed = 0;		\
     } while(0)
-#define mbe_reset_scissoring(canvas)
+#define mbe_reset_scissoring(canvas)		\
+    do {					\
+	_MK_CURRENT_CTX(canvas);		\
+	vgSeti(VG_SCISSORING, VG_FALSE);	\
+    } while(0)
 #define mbe_get_target(canvas) ((mbe_surface_t *)(canvas)->tgt)
 #define mbe_close_path(canvas)
 #define mbe_text_path(canvas, utf8)
@@ -232,7 +235,7 @@ mbe_stroke(mbe_t *canvas) {
 }
 
 static void
-mbe_fill(mbe_t *canvas) {
+mbe_fill_preserve(mbe_t *canvas) {
     _MK_CURRENT_CTX(canvas);
     _MK_CURRENT_PAINT(canvas);
     if(canvas->src)
@@ -240,6 +243,11 @@ mbe_fill(mbe_t *canvas) {
 			      VG_MATRIX_FILL_PAINT_TO_USER);
 
     vgDrawPath(canvas->path, VG_FILL_PATH);
+}
+
+static void
+mbe_fill(mbe_t *canvas) {
+    mbe_fill_preserve(canvas);
     vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
 }
 

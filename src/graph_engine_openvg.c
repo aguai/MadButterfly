@@ -262,6 +262,7 @@ mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
 	*coord++ = area->h;
     }
 
+    vgSeti(VG_SCISSORING, VG_TRUE);
     vgSetiv(VG_SCISSOR_RECTS, n_areas * 4, scissors);
 }
 
