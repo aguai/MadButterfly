@@ -651,6 +651,21 @@ mbe_surface_destroy(mbe_surface_t *surface) {
     free(surface);
 }
 
+void
+mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas) {
+    VGImage vg_img;
+    
+    ASSERT(src_canvas->tgt->asso_img != NULL);
+    
+    _MK_CURRENT_CTX(dst_canvas);
+    
+    vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
+    vgLoadIdentity();
+    
+    vg_img = src_canvas->tgt->asso_img;
+    vgDrawImage(vg_img);
+}
+
 mbe_t *
 mbe_create(mbe_surface_t *surface) {
     EGLDisplay display;
