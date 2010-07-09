@@ -34,7 +34,6 @@
 #define mbe_set_source_rgb(canvas, r, g, b)	\
     mbe_set_source_rgba(canvas, r, g, b, 1)
 #define mbe_get_font_face(canvas) ((mbe_font_face_t *)NULL)
-#define mbe_copy_source(src_canvas, dst_canvas)
 #define mbe_set_source(canvas, pattern)		\
     do {					\
 	(canvas)->src = (pattern);		\
@@ -239,6 +238,7 @@ extern mbe_surface_t *mbe_image_surface_create(mb_img_fmt_t fmt,
 					       int w, int h);
 extern void mbe_surface_destroy(mbe_surface_t *surface);
 
+extern void mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas);
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
 extern void mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha);
