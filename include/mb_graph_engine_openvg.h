@@ -54,11 +54,14 @@
 #define mbe_new_path(canvas)				\
     vgClearPath((canvas)->path, VG_PATH_CAPABILITY_ALL)
 #define mbe_curve_to(canvas, x1, y1, x2, y2, x3, y3)
-#define mbe_restore(canvas)
 #define mbe_move_to(canvas, x, y)
 #define mbe_line_to(canvas, x, y)
 #define mbe_in_fill(canvas, x, y) (0)
+/* TODO: change prototype of mbe_arc() to remove mbe_save() and
+ *	 mbe_restore().
+ */
 #define mbe_save(canvas)
+#define mbe_restore(canvas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
 typedef struct _mbe_text_extents_t mbe_text_extents_t;
