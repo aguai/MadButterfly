@@ -33,106 +33,119 @@ AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
 
 AC_ARG_ENABLE([testcase],
-	[  --enable-testcase	Enable testcase],
-[case "${enableval}" in
-  yes) testcase=true ;;
-  no) testcase=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-testcase]) ;;
-esac],[testcase=false])
+        [AS_HELP_STRING([--enable-testcase],[Enable testcase])],
+        [case "${enableval}" in
+            (yes) testcase=true ;;
+            (no) testcase=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --enable-testcase]) ;;
+        esac],[testcase=false])
+
 AM_CONDITIONAL([TESTCASE], [test x$testcase = xtrue])
 
 AC_ARG_ENABLE([sh_text],
-	[  --disable-sh_text	Turn off sh_text],
-[case "${enableval}" in
-  yes) sh_text=true ;;
-  no) sh_text=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_text]) ;;
-esac],[sh_text=true])
+        [AS_HELP_STRING([--disable-sh_text],[Turn off sh_text])],
+        [case "${enableval}" in
+            (yes) sh_text=true ;;
+            (no) sh_text=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_text]) ;;
+        esac],[sh_text=true])
 
 AC_ARG_ENABLE([sh_stext],
-	[  --disable-sh_stext	Turn off sh_stext],
-[case "${enableval}" in
-  yes) sh_stext=true ;;
-  no) sh_stext=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_stext]) ;;
-esac],[sh_stext=true])
+        [AS_HELP_STRING([--disable-sh_stext],[Turn off sh_stext])],
+        [case "${enableval}" in
+            (yes) sh_stext=true ;;
+            (no) sh_stext=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_stext]) ;;
+        esac],[sh_stext=true])
+
 AM_CONDITIONAL([SH_STEXT], [test x$sh_stext = xtrue])
+
 [if [ x"${sh_stext}" = xtrue ]; then]
-AC_DEFINE([SH_STEXT])
+    AC_DEFINE([SH_STEXT])
 [fi]
 
 AC_ARG_ENABLE([X_supp],
-	[  --disable-X_supp	Turn off X backend],
-[case "${enableval}" in
-  yes) X_supp=true ;;
-  no) X_supp=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --disable-X_supp]) ;;
-esac],[X_supp=true])
+        [AS_HELP_STRING([--disable-X_supp],[Turn off X backend])],
+        [case "${enableval}" in
+            (yes) X_supp=true ;;
+            (no) X_supp=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --disable-X_supp]) ;;
+        esac],[X_supp=true])
 
 AC_ARG_ENABLE([skia],
-	[  --enable-skia	Turn on Skia instead of Cairo],
-[case "${enableval}" in
-  yes) skia=true ;;
-  no) skia=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-skia]) ;;
-esac],[skia=false])
+        [AS_HELP_STRING([--enable-skia],[Turn on Skia instead of Cairo])],
+        [case "${enableval}" in
+            (yes) skia=true ;;
+            (no) skia=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --enable-skia]) ;;
+        esac],[skia=false])
+
 AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x$skia = xtrue])
 AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x$skia != xtrue])
+
 [if [ x"${skia}" = xtrue ]; then ]
-AC_DEFINE([SKIA_GRAPH_ENGINE])
-cairo=false
+    AC_DEFINE([SKIA_GRAPH_ENGINE])
+    cairo=false
 [else]
-AC_DEFINE([CAIRO_GRAPH_ENGINE])
-cairo=true
+    AC_DEFINE([CAIRO_GRAPH_ENGINE])
+    cairo=true
 [fi]
 
 AC_ARG_ENABLE([nodejs],
-	[  --enable-nodejs	Turn on nodejs support],
-[case "${enableval}" in
-  yes) nodejs=true ;;
-  no) nodejs=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-nodejs]) ;;
-esac],[nodejs=false])
+        [AS_HELP_STRING([--enable-nodejs],[Turn on nodejs support])],
+        [case "${enableval}" in
+            (yes) nodejs=true ;;
+            (no) nodejs=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --enable-nodejs]) ;;
+        esac],[nodejs=false])
+
 [if [ x"${nodejs}" = xtrue ]; then ]
-  AC_PATH_PROG([NODE_WAF], [node-waf])
-  AC_CHECK_PROG([has_node], [node], [true], [false])
+    AC_PATH_PROG([NODE_WAF], [node-waf])
+    AC_CHECK_PROG([has_node], [node], [true], [false])
 [fi]
+
 AM_CONDITIONAL([NODEJS], [test x"${nodejs}-${has_node}" = xtrue-true])
 
 # Define AM and AC variable for sh_text
+
 AM_CONDITIONAL([SH_TEXT], [test x$sh_text = xtrue -a x$cairo = xtrue])
+
 [if [ x"${sh_text}" = xtrue -a x$cairo = xtrue ]; then]
-AC_DEFINE([SH_TEXT])
+    AC_DEFINE([SH_TEXT])
 [fi]
 
 # Define AM and AC variable for X_supp
-AM_CONDITIONAL([X_SUPP],
-	 [test x$X_supp = xtrue -a x$cairo = xtrue])
+
+AM_CONDITIONAL([X_SUPP], [test x$X_supp = xtrue -a x$cairo = xtrue])
+
 [if [ x"${X_supp}" = xtrue -a x"${cairo}" = xtrue ]; then]
-AC_DEFINE([X_SUPP])
+    AC_DEFINE([X_SUPP])
 [fi]
 
 # Checks for libraries.
+
 [if [ x"${cairo}" = xtrue ]; then]
-PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
-PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
+    PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
+    PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
 [fi]
 
-AC_CONFIG_FILES([Makefile
-                 libmbfly.pc
-                 libmbfly-uninstalled.pc
-                 examples/Makefile
-                 examples/calculator/Makefile
-                 examples/svg2code_ex/Makefile
-                 examples/tank/Makefile
-                 examples/drag/Makefile
-		 examples/dynamic/Makefile
-                 examples/menu/Makefile
-                 src/Makefile
-                 include/Makefile
-                 inkscape/Makefile
-		 nodejs/Makefile
-                 tools/Makefile])
+AC_CONFIG_FILES([
+        Makefile
+        libmbfly.pc
+        libmbfly-uninstalled.pc
+        examples/Makefile
+        examples/calculator/Makefile
+        examples/svg2code_ex/Makefile
+        examples/tank/Makefile
+        examples/drag/Makefile
+        examples/dynamic/Makefile
+        examples/menu/Makefile
+        src/Makefile
+        include/Makefile
+        inkscape/Makefile
+        nodejs/Makefile
+        tools/Makefile
+        ])
 
 AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
 AH_TEMPLATE([SH_STEXT],[Enable sh_stext object])
