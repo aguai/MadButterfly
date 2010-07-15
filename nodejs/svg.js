@@ -27,8 +27,51 @@ function getInteger(n,name)
 	return parseInt(a.value());
 }
 
-function parseStyle(n)
+function parseTextStyle(obj,n)
 {
+	var attr;
+    if (n) {
+        attr = n.attr('style');
+	} else {
+	    attr = null;
+	}
+	var fs = 20;
+	var family="ciurier";
+	if (attr == null) {
+	    var paint = mb_rt.paint_color_new(1,1,1,1);
+	    var face=mb_rt.font_face_query(family, 2, 100);
+	    obj.set_style([[20,face,fs]]);
+		return paint;
+	}
+	var f = attr.value().split(';');
+
+	for(i in f) {
+	    var kv = f[i].split(':');
+		if (kv[0] == 'font-size') {
+		    fs = parsePointSize(kv[1]);
+		} else if (kv[0] == "font-style") {
+		} else if (kv[0] == "font-weight") {
+		} else if (kv[0] == "fill") {
+		} else if (kv[0] == "fill-opacity") {
+		} else if (kv[0] == "stroke") {
+		} else if (kv[0] == "stroke-width") {
+		} else if (kv[0] == "stroke-linecap") {
+		} else if (kv[0] == "stroke-linejoin") {
+		} else if (kv[0] == "stroke-lineopacity") {
+		} else if (kv[0] == "font-family") {
+		} else if (kv[0] == "font-stretch") {
+		} else if (kv[0] == "font-variant") {
+		} else if (kv[0] == "text-anchor") {
+		} else if (kv[0] == "text-align") {
+		} else if (kv[0] == "writing-mode") {
+		} else if (kv[0] == "line-height") {
+		    sys.puts("Unknown style: "+kv[0]);
+		}
+	}
+	var paint = mb_rt.paint_color_new(1,1,1,1);
+	var face=mb_rt.font_face_query(family, 2, 100);
+	obj.set_style([[20,face,fs]]);
+	return paint;
 }
 
 function _MB_parseTSpan(coord, n)
@@ -36,15 +79,12 @@ function _MB_parseTSpan(coord, n)
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
 	var tcoord = mb_rt.coord_new(coord);
-    var paint = parseStyle(n);
 	var nodes = n.childNodes();
 	var k;
 
     sys.puts(n.text());
     var obj = mb_rt.stext_new(n.text(),x,y);
-	var paint = mb_rt.paint_color_new(1,1,1,1);
-	var face=mb_rt.font_face_query("courier", 2, 100);
-	obj.set_style([[5,face,20]]);
+    var paint = parseTextStyle(obj,n);
 	paint.fill(obj);
 	tcoord.add_shape(obj);
 	for(k in nodes) {
@@ -61,7 +101,7 @@ function _MB_parseText(coord,id, n)
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
 	var tcoord = mb_rt.coord_new(coord);
-    var paint = parseStyle(n);
+    //var paint = parseTextStyle(n);
 	var nodes = n.childNodes();
 	var k;
 	for(k in nodes) {
