@@ -255,7 +255,7 @@ _mbe_pattern_create_gradient(VGfloat *gradient, int grad_len,
 
     pattern = O_ALLOC(mbe_pattern_t);
     if(pattern == NULL) {
-	vgPaintDestroy(paint);
+	vgDestroyPaint(paint);
 	return NULL;
     }
 

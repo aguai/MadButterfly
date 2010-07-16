@@ -11,6 +11,10 @@ calc_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = calculator_scr.c calculator_scr.h calculator_scr.mb
 CLEANFILES = calculator_scr.c calculator_scr.h calculator_scr.mb
 
+if OPENVG_GRAPH_ENGINE
+calc_LDFLAGS += -lOpenVG -lEGL
+endif
+
 calculator_scr.mb: $(srcdir)/calculator_scr.svg
 	$(top_srcdir)/tools/svg2code.py -s $? $@
 

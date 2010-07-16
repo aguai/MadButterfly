@@ -51,6 +51,7 @@ endif
 
 if OPENVG_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_openvg.c
+libmbfly_la_LDFLAGS += -lOpenVG -lEGL
 endif
 
 X_main_SOURCES = X_main.c
