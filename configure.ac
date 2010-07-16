@@ -61,6 +61,14 @@ AM_CONDITIONAL([SH_STEXT], [test x$sh_stext = xtrue])
 AC_DEFINE([SH_STEXT])
 [fi]
 
+AC_ARG_ENABLE([mbaf],
+	[ --disable-mbaf	Turn off mbaf],
+[case "${enableval}" in
+  yes) mbaf=true ;;
+  no) mbaf=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --disable-mbaf]) ;;
+esac],[mbaf=true])
+
 AC_ARG_ENABLE([X_supp],
 	[  --disable-X_supp	Turn off X backend],
 [case "${enableval}" in
@@ -95,6 +103,7 @@ cairo=false
 [elif [ x"${openvg}" = xtrue ]; then ]
 AC_DEFINE([OPENVG_GRAPH_ENGINE])
 cairo=false
+mbaf=false
 [else]
 AC_DEFINE([CAIRO_GRAPH_ENGINE])
 cairo=true
@@ -103,6 +112,7 @@ cairo=true
 AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x$skia = xtrue])
 AM_CONDITIONAL([OPENVG_GRAPH_ENGINE], [test x$openvg = xtrue])
 AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x"$cairo" = xtrue])
+AM_CONDITIONAL([MBAF], [test x"$mbaf" = xtrue])
 
 AC_ARG_ENABLE([nodejs],
 	[  --enable-nodejs	Turn on nodejs support],
