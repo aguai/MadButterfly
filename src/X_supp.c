@@ -475,11 +475,19 @@ static int X_MB_init(const char *display_name,
     xmb_rt->surface_ptn =
 	mbe_pattern_create_for_surface(xmb_rt->surface);
     
+#ifdef OPENVG_GRAPH_ENGINE
+    xmb_rt->backend_surface =
+	mbe_vg_win_surface_create(xmb_rt->display,
+				  xmb_rt->win,
+				  xmb_rt->visual,
+				  w, h);
+#else
     xmb_rt->backend_surface =
 	mbe_xlib_surface_create(xmb_rt->display,
 				  xmb_rt->win,
 				  xmb_rt->visual,
 				  w, h);
+#endif
 
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
