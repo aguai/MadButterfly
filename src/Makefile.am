@@ -12,7 +12,7 @@ if TESTCASE
 noinst_PROGRAMS += testcase
 endif
 
-if X_SUPP
+if MBAF
 MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c mbaf/animated_menu.c
 else
 MBAF_SOURCES=
