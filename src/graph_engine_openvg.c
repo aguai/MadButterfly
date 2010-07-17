@@ -432,8 +432,6 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 	attrib_list[i++] = 8;
 	attrib_list[i++] = EGL_ALPHA_SIZE;
 	attrib_list[i++] = 8;
-	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
-	attrib_list[i++] = 8;
 	break;
 	
     case MB_IFMT_RGB24:
@@ -443,21 +441,15 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 	attrib_list[i++] = 8;
 	attrib_list[i++] = EGL_BLUE_SIZE;
 	attrib_list[i++] = 8;
-	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
-	attrib_list[i++] = 8;
 	break;
 	
     case MB_IFMT_A8:
 	attrib_list[i++] = EGL_ALPHA_SIZE;
 	attrib_list[i++] = 8;
-	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
-	attrib_list[i++] = 8;
 	break;
 	
     case MB_IFMT_A1:
 	attrib_list[i++] = EGL_ALPHA_SIZE;
-	attrib_list[i++] = 1;
-	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
 	attrib_list[i++] = 1;
 	break;
 	
@@ -467,8 +459,6 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 	attrib_list[i++] = EGL_GREEN_SIZE;
 	attrib_list[i++] = 6;
 	attrib_list[i++] = EGL_BLUE_SIZE;
-	attrib_list[i++] = 5;
-	attrib_list[i++] = EGL_ALPHA_MASK_SIZE;
 	attrib_list[i++] = 5;
 	break;
 	
@@ -723,8 +713,8 @@ mbe_destroy(mbe_t *canvas) {
 
 void
 mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha) {
+    VGfloat color_trans[8] = {1, 1, 1, alpha, 0, 0, 0, 0};
     EGLDisplay display;
-    VGHandle mask;
     EGLint w, h;
     EGLBoolean r;
     
@@ -736,18 +726,18 @@ mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha) {
     ASSERT(r == EGL_TRUE);
     r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
     ASSERT(r == EGL_TRUE);
-    
-    /* enable and fill mask layer with alpha value */
-    vgSeti(VG_MASKING, VG_TRUE);
-    mask = vgCreateMaskLayer(w, h);
-    ASSERT(mask != VG_INVALID_HANDLE);
-    vgFillMaskLayer(mask, 0, 0, w, h, alpha);
-    vgMask(mask, VG_SET_MASK, 0, 0, w, h);
-    vgDestroyMaskLayer(mask);
-    
+
+    /* Setup color transform for alpha */
+#ifdef OPENVG_1_1
+    vgSetfv(VG_COLOR_TRANSFORM_VALUES, 8, color_trans);
+    vgSeti(VG_COLOR_TRANSFORM, VG_TRUE);
+#endif
+        
     mbe_paint(canvas);
 
-    vgSeti(VG_MASKING, VG_FALSE);
+#ifdef OPENVG_1_1
+    vgSeti(VG_COLOR_TRANSFORM, VG_FALSE);
+#endif
 }
 
 void
