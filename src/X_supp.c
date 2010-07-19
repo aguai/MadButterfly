@@ -468,6 +468,11 @@ static int X_MB_init(const char *display_name,
     xmb_rt->h = h;
     X_init_connection(display_name, w, h, &xmb_rt->display,
 		      &xmb_rt->visual, &xmb_rt->win);
+#ifdef OPENVG_GRAPH_ENGINE
+    _ge_openvg_disp_id = xmb_rt->display;
+#endif
+
+    mbe_init();
 
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);

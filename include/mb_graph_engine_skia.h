@@ -108,6 +108,7 @@ extern void mbe_copy_source(mbe_t *src, mbe_t *dst);
 extern void mbe_transform(mbe_t *mbe, co_aix matrix[6]);
 extern void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
 		    co_aix angle_start, co_aix angle_stop);
+#define mbe_init()
 /* @} */
 
 #endif /* __MB_GE_SKIA_H_ */

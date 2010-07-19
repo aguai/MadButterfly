@@ -50,6 +50,7 @@
 #define mbe_paint cairo_paint
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
+#define mbe_init()
 
 typedef cairo_text_extents_t mbe_text_extents_t;
 typedef cairo_scaled_font_t mbe_scaled_font_t;

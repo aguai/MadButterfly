@@ -244,6 +244,7 @@ extern void mbe_destroy(mbe_t *canvas);
 extern void mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha);
 extern void mbe_paint(mbe_t *canvas);
 extern void mbe_clear(mbe_t *canvas);
+extern void mbe_init();
 
 static void
 mbe_stroke(mbe_t *canvas) {
@@ -273,7 +274,6 @@ mbe_fill(mbe_t *canvas) {
     mbe_fill_preserve(canvas);
     vgClearPath(canvas->path, VG_PATH_CAPABILITY_ALL);
 }
-
 /* @} */
 
 #endif /* __MB_GE_OPENVG_H_ */

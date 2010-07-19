@@ -75,6 +75,9 @@
 #define mbe_scissoring(canvas, n_areas, areas)
 #define mbe_arc(canvas, x, y, radius, angle_start, angle_stop)
 
+/*! \brief Initialize graphic engine */
+#define mbe_init()
+
 typedef struct _mbe_text_extents_t mbe_text_extents_t;
 typedef int mbe_scaled_font_t;
 typedef int mbe_font_face_t;

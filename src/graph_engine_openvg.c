@@ -474,6 +474,9 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
     attrib_list[i++] = EGL_MAX_PBUFFER_HEIGHT;
     attrib_list[i++] = h;
 #endif
+
+    attrib_list[i++] = EGL_RENDERABLE_TYPE;
+    attrib_list[i++] = EGL_OPENVG_BIT;
     
     attrib_list[i++] = EGL_NONE;
     
@@ -800,3 +803,39 @@ mbe_clear(mbe_t *canvas) {
     /* Clear regions to the color specified by mbe_create() */
     vgClear(0, 0, w, h);
 }
+
+void mbe_init() {
+    static EGLContext init_ctx;
+    static EGLSurface init_surf;
+    EGLDisplay display;
+    EGLConfig config;
+    EGLint nconfigs;
+    EGLint attrib_list[] = {
+	EGL_RED_SIZE, 1,
+	EGL_GREEN_SIZE, 1,
+	EGL_BLUE_SIZE, 1,
+	EGL_RENDERABLE_TYPE, EGL_OPENVG_BIT,
+	EGL_NONE};
+    EGLint surf_attribs[] = {
+	EGL_WIDTH, 1,
+	EGL_HEIGHT, 1,
+	EGL_NONE};
+    EGLBoolean r;
+
+    display = _VG_DISPLAY();
+    eglInitialize(display, NULL, NULL);
+
+    r = eglChooseConfig(display, attrib_list, &config, 1, &nconfigs);
+    ASSERT(r);
+    
+    eglBindAPI(EGL_OPENVG_API);
+
+    init_ctx = eglCreateContext(display, config, EGL_NO_CONTEXT, NULL);
+    ASSERT(init_ctx != EGL_NO_CONTEXT);
+
+    init_surf = eglCreatePbufferSurface(display, config, surf_attribs);
+    ASSERT(init_surf != EGL_NO_SURFACE);
+    
+    eglMakeCurrent(display, init_surf, init_surf, init_ctx);
+}
+
