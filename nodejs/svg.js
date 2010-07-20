@@ -26,8 +26,27 @@ function getInteger(n,name)
 	if (a==null) return 0;
 	return parseInt(a.value());
 }
+function parsePointSize(s)
+{
+    var fs=0;
+	var i;
 
-function parseTextStyle(obj,n)
+	for(i=0;i<s.length;i++) {
+	    if (s[i]<'0' || s[i] > '9') break;
+		fs = fs*10 + (s[i]-'0');
+	}
+	return fs;
+	
+}
+
+
+function parseColor(c)
+{
+    if (c[0] == '#') {
+	    return parseInt(c.substring(1,3),16)<<16 | parseInt(c.substring(3,5),16)<<8 | parseInt(c.substring(5,7),16);
+	}
+}
+function parseTextStyle(style,n)
 {
 	var attr;
     if (n) {
@@ -35,23 +54,19 @@ function parseTextStyle(obj,n)
 	} else {
 	    attr = null;
 	}
-	var fs = 20;
-	var family="ciurier";
 	if (attr == null) {
-	    var paint = mb_rt.paint_color_new(1,1,1,1);
-	    var face=mb_rt.font_face_query(family, 2, 100);
-	    obj.set_style([[20,face,fs]]);
-		return paint;
+		return;
 	}
 	var f = attr.value().split(';');
 
 	for(i in f) {
 	    var kv = f[i].split(':');
 		if (kv[0] == 'font-size') {
-		    fs = parsePointSize(kv[1]);
+		    style.fs = parsePointSize(kv[1]);
 		} else if (kv[0] == "font-style") {
 		} else if (kv[0] == "font-weight") {
 		} else if (kv[0] == "fill") {
+		    style.color = parseColor(kv[1]);
 		} else if (kv[0] == "fill-opacity") {
 		} else if (kv[0] == "stroke") {
 		} else if (kv[0] == "stroke-width") {
@@ -59,6 +74,7 @@ function parseTextStyle(obj,n)
 		} else if (kv[0] == "stroke-linejoin") {
 		} else if (kv[0] == "stroke-lineopacity") {
 		} else if (kv[0] == "font-family") {
+		    style.family = kv[1];
 		} else if (kv[0] == "font-stretch") {
 		} else if (kv[0] == "font-variant") {
 		} else if (kv[0] == "text-anchor") {
@@ -68,13 +84,9 @@ function parseTextStyle(obj,n)
 		    sys.puts("Unknown style: "+kv[0]);
 		}
 	}
-	var paint = mb_rt.paint_color_new(1,1,1,1);
-	var face=mb_rt.font_face_query(family, 2, 100);
-	obj.set_style([[20,face,fs]]);
-	return paint;
 }
 
-function _MB_parseTSpan(coord, n)
+function _MB_parseTSpan(coord, n,style)
 {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
@@ -84,8 +96,11 @@ function _MB_parseTSpan(coord, n)
 
     sys.puts(n.text());
     var obj = mb_rt.stext_new(n.text(),x,y);
-    var paint = parseTextStyle(obj,n);
-	paint.fill(obj);
+    parseTextStyle(style,n);
+    style.paint = mb_rt.paint_color_new(1,1,1,1);
+    style.face=mb_rt.font_face_query(style.family, 2, 100);
+	obj.set_style([[20,style.face,style.fs]]);
+	style.paint.fill(obj);
 	tcoord.add_shape(obj);
 	for(k in nodes) {
 	    var name = nodes[k].name();
@@ -101,13 +116,16 @@ function _MB_parseText(coord,id, n)
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
 	var tcoord = mb_rt.coord_new(coord);
-    //var paint = parseTextStyle(n);
+    var style = new Object();
+	style.fs = 20;
+	style.family = 'courier';
+	parseTextStyle(style,n);
 	var nodes = n.childNodes();
 	var k;
 	for(k in nodes) {
 	    var n = nodes[k].name();
 		if (n == "tspan") {
-	        _MB_parseTSpan(tcoord,nodes[k]);
+	        _MB_parseTSpan(tcoord,nodes[k],style);
 		} else {
 		}
 	}
