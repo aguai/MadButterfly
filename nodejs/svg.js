@@ -81,6 +81,7 @@ function parseTextStyle(style,n)
 		} else if (kv[0] == "text-align") {
 		} else if (kv[0] == "writing-mode") {
 		} else if (kv[0] == "line-height") {
+		} else {
 		    sys.puts("Unknown style: "+kv[0]);
 		}
 	}
