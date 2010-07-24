@@ -126,7 +126,9 @@ AM_CONDITIONAL([X_SUPP], [test x$X_supp = xtrue -a x$cairo = xtrue])
 
 [if [ x"${cairo}" = xtrue ]; then]
     PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
-    PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
+    [if [ x"${sh_text}" = xtrue ]; then]
+        PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
+    [fi]
 [fi]
 
 AC_CONFIG_FILES([
