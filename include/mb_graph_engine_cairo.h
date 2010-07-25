@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <cairo.h>
-#include <cairo-xlib.h>
+#include <cairo-directfb.h>
 #include "mb_basic_types.h"
 #include "mb_img_ldr.h"
 
@@ -99,7 +99,7 @@ static void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
 
 static void mbe_clear(mbe_t *canvas) {
     cairo_operator_t old_op;
-    
+
     old_op = cairo_get_operator(canvas);
     cairo_set_operator(canvas, CAIRO_OPERATOR_CLEAR);
     cairo_paint(canvas);
@@ -110,7 +110,7 @@ static void mbe_copy_source(mbe_t *src, mbe_t *dst) {
     cairo_operator_t saved_op;
     cairo_surface_t *surf;
     cairo_pattern_t *ptn;
-    
+
     surf = cairo_get_target(src);
     ptn = cairo_pattern_create_for_surface(surf);
     cairo_set_source(src, ptn);
@@ -131,13 +131,13 @@ mbe_scaled_font_create(mbe_font_face_t *face, co_aix fnt_mtx[6],
     options = cairo_font_options_create();
     if(options == NULL)
 	return NULL;
-    
+
     MB_MATRIX_2_CAIRO(cfnt_mtx, fnt_mtx);
     MB_MATRIX_2_CAIRO(cctm, ctm);
     scaled = cairo_scaled_font_create(face, &cfnt_mtx, &cctm, options);
 
     cairo_font_options_destroy(options);
-    
+
     return scaled;
 }
 
@@ -147,7 +147,7 @@ mbe_image_surface_create_for_data(unsigned char *data,
 				  int width, int height,
 				  int stride) {
     cairo_format_t _fmt;
-    
+
     switch(fmt) {
     case MB_IFMT_ARGB32:
 	_fmt = CAIRO_FORMAT_ARGB32;
@@ -198,7 +198,7 @@ mbe_image_surface_get_format(mbe_surface_t *surface) {
 static mbe_surface_t *
 mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height) {
     cairo_format_t _fmt;
-    
+
     switch(fmt) {
     case MB_IFMT_ARGB32:
 	_fmt = CAIRO_FORMAT_ARGB32;
@@ -215,7 +215,7 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height) {
     default:
 	return NULL;
     }
-    
+
     return cairo_image_surface_create(_fmt, width, height);
 }
 
