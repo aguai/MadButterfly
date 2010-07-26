@@ -34,6 +34,6 @@ void xnjsmb_font_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> mb_rt_temp);
 
 /* From image_ldr.cc */
 void
-xnjsmb_img_ldr_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> mb_rt_temp);
+xnjsmb_img_ldr_init_mb_rt_temp(v8::Handle<v8::Object> mb_rt_temp);
 
 #endif /* __MBFLY_NJS_H_ */
