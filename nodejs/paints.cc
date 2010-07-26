@@ -154,6 +154,67 @@ xnjsmb_paint_color_new(const Arguments &args) {
 
 static Persistent<FunctionTemplate> xnjsmb_paint_color_new_temp;
 
+/*! \brief Constructor of paint_image_t objects for Javascript.
+ */
+static Handle<Value>
+xnjsmb_paint_image(const Arguments &args) {
+    int argc = args.Length();
+    Handle<Object> rt;
+    Handle<Object> self = args.This();
+    Handle<Object> img_obj;
+    redraw_man_t *rdman;
+    mb_img_data_t *img;
+    paint_t *paint;
+
+    if(argc != 2)
+	THROW("Invalid number of arguments (!= 2)");
+    if(!args[0]->IsObject() || !args[1]->IsObject())
+	THROW("Invalid argument type");
+    
+    rt = args[0]->ToObject();
+    img_obj = args[1]->ToObject();
+    
+    rdman = xnjsmb_rt_rdman(rt);
+    img = (mb_img_data_t *)UNWRAP(img_obj);
+
+    paint = rdman_paint_image_new(rdman, img);
+    ASSERT(paint != NULL);
+    
+    WRAP(self, paint);
+    SET(self, "mbrt", rt);
+    
+    return Null();
+}
+
+static Persistent<FunctionTemplate> xnjsmb_paint_image_temp;
+
+/*! \brief Create and return a paint_image object.
+ */
+static Handle<Value>
+xnjsmb_paint_image_new(const Arguments &args) {
+    int argc = args.Length();
+    HandleScope scope;
+    Handle<Object> rt = args.This();
+    Handle<Object> paint_image_obj;
+    Handle<Value> pi_args[2];
+    Handle<Function> paint_image_func;
+
+    if(argc != 1)
+	THROW("Invalid number of arguments (!= 2)");
+    if(!args[0]->IsObject())
+	THROW("Invalid argument type");
+
+    pi_args[0] = rt;
+    pi_args[1] = args[0];	// image
+    paint_image_func = xnjsmb_paint_image_temp->GetFunction();
+    paint_image_obj = paint_image_func->NewInstance(2, pi_args);
+
+    scope.Close(paint_image_obj);
+    return paint_image_obj;
+}
+
+static Persistent<FunctionTemplate> xnjsmb_paint_image_new_temp;
+
 /*! \brief Create templates for paint types.
  *
  * This function is only called one time for every execution.
@@ -186,12 +247,26 @@ xnjsmb_init_paints(void) {
     xnjsmb_paint_color_temp = Persistent<FunctionTemplate>::New(temp);
     xnjsmb_paint_color_temp->SetClassName(String::New("paint_color"));
     xnjsmb_paint_color_temp->Inherit(xnjsmb_paint_temp);
-    
+
     inst_temp = xnjsmb_paint_color_temp->InstanceTemplate();
     inst_temp->SetInternalFieldCount(1);
 
     temp = FunctionTemplate::New(xnjsmb_paint_color_new);
     xnjsmb_paint_color_new_temp = Persistent<FunctionTemplate>::New(temp);
+    
+    /*
+     * Paint image
+     */
+    temp = FunctionTemplate::New(xnjsmb_paint_image);
+    xnjsmb_paint_image_temp = Persistent<FunctionTemplate>::New(temp);
+    xnjsmb_paint_image_temp->SetClassName(String::New("paint_image"));
+    xnjsmb_paint_image_temp->Inherit(xnjsmb_paint_temp);
+    
+    inst_temp = xnjsmb_paint_image_temp->InstanceTemplate();
+    inst_temp->SetInternalFieldCount(1);
+
+    temp = FunctionTemplate::New(xnjsmb_paint_image_new);
+    xnjsmb_paint_image_new_temp = Persistent<FunctionTemplate>::New(temp);
 }
 
 void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
@@ -205,4 +280,5 @@ void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
 
     rt_proto_temp = rt_temp->PrototypeTemplate();
     SET(rt_proto_temp, "paint_color_new", xnjsmb_paint_color_new_temp);
+    SET(rt_proto_temp, "paint_image_new", xnjsmb_paint_image_new_temp);
 }
