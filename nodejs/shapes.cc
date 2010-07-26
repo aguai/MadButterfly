@@ -264,6 +264,7 @@ xnjsmb_shape_stext_new(const Arguments &args) {
     stext_obj = func->NewInstance(4, stext_args);
     ASSERT(stext_obj != NULL);
 
+    scope.Close(stext_obj);
     return stext_obj;
 }
 
@@ -313,7 +314,7 @@ xnjsmb_shape_stext_set_style(const Arguments &args) {
 
 /*! \brief Initialize function template for stext objects.
  */
-void
+static void
 xnjsmb_init_stext_temp(void) {
     Handle<FunctionTemplate> func_temp;
     Handle<FunctionTemplate> meth_temp;
@@ -336,12 +337,97 @@ xnjsmb_init_stext_temp(void) {
 
 /* @} */
 
+/*! \defgroup image_temp Templates for image objects.
+ *
+ * @{
+ */
+
+static Handle<Value>
+xnjsmb_shape_image(const Arguments &args) {
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    Handle<Object> rt;
+    float x, y;
+    float w, h;
+    redraw_man_t *rdman;
+    shape_t *img;
+
+    if(argc != 5)
+	THROW("Invalid number of arguments (!= 5)");
+    if(!args[0]->IsObject() ||
+       !args[1]->IsNumber() || !args[2]->IsNumber() ||
+       !args[3]->IsNumber() || !args[4]->IsNumber())
+	THROW("Invalid argument type");
+
+    rt = args[0]->ToObject();
+    x = args[1]->ToNumber()->Value();
+    y = args[2]->ToNumber()->Value();
+    w = args[3]->ToNumber()->Value();
+    h = args[4]->ToNumber()->Value();
+
+    rdman = xnjsmb_rt_rdman(rt);
+    img = rdman_shape_image_new(rdman, x, y, w, h);
+
+    WRAP(self, img);
+    SET(self, "mbrt", rt);
+
+    return Null();
+}
+
+static Persistent<FunctionTemplate> xnjsmb_shape_image_temp;
+
+static Handle<Value>
+xnjsmb_shape_image_new(const Arguments &args) {
+    HandleScope scope;
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    Handle<Value> img_args[5];
+    Handle<Object> img_obj;
+    Handle<Function> func;
+
+    if(argc != 4)
+	THROW("Invalid number of arguments (!= 3)");
+
+    img_args[0] = self;
+    img_args[1] = args[0];
+    img_args[2] = args[1];
+    img_args[3] = args[2];
+    img_args[4] = args[3];
+
+    func = xnjsmb_shape_image_temp->GetFunction();
+    img_obj = func->NewInstance(5, img_args);
+    ASSERT(img_obj != NULL);
+
+    scope.Close(img_obj);
+    return img_obj;
+}
+
+static void
+xnjsmb_init_image_temp() {
+    Handle<FunctionTemplate> func_temp;
+    Handle<FunctionTemplate> meth_temp;
+    Handle<ObjectTemplate> inst_temp;
+    Handle<ObjectTemplate> proto_temp;
+    
+    func_temp = FunctionTemplate::New(xnjsmb_shape_image);
+    func_temp->Inherit(xnjsmb_shape_temp);
+    func_temp->SetClassName(String::New("image"));
+    
+    inst_temp = func_temp->InstanceTemplate();
+    inst_temp->SetInternalFieldCount(1);
+
+    xnjsmb_shape_image_temp = Persistent<FunctionTemplate>::New(func_temp);
+}
+
+/* @} */
+
 /*! \brief Set properties of template of mb_rt.
  */
 void
 xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
     HandleScope scope;
     Handle<FunctionTemplate> path_new_temp, stext_new_temp;
+    Handle<FunctionTemplate> image_new_temp;
     Handle<ObjectTemplate> rt_proto_temp;
     static int temp_init_flag = 0;
 
@@ -359,4 +445,7 @@ xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
 
     stext_new_temp = FunctionTemplate::New(xnjsmb_shape_stext_new);
     SET(rt_proto_temp, "stext_new", stext_new_temp);
+
+    image_new_temp = FunctionTemplate::New(xnjsmb_shape_image_new);
+    SET(rt_proto_temp, "image_new", image_new_temp);
 }
