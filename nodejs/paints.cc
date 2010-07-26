@@ -269,6 +269,11 @@ xnjsmb_init_paints(void) {
     xnjsmb_paint_image_new_temp = Persistent<FunctionTemplate>::New(temp);
 }
 
+/*! \brief Initialize paints for mbfly.
+ *
+ * This function is called by init() in mbfly_njs.cc when the module
+ * being loaded.
+ */
 void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
     static int init_flag = 0;
     Handle<ObjectTemplate> rt_proto_temp;
