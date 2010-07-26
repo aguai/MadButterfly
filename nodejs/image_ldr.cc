@@ -15,6 +15,11 @@ using namespace v8;
 #define ASSERT(x)
 #endif
 
+/*! \defgroup img_ldr_js Javascript binding for image loader.
+ *
+ * @{
+ */
+
 static Persistent<ObjectTemplate> img_data_temp;
 
 /*! \brief load() method of img_ldr Javascript objects.
@@ -76,6 +81,8 @@ xnjsmb_img_ldr_new(const Arguments &args) {
 
     return Null();
 }
+
+/* @} */
 
 /*! \brief Initialize image loader.
  *
