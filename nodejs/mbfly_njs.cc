@@ -148,6 +148,7 @@ init(Handle<Object> target) {
     xnjsmb_shapes_init_mb_rt_temp(mb_rt_func);
     xnjsmb_paints_init_mb_rt_temp(mb_rt_func);
     xnjsmb_font_init_mb_rt_temp(mb_rt_func);
+    xnjsmb_img_ldr_init_mb_rt_temp(mb_rt_func);
     
     target->Set(String::New("mb_rt"), mb_rt_func->GetFunction());    
 }
