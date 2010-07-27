@@ -21,5 +21,5 @@ mbfly.node: wscript $(mbfly_node_SRCS)
 
 clean-mbfly-node:
 	cd $(srcdir); \
-	WAFLOCK=$(abs_builddir)/.lock-wscript \
+	WAFLOCK=$(abs_builddir)/objs/.lock-wscript \
 		$(NODE_WAF) clean
