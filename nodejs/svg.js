@@ -207,10 +207,13 @@ function _MB_parseImage(coord,id, n)
 
 	if (ref == null) return;
 	sys.puts(ref);
-	if (ref.substr(0,7) != "file://") {
+	if (ref.substr(0,7) == "file://") {
+	    ref = ref.substring(7);
+	} else if (ref.substr(0,5)=="file:") {
+	    ref = ref.substring(5);
+	} else {
 	    return;
 	}
-	ref = ref.substring(7);
 	sys.puts("Load image "+ref);
 	var w;
 	var h;

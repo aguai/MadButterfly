@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <svg
    xmlns:ns0="http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -14,8 +15,8 @@
    height="480"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.46"
-   sodipodi:docname="list.svg"
+   inkscape:version="0.47+devel r9312"
+   sodipodi:docname="test.svg"
    version="1.0"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
   <sodipodi:namedview
@@ -34,10 +35,11 @@
      inkscape:document-units="px"
      inkscape:current-layer="layer4"
      showgrid="false"
-     inkscape:window-width="1024"
-     inkscape:window-height="768"
+     inkscape:window-width="1347"
+     inkscape:window-height="894"
      inkscape:window-x="0"
-     inkscape:window-y="0" />
+     inkscape:window-y="25"
+     inkscape:window-maximized="0" />
   <defs
      id="defs4">
     <linearGradient
@@ -301,5 +303,12 @@
          rx="10"
          ry="10" />
     </g>
+    <image
+       y="78.788635"
+       x="34.986565"
+       id="image3033"
+       xlink:href="file:logo.png"
+       height="37"
+       width="46" />
   </g>
 </svg>
