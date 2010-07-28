@@ -11,6 +11,14 @@ var coord = mb_rt.coord_new(root);
 sys.puts("coord matrix: " + 
 	 [coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]]);
 
+/* Testcase for image shapes */
+var img = mb_rt.image_new(10, 10, 50, 50);
+var ldr = mbfly.img_ldr_new(".");
+var img_data = ldr.load("sample.png");
+var paint = mb_rt.paint_image_new(img_data);
+paint.fill(img);
+root.add_shape(img);
+
 sys.puts(mb_rt.path_new);
 var path = mb_rt.path_new("m 100,50 L 120,50 L 200,150 L 180,150 z");
 sys.puts(path);
