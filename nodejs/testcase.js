@@ -19,6 +19,7 @@ var paint = mb_rt.paint_image_new(img_data);
 paint.fill(img);
 root.add_shape(img);
 
+/* Moving a path */
 sys.puts(mb_rt.path_new);
 var path = mb_rt.path_new("m 100,50 L 120,50 L 200,150 L 180,150 z");
 sys.puts(path);
