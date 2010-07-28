@@ -2,6 +2,7 @@ var libxml = require('libxmljs');
 var sys=require('sys');
 var mbfly = require("mbfly");
 var mb_rt = new mbfly.mb_rt(":0.0", 720,480);
+var ldr = mbfly.img_ldr_new(".");
 
 function MB_loadSVG(mb_rt,root,filename) {
     var doc = libxml.parseXmlFile(filename);
@@ -192,11 +193,49 @@ function _MB_parseGroup(root, group_id, n)
 		    _MB_parseText(coord, id, nodes[k]);
 		} else if (n == "rect") {
 		    _MB_parseRect(coord, id, nodes[k]);
+		} else if (n == "image") {
+			_MB_parseImage(coord, id, nodes[k]);
 		}
 	}
     
 }
 
+function _MB_parseImage(coord,id, n)
+{
+    sys.puts("---> image");
+	var ref = n.attr('href').value();
+
+	if (ref == null) return;
+	sys.puts(ref);
+	if (ref.substr(0,7) != "file://") {
+	    return;
+	}
+	ref = ref.substring(7);
+	sys.puts("Load image "+ref);
+	var w;
+	var h;
+	var x,y;
+
+	w = n.attr("width");
+	if (w == null) return;
+	w = parseInt(w.value());
+	h = n.attr("height");
+	if (h == null) return;
+	h = parseInt(h.value());	
+	x = n.attr("x");
+	if (x == null) return;
+	x = parseInt(x.value());
+	y = n.attr("y");
+	if (y == null) return;
+	y = parseInt(y.value());
+	sys.puts("x="+x+",y="+y+",w="+w+",h="+h);
+	var img = mb_rt.image_new(x,y,w,h);
+	var img_data = ldr.load(ref);
+	sys.puts(img_data);
+	var paint = mb_rt.paint_image_new(img_data);
+	paint.fill(img);
+	coord.add_shape(img);
+}
 
 function _MB_parseDefs(root,n) 
 {
