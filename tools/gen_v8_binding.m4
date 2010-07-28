@@ -134,6 +134,43 @@ define([STR], [$][1])dnl
 define([FUNC], [$][1])dnl
 ])
 
+define([START_METHOD_RET_VAL], [dnl
+define([INT], [
+    int _ret;
+])dnl
+define([OBJ], [
+    $][2 *_ret;
+])dnl
+define([STR], [
+    char *_ret;
+])dnl
+define([FUNC], [
+    Handle<Function> _ret;
+])dnl
+])
+
+define([START_METHOD_RET_ASSIGN], [dnl
+define([INT], [_ret = ])dnl
+define([OBJ], [_ret = ])dnl
+define([STR], [_ret = ])dnl
+define([FUNC], [_ret = ])dnl
+])
+
+define([START_METHOD_RET], [dnl
+define([INT], [
+    return Integer::New(_ret);
+])dnl
+define([OBJ], [
+    return PROJ_PREFIX[]STRUCT_NAME[]_$][1[]_new(_ret);
+])dnl
+define([STR], [
+    return String::New(_ret);
+])dnl
+define([FUNC], [
+    return _ret;
+])dnl
+])
+
 define([STOP_METHOD_ARG], [dnl
 undefine([INT])dnl
 undefine([OBJ])dnl
@@ -149,7 +186,8 @@ PROJ_PREFIX[]STRUCT_NAME[]_$][1(const Arguments &args) {
     int argc = args.Length();
     Handle<Object> self = args.This();
     STRUCT_TYPE *_self = (STRUCT_TYPE *)UNWRAP(self);
-foreach([ITER], $][3, [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])
+foreach([ITER], $][3, [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])dnl
+START_METHOD_RET_VAL[]$][5[]STOP_METHOD_ARG
 
     if(argc != $][4)
         THROW("Invalid number of arguments (!=$][4)");
@@ -161,7 +199,11 @@ foreach([ITER], $][3, [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])
     i = 0;
 foreach([ITER], $][3, [START_METHOD_ARG_ASSIGN[]ITER[]STOP_METHOD_ARG]))
 
-    $][2(_self[]foreach([ITER], $][3, [START_METHOD_ARG_PASS[], ITER[]STOP_METHOD_ARG]));
+    START_METHOD_RET_ASSIGN[]$][5[]STOP_METHOD_ARG[]$][2(_self[]foreach([ITER], $][3, [START_METHOD_ARG_PASS[], ITER[]STOP_METHOD_ARG]));
+START_METHOD_RET[]$][5[]STOP_METHOD_ARG[]dnl
+ifelse($][5, [], [
+    return Null();
+])dnl
 }
 ])dnl
 ])
