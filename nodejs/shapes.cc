@@ -435,6 +435,7 @@ xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
 	xnjsmb_init_shape_temp();
 	xnjsmb_init_path_temp();
 	xnjsmb_init_stext_temp();
+	xnjsmb_init_image_temp();
 	temp_init_flag = 1;
     }
 

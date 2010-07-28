@@ -59,7 +59,7 @@ xnjsmb_img_ldr_load(const Arguments &args) {
 /*! \brief Constructor function of img_ldr Javascript objects.
  */
 static Handle<Value>
-xnjsmb_img_ldr_new(const Arguments &args) {
+xnjsmb_img_ldr(const Arguments &args) {
     HandleScope scope;
     int argc = args.Length();
     Handle<Object> self = args.This();
@@ -82,6 +82,29 @@ xnjsmb_img_ldr_new(const Arguments &args) {
     return Null();
 }
 
+static Persistent<FunctionTemplate> xnjsmb_img_ldr_temp;
+
+static Handle<Value>
+xnjsmb_img_ldr_new(const Arguments &args) {
+    HandleScope scope;
+    int argc = args.Length();
+    Handle<Value> il_args[1];
+    Handle<Object> img_ldr;
+    Handle<Function> func;
+    
+    if(argc != 1)
+	THROW("Invalid number of arguments (!= 1)");
+    if(!args[0]->IsString())
+	THROW("Invalid argument type");
+
+    il_args[0] = args[0];
+    func = xnjsmb_img_ldr_temp->GetFunction();
+    img_ldr = func->NewInstance(1, il_args);
+
+    scope.Close(img_ldr);
+    return img_ldr;
+}
+
 /* @} */
 
 /*! \brief Initialize image loader.
@@ -92,6 +115,7 @@ xnjsmb_img_ldr_new(const Arguments &args) {
 void
 xnjsmb_img_ldr_init_mb_rt_temp(Handle<Object> rt_temp) {
     HandleScope scope;
+    Handle<FunctionTemplate> img_ldr_temp;
     Handle<FunctionTemplate> img_ldr_new_temp;
     Handle<ObjectTemplate> ldr_inst_temp;
     Handle<ObjectTemplate> ldr_proto_temp;
@@ -104,15 +128,19 @@ xnjsmb_img_ldr_init_mb_rt_temp(Handle<Object> rt_temp) {
     img_data_temp = Persistent<ObjectTemplate>::New(_img_data_temp);
     
     /* Setup img_ldr class */
-    img_ldr_new_temp = FunctionTemplate::New(xnjsmb_img_ldr_new);
-    img_ldr_new_temp->SetClassName(String::New("img_ldr"));
-    ldr_inst_temp = img_ldr_new_temp->InstanceTemplate();
+    img_ldr_temp = FunctionTemplate::New(xnjsmb_img_ldr);
+    img_ldr_temp->SetClassName(String::New("img_ldr"));
+    ldr_inst_temp = img_ldr_temp->InstanceTemplate();
     ldr_inst_temp->SetInternalFieldCount(1);
 
     /* Set method load() for img_ldr */
-    ldr_proto_temp = img_ldr_new_temp->PrototypeTemplate();
+    ldr_proto_temp = img_ldr_temp->PrototypeTemplate();
     img_ldr_load_temp = FunctionTemplate::New(xnjsmb_img_ldr_load);
     SET(ldr_proto_temp, "load", img_ldr_load_temp);
-    
+
+    xnjsmb_img_ldr_temp = Persistent<FunctionTemplate>::New(img_ldr_temp);
+
+    /* Initialize img_ldr_new function */
+    img_ldr_new_temp = FunctionTemplate::New(xnjsmb_img_ldr_new);
     SET(rt_temp, "img_ldr_new", img_ldr_new_temp->GetFunction());
 }
