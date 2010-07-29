@@ -11,3 +11,5 @@ STRUCT([subject], [subject_t], [],
 	       [OBJ([observer], [observer_t])]),
         METHOD([remove_observer], [subject_remove_observer],
 	       (OBJ([observer], [observer_t])), 1, [])])
+
+FUNCTION([load], [my_load], [INT(sz), STR(name)], 2, [OBJ([test],[test_t])])
