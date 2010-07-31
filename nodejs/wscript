@@ -15,20 +15,29 @@ def configure(conf):
     conf.check_tool('compiler_cc')
     conf.check_tool('node_addon')
     conf.env.SRCDIR = Options.options.srcdir
-    conf.env.TOP_BUILDDIR = os.environ['TOP_BUILDDIR']    
+    conf.env.TOP_BUILDDIR = os.environ['TOP_BUILDDIR']
     pass
 
 def build(conf):
     import Utils
     
+    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
+         source='observer.m4', target='observer-inc.h',
+         name='observer-inc', shell=True, always=True, before=['cxx'])
+
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
     obj.source = 'mbfly_njs.cc coord.cc shapes.cc paints.cc font.cc ' + \
 	'image_ldr.cc'
-    obj.add_objects = 'X_supp_njs.o'
+    obj.add_objects = 'X_supp_njs.o observer.o'
     obj.staticlib = 'mbfly'
-    
+
     obj = conf.new_task_gen('cc', 'shlib', 'node_addon')
     obj.target = 'X_supp_njs.o'
     obj.source = 'X_supp_njs.c'
+    
+    obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
+    obj.target = 'observer.o'
+    obj.source = 'observer.cc'
+    obj.includes = '.'
     pass
