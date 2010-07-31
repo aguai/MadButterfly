@@ -3,12 +3,6 @@
 
 #include <stdio.h>
 #include <cairo.h>
-/* This include file should be remove from here, since it will only be
- * used by directfb runtime module.  Other modules would not use it.
- * FourDollars, please, confirms it.
- *
- * #include <cairo-directfb.h>
- */
 #include "mb_basic_types.h"
 #include "mb_img_ldr.h"
 
