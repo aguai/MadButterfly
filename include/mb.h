@@ -5,7 +5,7 @@
 
 #include "mb_types.h"
 #include "mb_redraw_man.h"
-#ifdef X_SUPP
+#ifdef X_BACKEND
 #include "mb_X_supp.h"
 #endif
 #include "mb_animate.h"

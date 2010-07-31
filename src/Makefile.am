@@ -12,7 +12,7 @@ if TESTCASE
 noinst_PROGRAMS += testcase
 endif
 
-if X_SUPP
+if X_BACKEND
 MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c mbaf/animated_menu.c
 else
 MBAF_SOURCES=
@@ -32,7 +32,7 @@ if SH_STEXT
 libmbfly_la_SOURCES += shape_stext.c
 endif
 
-if X_SUPP
+if X_BACKEND
 libmbfly_la_SOURCES += X_supp.c
 endif
 
