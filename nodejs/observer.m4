@@ -1,3 +1,5 @@
+define([PROJ_PREFIX], [xnjsmb_auto_])
+
 STRUCT([mb_obj], [mb_obj_t], [INT([obj_type])], [])
 
 STRUCT([observer], [observer_t],
