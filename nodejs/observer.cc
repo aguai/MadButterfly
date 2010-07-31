@@ -60,3 +60,6 @@ event_handler(event_t *evt, void *arg) {
     data->func->Call(Context::GetCurrent()->Global(), 1, func_args);
 }
 
+void
+xnjsmb_observer_init(void) {
+}
