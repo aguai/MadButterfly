@@ -33,7 +33,10 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
     sz = strlen(sldr->repo);
     sz += strlen(img_id);
     fname = (char *)malloc(sz + 2);
-    strcpy(fname, sldr->repo);
+	if (img_id[0] != '/') 
+        strcpy(fname, sldr->repo);
+	else
+		fname[0] = 0;
     strcat(fname, img_id);
     
     surf = mbe_image_surface_create_from_png(fname);
