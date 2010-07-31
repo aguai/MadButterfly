@@ -54,7 +54,7 @@ event_handler(event_t *evt, void *arg) {
     Handle<Value> evt_obj;
     Handle<Value> func_args[1];
 
-    evt_obj = xnjsmb_event_new(evt);
+    evt_obj = xnjsmb_auto_event_new(evt);
     ASSERT(!evt_obj.IsEmpty());
     func_args[0] = evt_obj;
     data->func->Call(Context::GetCurrent()->Global(), 1, func_args);
