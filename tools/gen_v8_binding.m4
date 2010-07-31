@@ -45,7 +45,7 @@ static Handle<Value>
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
-    return ]PROJ_PREFIX[$][2_new(data->$][1);
+    return ]PROJ_PREFIX[$][2_new(($][3 *)data->$][1);
 }
 
 static void
