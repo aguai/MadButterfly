@@ -13,6 +13,8 @@ define([COUNT],[ifelse([$*],[],0,[$#])])
 
 define([IMPORT],[define([$1],[$2$1(]$[]@[)])])
 
+define([EXPAND], [$1])
+
 define([PROJ_PREFIX], [xnjsmb_])
 
 define([START_ACCESSOR], [dnl
@@ -36,6 +38,27 @@ static void
 
     data = (STRUCT_TYPE *)UNWRAP(self);
     data->$][1 = value->Int32Value();
+}
+])
+  define([NUMBER], [
+static Handle<Value>
+]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    STRUCT_TYPE *data;
+
+    data = (STRUCT_TYPE *)UNWRAP(self);
+    return Number::New(data->$][1);
+}
+
+static void
+]PROJ_PREFIX[]STRUCT_NAME[_set_$][1(Local<String> property,
+		      Local<Value> value,
+		      const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    STRUCT_TYPE *data;
+
+    data = (STRUCT_TYPE *)UNWRAP(self);
+    data->$][1 = value->NumberValue();
 }
 ])
   define([OBJ], [
@@ -92,6 +115,7 @@ divert([])dnl
 define([STOP_ACCESSOR], [dnl
 divert([-1])dnl
 undefine([INT])
+undefine([NUMBER])
 undefine([OBJ])
 undefine([STR])
 divert([])dnl
@@ -99,12 +123,14 @@ divert([])dnl
 
 define([SET_ACCESSSOR], [dnl
 define([INT], [$][1])dnl
+define([NUMBER], [$][1])dnl
 define([OBJ], [$][1])dnl
 define([STR], [$][1])dnl
     inst_temp->SetAccessor(String::New("$1"),
 			   PROJ_PREFIX[]STRUCT_NAME[]_get_[]$1,
 			   PROJ_PREFIX[]STRUCT_NAME[]_set_[]$1);
 undefine([INT])dnl
+undefine([NUMBER])dnl
 undefine([OBJ])dnl
 undefine([STR])dnl
 ])
@@ -112,6 +138,9 @@ undefine([STR])dnl
 define([START_METHOD_ARG_VAR], [dnl
 define([INT], [dnl
     int arg_$][1;
+])dnl
+define([NUMBER], [dnl
+    double arg_$][1;
 ])dnl
 define([OBJ], [dnl
     $][2 *arg_$][1;
@@ -127,6 +156,8 @@ define([FUNC], [dnl
 define([START_METHOD_ARG_TYPE_CHK], [dnl
 define([INT], [ ||
        !args[[i++]]->IsInt32()])dnl
+define([NUMBER], [ ||
+       !args[[i++]]->IsNumber()])dnl
 define([OBJ], [ ||
        !args[[i++]]->IsObject()])dnl
 define([STR], [ ||
@@ -139,6 +170,9 @@ define([START_METHOD_ARG_ASSIGN], [dnl
 define([INT], [dnl
     arg_$][1 = args[[i++]]->Int32Value();
 ])dnl
+define([NUMBER], [dnl
+    arg_$][1 = args[[i++]]->NumberValue();
+])dnl
 define([OBJ], [dnl
     arg_$][1 = ($][2 *)UNWRAP(args[[i++]]->ToObject());
 ])dnl
@@ -150,8 +184,27 @@ define([FUNC], [dnl
 ])dnl
 ])
 
+define([START_VALUE_ASSIGN], [dnl
+define([INT], [dnl
+    $1 = $2->Int32Value();
+])dnl
+define([NUMBER], [dnl
+    $1 = $2->NumberValue();
+])dnl
+define([OBJ], [dnl
+    $1 = ($][2 *)UNWRAP($2->ToObject());
+])dnl
+define([STR], [dnl
+    $1 = strdup(*String::Utf8Value($2->ToString()));
+])dnl
+define([FUNC], [dnl
+    $1 = $2.As<Function>();
+])dnl
+])
+
 define([START_METHOD_ARG_PASS], [dnl
 define([INT], [arg_$][1])dnl
+define([NUMBER], [arg_$][1])dnl
 define([OBJ], [arg_$][1])dnl
 define([STR], [arg_$][1])dnl
 define([FUNC], [arg_$][1])dnl
@@ -160,6 +213,9 @@ define([FUNC], [arg_$][1])dnl
 define([START_METHOD_RET_VAL], [dnl
 define([INT], [dnl
     int _ret;
+])dnl
+define([NUMBER], [dnl
+    double _ret;
 ])dnl
 define([OBJ], [dnl
     $][2 *_ret;
@@ -172,8 +228,27 @@ define([FUNC], [dnl
 ])dnl
 ])
 
+define([START_VAR], [dnl
+define([INT], [dnl
+    int $1;
+])dnl
+define([NUMBER], [dnl
+    double $1;
+])dnl
+define([OBJ], [dnl
+    $][2 *$1;
+])dnl
+define([STR], [dnl
+    char *$1;
+])dnl
+define([FUNC], [dnl
+    Handle<Function> $1;
+])dnl
+])
+
 define([START_METHOD_RET_ASSIGN], [dnl
 define([INT], [_ret = (int)])dnl
+define([NUMBER], [_ret = (double)])dnl
 define([OBJ], [_ret = ($][2 *)])dnl
 define([STR], [_ret = (char *)])dnl
 define([FUNC], [_ret = ])dnl
@@ -182,6 +257,9 @@ define([FUNC], [_ret = ])dnl
 define([START_METHOD_RET], [dnl
 define([INT], [
     return Integer::New(_ret);
+])dnl
+define([NUMBER], [
+    return Number::New(_ret);
 ])dnl
 define([OBJ], [
     return PROJ_PREFIX[]$][1[]_new(_ret);
@@ -196,6 +274,7 @@ define([FUNC], [
 
 define([STOP_METHOD_ARG], [dnl
 undefine([INT])dnl
+undefine([NUMBER])dnl
 undefine([OBJ])dnl
 undefine([STR])dnl
 undefine([FUNC])dnl
@@ -242,12 +321,44 @@ $1[]dnl
 undefine([METHOD])dnl
 ])
 
+define([DEF_GET_INDEX], [
+static Handle<Value>
+PROJ_PREFIX[]STRUCT_NAME[]_get_index(uint32_t index, const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    STRUCT_TYPE *obj = (STRUCT_TYPE *)UNWRAP(self);
+START_METHOD_RET_VAL[]$2[]STOP_METHOD_ARG[]dnl
+    
+    _ret = $1(obj, index);
+START_METHOD_RET[]$2[]STOP_METHOD_ARG[]dnl
+}
+])
+
+define([DEF_SET_INDEX], [
+static Handle<Value>
+PROJ_PREFIX[]STRUCT_NAME[]_set_index(uint32_t index, Local<Value> value,
+	const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    STRUCT_TYPE *obj = (STRUCT_TYPE *)UNWRAP(self);
+START_VAR([in_value])[]$2[]STOP_METHOD_ARG[]dnl
+START_METHOD_RET_VAL[]$2[]STOP_METHOD_ARG[]dnl
+
+START_VALUE_ASSIGN(in_value, value)[]$2[]STOP_METHOD_ARG[]dnl
+    _ret = $1(obj, index, in_value);
+START_METHOD_RET[]$2[]STOP_METHOD_ARG[]dnl
+}
+])
+
+define([INSTALL_INDEX_FUNCTIONS],[])
+
 dnl
 dnl STRUCT(struct_name, struct_type, member_vars, methods)
 dnl
 define([STRUCT], [dnl
 define([STRUCT_NAME], [$1])dnl
 define([STRUCT_TYPE], [$2])dnl
+dnl
+ifelse([$5], [], [], [foreach([ITER], $5, [EXPAND([define]ITER)])])dnl
+dnl
 [
 /* **************************************************
  * STRUCT: $1
@@ -273,6 +384,8 @@ static Handle<Value>
 ]dnl
 foreach([ITER], ($3), [START_ACCESSOR ITER STOP_ACCESSOR])dnl
 foreach([ITER], ($4), [START_METHOD ITER STOP_METHOD])dnl
+ifdef([GET_INDEX], [EXPAND([DEF_GET_INDEX]GET_INDEX)])dnl
+ifdef([SET_INDEX], [EXPAND([DEF_SET_INDEX]SET_INDEX)])dnl
 [
 static void
 ]PROJ_PREFIX[$1][_init(void) {
@@ -287,11 +400,19 @@ static void
     ]
 foreach([ITER], ($3), [SET_ACCESSSOR(ITER)])dnl
     inst_temp = func_temp->InstanceTemplate();
+INSTALL_INDEX_FUNCTIONS[]dnl
 
 foreach([ITER], ($4), [SET_METHOD(ITER)])dnl
 
     PROJ_PREFIX[$1][_temp = Persistent<FunctionTemplate>::New(func_temp);
 }]dnl
+dnl
+ifelse([$5], [], [], [foreach([ITER], $5, [dnl
+define([DUMMY], [undefine]ITER)dnl
+DUMMY[]dnl
+undefine([DUMMY])])dnl
+])dnl
+dnl
 ])
 
 dnl
