@@ -64,13 +64,14 @@ AM_CONDITIONAL([SH_STEXT], [test x$sh_stext = xtrue])
     AC_DEFINE([SH_STEXT])
 [fi]
 
-AC_ARG_ENABLE([X_supp],
-        [AS_HELP_STRING([--disable-X_supp],[Turn off X backend])],
-        [case "${enableval}" in
-            (yes) X_supp=true ;;
-            (no) X_supp=false ;;
-            (*) AC_MSG_ERROR([bad value ${enableval} for --disable-X_supp]) ;;
-        esac],[X_supp=true])
+AC_ARG_WITH([backend],
+        [AS_HELP_STRING([--with-backend=FOO],[Use FOO as display backend (default is 'X')])],
+        [case "${withval}" in
+            ('X') backend='X' ;;
+            ('dfb') backend='dfb' ;;
+            ('no') backend='none' ;;
+            (*) AC_MSG_ERROR([bad value ${withval} for --with-backend]) ;;
+        esac],[backend='X'])
 
 AC_ARG_ENABLE([skia],
         [AS_HELP_STRING([--enable-skia],[Turn on Skia instead of Cairo])],
@@ -114,12 +115,18 @@ AM_CONDITIONAL([SH_TEXT], [test x$sh_text = xtrue -a x$cairo = xtrue])
     AC_DEFINE([SH_TEXT])
 [fi]
 
-# Define AM and AC variable for X_supp
+# Define AM and AC variable for display backend
 
-AM_CONDITIONAL([X_SUPP], [test x$X_supp = xtrue -a x$cairo = xtrue])
+AM_CONDITIONAL([X_BACKEND], [test x$backend = x'X' -a x$cairo = xtrue])
 
-[if [ x"${X_supp}" = xtrue -a x"${cairo}" = xtrue ]; then]
-    AC_DEFINE([X_SUPP])
+[if [ x"${backend}" = x'X' -a x"${cairo}" = xtrue ]; then]
+    AC_DEFINE([X_BACKEND])
+[fi]
+
+AM_CONDITIONAL([DFB_BACKEND], [test x$backend = x'dfb' -a x$cairo = xtrue])
+
+[if [ x"${backend}" = x'dfb' -a x"${cairo}" = xtrue ]; then]
+    AC_DEFINE([DFB_BACKEND])
 [fi]
 
 # Checks for libraries.
@@ -153,6 +160,7 @@ AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
 AH_TEMPLATE([SH_STEXT],[Enable sh_stext object])
 AH_TEMPLATE([SKIA_GRAPH_ENGINE], [Enable Skia Graphic Engine])
 AH_TEMPLATE([CAIRO_GRAPH_ENGINE], [Enable Cairo Graphic Engine])
-AH_TEMPLATE([X_SUPP], [Enable X backend])
+AH_TEMPLATE([X_BACKEND], [Enable X backend])
+AH_TEMPLATE([DFB_BACKEND], [Enable DirectFB backend])
 
 AC_OUTPUT
