@@ -16,126 +16,52 @@ extern "C" {
 
 using namespace v8;
 
-static Handle<Value>
-xnjsmb_coord_get_index(uint32_t index, const AccessorInfo &info) {
-    HandleScope scope;
-    Handle<Object> self;
-    coord_t *coord;
-    co_aix v;
+static float
+coord_get_index(coord_t *coord, Handle<Object> self, int idx,
+		const char **err) {
+    if(idx < 0 || idx >= 6) {
+        *err = "Invalid index: out of range";
+        return 0;
+    }
 
-    if(index < 0 || index >= 6)
-	THROW("Invalid index");
-    
-    self = info.This();
-    coord = (coord_t *)UNWRAP(self);
-    v = coord_get_matrix(coord)[index];
-
-    return Number::New(v);
+    return coord_get_matrix(coord)[idx];
 }
 
-static Handle<Value>
-xnjsmb_coord_set_index(uint32_t index, Local<Value> value,
-		       const AccessorInfo &info) {
-    
-    HandleScope scope;
-    Handle<Object> self;
+static float
+coord_set_index(coord_t *coord, Handle<Object> self,
+		int idx, float v, const char **err) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    coord_t *coord;
-    co_aix v;
+    
+    if(idx < 0 || idx >= 6) {
+        *err = "Invalid index: out of range";
+        return 0;
+    }
 
-    if(index < 0 || index >= 6)
-	THROW("Invalid Index");
-    if(!value->IsNumber())
-	THROW("Invalid value");
-
-    self = info.This();
-    coord = (coord_t *)UNWRAP(self);
-    v = value->NumberValue();
-    coord_get_matrix(coord)[index] = v;
-
+    coord_get_matrix(coord)[idx] = v;
+    
     js_rt = GET(self, "mbrt")->ToObject();
     rdman = xnjsmb_rt_rdman(js_rt);
     rdman_coord_changed(rdman, coord);
 
-    return value;
+    return v;
 }
-
-/*! \brief Callback functio to add a shape to a coord in Javascript.
- *
- * coord.add_shape(shape)
- */
-static Handle<Value>
-xnjsmb_coord_add_shape(const Arguments &args) {
-    int argc = args.Length();
-    Handle<Object> self = args.This();
-    Handle<Object> shape_obj;
-    Handle<Object> rt_obj;
-    Handle<Value> rt_val;
-    redraw_man_t *rdman;
-    coord_t *coord;
-    shape_t *sh;
-    int r;
-
-    if(argc != 1)
-	THROW("Invalid number of arguments (!= 1)");
-    
-    shape_obj = args[0]->ToObject();
-    sh = (shape_t *)UNWRAP(shape_obj);
-    ASSERT(sh != NULL);
-    
-    coord = (coord_t *)UNWRAP(self);
-    ASSERT(coord != NULL);
-
-    rt_val = GET(self, "mbrt");
-    rt_obj = rt_val->ToObject();
-    rdman = xnjsmb_rt_rdman(rt_obj);
-    
-    r = rdman_add_shape(rdman, sh, coord);
-    if(r != 0)
-	THROW("Unknown error");
-
-    return Null();
-}
-
-static Persistent<ObjectTemplate> coord_obj_temp;
 
 static void
-xnjsmb_init_temp(void) {
-    Handle<FunctionTemplate> add_shape_temp;
+xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
+			shape_t *shape, const char **err) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    int r;
     
-    coord_obj_temp = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
-    coord_obj_temp->SetIndexedPropertyHandler(xnjsmb_coord_get_index,
-					      xnjsmb_coord_set_index);
-    coord_obj_temp->SetInternalFieldCount(1);
-
-    add_shape_temp = FunctionTemplate::New(xnjsmb_coord_add_shape);
-    SET(coord_obj_temp, "add_shape", add_shape_temp);
+    js_rt = GET(self, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(js_rt);
+    r = rdman_add_shape(rdman, shape, coord);
+    if(r != 0)
+	*err = "Unknown error";
 }
 
-/*! \brief Create and initialize a Javascript object for a coord.
- */
-static Handle<Object>
-xnjsmb_coord_new_jsobj(coord_t *coord, Handle<Object> parent_obj,
-		       Handle<Object> js_rt) {
-    Handle<Object> coord_obj;
-    static int init_temp = 0;
-    
-    if(!init_temp) {
-	xnjsmb_init_temp();
-	init_temp = 1;
-    }
-
-    coord_obj = coord_obj_temp->NewInstance();
-    ASSERT(coord_obj != NULL);
-    WRAP(coord_obj, coord);
-
-    if(!parent_obj.IsEmpty())
-	SET(coord_obj, "parent", parent_obj);
-    SET(coord_obj, "mbrt", js_rt);
-
-    return coord_obj;
-}
+#include "coord-inc.h"
 
 /*! \brief Create a coord object associated with the rdman of the runtime.
  *
@@ -166,7 +92,11 @@ xnjsmb_coord_new(const Arguments &args) {
     
     coord = rdman_coord_new(rdman, parent);
     ASSERT(coord != NULL);
-    coord_obj = xnjsmb_coord_new_jsobj(coord, parent_obj, js_rt);
+    
+    coord_obj = xnjsmb_auto_coord_new(coord).As<Object>();
+    if(!parent_obj.IsEmpty())
+	SET(coord_obj, "parent", parent_obj);
+    SET(coord_obj, "mbrt", js_rt);
 
     scope.Close(coord_obj);
     
@@ -185,10 +115,17 @@ xnjsmb_coord_mkroot(Handle<Object> js_rt) {
     redraw_man_t *rdman;
     coord_t *root;
     Handle<Object> obj;
+    static int init_flag = 0;
+
+    if(!init_flag) {
+	xnjsmb_auto_coord_init();
+	init_flag = 1;
+    }
     
     rdman = xnjsmb_rt_rdman(js_rt);
     root = rdman_get_root(rdman);
-    obj = xnjsmb_coord_new_jsobj(root, Handle<Object>(NULL), js_rt);
+    obj = xnjsmb_auto_coord_new(root).As<Object>();
+    SET(obj, "mbrt", js_rt);
 
     SET(js_rt, "root", obj);
 }

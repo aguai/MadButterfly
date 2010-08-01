@@ -24,12 +24,15 @@ def build(conf):
     conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
          source='observer.m4', target='observer-inc.h',
          name='observer-inc', shell=True, always=True, before=['cxx'])
+    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
+         source='coord.m4', target='coord-inc.h',
+         name='coord-inc', shell=True, always=True, before=['cxx'])
 
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'mbfly_njs.cc coord.cc shapes.cc paints.cc font.cc ' + \
+    obj.source = 'mbfly_njs.cc shapes.cc paints.cc font.cc ' + \
 	'image_ldr.cc'
-    obj.add_objects = 'X_supp_njs.o observer.o'
+    obj.add_objects = 'X_supp_njs.o observer.o coord.o'
     obj.staticlib = 'mbfly'
 
     obj = conf.new_task_gen('cc', 'shlib', 'node_addon')
@@ -39,5 +42,10 @@ def build(conf):
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'observer.o'
     obj.source = 'observer.cc'
+    obj.includes = '.'
+    
+    obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
+    obj.target = 'coord.o'
+    obj.source = 'coord.cc'
     obj.includes = '.'
     pass
