@@ -151,6 +151,8 @@ define([STR], [dnl
 define([FUNC], [dnl
     Handle<Function> arg_$][1;
 ])dnl
+define([SELF], [])dnl
+define([ERR], [])dnl
 ])
 
 define([START_METHOD_ARG_TYPE_CHK], [dnl
@@ -164,6 +166,16 @@ define([STR], [ ||
        !args[[i++]]->IsString()])dnl
 define([FUNC], [ ||
        !args[[i++]]->IsFunction()])dnl
+define([SELF], [])dnl
+define([ERR], [])dnl
+])
+
+define([START_TYPE_CHK], [dnl
+define([INT], [$1->IsInt32()])dnl
+define([NUMBER], [$1->IsNumber()])dnl
+define([OBJ], [$1->IsObject()])dnl
+define([STR], [$1->IsString()])dnl
+define([FUNC], [$1->IsFunction()])dnl
 ])
 
 define([START_METHOD_ARG_ASSIGN], [dnl
@@ -182,6 +194,8 @@ define([STR], [dnl
 define([FUNC], [dnl
     arg_$][1 = args[[i++]].As<Function>();
 ])dnl
+define([SELF], [])dnl
+define([ERR], [])dnl
 ])
 
 define([START_VALUE_ASSIGN], [dnl
@@ -208,6 +222,8 @@ define([NUMBER], [arg_$][1])dnl
 define([OBJ], [arg_$][1])dnl
 define([STR], [arg_$][1])dnl
 define([FUNC], [arg_$][1])dnl
+define([SELF], [self])dnl
+define([ERR], [&_err])dnl
 ])
 
 define([START_METHOD_RET_VAL], [dnl
@@ -278,6 +294,8 @@ undefine([NUMBER])dnl
 undefine([OBJ])dnl
 undefine([STR])dnl
 undefine([FUNC])dnl
+undefine([SELF])dnl
+undefine([ERR])dnl
 ])
 
 define([START_METHOD], [dnl
@@ -288,20 +306,23 @@ PROJ_PREFIX[]STRUCT_NAME[]_$][1(const Arguments &args) {
     int argc = args.Length();
     Handle<Object> self = args.This();
     STRUCT_TYPE *_self = (STRUCT_TYPE *)UNWRAP(self);
+    const char *_err = NULL;
 foreach([ITER], $][3, [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])dnl
 START_METHOD_RET_VAL[]$][5[]STOP_METHOD_ARG
 
     if(argc != $][4)
         THROW("Invalid number of arguments (!=$][4)");
     i = 0;
-    if(0]dnl
-foreach([ITER], $][3, [START_METHOD_ARG_TYPE_CHK[]ITER[]STOP_METHOD_ARG])[)
+    if(0[]dnl
+foreach([ITER], $][3, [START_METHOD_ARG_TYPE_CHK[]ITER[]STOP_METHOD_ARG]))
         THROW("Invalid argument type");
 
     i = 0;
 foreach([ITER], $][3, [START_METHOD_ARG_ASSIGN[]ITER[]STOP_METHOD_ARG])dnl
 
     START_METHOD_RET_ASSIGN[]$][5[]STOP_METHOD_ARG[]$][2(_self[]foreach([ITER], $][3, [START_METHOD_ARG_PASS[], ITER[]STOP_METHOD_ARG]));
+    if(_err)
+        THROW(_err);
 START_METHOD_RET[]$][5[]STOP_METHOD_ARG[]dnl
 ifelse($][5, [], [
     return Null();
@@ -326,9 +347,12 @@ static Handle<Value>
 PROJ_PREFIX[]STRUCT_NAME[]_get_index(uint32_t index, const AccessorInfo &info) {
     Handle<Object> self = info.This();
     STRUCT_TYPE *obj = (STRUCT_TYPE *)UNWRAP(self);
+    const char *_err = NULL;
 START_METHOD_RET_VAL[]$2[]STOP_METHOD_ARG[]dnl
-    
-    _ret = $1(obj, index);
+
+    _ret = $1(obj, self, index, &_err);
+    if(_err)
+        THROW(_err);
 START_METHOD_RET[]$2[]STOP_METHOD_ARG[]dnl
 }
 ])
@@ -339,16 +363,30 @@ PROJ_PREFIX[]STRUCT_NAME[]_set_index(uint32_t index, Local<Value> value,
 	const AccessorInfo &info) {
     Handle<Object> self = info.This();
     STRUCT_TYPE *obj = (STRUCT_TYPE *)UNWRAP(self);
+    const char *_err = NULL;
 START_VAR([in_value])[]$2[]STOP_METHOD_ARG[]dnl
 START_METHOD_RET_VAL[]$2[]STOP_METHOD_ARG[]dnl
 
+    if(START_TYPE_CHK(value)[]![]$2[]STOP_METHOD_ARG)
+        THROW("Invalid value type");
+
 START_VALUE_ASSIGN(in_value, value)[]$2[]STOP_METHOD_ARG[]dnl
-    _ret = $1(obj, index, in_value);
+    _ret = $1(obj, self, index, in_value, &_err);
+    if(_err) THROW(_err);
 START_METHOD_RET[]$2[]STOP_METHOD_ARG[]dnl
 }
 ])
 
-define([INSTALL_INDEX_FUNCTIONS],[])
+define([INSTALL_INDEX_FUNCTIONS],[dnl
+define([FIRST], [$][1])dnl
+ifdef([GET_INDEX], [ifdef([SET_INDEX], [dnl
+    inst_temp->SetIndexedPropertyHandler(PROJ_PREFIX[]STRUCT_NAME[]_get_index,
+					 PROJ_PREFIX[]STRUCT_NAME[]_set_index);
+], [dnl
+    inst_temp->SetIndexedPropertyHandler(PROJ_PREFIX[]STRUCT_NAME[]_get_index);
+])])dnl
+undefine([FIRST])dnl
+])
 
 dnl
 dnl STRUCT(struct_name, struct_type, member_vars, methods)
@@ -399,9 +437,9 @@ static void
     inst_temp->SetInternalFieldCount(1);
     ]
 foreach([ITER], ($3), [SET_ACCESSSOR(ITER)])dnl
-    inst_temp = func_temp->InstanceTemplate();
 INSTALL_INDEX_FUNCTIONS[]dnl
 
+    proto_temp = func_temp->PrototypeTemplate();
 foreach([ITER], ($4), [SET_METHOD(ITER)])dnl
 
     PROJ_PREFIX[$1][_temp = Persistent<FunctionTemplate>::New(func_temp);
@@ -427,6 +465,7 @@ static Handle<Value>
 PROJ_PREFIX[]$1(const Arguments &args) {
     int argc = args.Length();
     int i;
+    const char *_err = NULL;
 foreach([ITER], ($3), [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])dnl
 START_METHOD_RET_VAL[]$5[]STOP_METHOD_ARG[]dnl
     
@@ -442,6 +481,8 @@ foreach([ITER], ($3), [START_METHOD_ARG_ASSIGN[]ITER[]STOP_METHOD_ARG])dnl
 
 define([SEP], [])dnl
     START_METHOD_RET_ASSIGN[]$5[]STOP_METHOD_ARG[]$2(foreach([ITER], ($3), [START_METHOD_ARG_PASS[]SEP[]ITER[]STOP_METHOD_ARG[]define([SEP], [, ])]));[]undefine([SEP])
+    if(_err)
+        THROW(_err);
 START_METHOD_RET[]$][5[]STOP_METHOD_ARG[]dnl
 ifelse($][5, [], [
     return Null();
