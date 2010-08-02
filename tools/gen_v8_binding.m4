@@ -143,7 +143,7 @@ define([NUMBER], [dnl
     double arg_$][1;
 ])dnl
 define([OBJ], [dnl
-    $][2 *arg_$][1;
+    $][3 *arg_$][1;
 ])dnl
 define([STR], [dnl
     char *arg_$][1;
@@ -186,7 +186,7 @@ define([NUMBER], [dnl
     arg_$][1 = args[[i++]]->NumberValue();
 ])dnl
 define([OBJ], [dnl
-    arg_$][1 = ($][2 *)UNWRAP(args[[i++]]->ToObject());
+    arg_$][1 = ($][3 *)UNWRAP(args[[i++]]->ToObject());
 ])dnl
 define([STR], [dnl
     arg_$][1 = strdup(*String::Utf8Value(args[[i++]]->ToString()));
