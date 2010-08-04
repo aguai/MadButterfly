@@ -20,7 +20,6 @@ extern "C" {
 redraw_man_t *xnjsmb_rt_rdman(v8::Handle<v8::Object> mbrt);
 
 /* From coord.cc */
-v8::Handle<v8::Value> xnjsmb_coord_new(const v8::Arguments &args);
 void xnjsmb_coord_mkroot(v8::Handle<v8::Object> js_rt);
 v8::Handle<v8::Value> export_xnjsmb_auto_coord_new(coord_t *coord);
 

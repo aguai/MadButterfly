@@ -63,46 +63,6 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
 
 #include "coord-inc.h"
 
-/*! \brief Create a coord object associated with the rdman of the runtime.
- *
- * Two internal fields, coord and rdman.
- */
-Handle<Value>
-xnjsmb_coord_new(const Arguments &args) {
-    HandleScope scope;
-    Handle<Object> js_rt;
-    Handle<Object> coord_obj, parent_obj;
-    njs_runtime_t *rt;
-    redraw_man_t *rdman;
-    coord_t *coord, *parent = NULL;
-    int argc;
-
-    argc = args.Length();
-    if(argc > 1)
-	THROW("Too many arguments (> 1)");
-
-    js_rt = args.This();
-    rt = (njs_runtime_t *)UNWRAP(js_rt);
-    rdman = X_njs_MB_rdman(rt);
-
-    if(argc == 1) {
-	parent_obj = args[0]->ToObject();
-	parent = (coord_t *)UNWRAP(parent_obj);
-    }
-    
-    coord = rdman_coord_new(rdman, parent);
-    ASSERT(coord != NULL);
-    
-    coord_obj = xnjsmb_auto_coord_new(coord).As<Object>();
-    if(!parent_obj.IsEmpty())
-	SET(coord_obj, "parent", parent_obj);
-    SET(coord_obj, "mbrt", js_rt);
-
-    scope.Close(coord_obj);
-    
-    return coord_obj;
-}
-
 Handle<Value> export_xnjsmb_auto_coord_new(coord_t *coord) {
     xnjsmb_auto_coord_new(coord);
 }
