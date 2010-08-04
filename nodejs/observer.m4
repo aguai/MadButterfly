@@ -8,7 +8,7 @@ STRUCT([subject], [subject_t], [],
        	       (INT([type]), FUNC([handler])), 2,
 	       [OBJ([observer], [observer_t])]),
         METHOD([remove_observer], [_subject_remove_observer],
-	       (OBJ([observer], [observer_t])), 1, [])])
+	       (OBJ([observer], [observer], [observer_t])), 1, [])])
 
 STRUCT([event], [event_t],
        [INT([type]), OBJ([tgt], [subject], [subject_t]),

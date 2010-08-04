@@ -103,6 +103,10 @@ xnjsmb_coord_new(const Arguments &args) {
     return coord_obj;
 }
 
+Handle<Value> export_xnjsmb_auto_coord_new(coord_t *coord) {
+    xnjsmb_auto_coord_new(coord);
+}
+
 /*! \brief Initialize Javascript object for root coord of a runtime.
  *
  * \param js_rt is the runtime object to create the root object for.

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <v8.h>
 
 extern "C" {
@@ -9,87 +10,68 @@ extern "C" {
 
 using namespace v8;
 
+static coord_t *
+xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
+    coord_t *coord;
+    redraw_man_t *rdman;
+
+    rdman = X_njs_MB_rdman(rt);
+    coord = rdman_coord_new(rdman, parent);
+    if(coord == NULL) {
+        *err = "Can not allocate a redraw_man_t";
+	return NULL;
+    }
+
+    return coord;
+}
+
+static void
+xnjsmb_coord_mod(Handle<Object> mbrt, Handle<Value> ret) {
+    Handle<Object> ret_obj = ret->ToObject();
+
+    SET(ret_obj, "mbrt", mbrt);
+}
+
+#define xnjsmb_auto_coord_new export_xnjsmb_auto_coord_new
+
+static void
+xnjsmb_redraw_changed(njs_runtime_t *rt) {
+    redraw_man_t *rdman;
+
+    rdman = X_njs_MB_rdman(rt);
+    rdman_redraw_changed(rdman);
+}
+
+static void
+xnjsmb_redraw_all(njs_runtime_t *rt) {
+    redraw_man_t *rdman;
+
+    rdman = X_njs_MB_rdman(rt);
+    rdman_redraw_all(rdman);
+}
+
+static njs_runtime_t *
+_X_njs_MB_new(Handle<Object> self, char *display_name,
+	      int width, int height) {
+    njs_runtime_t *obj;
+
+    obj = X_njs_MB_new(display_name, width, height);
+    WRAP(self, obj);		/* mkroot need a wrapped object, but
+				 * it is wrapped after returning of
+				 * this function.  So, we wrap it
+				 * here. */
+    X_njs_MB_init_handle_connection(obj);
+    xnjsmb_coord_mkroot(self);
+
+    return obj;
+}
+
 /*! \defgroup njs_template_cb Callback functions for v8 engine and nodejs.
  *
  * @{
  */
 
-/*! \brief to Create a njs runtime object for MadButterfly.
- *
- * Three arguments are requried.  They are
- *   - display name,
- *   - width, and
- *   - height.
- */
-static Handle<Value>
-xnjsmb_new(const Arguments &args) {
-    HandleScope scope;
-    int argc;
-    Handle<Value> exc;
-    njs_runtime_t *rt;
-    char *display_name;
-    int width, height;
-    Handle<Object> self;
-
-    argc = args.Length();
-    if(argc != 3) {
-	exc = Exception::Error(String::New("Need 3 arguments."));
-	return ThrowException(exc);
-    }
-
-    if(!args[0]->IsString() || !args[1]->IsInt32() || !args[2]->IsInt32()) {
-	exc = Exception::Error(String::New("Invalid argument type."));
-	return ThrowException(exc);
-    }
-    
-    String::Utf8Value disp_utf8(args[0]->ToString());
-    display_name = *disp_utf8;
-    width = args[1]->Int32Value();
-    height = args[2]->Int32Value();
-    rt = X_njs_MB_new(display_name, width, height);
-
-    self = args.This();
-    WRAP(self, rt);
-    xnjsmb_coord_mkroot(self);
-    
-    X_njs_MB_init_handle_connection(rt);
-
-    return Null();
-}
-
-static Handle<Value>
-xnjsmb_handle_connection(const Arguments &args) {
-}
-
-static Handle<Value>
-xnjsmb_rt_redraw_changed(const Arguments &args) {
-    Handle<Object> self = args.This();
-    njs_runtime_t *rt;
-    redraw_man_t *rdman;
-    
-    rdman = xnjsmb_rt_rdman(self);
-    rdman_redraw_changed(rdman);
-    
-    rt = (njs_runtime_t *)UNWRAP(self);
-    X_njs_MB_flush(rt);
-    
-    return Null();
-}
-
-static Handle<Value>
-xnjsmb_rt_redraw_all(const Arguments &args) {
-    Handle<Object> self = args.This();
-    njs_runtime_t *rt;
-    redraw_man_t *rdman;
-    
-    rdman = xnjsmb_rt_rdman(self);
-    rdman_redraw_all(rdman);
-    
-    rt = (njs_runtime_t *)UNWRAP(self);
-    X_njs_MB_flush(rt);
-    
-    return Null();
-}
+#include "mbfly_njs-inc.h"
 
 /* @} */
 
@@ -126,29 +108,16 @@ init(Handle<Object> target) {
     /*
      * Initialize template for MadButterfly runtime objects.
      */
-    mb_rt_func = FunctionTemplate::New(xnjsmb_new);
-    mb_rt_func->SetClassName(String::New("mb_rt"));
-    
-    rt_instance_temp = mb_rt_func->InstanceTemplate();
-    rt_instance_temp->SetInternalFieldCount(1);
-    
-    rt_proto_temp = mb_rt_func->PrototypeTemplate();
-    func = FunctionTemplate::New(xnjsmb_coord_new);
-    SET(rt_proto_temp, "coord_new", func);
-
-    func = FunctionTemplate::New(xnjsmb_rt_redraw_changed);
-    SET(rt_proto_temp, "redraw_changed", func);
-
-    func = FunctionTemplate::New(xnjsmb_rt_redraw_all);
-    SET(rt_proto_temp, "redraw_all", func);
+    xnjsmb_auto_mb_rt_init();
 
     /*
      * Add properties to mb_rt templates for other modules.
      */
-    xnjsmb_shapes_init_mb_rt_temp(mb_rt_func);
-    xnjsmb_paints_init_mb_rt_temp(mb_rt_func);
-    xnjsmb_font_init_mb_rt_temp(mb_rt_func);
+    xnjsmb_shapes_init_mb_rt_temp(xnjsmb_auto_mb_rt_temp);
+    xnjsmb_paints_init_mb_rt_temp(xnjsmb_auto_mb_rt_temp);
+    xnjsmb_font_init_mb_rt_temp(xnjsmb_auto_mb_rt_temp);
     xnjsmb_img_ldr_init_mb_rt_temp(target);
     
-    target->Set(String::New("mb_rt"), mb_rt_func->GetFunction());    
+    target->Set(String::New("mb_rt"),
+		xnjsmb_auto_mb_rt_temp->GetFunction());    
 }
