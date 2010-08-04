@@ -272,19 +272,19 @@ define([FUNC], [_ret = ])dnl
 
 define([START_METHOD_RET], [dnl
 define([INT], [
-    return Integer::New(_ret);
+    _ret_val = Integer::New(_ret);
 ])dnl
 define([NUMBER], [
-    return Number::New(_ret);
+    _ret_val = Number::New(_ret);
 ])dnl
 define([OBJ], [
-    return PROJ_PREFIX[]$][1[]_new(_ret);
+    _ret_val = PROJ_PREFIX[]$][1[]_new(_ret);
 ])dnl
 define([STR], [
-    return String::New(_ret);
+    _ret_val = String::New(_ret);
 ])dnl
 define([FUNC], [
-    return _ret;
+    _rt_val = _ret;
 ])dnl
 ])
 
@@ -299,7 +299,15 @@ undefine([ERR])dnl
 ])
 
 define([START_METHOD], [dnl
+dnl
+dnl METHOD(name, func, arguments, cnt, ret_type, options)
+dnl
 define([METHOD], [
+dnl
+ifelse($][6, [], [], [dnl
+foreach([ITER], ]$][6[, [EXPAND([define]ITER)])dnl
+])dnl
+dnl
 static Handle<Value>
 PROJ_PREFIX[]STRUCT_NAME[]_$][1(const Arguments &args) {
     int i;
@@ -309,6 +317,7 @@ PROJ_PREFIX[]STRUCT_NAME[]_$][1(const Arguments &args) {
     const char *_err = NULL;
 foreach([ITER], $][3, [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])dnl
 START_METHOD_RET_VAL[]$][5[]STOP_METHOD_ARG
+    Handle<Value> _ret_val;
 
     if(argc != $][4)
         THROW("Invalid number of arguments (!=$][4)");
@@ -326,8 +335,19 @@ foreach([ITER], $][3, [START_METHOD_ARG_ASSIGN[]ITER[]STOP_METHOD_ARG])dnl
 START_METHOD_RET[]$][5[]STOP_METHOD_ARG[]dnl
 ifelse($][5, [], [
     return Null();
+], [dnl
+dnl
+dnl Modify returned object
+dnl
+ifdef([MOD], [
+    MOD[](self, _ret_val);
+])dnl
+    return _ret_val;
 ])dnl
 }
+ifelse($][6, [], [], [dnl
+foreach([ITER], ]$][6[, [EXPAND([undefine]ITER)])dnl
+])dnl
 ])dnl
 ])
 
@@ -388,14 +408,41 @@ ifdef([GET_INDEX], [ifdef([SET_INDEX], [dnl
 undefine([FIRST])dnl
 ])
 
+define([CTOR_INTERNAL], [dnl
+    int argc = args.Length();
+    Handle<Object> self = args.This();
+    $4 *obj;
+foreach([ITER], $2, [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])dnl
+    int i;
+
+    if(argc != $3)
+        THROW("Invalid number of arguments (!=$][4)");
+    i = 0;
+    if(0]dnl
+[foreach([ITER], $2, [START_METHOD_ARG_TYPE_CHK[]ITER[]STOP_METHOD_ARG]))
+        THROW("Invalid argument type");
+
+    i = 0;
+foreach([ITER], $2, [START_METHOD_ARG_ASSIGN[]ITER[]STOP_METHOD_ARG])dnl
+
+define([SEP], [])dnl
+    obj = ($4 *)$1(foreach([ITER], $2, [START_METHOD_ARG_PASS[]SEP[]ITER[]STOP_METHOD_ARG[]define([SEP], [, ])]));[]undefine([SEP])
+
+    WRAP(self, obj);
+])
+
 dnl
-dnl STRUCT(struct_name, struct_type, member_vars, methods)
+dnl STRUCT(struct_name, struct_type, member_vars, methods, options)
 dnl
 define([STRUCT], [dnl
 define([STRUCT_NAME], [$1])dnl
 define([STRUCT_TYPE], [$2])dnl
 dnl
-ifelse([$5], [], [], [foreach([ITER], $5, [EXPAND([define]ITER)])])dnl
+ifelse([$5], [], [], [dnl
+foreach([ITER], $5, [dnl
+EXPAND([define]ITER)[]dnl
+])dnl
+])dnl
 dnl
 [
 /* **************************************************
@@ -404,7 +451,9 @@ dnl
  */
 static Handle<Value>
 ]PROJ_PREFIX[$1(const Arguments &args) {
-}
+]ifdef([CTOR], [EXPAND([CTOR_INTERNAL](EXPAND([UNQUOTE]CTOR), [$2]))])dnl
+    return Null();
+[}
 
 static Persistent<FunctionTemplate> ]PROJ_PREFIX[$1][_temp;
 
