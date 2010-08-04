@@ -27,25 +27,25 @@ def build(conf):
     conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
          source='coord.m4', target='coord-inc.h',
          name='coord-inc', shell=True, always=True, before=['cxx'])
+    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
+         source='mbfly_njs.m4', target='mbfly_njs-inc.h',
+         name='mbfly_njs-inc', shell=True, always=True, before=['cxx'])
 
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'mbfly_njs.cc shapes.cc paints.cc font.cc ' + \
+    obj.source = 'shapes.cc paints.cc font.cc ' + \
 	'image_ldr.cc'
-    obj.add_objects = 'X_supp_njs.o observer.o coord.o'
+    obj.add_objects = 'X_supp_njs.o observer.o coord.o mbfly_njs.o'
     obj.staticlib = 'mbfly'
 
+    for src in 'observer.cc coord.cc mbfly_njs.cc'.split():
+        obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
+        obj.target = src[:-3] + '.o'
+        obj.source = src
+        obj.includes = '.'
+        pass
+    
     obj = conf.new_task_gen('cc', 'shlib', 'node_addon')
     obj.target = 'X_supp_njs.o'
     obj.source = 'X_supp_njs.c'
-    
-    obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
-    obj.target = 'observer.o'
-    obj.source = 'observer.cc'
-    obj.includes = '.'
-    
-    obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
-    obj.target = 'coord.o'
-    obj.source = 'coord.cc'
-    obj.includes = '.'
     pass
