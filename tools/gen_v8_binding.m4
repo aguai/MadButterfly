@@ -109,6 +109,38 @@ static void
     data->$][1 = strdup(*utf8);
 }
 ])
+dnl
+dnl ACCESSOR(name, getter, setter)
+dnl
+  define([ACCESSOR], [
+static Handle<Value>
+]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    Handle<Value> _ret;
+    STRUCT_TYPE *data;
+    const char *err = NULL;
+
+    data = (STRUCT_TYPE *)UNWRAP(self);
+    _ret = $][2(self, data, &err);
+    if(err)
+	THROW(err);
+    return _ret;
+}
+
+static void
+]PROJ_PREFIX[]STRUCT_NAME[_set_$][1(Local<String> property,
+		      Local<Value> value,
+		      const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    STRUCT_TYPE *data;
+    const char *err = NULL;
+
+    data = (STRUCT_TYPE *)UNWRAP(self);
+    $][3(self, data, value, &err);
+    if(err)
+	THROW_noret(err);
+}
+])
 divert([])dnl
 ])
 
@@ -118,6 +150,7 @@ undefine([INT])
 undefine([NUMBER])
 undefine([OBJ])
 undefine([STR])
+undefine([ACCESSOR])
 divert([])dnl
 ])
 
@@ -126,6 +159,7 @@ define([INT], [$][1])dnl
 define([NUMBER], [$][1])dnl
 define([OBJ], [$][1])dnl
 define([STR], [$][1])dnl
+define([ACCESSOR], [$][1])dnl
     inst_temp->SetAccessor(String::New("$1"),
 			   PROJ_PREFIX[]STRUCT_NAME[]_get_[]$1,
 			   PROJ_PREFIX[]STRUCT_NAME[]_set_[]$1);
@@ -133,6 +167,7 @@ undefine([INT])dnl
 undefine([NUMBER])dnl
 undefine([OBJ])dnl
 undefine([STR])dnl
+undefine([ACCESSOR])dnl
 ])
 
 define([START_METHOD_ARG_VAR], [dnl
