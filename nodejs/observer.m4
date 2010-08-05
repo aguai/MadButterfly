@@ -11,5 +11,8 @@ STRUCT([subject], [subject_t], [],
 	       (OBJ([observer], [observer], [observer_t])), 1, [])])
 
 STRUCT([event], [event_t],
-       [INT([type]), OBJ([tgt], [subject], [subject_t]),
-        OBJ([cur_tgt], [subject], [subject_t]), INT([flags])], [])
+       [INT([type]),
+        ACCESSOR([tgt], [xnjsmb_event_tgt_getter], [xnjsmb_event_tgt_setter]),
+        ACCESSOR([cur_tgt], [xnjsmb_event_cur_tgt_getter],
+	    [xnjsmb_event_cur_tgt_setter]),
+	INT([flags])], [])

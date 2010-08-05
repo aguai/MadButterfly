@@ -125,6 +125,7 @@ xnjsmb_shape_path(const Arguments &args) {
     redraw_man_t *rdman;
     Handle<Object> self = args.This(); // path object
     Handle<Object> rt;
+    Persistent<Object> *self_hdl;
     char *dstr;
     int argc;
 
@@ -145,7 +146,11 @@ xnjsmb_shape_path(const Arguments &args) {
 
     WRAP(self, sh);
     SET(self, "mbrt", rt);
-    mb_prop_set(&sh->obj.props, PROP_JSOBJ, *self);
+    /* Keep associated js object in property store for retrieving,
+     * later, without create new js object.
+     */
+    self_hdl = new Persistent<Object>(self);
+    mb_prop_set(&sh->obj.props, PROP_JSOBJ, self_hdl);
 
     return Null();
 }
@@ -212,6 +217,7 @@ xnjsmb_shape_stext(const Arguments &args) {
     int argc = args.Length();
     Handle<Object> self = args.This();
     Handle<Object> rt;
+    Persistent<Object> *self_hdl;
     float x, y;
     char *data;
     redraw_man_t *rdman;
@@ -236,7 +242,11 @@ xnjsmb_shape_stext(const Arguments &args) {
 
     WRAP(self, stext);
     SET(self, "mbrt", rt);
-    mb_prop_set(&stext->obj.props, PROP_JSOBJ, *self);
+    /* Keep associated js object in property store for retrieving,
+     * later, without create new js object.
+     */
+    self_hdl = new Persistent<Object>(self);
+    mb_prop_set(&stext->obj.props, PROP_JSOBJ, self_hdl);
 
     return Null();
 }
@@ -349,6 +359,7 @@ xnjsmb_shape_image(const Arguments &args) {
     int argc = args.Length();
     Handle<Object> self = args.This();
     Handle<Object> rt;
+    Persistent<Object> *self_hdl;
     float x, y;
     float w, h;
     redraw_man_t *rdman;
@@ -372,7 +383,11 @@ xnjsmb_shape_image(const Arguments &args) {
 
     WRAP(self, img);
     SET(self, "mbrt", rt);
-    mb_prop_set(&img->obj.props, PROP_JSOBJ, *self);
+    /* Keep associated js object in property store for retrieving,
+     * later, without create new js object.
+     */
+    self_hdl = new Persistent<Object>(self);
+    mb_prop_set(&img->obj.props, PROP_JSOBJ, self_hdl);
 
     return Null();
 }

@@ -12,6 +12,12 @@ extern "C" {
 	exc = v8::Exception::Error(v8::String::New(x));		\
 	return v8::ThrowException(exc);				\
     } while(0)
+#define THROW_noret(x)						\
+    do {							\
+	v8::Handle<v8::Value> exc;				\
+	exc = v8::Exception::Error(v8::String::New(x));		\
+	v8::ThrowException(exc);				\
+    } while(0)
 #define UNWRAP(o) v8::External::Unwrap((o)->GetInternalField(0))
 #define WRAP(o, v) (o)->SetInternalField(0, v8::External::Wrap(v))
 #define SET(o, n, v) (o)->Set(v8::String::New(n), v)
