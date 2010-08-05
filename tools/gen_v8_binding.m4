@@ -310,6 +310,7 @@ foreach([ITER], ]$][6[, [EXPAND([define]ITER)])dnl
 dnl
 static Handle<Value>
 PROJ_PREFIX[]STRUCT_NAME[]_$][1(const Arguments &args) {
+    HandleScope scope;
     int i;
     int argc = args.Length();
     Handle<Object> self = args.This();
@@ -342,6 +343,7 @@ dnl
 ifdef([MOD], [
     MOD[](self, _ret_val);
 ])dnl
+    scope.Close(_ret_val);
     return _ret_val;
 ])dnl
 }
@@ -522,6 +524,7 @@ dnl
  */
 static Handle<Value>
 PROJ_PREFIX[]$1(const Arguments &args) {
+    HandleScope scope;
     int argc = args.Length();
     int i;
     const char *_err = NULL;
@@ -553,6 +556,7 @@ dnl
 ifdef([MOD], [
     MOD[](self, _ret_val);
 ])dnl
+    scope.Close(_ret_val);
     return _ret_val;
 ])dnl
 }
