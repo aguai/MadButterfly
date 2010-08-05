@@ -224,6 +224,7 @@ define([STR], [arg_$][1])dnl
 define([FUNC], [arg_$][1])dnl
 define([SELF], [self])dnl
 define([ERR], [&_err])dnl
+define([VAL], [&_err])dnl
 ])
 
 define([START_METHOD_RET_VAL], [dnl
@@ -241,6 +242,9 @@ define([STR], [dnl
 ])dnl
 define([FUNC], [dnl
     Handle<Function> _ret;
+])dnl
+define([VAL], [dnl
+    Handle<Value> _ret;
 ])dnl
 ])
 
@@ -268,6 +272,7 @@ define([NUMBER], [_ret = (double)])dnl
 define([OBJ], [_ret = ($][2 *)])dnl
 define([STR], [_ret = (char *)])dnl
 define([FUNC], [_ret = ])dnl
+define([VAL], [_ret = ])dnl
 ])
 
 define([START_METHOD_RET], [dnl
@@ -284,6 +289,9 @@ define([STR], [
     _ret_val = String::New(_ret);
 ])dnl
 define([FUNC], [
+    _rt_val = _ret;
+])dnl
+define([VAL], [
     _rt_val = _ret;
 ])dnl
 ])
