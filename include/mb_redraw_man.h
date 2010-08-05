@@ -107,6 +107,8 @@ extern int rdman_add_shape(redraw_man_t *rdman,
 	STAILQ_INS_TAIL(rdman->shapes, shape_t, sh_next, shape);	\
 	if(rdman->last_mouse_over == (mb_obj_t *)(shape))		\
 	    rdman->last_mouse_over = NULL;				\
+	mb_prop_store_init(&((mb_obj_t *)(shape))->props,		\
+			   (rdman)->pent_pool);				\
     } while(0)
 extern int rdman_shape_free(redraw_man_t *rdman, shape_t *shape);
 
