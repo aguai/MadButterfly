@@ -62,4 +62,7 @@ event_handler(event_t *evt, void *arg) {
 
 void
 xnjsmb_observer_init(void) {
+    xnjsmb_auto_observer_init();
+    xnjsmb_auto_subject_init();
+    xnjsmb_auto_event_init();
 }

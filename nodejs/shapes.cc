@@ -145,6 +145,7 @@ xnjsmb_shape_path(const Arguments &args) {
 
     WRAP(self, sh);
     SET(self, "mbrt", rt);
+    mb_prop_set(&sh->obj.props, PROP_JSOBJ, *self);
 
     return Null();
 }
@@ -235,6 +236,7 @@ xnjsmb_shape_stext(const Arguments &args) {
 
     WRAP(self, stext);
     SET(self, "mbrt", rt);
+    mb_prop_set(&stext->obj.props, PROP_JSOBJ, *self);
 
     return Null();
 }
@@ -370,6 +372,7 @@ xnjsmb_shape_image(const Arguments &args) {
 
     WRAP(self, img);
     SET(self, "mbrt", rt);
+    mb_prop_set(&img->obj.props, PROP_JSOBJ, *self);
 
     return Null();
 }

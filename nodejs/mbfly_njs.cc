@@ -28,8 +28,11 @@ xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
 static void
 xnjsmb_coord_mod(Handle<Object> mbrt, Handle<Value> ret) {
     Handle<Object> ret_obj = ret->ToObject();
+    coord_t *coord;
 
     SET(ret_obj, "mbrt", mbrt);
+    coord = (coord_t *)UNWRAP(ret_obj);
+    mb_prop_set(&coord->obj.props, PROP_JSOBJ, *ret_obj);
 }
 
 #define xnjsmb_auto_coord_new export_xnjsmb_auto_coord_new
