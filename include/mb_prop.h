@@ -32,6 +32,7 @@ enum {
     PROP_DUMMY,
     PROP_MEVT_OB_CNT,
     PROP_MEVT_OBSERVER,
+    PROP_JSOBJ,
     PROP_LAST
 };
 
