@@ -65,9 +65,9 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
     X_njs_MB_init_handle_connection(obj);
     xnjsmb_coord_mkroot(self);
     
-    subject = X_MB_kbevents(obj->xrt);
+    subject = X_njs_MB_kbevents(obj);
     subject_o = export_xnjsmb_auto_subject_new(subject);
-    SET(self, "kbevent", subject_o);
+    SET(self, "kbevents", subject_o);
 
     return obj;
 }
