@@ -1,5 +1,5 @@
-define([PROJ_PREFIX], [xnjsmb_auto_])
-
+define([PROJ_PREFIX], [xnjsmb_auto_])dnl
+dnl
 STRUCT([observer], [observer_t],
        [INT([type])], [])
 
@@ -15,4 +15,4 @@ STRUCT([event], [event_t],
         ACCESSOR([tgt], [xnjsmb_event_tgt_getter], [xnjsmb_event_tgt_setter]),
         ACCESSOR([cur_tgt], [xnjsmb_event_cur_tgt_getter],
 	    [xnjsmb_event_cur_tgt_setter]),
-	INT([flags])], [])
+	INT([flags])], [], (([STMOD], [xnjsmb_event_mod])))
