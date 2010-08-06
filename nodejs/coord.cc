@@ -16,6 +16,23 @@ extern "C" {
 
 using namespace v8;
 
+static void
+xnjsmb_coord_mod(Handle<Object> self, coord_t *coord) {
+    Persistent<Object> *self_hdl;
+    subject_t *subject;
+    Handle<Value> subject_o;
+    
+    /* Keep associated js object in property store for retrieving,
+     * later, without create new js object.
+     */
+    self_hdl = new Persistent<Object>(self);
+    mb_prop_set(&coord->obj.props, PROP_JSOBJ, self_hdl);
+
+    subject = coord->mouse_event;
+    subject_o = export_xnjsmb_auto_subject_new(subject);
+    SET(self, "mouse_event", subject_o);
+}
+
 static float
 coord_get_index(coord_t *coord, Handle<Object> self, int idx,
 		const char **err) {
