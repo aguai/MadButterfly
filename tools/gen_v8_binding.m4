@@ -9,6 +9,20 @@ define([UNQUOTE], [$*])
 
 define([QUOTE], [[[$*]]])
 
+define([VARFRAME], [dnl
+pushdef([_FRAME_VARS], [])dnl
+])
+
+define([UNVARFRAME], [dnl
+EXPAND(_FRAME_VARS)dnl
+popdef([_FRAME_VARS])dnl
+])
+
+define([fdefine], [dnl
+pushdef([$1], [$2])dnl
+define([_FRAME_VARS], QUOTE(_FRAME_VARS[popdef([$1])]))
+])
+
 define([COUNT],[ifelse([$*],[],0,[$#])])
 
 define([IMPORT],[define([$1],[$2$1(]$[]@[)])])
@@ -19,7 +33,8 @@ define([PROJ_PREFIX], [xnjsmb_])
 
 define([START_ACCESSOR], [dnl
 divert([-1])dnl
-  define([INT], [
+VARFRAME
+  fdefine([INT], [
 static Handle<Value>
 ]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
     Handle<Object> self = info.This();
@@ -40,7 +55,7 @@ static void
     data->$][1 = value->Int32Value();
 }
 ])
-  define([NUMBER], [
+  fdefine([NUMBER], [
 static Handle<Value>
 ]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
     Handle<Object> self = info.This();
@@ -61,7 +76,7 @@ static void
     data->$][1 = value->NumberValue();
 }
 ])
-  define([OBJ], [
+  fdefine([OBJ], [
 static Handle<Value>
 ]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
     Handle<Object> self = info.This();
@@ -86,7 +101,7 @@ static void
     data->$][1 = v;
 }
 ])
-  define([STR], [
+  fdefine([STR], [
 static Handle<Value>
 ]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
     Handle<Object> self = info.This();
@@ -112,7 +127,7 @@ static void
 dnl
 dnl ACCESSOR(name, getter, setter)
 dnl
-  define([ACCESSOR], [
+  fdefine([ACCESSOR], [
 static Handle<Value>
 ]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
     Handle<Object> self = info.This();
@@ -146,199 +161,196 @@ divert([])dnl
 
 define([STOP_ACCESSOR], [dnl
 divert([-1])dnl
-undefine([INT])
-undefine([NUMBER])
-undefine([OBJ])
-undefine([STR])
-undefine([ACCESSOR])
+UNVARFRAME[]
 divert([])dnl
 ])
 
 define([SET_ACCESSSOR], [dnl
-define([INT], [$][1])dnl
-define([NUMBER], [$][1])dnl
-define([OBJ], [$][1])dnl
-define([STR], [$][1])dnl
-define([ACCESSOR], [$][1])dnl
+VARFRAME[]dnl
+fdefine([INT], [$][1])dnl
+fdefine([NUMBER], [$][1])dnl
+fdefine([OBJ], [$][1])dnl
+fdefine([STR], [$][1])dnl
+fdefine([ACCESSOR], [$][1])dnl
     inst_temp->SetAccessor(String::New("$1"),
 			   PROJ_PREFIX[]STRUCT_NAME[]_get_[]$1,
 			   PROJ_PREFIX[]STRUCT_NAME[]_set_[]$1);
-undefine([INT])dnl
-undefine([NUMBER])dnl
-undefine([OBJ])dnl
-undefine([STR])dnl
-undefine([ACCESSOR])dnl
+UNVARFRAME[]dnl
 ])
 
 define([START_METHOD_ARG_VAR], [dnl
-define([INT], [dnl
+VARFRAME[]dnl
+fdefine([INT], [dnl
     int arg_$][1;
 ])dnl
-define([NUMBER], [dnl
+fdefine([NUMBER], [dnl
     double arg_$][1;
 ])dnl
-define([OBJ], [dnl
+fdefine([OBJ], [dnl
     $][3 *arg_$][1;
 ])dnl
-define([STR], [dnl
+fdefine([STR], [dnl
     char *arg_$][1;
 ])dnl
-define([FUNC], [dnl
+fdefine([FUNC], [dnl
     Handle<Function> arg_$][1;
 ])dnl
-define([SELF], [])dnl
-define([ERR], [])dnl
+fdefine([SELF], [])dnl
+fdefine([ERR], [])dnl
 ])
 
 define([START_METHOD_ARG_TYPE_CHK], [dnl
-define([INT], [ ||
+VARFRAME[]dnl
+fdefine([INT], [ ||
        !args[[i++]]->IsInt32()])dnl
-define([NUMBER], [ ||
+fdefine([NUMBER], [ ||
        !args[[i++]]->IsNumber()])dnl
-define([OBJ], [ ||
+fdefine([OBJ], [ ||
        !args[[i++]]->IsObject()])dnl
-define([STR], [ ||
+fdefine([STR], [ ||
        !args[[i++]]->IsString()])dnl
-define([FUNC], [ ||
+fdefine([FUNC], [ ||
        !args[[i++]]->IsFunction()])dnl
-define([SELF], [])dnl
-define([ERR], [])dnl
+fdefine([SELF], [])dnl
+fdefine([ERR], [])dnl
 ])
 
 define([START_TYPE_CHK], [dnl
-define([INT], [$1->IsInt32()])dnl
-define([NUMBER], [$1->IsNumber()])dnl
-define([OBJ], [$1->IsObject()])dnl
-define([STR], [$1->IsString()])dnl
-define([FUNC], [$1->IsFunction()])dnl
+VARFRAME[]dnl
+fdefine([INT], [$1->IsInt32()])dnl
+fdefine([NUMBER], [$1->IsNumber()])dnl
+fdefine([OBJ], [$1->IsObject()])dnl
+fdefine([STR], [$1->IsString()])dnl
+fdefine([FUNC], [$1->IsFunction()])dnl
 ])
 
 define([START_METHOD_ARG_ASSIGN], [dnl
-define([INT], [dnl
+VARFRAME[]dnl
+fdefine([INT], [dnl
     arg_$][1 = args[[i++]]->Int32Value();
 ])dnl
-define([NUMBER], [dnl
+fdefine([NUMBER], [dnl
     arg_$][1 = args[[i++]]->NumberValue();
 ])dnl
-define([OBJ], [dnl
+fdefine([OBJ], [dnl
     arg_$][1 = ($][3 *)UNWRAP(args[[i++]]->ToObject());
 ])dnl
-define([STR], [dnl
+fdefine([STR], [dnl
     arg_$][1 = strdup(*String::Utf8Value(args[[i++]]->ToString()));
 ])dnl
-define([FUNC], [dnl
+fdefine([FUNC], [dnl
     arg_$][1 = args[[i++]].As<Function>();
 ])dnl
-define([SELF], [])dnl
-define([ERR], [])dnl
+fdefine([SELF], [])dnl
+fdefine([ERR], [])dnl
 ])
 
 define([START_VALUE_ASSIGN], [dnl
-define([INT], [dnl
+VARFRAME[]dnl
+fdefine([INT], [dnl
     $1 = $2->Int32Value();
 ])dnl
-define([NUMBER], [dnl
+fdefine([NUMBER], [dnl
     $1 = $2->NumberValue();
 ])dnl
-define([OBJ], [dnl
+fdefine([OBJ], [dnl
     $1 = ($][2 *)UNWRAP($2->ToObject());
 ])dnl
-define([STR], [dnl
+fdefine([STR], [dnl
     $1 = strdup(*String::Utf8Value($2->ToString()));
 ])dnl
-define([FUNC], [dnl
+fdefine([FUNC], [dnl
     $1 = $2.As<Function>();
 ])dnl
 ])
 
 define([START_METHOD_ARG_PASS], [dnl
-define([INT], [arg_$][1])dnl
-define([NUMBER], [arg_$][1])dnl
-define([OBJ], [arg_$][1])dnl
-define([STR], [arg_$][1])dnl
-define([FUNC], [arg_$][1])dnl
-define([SELF], [self])dnl
-define([ERR], [&_err])dnl
-define([VAL], [&_err])dnl
+VARFRAME[]dnl
+fdefine([INT], [arg_$][1])dnl
+fdefine([NUMBER], [arg_$][1])dnl
+fdefine([OBJ], [arg_$][1])dnl
+fdefine([STR], [arg_$][1])dnl
+fdefine([FUNC], [arg_$][1])dnl
+fdefine([SELF], [self])dnl
+fdefine([ERR], [&_err])dnl
+fdefine([VAL], [&_err])dnl
 ])
 
 define([START_METHOD_RET_VAL], [dnl
-define([INT], [dnl
+VARFRAME[]dnl
+fdefine([INT], [dnl
     int _ret;
 ])dnl
-define([NUMBER], [dnl
+fdefine([NUMBER], [dnl
     double _ret;
 ])dnl
-define([OBJ], [dnl
+fdefine([OBJ], [dnl
     $][2 *_ret;
 ])dnl
-define([STR], [dnl
+fdefine([STR], [dnl
     char *_ret;
 ])dnl
-define([FUNC], [dnl
+fdefine([FUNC], [dnl
     Handle<Function> _ret;
 ])dnl
-define([VAL], [dnl
+fdefine([VAL], [dnl
     Handle<Value> _ret;
 ])dnl
 ])
 
 define([START_VAR], [dnl
-define([INT], [dnl
+VARFRAME[]dnl
+fdefine([INT], [dnl
     int $1;
 ])dnl
-define([NUMBER], [dnl
+fdefine([NUMBER], [dnl
     double $1;
 ])dnl
-define([OBJ], [dnl
+fdefine([OBJ], [dnl
     $][2 *$1;
 ])dnl
-define([STR], [dnl
+fdefine([STR], [dnl
     char *$1;
 ])dnl
-define([FUNC], [dnl
+fdefine([FUNC], [dnl
     Handle<Function> $1;
 ])dnl
 ])
 
 define([START_METHOD_RET_ASSIGN], [dnl
-define([INT], [_ret = (int)])dnl
-define([NUMBER], [_ret = (double)])dnl
-define([OBJ], [_ret = ($][2 *)])dnl
-define([STR], [_ret = (char *)])dnl
-define([FUNC], [_ret = ])dnl
-define([VAL], [_ret = ])dnl
+VARFRAME[]dnl
+fdefine([INT], [_ret = (int)])dnl
+fdefine([NUMBER], [_ret = (double)])dnl
+fdefine([OBJ], [_ret = ($][2 *)])dnl
+fdefine([STR], [_ret = (char *)])dnl
+fdefine([FUNC], [_ret = ])dnl
+fdefine([VAL], [_ret = ])dnl
 ])
 
 define([START_METHOD_RET], [dnl
-define([INT], [
+VARFRAME[]dnl
+fdefine([INT], [
     _ret_val = Integer::New(_ret);
 ])dnl
-define([NUMBER], [
+fdefine([NUMBER], [
     _ret_val = Number::New(_ret);
 ])dnl
-define([OBJ], [
+fdefine([OBJ], [
     _ret_val = PROJ_PREFIX[]$][1[]_new(_ret);
 ])dnl
-define([STR], [
+fdefine([STR], [
     _ret_val = String::New(_ret);
 ])dnl
-define([FUNC], [
+fdefine([FUNC], [
     _rt_val = _ret;
 ])dnl
-define([VAL], [
+fdefine([VAL], [
     _rt_val = _ret;
 ])dnl
 ])
 
 define([STOP_METHOD_ARG], [dnl
-undefine([INT])dnl
-undefine([NUMBER])dnl
-undefine([OBJ])dnl
-undefine([STR])dnl
-undefine([FUNC])dnl
-undefine([SELF])dnl
-undefine([ERR])dnl
+UNVARFRAME[]dnl
 ])
 
 define([START_METHOD], [dnl
@@ -487,9 +499,10 @@ define([STRUCT], [dnl
 define([STRUCT_NAME], [$1])dnl
 define([STRUCT_TYPE], [$2])dnl
 dnl
+VARFRAME[]dnl
 ifelse([$5], [], [], [dnl
 foreach([ITER], $5, [dnl
-EXPAND([define]ITER)[]dnl
+EXPAND([fdefine]ITER)[]dnl
 ])dnl
 ])dnl
 dnl
@@ -543,11 +556,7 @@ foreach([ITER], ($4), [SET_METHOD(ITER)])dnl
     PROJ_PREFIX[$1][_temp = Persistent<FunctionTemplate>::New(func_temp);
 }]dnl
 dnl
-ifelse([$5], [], [], [foreach([ITER], $5, [dnl
-define([DUMMY], [undefine]ITER)dnl
-DUMMY[]dnl
-undefine([DUMMY])])dnl
-])dnl
+UNVARFRAME[]dnl
 dnl
 ])
 
@@ -557,8 +566,9 @@ dnl          return_type, options)
 dnl
 define([FUNCTION], [dnl
 dnl
+VARFRAME[]dnl
 ifelse($6, [], [], [dnl
-foreach([ITER], $6, [EXPAND([define]ITER)])dnl
+foreach([ITER], $6, [EXPAND([fdefine]ITER)])dnl
 ])dnl
 dnl
 /* **************************************************
@@ -613,9 +623,7 @@ PROJ_PREFIX[]$1[]_init(void) {
     PROJ_PREFIX[]$1[]_temp = Persistent<FunctionTemplate>::New(func_temp);
 }
 dnl
-ifelse($6, [], [], [dnl
-foreach([ITER], $6, [EXPAND([undefine]ITER)])dnl
-])dnl
+UNVARFRAME[]dnl
 dnl
 ])
 
