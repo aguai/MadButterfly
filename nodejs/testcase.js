@@ -61,7 +61,7 @@ observer = root.mouse_event.add_event_observer(4, function(evt) {
 
 var kbobserver;
 /* Keyboard event */
-kbobserver = mb_rt.kbevent.add_event_observer(6, function(evt) {
+kbobserver = mb_rt.kbevents.add_event_observer(6, function(evt) {
 	sys.puts("keycode = " + evt.keycode);
 	sys.puts("sym = " + evt.sym);
     });
