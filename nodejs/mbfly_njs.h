@@ -42,4 +42,8 @@ void xnjsmb_font_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> mb_rt_temp);
 void
 xnjsmb_img_ldr_init_mb_rt_temp(v8::Handle<v8::Object> mb_rt_temp);
 
+/* From observer.cc */
+v8::Handle<v8::Value> export_xnjsmb_auto_subject_new(subject_t *subject);
+void xnjsmb_observer_init(void);
+
 #endif /* __MBFLY_NJS_H_ */
