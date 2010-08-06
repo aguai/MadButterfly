@@ -20,7 +20,7 @@ popdef([_FRAME_VARS])dnl
 
 define([fdefine], [dnl
 pushdef([$1], [$2])dnl
-define([_FRAME_VARS], QUOTE(_FRAME_VARS[popdef([$1])]))
+define([_FRAME_VARS], QUOTE(_FRAME_VARS[popdef([$1])]))dnl
 ])
 
 define([COUNT],[ifelse([$*],[],0,[$#])])
@@ -33,7 +33,7 @@ define([PROJ_PREFIX], [xnjsmb_])
 
 define([START_ACCESSOR], [dnl
 divert([-1])dnl
-VARFRAME
+VARFRAME[]dnl
   fdefine([INT], [
 static Handle<Value>
 ]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
@@ -161,7 +161,7 @@ divert([])dnl
 
 define([STOP_ACCESSOR], [dnl
 divert([-1])dnl
-UNVARFRAME[]
+UNVARFRAME[]dnl
 divert([])dnl
 ])
 
@@ -489,8 +489,11 @@ foreach([ITER], $2, [START_METHOD_ARG_ASSIGN[]ITER[]STOP_METHOD_ARG])dnl
 define([SEP], [])dnl
     obj = ($4 *)$1(foreach([ITER], $2, [START_METHOD_ARG_PASS[]SEP[]ITER[]STOP_METHOD_ARG[]define([SEP], [, ])]));[]undefine([SEP])
 
-    WRAP(self, obj);
-])
+    WRAP(self, obj);]
+ifdef([STMOD], [
+    STMOD(self, obj);
+])dnl
+)
 
 dnl
 dnl STRUCT(struct_name, struct_type, member_vars, methods, options)
@@ -526,9 +529,11 @@ static Handle<Value>
 
     func = ]PROJ_PREFIX[$1][_temp->GetFunction();
     obj = func->NewInstance();
-    WRAP(obj, data);
-
-    return obj;
+    WRAP(obj, data);]
+ifdef([STMOD], [
+    STMOD[(obj, data)];
+])dnl
+[   return obj;
 }
 ]dnl
 foreach([ITER], ($3), [START_ACCESSOR ITER STOP_ACCESSOR])dnl
