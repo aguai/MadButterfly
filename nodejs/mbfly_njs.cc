@@ -28,22 +28,8 @@ xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
 static void
 xnjsmb_coord_new_mod(Handle<Object> mbrt, Handle<Value> ret) {
     Handle<Object> ret_obj = ret->ToObject();
-    Persistent<Object> *ret_obj_hdl;
-    coord_t *coord;
-    subject_t *subject;
-    Handle<Value> subject_o;
 
     SET(ret_obj, "mbrt", mbrt);
-    coord = (coord_t *)UNWRAP(ret_obj);
-    /* Keep associated js object in property store for retrieving,
-     * later, without create new js object.
-     */
-    ret_obj_hdl = new Persistent<Object>(ret_obj);
-    mb_prop_set(&coord->obj.props, PROP_JSOBJ, ret_obj_hdl);
-
-    subject = coord->mouse_event;
-    subject_o = export_xnjsmb_auto_subject_new(subject);
-    SET(ret_obj, "subject", subject_o);
 }
 
 #define xnjsmb_auto_coord_new export_xnjsmb_auto_coord_new
@@ -68,9 +54,7 @@ static njs_runtime_t *
 _X_njs_MB_new(Handle<Object> self, char *display_name,
 	      int width, int height) {
     njs_runtime_t *obj;
-    coord_t *root;
     subject_t *subject;
-    Handle<Object> root_o;
     Handle<Value> subject_o;
 
     obj = X_njs_MB_new(display_name, width, height);
@@ -81,12 +65,6 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
     X_njs_MB_init_handle_connection(obj);
     xnjsmb_coord_mkroot(self);
     
-    root_o = GET(self, "root")->ToObject();
-    root = (coord_t *)UNWRAP(root_o);
-    subject = root->mouse_event;
-    subject_o = export_xnjsmb_auto_subject_new(subject);
-    SET(root_o, "subject", subject_o);
-
     subject = X_MB_kbevents(obj->xrt);
     subject_o = export_xnjsmb_auto_subject_new(subject);
     SET(self, "kbevent", subject_o);

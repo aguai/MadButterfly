@@ -52,10 +52,10 @@ setInterval(function() {
     }, 20);
 setTimeout(function() { sys.puts("timeout"); }, 1000);
 
-sys.puts(root.subject);
+sys.puts(root.mouse_event);
 var observer;
 /* Mouse button pressed */
-observer = root.subject.add_event_observer(4, function(evt) {
+observer = root.mouse_event.add_event_observer(4, function(evt) {
 	sys.puts("mouse " + evt.x + " " + evt.y);
     });
 
