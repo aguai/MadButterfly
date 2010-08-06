@@ -93,6 +93,14 @@ event_handler(event_t *evt, void *arg) {
     data->func->Call(Context::GetCurrent()->Global(), 1, func_args);
 }
 
+Handle<Value>
+export_xnjsmb_auto_subject_new(subject_t *subject) {
+    Handle<Value> val;
+    
+    val = xnjsmb_auto_subject_new(subject);
+    return val;
+}
+
 void
 xnjsmb_observer_init(void) {
     xnjsmb_auto_observer_init();

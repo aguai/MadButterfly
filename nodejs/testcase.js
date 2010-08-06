@@ -51,3 +51,10 @@ setInterval(function() {
 	mb_rt.redraw_changed();
     }, 20);
 setTimeout(function() { sys.puts("timeout"); }, 1000);
+
+sys.puts(root.subject);
+var observer;
+/* Mouse button pressed */
+observer = root.subject.add_event_observer(4, function() {
+	sys.puts("mouse");
+    });

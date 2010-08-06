@@ -26,10 +26,12 @@ xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
 }
 
 static void
-xnjsmb_coord_mod(Handle<Object> mbrt, Handle<Value> ret) {
+xnjsmb_coord_new_mod(Handle<Object> mbrt, Handle<Value> ret) {
     Handle<Object> ret_obj = ret->ToObject();
     Persistent<Object> *ret_obj_hdl;
     coord_t *coord;
+    subject_t *subject;
+    Handle<Value> subject_o;
 
     SET(ret_obj, "mbrt", mbrt);
     coord = (coord_t *)UNWRAP(ret_obj);
@@ -38,6 +40,10 @@ xnjsmb_coord_mod(Handle<Object> mbrt, Handle<Value> ret) {
      */
     ret_obj_hdl = new Persistent<Object>(ret_obj);
     mb_prop_set(&coord->obj.props, PROP_JSOBJ, ret_obj_hdl);
+
+    subject = coord->mouse_event;
+    subject_o = export_xnjsmb_auto_subject_new(subject);
+    SET(ret_obj, "subject", subject_o);
 }
 
 #define xnjsmb_auto_coord_new export_xnjsmb_auto_coord_new
@@ -62,6 +68,10 @@ static njs_runtime_t *
 _X_njs_MB_new(Handle<Object> self, char *display_name,
 	      int width, int height) {
     njs_runtime_t *obj;
+    coord_t *root;
+    subject_t *subject;
+    Handle<Object> root_o;
+    Handle<Value> subject_o;
 
     obj = X_njs_MB_new(display_name, width, height);
     WRAP(self, obj);		/* mkroot need a wrapped object, but
@@ -70,6 +80,12 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
 				 * here. */
     X_njs_MB_init_handle_connection(obj);
     xnjsmb_coord_mkroot(self);
+    
+    root_o = GET(self, "root")->ToObject();
+    root = (coord_t *)UNWRAP(root_o);
+    subject = root->mouse_event;
+    subject_o = export_xnjsmb_auto_subject_new(subject);
+    SET(root_o, "subject", subject_o);
 
     return obj;
 }
@@ -125,6 +141,7 @@ init(Handle<Object> target) {
     xnjsmb_paints_init_mb_rt_temp(xnjsmb_auto_mb_rt_temp);
     xnjsmb_font_init_mb_rt_temp(xnjsmb_auto_mb_rt_temp);
     xnjsmb_img_ldr_init_mb_rt_temp(target);
+    xnjsmb_observer_init();
     
     target->Set(String::New("mb_rt"),
 		xnjsmb_auto_mb_rt_temp->GetFunction());    
