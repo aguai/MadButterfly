@@ -55,6 +55,13 @@ setTimeout(function() { sys.puts("timeout"); }, 1000);
 sys.puts(root.subject);
 var observer;
 /* Mouse button pressed */
-observer = root.subject.add_event_observer(4, function() {
-	sys.puts("mouse");
+observer = root.subject.add_event_observer(4, function(evt) {
+	sys.puts("mouse " + evt.x + " " + evt.y);
+    });
+
+var kbobserver;
+/* Keyboard event */
+kbobserver = mb_rt.kbevent.add_event_observer(6, function(evt) {
+	sys.puts("keycode = " + evt.keycode);
+	sys.puts("sym = " + evt.sym);
     });

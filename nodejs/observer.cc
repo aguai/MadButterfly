@@ -19,6 +19,44 @@ struct xnjsmb_observer_data {
 static void
 event_handler(event_t *evt, void *arg);
 
+static void
+xnjsmb_event_mod(Handle<Object> self, event_t *evt) {
+    mouse_event_t *mevt;
+    X_kb_event_t *xkbevt;
+    
+    switch(evt->type) {
+    case EVT_ANY:
+    case EVT_MOUSE_OVER:
+    case EVT_MOUSE_OUT:
+    case EVT_MOUSE_MOVE:
+    case EVT_MOUSE_BUT_PRESS:
+    case EVT_MOUSE_BUT_RELEASE:
+	mevt = (mouse_event_t *)evt;
+	SET(self, "x", Integer::New(mevt->x));
+	SET(self, "y", Integer::New(mevt->y));
+	SET(self, "but_state", Integer::New(mevt->but_state));
+	SET(self, "button", Integer::New(mevt->button));
+	break;
+	
+    case EVT_KB_PRESS:
+    case EVT_KB_RELEASE:
+	xkbevt = (X_kb_event_t *)evt;
+	SET(self, "keycode", Integer::New(xkbevt->keycode));
+	SET(self, "sym", Integer::New(xkbevt->sym));
+	break;
+	
+    case EVT_PROGM_COMPLETE:
+    case EVT_RDMAN_REDRAW:
+    case EVT_MONITOR_ADD:
+    case EVT_MONITOR_REMOVE:
+    case EVT_MONITOR_FREE:
+    case EVT_MOUSE_MOVE_RAW:
+    default:
+	/* Not implemented.  Do nothing. */
+	break;
+    }
+}
+
 static observer_t *
 _subject_add_event_observer(subject_t *subject, int type,
                             Handle<Function> func) {
