@@ -12,7 +12,7 @@ STRUCT([path], [shape_t], [], [], (([INHERIT], [shape])))
 STRUCT([stext], [shape_t], [],
        [METHOD([set_text], [sh_stext_set_text], (STR([txt])), 1, []),
         METHOD([set_style], [xnjsmb_sh_stext_set_style],
-	       (ARRAY([blks]), ERR), 1, [])],
+	       (SELF, ARRAY([blks]), ERR), 1, [])],
        (([INHERIT], [shape])))
 
 STRUCT([image], [shape_t], [], [], (([INHERIT], [shape])))
