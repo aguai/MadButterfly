@@ -21,26 +21,20 @@ def configure(conf):
 def build(conf):
     import Utils
     
-    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
-         source='observer.m4', target='observer-inc.h',
-         name='observer-inc', shell=True, always=True, before=['cxx'])
-    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
-         source='coord.m4', target='coord-inc.h',
-         name='coord-inc', shell=True, always=True, before=['cxx'])
-    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
-         source='mbfly_njs.m4', target='mbfly_njs-inc.h',
-         name='mbfly_njs-inc', shell=True, always=True, before=['cxx'])
-    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
-         source='shapes.m4', target='shapes-inc.h',
-         name='shapes-inc', shell=True, always=True, before=['cxx'])
+    for m in 'observer coord mbfly_njs shapes paints'.split():
+        conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
+             source=m+'.m4', target=m+'-inc.h',
+             name=m+'-inc', shell=True, always=True, before=['cxx'])
+        pass
 
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'paints.cc font.cc image_ldr.cc'
-    obj.add_objects = 'X_supp_njs.o observer.o coord.o mbfly_njs.o shapes.o'
+    obj.source = 'font.cc image_ldr.cc'
+    obj.add_objects = 'X_supp_njs.o observer.o coord.o mbfly_njs.o ' + \
+        'shapes.o paints.o'
     obj.staticlib = 'mbfly'
 
-    for src in 'observer.cc coord.cc mbfly_njs.cc shapes.cc'.split():
+    for src in 'observer.cc coord.cc mbfly_njs.cc shapes.cc paints.cc'.split():
         obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
         obj.target = src[:-3] + '.o'
         obj.source = src
