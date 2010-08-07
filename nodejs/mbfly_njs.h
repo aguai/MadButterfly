@@ -44,6 +44,13 @@ v8::Handle<v8::Value> export_xnjsmb_auto_image_new(shape_t *sh);
 
 /* From paints.cc */
 void xnjsmb_paints_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> rt_temp);
+paint_t *xnjsmb_paint_color_new(njs_runtime_t *rt,
+				float r, float g, float b, float a,
+				const char **err);
+paint_t *xnjsmb_paint_image_new(njs_runtime_t *rt, mb_img_data_t *img,
+				const char **err);
+v8::Handle<v8::Value> export_xnjsmb_auto_paint_color_new(paint_t *paint);
+v8::Handle<v8::Value> export_xnjsmb_auto_paint_image_new(paint_t *paint);
 
 /* From font.cc */
 void xnjsmb_font_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> mb_rt_temp);

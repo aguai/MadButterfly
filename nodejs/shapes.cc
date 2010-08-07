@@ -80,8 +80,11 @@ xnjsmb_shape_stroke_width_set(Handle<Object> self, shape_t *sh,
 
 #include "shapes-inc.h"
 
-/*! \defgroup xnjsmb_shapes_export Export functions of creating objects.
+/*! \defgroup xnjsmb_shapes_wraps Exported wrapper makers for shapes
  * \ingroup xnjsmb_shapes
+ * 
+ * These functions are used by methods of mb_rt to wrap shape objects
+ * as Javascript objects.
  *
  * @{
  */
@@ -102,11 +105,8 @@ export_xnjsmb_auto_image_new(shape_t *sh) {
 
 /* @} */
 
-/*! \defgroup xnjsmb_shapes_wraps Wrap functions for shape objects.
+/*! \defgroup xnjsmb_shapes_cons Constructor of shapes
  * \ingroup xnjsmb_shapes
- * 
- * These functions are used by methods of mb_rt to wrap shape objects
- * as Javascript objects.
  *
  * @{
  */
