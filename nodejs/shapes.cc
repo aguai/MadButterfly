@@ -19,11 +19,14 @@ using namespace v8;
  * @{
  */
 static void
-xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Value> blks, const char **err) {
+xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Object> self,
+			  Handle<Value> blks, const char **err) {
     Array *blksobj;
     Array *blkobj;
     mb_style_blk_t *mb_blks;
     int nblks;
+    Handle<Object> rt;
+    redraw_man_t *rdman;
     int r;
     int i;
     
@@ -42,6 +45,13 @@ xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Value> blks, const char **err) {
 	*err = "Unknown error";
 	return;
     }
+    
+    /*
+     * Mark changed.
+     */
+    rt = GET(self, "mbrt")->ToObject();
+    ASSERT(rt != NULL);
+    rdman = xnjsmb_rt_rdman(rt);
     
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
