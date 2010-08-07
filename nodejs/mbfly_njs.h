@@ -4,6 +4,7 @@
 #include <v8.h>
 extern "C" {
 #include <mb.h>
+#include "X_supp_njs.h"
 }
 
 #define THROW(x)						\
@@ -17,6 +18,7 @@ extern "C" {
 	v8::Handle<v8::Value> exc;				\
 	exc = v8::Exception::Error(v8::String::New(x));		\
 	v8::ThrowException(exc);				\
+	return;							\
     } while(0)
 #define UNWRAP(o) v8::External::Unwrap((o)->GetInternalField(0))
 #define WRAP(o, v) (o)->SetInternalField(0, v8::External::Wrap(v))
@@ -31,6 +33,14 @@ v8::Handle<v8::Value> export_xnjsmb_auto_coord_new(coord_t *coord);
 
 /* From shapes.cc */
 void xnjsmb_shapes_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> rt_temp);
+shape_t *xnjsmb_path_new(njs_runtime_t *rt, const char *d);
+shape_t *xnjsmb_stext_new(njs_runtime_t *rt, const char *txt,
+			  float x, float y);
+shape_t *xnjsmb_image_new(njs_runtime_t *rt, float x, float y,
+			  float w, float h);
+v8::Handle<v8::Value> export_xnjsmb_auto_path_new(shape_t *sh);
+v8::Handle<v8::Value> export_xnjsmb_auto_stext_new(shape_t *sh);
+v8::Handle<v8::Value> export_xnjsmb_auto_image_new(shape_t *sh);
 
 /* From paints.cc */
 void xnjsmb_paints_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> rt_temp);
