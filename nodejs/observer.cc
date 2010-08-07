@@ -12,6 +12,12 @@ extern "C" {
 
 using namespace v8;
 
+/*! \defgroup xnjsmb_observer JS binding for observer, subject and events
+ * \ingroup xnjsmb
+ *
+ * @{
+ */
+
 struct xnjsmb_observer_data {
     Persistent<Function> func;
 };
@@ -145,3 +151,5 @@ xnjsmb_observer_init(void) {
     xnjsmb_auto_subject_init();
     xnjsmb_auto_event_init();
 }
+
+/* @} */
