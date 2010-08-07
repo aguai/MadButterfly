@@ -13,7 +13,7 @@ extern "C" {
 
 using namespace v8;
 
-/*! \defgroup xnjsmb_shapes Implement binding of shapes.
+/*! \defgroup xnjsmb_shapes JS binding for shapes.
  * \ingroup xnjsmb
  *
  * @{

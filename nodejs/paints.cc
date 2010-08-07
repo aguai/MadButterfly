@@ -12,6 +12,11 @@ using namespace v8;
 #define ASSERT(x)
 #endif
 
+/*! \defgroup xnjsmb_paints JS binding for paints
+ * \ingroup xnjsmb
+ *
+ * @{
+ */
 
 /*! \brief Fill a shape with the paint.
  */
@@ -287,3 +292,5 @@ void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
     SET(rt_proto_temp, "paint_color_new", xnjsmb_paint_color_new_temp);
     SET(rt_proto_temp, "paint_image_new", xnjsmb_paint_image_new_temp);
 }
+
+/* @} */
