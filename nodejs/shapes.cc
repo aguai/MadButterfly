@@ -89,6 +89,25 @@ xnjsmb_shape_stroke_width_set(Handle<Object> self, shape_t *sh,
 	rdman_shape_changed(rdman, sh);
 }
 
+static void
+xnjsmb_sh_rect_set(shape_t *sh, Handle<Object> self, float x, float y,
+		   float w, float h, float rx, float ry) {
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+    
+    sh_rect_set(sh, x, y, w, h, rx, ry);
+    
+    /*
+     * Mark changed.
+     */
+    rt = GET(self, "mbrt")->ToObject();
+    ASSERT(rt != NULL);
+    rdman = xnjsmb_rt_rdman(rt);
+    
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+}
+
 /* @} */
 
 #include "shapes-inc.h"
@@ -114,6 +133,11 @@ export_xnjsmb_auto_stext_new(shape_t *sh) {
 Handle<Value>
 export_xnjsmb_auto_image_new(shape_t *sh) {
     return xnjsmb_auto_image_new(sh);
+}
+
+Handle<Value>
+export_xnjsmb_auto_rect_new(shape_t *sh) {
+    return xnjsmb_auto_rect_new(sh);
 }
 
 /* @} */
@@ -156,6 +180,22 @@ xnjsmb_image_new(njs_runtime_t *rt, float x, float y, float w, float h) {
     return sh;
 }
 
+shape_t *
+xnjsmb_rect_new(njs_runtime_t *rt, float x, float y, float w, float h,
+		float rx, float ry, const char **err) {
+    redraw_man_t *rdman;
+    shape_t *sh;
+
+    rdman = X_njs_MB_rdman(rt);
+    sh = rdman_shape_rect_new(rdman, x, y, w, h, rx, ry);
+    if(sh == NULL) {
+	*err = "Can not create a sh_rect_t";
+	return NULL;
+    }
+
+    return sh;
+}
+
 /* @} */
 
 /*! \brief Set properties of template of mb_rt.
@@ -174,6 +214,7 @@ xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
 	xnjsmb_auto_path_init();
 	xnjsmb_auto_stext_init();
 	xnjsmb_auto_image_init();
+	xnjsmb_auto_rect_init();
 	temp_init_flag = 1;
     }
     return;

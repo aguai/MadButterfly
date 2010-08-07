@@ -91,6 +91,7 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
 #define xnjsmb_auto_path_new export_xnjsmb_auto_path_new
 #define xnjsmb_auto_stext_new export_xnjsmb_auto_stext_new
 #define xnjsmb_auto_image_new export_xnjsmb_auto_image_new
+#define xnjsmb_auto_rect_new export_xnjsmb_auto_rect_new
 #define xnjsmb_auto_paint_color_new export_xnjsmb_auto_paint_color_new
 #define xnjsmb_auto_paint_image_new export_xnjsmb_auto_paint_image_new
 
