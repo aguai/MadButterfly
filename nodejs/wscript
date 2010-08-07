@@ -30,15 +30,17 @@ def build(conf):
     conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
          source='mbfly_njs.m4', target='mbfly_njs-inc.h',
          name='mbfly_njs-inc', shell=True, always=True, before=['cxx'])
+    conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
+         source='shapes.m4', target='shapes-inc.h',
+         name='shapes-inc', shell=True, always=True, before=['cxx'])
 
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'shapes.cc paints.cc font.cc ' + \
-	'image_ldr.cc'
-    obj.add_objects = 'X_supp_njs.o observer.o coord.o mbfly_njs.o'
+    obj.source = 'paints.cc font.cc image_ldr.cc'
+    obj.add_objects = 'X_supp_njs.o observer.o coord.o mbfly_njs.o shapes.o'
     obj.staticlib = 'mbfly'
 
-    for src in 'observer.cc coord.cc mbfly_njs.cc'.split():
+    for src in 'observer.cc coord.cc mbfly_njs.cc shapes.cc'.split():
         obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
         obj.target = src[:-3] + '.o'
         obj.source = src

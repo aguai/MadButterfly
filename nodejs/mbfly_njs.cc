@@ -26,7 +26,7 @@ xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
 }
 
 static void
-xnjsmb_coord_new_mod(Handle<Object> mbrt, Handle<Value> ret) {
+xnjsmb_mb_rt_objs_mod(Handle<Object> mbrt, Handle<Value> ret) {
     Handle<Object> ret_obj = ret->ToObject();
 
     SET(ret_obj, "mbrt", mbrt);
@@ -76,6 +76,10 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
  *
  * @{
  */
+
+#define xnjsmb_auto_path_new export_xnjsmb_auto_path_new
+#define xnjsmb_auto_stext_new export_xnjsmb_auto_stext_new
+#define xnjsmb_auto_image_new export_xnjsmb_auto_image_new
 
 #include "mbfly_njs-inc.h"
 
