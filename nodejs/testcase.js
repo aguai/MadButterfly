@@ -19,6 +19,13 @@ var paint = mb_rt.paint_image_new(img_data);
 paint.fill(img);
 root.add_shape(img);
 
+/* test alpha blending and rectangle */
+var rect = mb_rt.rect_new(40, 40, 100, 100, 10, 10);
+sys.puts(mb_rt.paint_color_new);
+var paint = mb_rt.paint_color_new(1, 0.5, 0.5, 0.5);
+paint.fill(rect);
+root.add_shape(rect);
+
 /* Moving a path */
 sys.puts(mb_rt.path_new);
 var path = mb_rt.path_new("m 100,50 L 120,50 L 200,150 L 180,150 z");

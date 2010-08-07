@@ -16,3 +16,9 @@ STRUCT([stext], [shape_t], [],
        (([INHERIT], [shape])))
 
 STRUCT([image], [shape_t], [], [], (([INHERIT], [shape])))
+
+STRUCT([rect], [shape_t], [],
+       [METHOD([set], [xnjsmb_sh_rect_set],
+	       (SELF, NUMBER(x), NUMBER(y), NUMBER(w), NUMBER(h),
+	        NUMBER(rx), NUMBER(ry)), 6, [])],
+       (([INHERIT], [shape])))

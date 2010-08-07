@@ -38,9 +38,13 @@ shape_t *xnjsmb_stext_new(njs_runtime_t *rt, const char *txt,
 			  float x, float y);
 shape_t *xnjsmb_image_new(njs_runtime_t *rt, float x, float y,
 			  float w, float h);
+shape_t *xnjsmb_rect_new(njs_runtime_t *rt, float x, float y,
+			 float w, float h,
+			 float rx, float ry, const char **err);
 v8::Handle<v8::Value> export_xnjsmb_auto_path_new(shape_t *sh);
 v8::Handle<v8::Value> export_xnjsmb_auto_stext_new(shape_t *sh);
 v8::Handle<v8::Value> export_xnjsmb_auto_image_new(shape_t *sh);
+v8::Handle<v8::Value> export_xnjsmb_auto_rect_new(shape_t *sh);
 
 /* From paints.cc */
 void xnjsmb_paints_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> rt_temp);
