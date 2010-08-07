@@ -43,6 +43,9 @@ xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Value> blks, const char **err) {
 	return;
     }
     
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+    
     delete mb_blks;
 }
 
