@@ -101,6 +101,28 @@ static void
     data->$][1 = v;
 }
 ])
+  fdefine([ARRAY], [
+static Handle<Value>
+]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    STRUCT_TYPE *data;
+
+    data = (STRUCT_TYPE *)UNWRAP(self);
+    return data->$][1;
+}
+
+static void
+]PROJ_PREFIX[]STRUCT_NAME[_set_$][1(Local<String> property,
+		      Local<Value> value,
+		      const AccessorInfo &info) {
+    Handle<Object> self = info.This();
+    Handle<Object> obj;
+    STRUCT_TYPE *data;
+
+    data = (STRUCT_TYPE *)UNWRAP(self);
+    data->$][1 = value;
+}
+])
   fdefine([STR], [
 static Handle<Value>
 ]PROJ_PREFIX[]STRUCT_NAME[_get_$][1(Local<String> property, const AccessorInfo &info) {
@@ -170,6 +192,7 @@ VARFRAME[]dnl
 fdefine([INT], [$][1])dnl
 fdefine([NUMBER], [$][1])dnl
 fdefine([OBJ], [$][1])dnl
+fdefine([ARRAY], [$][1])dnl
 fdefine([STR], [$][1])dnl
 fdefine([ACCESSOR], [$][1])dnl
     inst_temp->SetAccessor(String::New("$1"),
@@ -189,6 +212,9 @@ fdefine([NUMBER], [dnl
 fdefine([OBJ], [dnl
     $][3 *arg_$][1;
 ])dnl
+fdefine([ARRAY], [dnl
+    Handle<Value> arg_$][1;
+])dnl
 fdefine([STR], [dnl
     char *arg_$][1;
 ])dnl
@@ -207,6 +233,8 @@ fdefine([NUMBER], [ ||
        !args[[i++]]->IsNumber()])dnl
 fdefine([OBJ], [ ||
        !args[[i++]]->IsObject()])dnl
+fdefine([ARRAY], [ ||
+       !args[[i++]]->IsArray()])dnl
 fdefine([STR], [ ||
        !args[[i++]]->IsString()])dnl
 fdefine([FUNC], [ ||
@@ -220,6 +248,7 @@ VARFRAME[]dnl
 fdefine([INT], [$1->IsInt32()])dnl
 fdefine([NUMBER], [$1->IsNumber()])dnl
 fdefine([OBJ], [$1->IsObject()])dnl
+fdefine([ARRAY], [$1->IsArray()])dnl
 fdefine([STR], [$1->IsString()])dnl
 fdefine([FUNC], [$1->IsFunction()])dnl
 ])
@@ -234,6 +263,9 @@ fdefine([NUMBER], [dnl
 ])dnl
 fdefine([OBJ], [dnl
     arg_$][1 = ($][3 *)UNWRAP(args[[i++]]->ToObject());
+])dnl
+fdefine([ARRAY], [dnl
+    arg_$][1 = args[[i++]];
 ])dnl
 fdefine([STR], [dnl
     arg_$][1 = strdup(*String::Utf8Value(args[[i++]]->ToString()));
@@ -256,6 +288,9 @@ fdefine([NUMBER], [dnl
 fdefine([OBJ], [dnl
     $1 = ($][2 *)UNWRAP($2->ToObject());
 ])dnl
+fdefine([ARRAY], [dnl
+    $1 = $2;
+])dnl
 fdefine([STR], [dnl
     $1 = strdup(*String::Utf8Value($2->ToString()));
 ])dnl
@@ -269,6 +304,7 @@ VARFRAME[]dnl
 fdefine([INT], [arg_$][1])dnl
 fdefine([NUMBER], [arg_$][1])dnl
 fdefine([OBJ], [arg_$][1])dnl
+fdefine([ARRAY], [arg_$][1])dnl
 fdefine([STR], [arg_$][1])dnl
 fdefine([FUNC], [arg_$][1])dnl
 fdefine([SELF], [self])dnl
@@ -286,6 +322,9 @@ fdefine([NUMBER], [dnl
 ])dnl
 fdefine([OBJ], [dnl
     $][2 *_ret;
+])dnl
+fdefine([ARRAY], [dnl
+    Handle<Value> _ret;
 ])dnl
 fdefine([STR], [dnl
     char *_ret;
@@ -309,6 +348,9 @@ fdefine([NUMBER], [dnl
 fdefine([OBJ], [dnl
     $][2 *$1;
 ])dnl
+fdefine([ARRAY], [dnl
+    Handle<Value> *$1;
+])dnl
 fdefine([STR], [dnl
     char *$1;
 ])dnl
@@ -322,6 +364,7 @@ VARFRAME[]dnl
 fdefine([INT], [_ret = (int)])dnl
 fdefine([NUMBER], [_ret = (double)])dnl
 fdefine([OBJ], [_ret = ($][2 *)])dnl
+fdefine([ARRAY], [_ret = ])dnl
 fdefine([STR], [_ret = (char *)])dnl
 fdefine([FUNC], [_ret = ])dnl
 fdefine([VAL], [_ret = ])dnl
@@ -337,6 +380,9 @@ fdefine([NUMBER], [
 ])dnl
 fdefine([OBJ], [
     _ret_val = PROJ_PREFIX[]$][1[]_new(_ret);
+])dnl
+fdefine([ARRAY], [
+    _ret_val = _ret;
 ])dnl
 fdefine([STR], [
     _ret_val = String::New(_ret);
@@ -358,9 +404,10 @@ dnl
 dnl METHOD(name, func, arguments, cnt, ret_type, options)
 dnl
 define([METHOD], [
+VARFRAME[]dnl
 dnl
 ifelse($][6, [], [], [dnl
-foreach([ITER], ]$][6[, [EXPAND([define]ITER)])dnl
+foreach([ITER], ]$][6[, [EXPAND([fdefine]ITER)])dnl
 ])dnl
 dnl
 static Handle<Value>
@@ -402,9 +449,7 @@ ifdef([MOD], [
     return _ret_val;
 ])dnl
 }
-ifelse($][6, [], [], [dnl
-foreach([ITER], ]$][6[, [EXPAND([undefine]ITER)])dnl
-])dnl
+UNVARFRAME[]dnl
 ])dnl
 ])
 
@@ -549,10 +594,12 @@ static void
 
     func_temp = FunctionTemplate::New(]PROJ_PREFIX[$1);
     func_temp->SetClassName(String::New("]STRUCT_NAME["));
-    inst_temp = func_temp->InstanceTemplate();
+]ifdef([INHERIT], [dnl
+    func_temp->Inherit(]PROJ_PREFIX[]INHERIT[_temp);
+])dnl
+[    inst_temp = func_temp->InstanceTemplate();
     inst_temp->SetInternalFieldCount(1);
-    ]
-foreach([ITER], ($3), [SET_ACCESSSOR(ITER)])dnl
+]foreach([ITER], ($3), [SET_ACCESSSOR(ITER)])dnl
 INSTALL_INDEX_FUNCTIONS[]dnl
 
     proto_temp = func_temp->PrototypeTemplate();
