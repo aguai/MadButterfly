@@ -15,7 +15,8 @@ using namespace v8;
 #define ASSERT(x)
 #endif
 
-/*! \defgroup img_ldr_js Javascript binding for image loader.
+/*! \defgroup xnjsmb_img_ldr_js Javascript binding for image loader.
+ * \ingroup xnjsmb
  *
  * @{
  */

@@ -16,6 +16,11 @@ extern "C" {
 
 using namespace v8;
 
+/*! \defgroup xnjsmb_coord JS binding for coord objects.
+ * \ingroup xnjsmb
+ *
+ * @{
+ */
 static void
 xnjsmb_coord_mod(Handle<Object> self, coord_t *coord) {
     Persistent<Object> *self_hdl;
@@ -80,6 +85,8 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
 
 #include "coord-inc.h"
 
+/*! \brief This function used by \ref xnjsmb_mb_rt to wrap coord object.
+ */
 Handle<Value> export_xnjsmb_auto_coord_new(coord_t *coord) {
     xnjsmb_auto_coord_new(coord);
 }
@@ -110,3 +117,5 @@ xnjsmb_coord_mkroot(Handle<Object> js_rt) {
 
     SET(js_rt, "root", obj);
 }
+
+/* @} */

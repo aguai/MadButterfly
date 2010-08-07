@@ -10,6 +10,11 @@ extern "C" {
 
 using namespace v8;
 
+/*! \defgroup xnjsmb_mb_rt JS binding for MB runtime.
+ * \ingroup xnjsmb
+ *
+ * @{
+ */
 static coord_t *
 xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
     coord_t *coord;
@@ -132,3 +137,5 @@ init(Handle<Object> target) {
     target->Set(String::New("mb_rt"),
 		xnjsmb_auto_mb_rt_temp->GetFunction());    
 }
+
+/* @} */
