@@ -10,6 +10,7 @@ sys.puts("root matrix: " +
 var coord = mb_rt.coord_new(root);
 sys.puts("coord matrix: " + 
 	 [coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]]);
+sys.puts('coord='+coord);
 
 /* Testcase for image shapes */
 var img = mb_rt.image_new(10, 10, 50, 50);
