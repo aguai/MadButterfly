@@ -81,6 +81,14 @@ AC_ARG_ENABLE([skia],
             (*) AC_MSG_ERROR([bad value ${enableval} for --enable-skia]) ;;
         esac],[skia=false])
 
+AC_ARG_ENABLE([xshm],
+	[AS_HELP_STRING([--disable-xshm],[Turn off XSHM supporting])],
+	[case "${enableval}" in
+	    (yes) xshm=true ;;
+	    (no) xshm=false ;;
+	    (*) AC_MSG_ERROR([bad value ${enableval} for --disable-xshm]) ;;
+	esac], [xshm=true])
+
 AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x$skia = xtrue])
 AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x$skia != xtrue])
 
@@ -129,6 +137,12 @@ AM_CONDITIONAL([DFB_BACKEND], [test x$backend = x'dfb' -a x$cairo = xtrue])
     AC_DEFINE([DFB_BACKEND])
 [fi]
 
+AM_CONDITIONAL([XSHM], [test x"${xshm}" = xtrue -a x"${cairo}" = xtrue -a x$backend = x'X'])
+
+[if [ x"${xshm}" = xtrue -a x"${cairo}" = xtrue -a x$backend = x'X' ]; then]
+    AC_DEFINE([XSHM])
+[fi]
+
 # Checks for libraries.
 
 [if [ x"${cairo}" = xtrue ]; then]
@@ -162,5 +176,6 @@ AH_TEMPLATE([SKIA_GRAPH_ENGINE], [Enable Skia Graphic Engine])
 AH_TEMPLATE([CAIRO_GRAPH_ENGINE], [Enable Cairo Graphic Engine])
 AH_TEMPLATE([X_BACKEND], [Enable X backend])
 AH_TEMPLATE([DFB_BACKEND], [Enable DirectFB backend])
+AH_TEMPLATE([XSHM], [Enable XSHM])
 
 AC_OUTPUT
