@@ -8,8 +8,7 @@
 #include "mb_redraw_man.h"
 #include "mb_timer.h"
 #include "mb_X_supp.h"
-
-#define XSHM 1
+#include "config.h"
 
 #ifdef XSHM
 /* \sa http://www.xfree86.org/current/mit-shm.html */
