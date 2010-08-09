@@ -69,6 +69,23 @@ struct _X_MB_runtime {
 #endif
 };
 
+#ifdef XSHM
+static void
+XSHM_update(X_MB_runtime_t *xmb_rt) {
+    GC gc;
+    
+    gc = DefaultGC(xmb_rt->display, DefaultScreen(xmb_rt->display));
+    if(xmb_rt->ximage) {	/* support XSHM */
+	XShmPutImage(xmb_rt->display,
+		     xmb_rt->win,
+		     gc,
+		     xmb_rt->ximage,
+		     0, 0, 0, 0,
+		     xmb_rt->w, xmb_rt->h, 0);
+    }
+}
+#endif
+
 /*! \defgroup xkb X Keyboard Handling
  *
  * Accept keyboard events from X server and delivery it to
@@ -343,6 +360,9 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	rdman_redraw_area(rdman, ex1, ey1, (ex2 - ex1), (ey2 - ey1));
 	eflag = 0;
     }
+#ifdef XSHM
+    XSHM_update(rt);
+#endif
     XFlush(display);
 }
 
@@ -401,6 +421,9 @@ void X_MB_handle_connection(void *be) {
 	    get_now(&now);
 	    mb_tman_handle_timeout(tman, &now);
 	    rdman_redraw_changed(rdman);
+#ifdef XSHM
+	    XSHM_update(rt);
+#endif
 	    XFlush(display);
 	} else if(FD_ISSET(fd, &rfds)){
 	    handle_x_event(rt);
@@ -585,7 +608,7 @@ static int X_MB_init(const char *display_name,
     xmb_rt->surface_ptn =
 	mbe_pattern_create_for_surface(xmb_rt->surface);
     
-    if(xmb_rt->backend_surface != NULL) /* xshm_init() may create one */
+    if(xmb_rt->backend_surface == NULL) /* xshm_init() may create one */
 	xmb_rt->backend_surface =
 	    mbe_xlib_surface_create(xmb_rt->display,
 				    xmb_rt->win,
@@ -778,7 +801,11 @@ int _X_MB_get_x_conn_for_nodejs(void *rt) {
 /*! \brief Flush buffer for the X connection of a runtime object.
  */
 int _X_MB_flush_x_conn_for_nodejs(void *rt) {
-    return XFlush(((X_MB_runtime_t *)rt)->display);
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
+#ifdef XSHM
+    XSHM_update(xmb_rt);
+#endif
+    return XFlush(xmb_rt->display);
 }
 
 /* @} */

@@ -40,7 +40,7 @@ if CAIRO_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_cairo.c
 
 libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ @pangocairo_CFLAGS@
-libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@
+libmbfly_la_LDFLAGS = @cairo_LIBS@ @pangocairo_LIBS@ -lXext
 endif
 
 if SKIA_GRAPH_ENGINE
