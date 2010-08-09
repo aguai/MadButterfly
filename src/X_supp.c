@@ -3,6 +3,7 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <cairo-xlib.h>
 #include "mb_graph_engine.h"
 #include "mb_redraw_man.h"
 #include "mb_timer.h"
@@ -698,7 +699,7 @@ ob_factory_t *X_MB_ob_factory(void *rt) {
 
 mb_img_ldr_t *X_MB_img_ldr(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
-    X_MB_runtime_t *img_ldr;
+    mb_img_ldr_t *img_ldr;
 
     img_ldr = xmb_rt->img_ldr;
 
