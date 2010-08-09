@@ -88,7 +88,7 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
 /*! \brief This function used by \ref xnjsmb_mb_rt to wrap coord object.
  */
 Handle<Value> export_xnjsmb_auto_coord_new(coord_t *coord) {
-    xnjsmb_auto_coord_new(coord);
+    return xnjsmb_auto_coord_new(coord);
 }
 
 /*! \brief Initialize Javascript object for root coord of a runtime.
