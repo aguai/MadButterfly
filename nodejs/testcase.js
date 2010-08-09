@@ -57,6 +57,7 @@ setInterval(function() {
 	var deg = (i++) * 0.1;
 	coord[2] = (i % 20) * 10;
 	mb_rt.redraw_changed();
+	mb_rt.flush();
     }, 20);
 setTimeout(function() { sys.puts("timeout"); }, 1000);
 
