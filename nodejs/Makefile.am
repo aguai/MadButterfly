@@ -5,7 +5,11 @@ mbfly_node_CFLAGS= -I$(abs_top_builddir)/include \
 	-I$(abs_top_srcdir)/include \
 	-I$(prefix)/include \
 	@pangocairo_CFLAGS@ $(CFLAGS)
-mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@ -lXext
+mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@
+
+if XSHM
+mbfly_node_LDFLAGS += -lXext
+endif
 
 all: mbfly.node
 clean: clean-mbfly-node
