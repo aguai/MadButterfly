@@ -10,7 +10,6 @@ sys.puts("root matrix: " +
 var coord = mb_rt.coord_new(root);
 sys.puts("coord matrix: " + 
 	 [coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]]);
-sys.puts('coord='+coord);
 
 /* Testcase for image shapes */
 var img = mb_rt.image_new(10, 10, 50, 50);
@@ -55,7 +54,7 @@ mb_rt.redraw_all();
 var i = 0;
 setInterval(function() {
 	var deg = (i++) * 0.1;
-	coord[2] = (i % 20) * 10;
+	coord[2] = (i % 40) * 5;
 	mb_rt.redraw_changed();
 	mb_rt.flush();
     }, 20);
@@ -65,7 +64,15 @@ sys.puts(root.mouse_event);
 var observer;
 /* Mouse button pressed */
 observer = root.mouse_event.add_event_observer(4, function(evt) {
+	var c = 1 - (i % 40) / 40;
+	sys.puts(c);
+
 	sys.puts("mouse " + evt.x + " " + evt.y);
+	sys.puts(c);
+	sys.puts(paint.set_color);
+	paint.set_color(c, 1, 1, 1);
+	mb_rt.redraw_changed();
+	mb_rt.flush();
     });
 
 var kbobserver;

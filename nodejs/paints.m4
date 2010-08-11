@@ -7,7 +7,9 @@ STRUCT([paint], [paint_t], [],
 	       (SELF, OBJ([sh], [shape], [shape_t])), 1, [])])
 
 STRUCT([paint_color], [paint_t], [],
-       [],
+       [METHOD([set_color], [xnjsmb_paint_color_set_color],
+       	       (SELF, NUMBER([r]), NUMBER([g]), NUMBER([b]), NUMBER([a])),
+	       4, [])],
        (([INHERIT], [paint])))
 
 STRUCT([paint_image], [paint_t], [],
