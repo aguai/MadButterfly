@@ -12,7 +12,7 @@ defined by the NODE_PATH environment variable.
 
 (2) Compile libxml
  ~user/MadButterfly/nodejs$ git clone http://github.com/polotek/libxmljs.git
- ~user/MadButterfly/nodejs$ cd libxml; make
+ ~user/MadButterfly/nodejs$ cd libxml; make; cd ..
 
 (3) Copy the libxml.node to the nodejs build directory
  ~user/MadButterfly/nodejs$ cp libxml/libxml.node objs/default
