@@ -1,9 +1,11 @@
 svg.js: 
 ===============
 
-The sample code to load an SVG file. It requires the libxml, which is available at http://github.com/polotek/libxmljs/tree/refactor.
-Please copy the libxmljs.node to the objs/default if you want to test the libxml+mbfly without installing them into the system. The
-path can be defined by the NODE_PATH environment variable.
+The sample code to load an SVG file. It requires the libxml, which is
+available at http://github.com/polotek/libxmljs/tree/refactor.  Please
+copy the libxmljs.node to the objs/default if you want to test the
+libxml+mbfly without installing them into the system. The path can be
+defined by the NODE_PATH environment variable.
 
 (1) Compile MadButterfly with nodejs support
  ~user/MadButterfly$ ./configure --enable-nodejs; make
