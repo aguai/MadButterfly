@@ -50,6 +50,22 @@ xnjsmb_paint_stroke(paint_t *paint, Handle<Object> self, shape_t *sh) {
 	rdman_shape_changed(rdman, sh);
 }
 
+static void
+xnjsmb_paint_color_set_color(paint_t *paint, Handle<Object> self,
+			     float r, float g, float b, float a) {
+    Handle<Value> rt_v;
+    Handle<Object> rt_o;
+    redraw_man_t *rdman;
+
+    rt_v = GET(self, "mbrt");
+    rt_o = rt_v->ToObject();
+    rdman = xnjsmb_rt_rdman(rt_o);
+
+    paint_color_set(paint, r, g, b, a);
+
+    rdman_paint_changed(rdman, paint);
+}
+
 #include "paints-inc.h"
 
 /*! \defgroup xnjsmb_paints_cons Constructor of paints
@@ -131,14 +147,8 @@ void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
 	xnjsmb_auto_paint_color_init();
 	xnjsmb_auto_paint_image_init();
 	
-	/* xnjsmb_init_paints(); */
 	init_flag = 1;
     }
-    /*
-    rt_proto_temp = rt_temp->PrototypeTemplate();
-    SET(rt_proto_temp, "paint_color_new", xnjsmb_paint_color_new_temp);
-    SET(rt_proto_temp, "paint_image_new", xnjsmb_paint_image_new_temp);
-    */
 }
 
 /* @} */
