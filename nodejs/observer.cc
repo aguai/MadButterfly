@@ -20,6 +20,7 @@ using namespace v8;
 
 struct xnjsmb_observer_data {
     Persistent<Function> func;
+    Persistent<Context> ctx;
 };
 
 static void
@@ -68,11 +69,14 @@ _subject_add_event_observer(subject_t *subject, int type,
                             Handle<Function> func) {
     observer_t *observer;
     xnjsmb_observer_data *data;
+    Handle<Context> ctx;
     
     data = new xnjsmb_observer_data;
     if(data == NULL)
 	return NULL;
     data->func = Persistent<Function>::New(func);
+    ctx = Context::GetCurrent();
+    data->ctx = Persistent<Context>::New(ctx);
     observer = subject_add_event_observer(subject, type,
 					  event_handler,
     	       				  data);
@@ -130,11 +134,19 @@ event_handler(event_t *evt, void *arg) {
     xnjsmb_observer_data *data = (xnjsmb_observer_data *)arg;
     Handle<Value> evt_obj;
     Handle<Value> func_args[1];
+    Handle<Value> r;
+    Context::Scope context_scope(data->ctx);
+    TryCatch trycatch;
 
     evt_obj = xnjsmb_auto_event_new(evt);
     ASSERT(!evt_obj.IsEmpty());
     func_args[0] = evt_obj;
-    data->func->Call(Context::GetCurrent()->Global(), 1, func_args);
+    r = data->func->Call(data->ctx->Global(), 1, func_args);
+    if(r.IsEmpty()) {
+	Handle<Value> exception = trycatch.Exception();
+	String::AsciiValue exc_str(exception);
+	fprintf(stderr, "Exception: %s\n", *exc_str);
+    }
 }
 
 Handle<Value>
