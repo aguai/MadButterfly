@@ -257,7 +257,7 @@ function _MB_parseRect(coord, id, n)
 	} else {
 	    var items = style.value().split(';');
 		var fill = '';
-		var alpha;
+		var alpha = 1;
 		for(i in items) {
 		    sys.puts(items[i]);
 			var f = items[i].split(':');
