@@ -50,6 +50,7 @@ paint.fill(stext);
 coord.add_shape(stext);
 
 mb_rt.redraw_all();
+mb_rt.flush();
 
 var i = 0;
 setInterval(function() {

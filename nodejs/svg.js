@@ -309,3 +309,4 @@ function _MB_parseDefs(root,n)
 
 MB_loadSVG(mb_rt,mb_rt.root,"test.svg");
 mb_rt.redraw_all();
+mb_rt.flush();
