@@ -570,6 +570,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
     char cmd;
     co_aix *pnts;
     co_aix *float_args;
+    co_aix sx = 0, sy = 0;
     co_aix x, y;
     int r;
 
@@ -684,8 +685,37 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		*cmds++ = toupper(cmd);
 	    }
 	    break;
+
 	case 'm':
 	case 'M':
+	    while(*p) {
+		old = p;
+		SKIP_SPACE(p);
+		old = p;
+		SKIP_NUM(p);
+		if(p == old)
+		    break;
+		*pnts = TO_ABSX;
+		x = *pnts;
+		pnts++;
+
+		SKIP_SPACE(p);
+		old = p;
+		SKIP_NUM(p);
+		if(p == old)
+		    return ERR;
+		*pnts = TO_ABSY;
+		y = *pnts;
+		pnts++;
+
+		*cmds++ = toupper(cmd);
+
+		/* save initial point of a subpath */
+		sx = x;
+		sy = y;
+	    }
+	    break;
+		
 	case 'l':
 	case 'L':
 	case 't':
@@ -732,6 +762,9 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 	case 'z':
 	case 'Z':
 	    *cmds++ = toupper(cmd);
+	    /* Go back to initial point of a subpath */
+	    x = sx;
+	    y = sy;
 	    break;
 	default:
 	    return ERR;
