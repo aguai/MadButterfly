@@ -69,6 +69,7 @@ function parseTextStyle(style,n)
 		} else if (kv[0] == "fill") {
 		    style.color = parseColor(kv[1]);
 		} else if (kv[0] == "fill-opacity") {
+		} else if (kv[0] == "stroke-opacity") {
 		} else if (kv[0] == "stroke") {
 		} else if (kv[0] == "stroke-width") {
 		} else if (kv[0] == "stroke-linecap") {
@@ -161,12 +162,64 @@ function parseTransform(coord, s)
 	off = s.indexOf('matrix');
 	if (off != -1) {
 	    sys.puts("matrix");
+		var end = s.indexOf(')');
+		var m = s.substring(7,end);
+		var fields = m.split(',');
+		coord[0] = parseFloat(fields[0]);
+		coord[1] = parseFloat(fields[1]);
+		coord[2] = parseFloat(fields[4]);
+		coord[3] = parseFloat(fields[2]);
+		coord[4] = parseFloat(fields[3]);
+		coord[5] = parseFloat(fields[5]);
 	}
 }
 
 function _MB_parseRect(coord, id, n) 
 {
-    
+    var x = getInteger(n,'x');
+    var y = getInteger(n,'y');
+    var w = getInteger(n,'width');
+    var h = getInteger(n,'height');
+	var paint;
+	
+	var style = n.attr('style');
+
+	if (style==null) {
+		paint = mb_rt.paint_color_new(0,0,0,0.1);
+	} else {
+	    var items = style.value().split(';');
+		var fill = '';
+		var alpha;
+		for(i in items) {
+		    sys.puts(items[i]);
+			var f = items[i].split(':');
+			if (f[0] == 'opacity') {
+			    alpha = f[1];
+			} else if (f[0] == 'fill') {
+			    fill = f[1];
+			} else if (f[0] == 'fill-opacity') {
+			} else if (f[0] == 'stroke') {
+			} else if (f[0] == 'stroken-width') {
+			} else if (f[0] == 'stroke-opacity') {
+			}
+		}
+		sys.puts("fill="+fill);
+		if (fill[0]=='#') {
+		    var r,g,b;
+			r = parseInt(fill.substring(1,3),16)/256;
+			g = parseInt(fill.substring(3,5),16)/256;
+			b = parseInt(fill.substring(5,7),16)/256;
+			sys.puts("r="+r+" g="+g+" b="+b+" a="+alpha);
+
+		    paint = mb_rt.paint_color_new(r,g,b,parseFloat(alpha));
+		} else {
+	        paint = mb_rt.paint_color_new(0,0,0,1);
+		}
+	}
+	var rect = mb_rt.rect_new(x,y,w,h,10, 10);
+	sys.puts("rect x="+x+" y="+y+" w="+w+" h="+h);
+	paint.fill(rect);
+	coord.add_shape(rect);
 }
 
 function _MB_parseGroup(root, group_id, n)
