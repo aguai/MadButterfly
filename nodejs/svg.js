@@ -141,7 +141,7 @@ function _MB_parsePath(coord,id, n)
     var paint;
     
     if (style==null) {
-	paint = mb_rt.paint_color_new(0,0,0,0.1);
+	paint = mb_rt.paint_color_new(0,0,0,1);
 	paint.stroke(path);
     } else {
 	var items = style.value().split(';');
@@ -178,6 +178,10 @@ function _MB_parsePath(coord,id, n)
 	if(stroke_color) {
 	    paint = _prepare_paint_color(stroke_color, stroke_alpha);
 	    paint.stroke(path);
+	}
+	if(!stroke_color && !fill_color) {
+	    paint = mb_rt.paint_color_new(0, 0, 0, 1);
+	    paint.fill(path);
 	}
 
     }
