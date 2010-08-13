@@ -114,6 +114,72 @@ function _MB_parseTSpan(coord, n,style)
 	}
 }
 
+function _prepare_paint_color(color, alpha) {
+    var paint;
+    
+    if (color[0]=='#') {
+	var r,g,b;
+	r = parseInt(color.substring(1,3),16)/256;
+	g = parseInt(color.substring(3,5),16)/256;
+	b = parseInt(color.substring(5,7),16)/256;
+	paint = mb_rt.paint_color_new(r, g, b, alpha);
+    } else {
+	paint = mb_rt.paint_color_new(0,0,0,1);
+    }
+    return paint;
+}
+
+function _MB_parsePath(coord,id, n)
+{
+    var d = n.attr('d').value();
+    var style = n.attr('style');
+    var path = mb_rt.path_new(d);
+    var paint;
+    
+    if (style==null) {
+	paint = mb_rt.paint_color_new(0,0,0,0.1);
+	paint.stroke(path);
+    } else {
+	var items = style.value().split(';');
+	var fill_alpha = 1;
+	var stroke_alpha = 1;
+	var fill_color;
+	var stroke_color;
+	var alpha;
+	
+	for(i in items) {
+	    sys.puts(items[i]);
+	    var f = items[i].split(':');
+	    if (f[0] == 'opacity') {
+		alpha = f[1];
+	    } else if (f[0] == 'fill') {
+		if(f[1] != "none")
+		    fill_color = f[1];
+	    } else if (f[0] == 'fill-opacity') {
+		fill_alpha = parseFloat(f[1]);
+	    } else if (f[0] == 'stroke') {
+		if(f[1] != "none")
+		    stroke_color = f[1];
+	    } else if (f[0] == 'stroke-width') {
+		path.stroke_width = parseFloat(f[1]);
+	    } else if (f[0] == 'stroke-opacity') {
+		stroke_alpha = parseFloat(f[1]);
+	    }
+	}
+
+	if(fill_color) {
+	    paint = _prepare_paint_color(fill_color, fill_alpha);
+	    paint.fill(path);
+	}
+	if(stroke_color) {
+	    paint = _prepare_paint_color(stroke_color, stroke_alpha);
+	    paint.stroke(path);
+	}
+
+    }
+    coord.add_shape(path);
+}
+
 function _MB_parseText(coord,id, n)
 {
     var x = getInteger(n,'x');
@@ -136,7 +202,6 @@ function _MB_parseText(coord,id, n)
     
 }
 
-
 function parseTransform(coord, s)
 {
     var off = s.indexOf('translate');
@@ -154,21 +219,24 @@ function parseTransform(coord, s)
 		}
 		var f = ss.split(',');
 		var x,y;
-		x = parseInt(f[0]);
-		y = parseInt(f[1]);
-        coord[2] = x;
+		x = parseFloat(f[0]);
+		y = parseFloat(f[1]);
+		coord[0] = 1;
+		coord[1] = 0;
+		coord[2] = x;
+		coord[3] = 0;
+		coord[4] = 1;
 		coord[5] = y;
 	}
 	off = s.indexOf('matrix');
 	if (off != -1) {
-	    sys.puts("matrix");
 		var end = s.indexOf(')');
 		var m = s.substring(7,end);
 		var fields = m.split(',');
 		coord[0] = parseFloat(fields[0]);
-		coord[1] = parseFloat(fields[1]);
+		coord[1] = parseFloat(fields[2]);
 		coord[2] = parseFloat(fields[4]);
-		coord[3] = parseFloat(fields[2]);
+		coord[3] = parseFloat(fields[1]);
 		coord[4] = parseFloat(fields[3]);
 		coord[5] = parseFloat(fields[5]);
 	}
@@ -242,6 +310,8 @@ function _MB_parseGroup(root, group_id, n)
 		}
 		if (n == "g") {
 		    _MB_parseGroup(coord, id, nodes[k]);
+		} else if (n == "path") {
+		    _MB_parsePath(coord, id, nodes[k]);
 		} else if (n == "text") {
 		    _MB_parseText(coord, id, nodes[k]);
 		} else if (n == "rect") {
