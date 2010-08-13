@@ -8,6 +8,12 @@ var paint = mb_rt.paint_color_new(1, 1, 1, 1);
 paint.fill(background);
 mb_rt.root.add_shape(background);
 
+var _std_colors = {
+    "white": [1, 1, 1],
+    "black": [0, 0, 0],
+    "red": [1, 0, 0]
+};
+
 function MB_loadSVG(mb_rt,root,filename) {
     var doc = libxml.parseXmlFile(filename);
     var nodes = doc.root().childNodes();
@@ -120,6 +126,7 @@ function _MB_parseTSpan(coord, n,style)
 
 function _prepare_paint_color(color, alpha) {
     var paint;
+    var c;
     
     if (color[0]=='#') {
 	var r,g,b;
@@ -127,6 +134,9 @@ function _prepare_paint_color(color, alpha) {
 	g = parseInt(color.substring(3,5),16)/256;
 	b = parseInt(color.substring(5,7),16)/256;
 	paint = mb_rt.paint_color_new(r, g, b, alpha);
+    } else if(_std_colors[color]) {
+	c = _std_colors[color];
+	paint = mb_rt.paint_color_new(c[0], c[1], c[2], alpha);
     } else {
 	paint = mb_rt.paint_color_new(0,0,0,1);
     }
