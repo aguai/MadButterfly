@@ -1,12 +1,8 @@
 var libxml = require('libxmljs');
 var sys=require('sys');
 var mbfly = require("mbfly");
-var mb_rt = new mbfly.mb_rt(":0.0", 720,480);
 var ldr = mbfly.img_ldr_new(".");
-var background = mb_rt.rect_new(0, 0, 720, 480, 0, 0);
-var paint = mb_rt.paint_color_new(1, 1, 1, 1);
-paint.fill(background);
-mb_rt.root.add_shape(background);
+
 
 var _std_colors = {
     "white": [1, 1, 1],
@@ -14,18 +10,19 @@ var _std_colors = {
     "red": [1, 0, 0]
 };
 
-function MB_loadSVG(mb_rt,root,filename) {
+exports.loadSVG=function(mb_rt,root,filename) {
     var doc = libxml.parseXmlFile(filename);
     var nodes = doc.root().childNodes();
     var coord = mb_rt.coord_new(root);
 	var k;
+	this.mb_rt = mb_rt;
 
     for(k in nodes) {
 	    var n = nodes[k].name();
 		if (n == "defs") {
-		    _MB_parseDefs(root,nodes[k]);
+		    this.parseDefs(root,nodes[k]);
 		} else if (n == "g") {
-		    _MB_parseGroup(root,'root_coord',nodes[k]);
+		    this.parseGroup(root,'root_coord',nodes[k]);
 		} 
     }
 }
@@ -99,32 +96,32 @@ function parseTextStyle(style,n)
 	}
 }
 
-function _MB_parseTSpan(coord, n,style)
+exports.parseTSpan=function(coord, n,style)
 {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
-	var tcoord = mb_rt.coord_new(coord);
+	var tcoord = this.mb_rt.coord_new(coord);
 	var nodes = n.childNodes();
 	var k;
 
     sys.puts(n.text());
-    var obj = mb_rt.stext_new(n.text(),x,y);
+    var obj = this.mb_rt.stext_new(n.text(),x,y);
     parseTextStyle(style,n);
-    style.paint = mb_rt.paint_color_new(1,1,1,1);
-    style.face=mb_rt.font_face_query(style.family, 2, 100);
+    style.paint = this.mb_rt.paint_color_new(1,1,1,1);
+    style.face=this.mb_rt.font_face_query(style.family, 2, 100);
 	obj.set_style([[20,style.face,style.fs]]);
 	style.paint.fill(obj);
 	tcoord.add_shape(obj);
 	for(k in nodes) {
 	    var name = nodes[k].name();
 		if (name == "tspan") {
-		    _MB_parseTSpan(tcoord,nodes[k]);
+		    this.parseTSpan(tcoord,nodes[k]);
 		} else {
 		}
 	}
 }
 
-function _prepare_paint_color(color, alpha) {
+exports._prepare_paint_color=function(color, alpha) {
     var paint;
     var c;
     
@@ -133,25 +130,25 @@ function _prepare_paint_color(color, alpha) {
 	r = parseInt(color.substring(1,3),16)/256;
 	g = parseInt(color.substring(3,5),16)/256;
 	b = parseInt(color.substring(5,7),16)/256;
-	paint = mb_rt.paint_color_new(r, g, b, alpha);
+	paint = this.mb_rt.paint_color_new(r, g, b, alpha);
     } else if(_std_colors[color]) {
 	c = _std_colors[color];
-	paint = mb_rt.paint_color_new(c[0], c[1], c[2], alpha);
+	paint = this.mb_rt.paint_color_new(c[0], c[1], c[2], alpha);
     } else {
-	paint = mb_rt.paint_color_new(0,0,0,1);
+	paint = this.mb_rt.paint_color_new(0,0,0,1);
     }
     return paint;
 }
 
-function _MB_parsePath(coord,id, n)
+exports.parsePath=function(coord,id, n)
 {
     var d = n.attr('d').value();
     var style = n.attr('style');
-    var path = mb_rt.path_new(d);
+    var path = this.mb_rt.path_new(d);
     var paint;
     
     if (style==null) {
-	paint = mb_rt.paint_color_new(0,0,0,1);
+	paint = this.mb_rt.paint_color_new(0,0,0,1);
 	paint.fill(path);
     } else {
 	var items = style.value().split(';');
@@ -182,15 +179,15 @@ function _MB_parsePath(coord,id, n)
 	}
 
 	if(fill_color) {
-	    paint = _prepare_paint_color(fill_color, fill_alpha);
+	    paint = this._prepare_paint_color(fill_color, fill_alpha);
 	    paint.fill(path);
 	}
 	if(stroke_color) {
-	    paint = _prepare_paint_color(stroke_color, stroke_alpha);
+	    paint = this._prepare_paint_color(stroke_color, stroke_alpha);
 	    paint.stroke(path);
 	}
 	if(!stroke_color && !fill_color) {
-	    paint = mb_rt.paint_color_new(0, 0, 0, 1);
+	    paint = this.mb_rt.paint_color_new(0, 0, 0, 1);
 	    paint.fill(path);
 	}
 
@@ -198,11 +195,11 @@ function _MB_parsePath(coord,id, n)
     coord.add_shape(path);
 }
 
-function _MB_parseText(coord,id, n)
+exports.parseText=function(coord,id, n)
 {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
-	var tcoord = mb_rt.coord_new(coord);
+	var tcoord = this.mb_rt.coord_new(coord);
     var style = new Object();
 	style.fs = 20;
 	style.family = 'courier';
@@ -212,7 +209,7 @@ function _MB_parseText(coord,id, n)
 	for(k in nodes) {
 	    var n = nodes[k].name();
 		if (n == "tspan") {
-	        _MB_parseTSpan(tcoord,nodes[k],style);
+	        this.parseTSpan(tcoord,nodes[k],style);
 		} else {
 		}
 	}
@@ -260,7 +257,7 @@ function parseTransform(coord, s)
 	}
 }
 
-function _MB_parseRect(coord, id, n) 
+exports.parseRect=function(coord, id, n) 
 {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
@@ -271,7 +268,7 @@ function _MB_parseRect(coord, id, n)
 	var style = n.attr('style');
 
 	if (style==null) {
-		paint = mb_rt.paint_color_new(0,0,0,0.1);
+		paint = this.mb_rt.paint_color_new(0,0,0,0.1);
 	} else {
 	    var items = style.value().split(';');
 		var fill = '';
@@ -297,22 +294,22 @@ function _MB_parseRect(coord, id, n)
 			b = parseInt(fill.substring(5,7),16)/256;
 			sys.puts("r="+r+" g="+g+" b="+b+" a="+alpha);
 
-		    paint = mb_rt.paint_color_new(r,g,b,parseFloat(alpha));
+		    paint = this.mb_rt.paint_color_new(r,g,b,parseFloat(alpha));
 		} else {
-	        paint = mb_rt.paint_color_new(0,0,0,1);
+	        paint = this.mb_rt.paint_color_new(0,0,0,1);
 		}
 	}
-	var rect = mb_rt.rect_new(x,y,w,h,10, 10);
+	var rect = this.mb_rt.rect_new(x,y,w,h,10, 10);
 	sys.puts("rect x="+x+" y="+y+" w="+w+" h="+h);
 	paint.fill(rect);
 	coord.add_shape(rect);
 }
 
-function _MB_parseGroup(root, group_id, n)
+exports.parseGroup=function(root, group_id, n)
 {
     var k;
     var nodes = n.childNodes();
-    var coord = mb_rt.coord_new(root);
+    var coord = this.mb_rt.coord_new(root);
 	// Parse the transform and style here
 	var trans = n.attr('transform');
 	if (trans!=null) {
@@ -327,21 +324,21 @@ function _MB_parseGroup(root, group_id, n)
 		    id = attr.value();
 		}
 		if (n == "g") {
-		    _MB_parseGroup(coord, id, nodes[k]);
+		    this.parseGroup(coord, id, nodes[k]);
 		} else if (n == "path") {
-		    _MB_parsePath(coord, id, nodes[k]);
+		    this.parsePath(coord, id, nodes[k]);
 		} else if (n == "text") {
-		    _MB_parseText(coord, id, nodes[k]);
+		    this.parseText(coord, id, nodes[k]);
 		} else if (n == "rect") {
-		    _MB_parseRect(coord, id, nodes[k]);
+		    this.parseRect(coord, id, nodes[k]);
 		} else if (n == "image") {
-			_MB_parseImage(coord, id, nodes[k]);
+			this.parseImage(coord, id, nodes[k]);
 		}
 	}
     
 }
 
-function _MB_parseImage(coord,id, n)
+exports.parseImage=function(coord,id, n)
 {
     sys.puts("---> image");
 	var ref = n.attr('href').value();
@@ -373,15 +370,15 @@ function _MB_parseImage(coord,id, n)
 	if (y == null) return;
 	y = parseInt(y.value());
 	sys.puts("x="+x+",y="+y+",w="+w+",h="+h);
-	var img = mb_rt.image_new(x,y,w,h);
+	var img = this.mb_rt.image_new(x,y,w,h);
 	var img_data = ldr.load(ref);
 	sys.puts(img_data);
-	var paint = mb_rt.paint_image_new(img_data);
+	var paint = this.mb_rt.paint_image_new(img_data);
 	paint.fill(img);
 	coord.add_shape(img);
 }
 
-function _MB_parseDefs(root,n) 
+exports.parseDefs=function(root,n) 
 {
     var k;
 	var nodes = n.childNodes();
@@ -395,6 +392,3 @@ function _MB_parseDefs(root,n)
 }
 
 
-MB_loadSVG(mb_rt,mb_rt.root,"test.svg");
-mb_rt.redraw_all();
-mb_rt.flush();
