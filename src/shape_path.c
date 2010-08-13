@@ -626,6 +626,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSX;
+		x = *pnts;
 		pnts++;
 
 		SKIP_SPACE(p);
@@ -634,6 +635,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSY;
+		y = *pnts;
 		pnts++;
 
 		*cmds++ = toupper(cmd);
@@ -667,6 +669,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSX;
+		x = *pnts;
 		pnts++;
 
 		SKIP_SPACE(p);
@@ -675,6 +678,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSY;
+		y = *pnts;
 		pnts++;
 
 		*cmds++ = toupper(cmd);
@@ -694,6 +698,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    break;
 		*pnts = TO_ABSX;
+		x = *pnts;
 		pnts++;
 
 		SKIP_SPACE(p);
@@ -702,6 +707,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSY;
+		y = *pnts;
 		pnts++;
 
 		*cmds++ = toupper(cmd);
