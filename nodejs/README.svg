@@ -1,21 +1,21 @@
 svg.js: 
 ===============
 
-The sample code to load an SVG file. It requires the libxml, which is
+The sample code to load an SVG file. It requires the libxmljs, which is
 available at http://github.com/polotek/libxmljs/tree/refactor.  Please
 copy the libxmljs.node to the objs/default if you want to test the
-libxml+mbfly without installing them into the system. The path can be
+libxmljs+mbfly without installing them into the system. The path can be
 defined by the NODE_PATH environment variable.
 
 (1) Compile MadButterfly with nodejs support
  ~user/MadButterfly$ ./configure --enable-nodejs; make
 
-(2) Compile libxml
+(2) Compile libxmljs
  ~user/MadButterfly/nodejs$ git clone http://github.com/polotek/libxmljs.git
- ~user/MadButterfly/nodejs$ cd libxml; make; cd ..
+ ~user/MadButterfly/nodejs$ cd libxmljs; make; cd ..
 
-(3) Copy the libxml.node to the nodejs build directory
- ~user/MadButterfly/nodejs$ cp libxml/libxml.node objs/default
+(3) Copy the libxmljs.node to the nodejs build directory
+ ~user/MadButterfly/nodejs$ cp libxmljs/libjsxml.node objs/default
 (4) Set the path
  ~user/MadButterfly/nodejs$ export NODE_PATH=objs/default
 
