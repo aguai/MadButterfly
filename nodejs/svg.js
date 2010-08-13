@@ -142,7 +142,7 @@ function _MB_parsePath(coord,id, n)
     
     if (style==null) {
 	paint = mb_rt.paint_color_new(0,0,0,1);
-	paint.stroke(path);
+	paint.fill(path);
     } else {
 	var items = style.value().split(';');
 	var fill_alpha = 1;
