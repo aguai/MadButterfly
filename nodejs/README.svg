@@ -19,6 +19,6 @@ defined by the NODE_PATH environment variable.
 (4) Set the path
  ~user/MadButterfly/nodejs$ export NODE_PATH=objs/default
 
-(5) Execute svg.js
- ~user/MadButterfly/nodejs$ node svg.js
+(5) Execute testsvg.js
+ ~user/MadButterfly/nodejs$ node testsvg.js
 
