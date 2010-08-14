@@ -31,6 +31,20 @@ function loadSVG(mb_rt, root, filename) {
     }
 }
 
+function make_mbnames(mb_rt, n, obj) {
+    var mbname;
+    var name;
+    
+    if(!mb_rt.mbnames)
+	mb_rt.mbnames = {};
+    
+    mbname = n.attr("mbname");
+    if(mbname) {
+	name = mbname.value();
+	mb_rt.mbnames[name] = obj;
+    }
+}
+
 function getInteger(n,name)
 {
     if (n == null) return 0;
@@ -38,6 +52,7 @@ function getInteger(n,name)
 	if (a==null) return 0;
 	return parseInt(a.value());
 }
+
 function parsePointSize(s)
 {
     var fs=0;
@@ -51,13 +66,13 @@ function parsePointSize(s)
 	
 }
 
-
 function parseColor(c)
 {
     if (c[0] == '#') {
 	    return parseInt(c.substring(1,3),16)<<16 | parseInt(c.substring(3,5),16)<<8 | parseInt(c.substring(5,7),16);
 	}
 }
+
 function parseTextStyle(style,n)
 {
 	var attr;
@@ -123,6 +138,7 @@ loadSVG.prototype.parseTSpan=function(coord, n,style)
 		} else {
 		}
 	}
+    make_mbnames(this.mb_rt, n, tcoord);
 }
 
 loadSVG.prototype._prepare_paint_color=function(color, alpha) {
@@ -200,6 +216,8 @@ loadSVG.prototype.parsePath=function(coord,id, n)
 	black_paint.stroke(path);
     }
     coord.add_shape(path);
+
+    make_mbnames(this.mb_rt, n, path);
 }
 
 loadSVG.prototype.parseText=function(coord,id, n)
@@ -221,7 +239,7 @@ loadSVG.prototype.parseText=function(coord,id, n)
 		}
 	}
 	
-    
+    make_mbnames(this.mb_rt, n, tcoord);
 }
 
 function parseTransform(coord, s)
@@ -324,25 +342,26 @@ loadSVG.prototype.parseGroup=function(root, group_id, n)
 	}
 
 	for(k in nodes) {
-	    var n = nodes[k].name();
+	    var c = nodes[k].name();
 		var attr = nodes[k].attr('id');
 		var id;
 		if (attr) {
 		    id = attr.value();
 		}
-		if (n == "g") {
+		if (c == "g") {
 		    this.parseGroup(coord, id, nodes[k]);
-		} else if (n == "path") {
+		} else if (c == "path") {
 		    this.parsePath(coord, id, nodes[k]);
-		} else if (n == "text") {
+		} else if (c == "text") {
 		    this.parseText(coord, id, nodes[k]);
-		} else if (n == "rect") {
+		} else if (c == "rect") {
 		    this.parseRect(coord, id, nodes[k]);
-		} else if (n == "image") {
+		} else if (c == "image") {
 			this.parseImage(coord, id, nodes[k]);
 		}
 	}
     
+    make_mbnames(this.mb_rt, n, coord);
 }
 
 loadSVG.prototype.parseImage=function(coord,id, n)
@@ -383,6 +402,7 @@ loadSVG.prototype.parseImage=function(coord,id, n)
 	var paint = this.mb_rt.paint_image_new(img_data);
 	paint.fill(img);
 	coord.add_shape(img);
+    make_mbnames(this.mb_rt, n, img);
 }
 
 loadSVG.prototype.parseDefs=function(root,n) 
