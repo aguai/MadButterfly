@@ -232,8 +232,8 @@ loadSVG.prototype.parseText=function(coord,id, n)
 	var nodes = n.childNodes();
 	var k;
 	for(k in nodes) {
-	    var n = nodes[k].name();
-		if (n == "tspan") {
+	    var c= nodes[k].name();
+		if (c == "tspan") {
 	        this.parseTSpan(tcoord,nodes[k],style);
 		} else {
 		}
