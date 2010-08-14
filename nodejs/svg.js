@@ -11,6 +11,10 @@ var _std_colors = {
 };
 
 exports.loadSVG=function(mb_rt,root,filename) {
+    return new loadSVG(mb_rt, root, filename);
+};
+
+function loadSVG(mb_rt, root, filename) {
     var doc = libxml.parseXmlFile(filename);
     var nodes = doc.root().childNodes();
     var coord = mb_rt.coord_new(root);
@@ -96,7 +100,7 @@ function parseTextStyle(style,n)
 	}
 }
 
-exports.parseTSpan=function(coord, n,style)
+loadSVG.prototype.parseTSpan=function(coord, n,style)
 {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
@@ -121,7 +125,7 @@ exports.parseTSpan=function(coord, n,style)
 	}
 }
 
-exports._prepare_paint_color=function(color, alpha) {
+loadSVG.prototype._prepare_paint_color=function(color, alpha) {
     var paint;
     var c;
     
@@ -140,7 +144,7 @@ exports._prepare_paint_color=function(color, alpha) {
     return paint;
 }
 
-exports.parsePath=function(coord,id, n)
+loadSVG.prototype.parsePath=function(coord,id, n)
 {
     var d = n.attr('d').value();
     var style = n.attr('style');
@@ -198,7 +202,7 @@ exports.parsePath=function(coord,id, n)
     coord.add_shape(path);
 }
 
-exports.parseText=function(coord,id, n)
+loadSVG.prototype.parseText=function(coord,id, n)
 {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
@@ -260,7 +264,7 @@ function parseTransform(coord, s)
 	}
 }
 
-exports.parseRect=function(coord, id, n) 
+loadSVG.prototype.parseRect=function(coord, id, n) 
 {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
@@ -308,7 +312,7 @@ exports.parseRect=function(coord, id, n)
 	coord.add_shape(rect);
 }
 
-exports.parseGroup=function(root, group_id, n)
+loadSVG.prototype.parseGroup=function(root, group_id, n)
 {
     var k;
     var nodes = n.childNodes();
@@ -341,7 +345,7 @@ exports.parseGroup=function(root, group_id, n)
     
 }
 
-exports.parseImage=function(coord,id, n)
+loadSVG.prototype.parseImage=function(coord,id, n)
 {
     sys.puts("---> image");
 	var ref = n.attr('href').value();
@@ -381,7 +385,7 @@ exports.parseImage=function(coord,id, n)
 	coord.add_shape(img);
 }
 
-exports.parseDefs=function(root,n) 
+loadSVG.prototype.parseDefs=function(root,n) 
 {
     var k;
 	var nodes = n.childNodes();
