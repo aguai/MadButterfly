@@ -127,9 +127,9 @@ exports._prepare_paint_color=function(color, alpha) {
     
     if (color[0]=='#') {
 	var r,g,b;
-	r = parseInt(color.substring(1,3),16)/256;
-	g = parseInt(color.substring(3,5),16)/256;
-	b = parseInt(color.substring(5,7),16)/256;
+	r = parseInt(color.substring(1,3),16)/255;
+	g = parseInt(color.substring(3,5),16)/255;
+	b = parseInt(color.substring(5,7),16)/255;
 	paint = this.mb_rt.paint_color_new(r, g, b, alpha);
     } else if(_std_colors[color]) {
 	c = _std_colors[color];
@@ -146,16 +146,14 @@ exports.parsePath=function(coord,id, n)
     var style = n.attr('style');
     var path = this.mb_rt.path_new(d);
     var paint;
+    var fill_alpha = 1;
+    var stroke_alpha = 1;
+    var fill_color;
+    var stroke_color;
+    var black_paint;
     
-    if (style==null) {
-	paint = this.mb_rt.paint_color_new(0,0,0,1);
-	paint.fill(path);
-    } else {
+    if(style != null) {
 	var items = style.value().split(';');
-	var fill_alpha = 1;
-	var stroke_alpha = 1;
-	var fill_color;
-	var stroke_color;
 	var alpha;
 	
 	for(i in items) {
@@ -164,13 +162,11 @@ exports.parsePath=function(coord,id, n)
 	    if (f[0] == 'opacity') {
 		alpha = f[1];
 	    } else if (f[0] == 'fill') {
-		if(f[1] != "none")
-		    fill_color = f[1];
+		fill_color = f[1];
 	    } else if (f[0] == 'fill-opacity') {
 		fill_alpha = parseFloat(f[1]);
 	    } else if (f[0] == 'stroke') {
-		if(f[1] != "none")
-		    stroke_color = f[1];
+		stroke_color = f[1];
 	    } else if (f[0] == 'stroke-width') {
 		path.stroke_width = parseFloat(f[1]);
 	    } else if (f[0] == 'stroke-opacity') {
@@ -178,19 +174,26 @@ exports.parsePath=function(coord,id, n)
 	    }
 	}
 
-	if(fill_color) {
+    }
+
+    if(!fill_color || !stroke_color)
+	black_paint = this.mb_rt.paint_color_new(0, 0, 0, 1);
+    
+    if(fill_color) {
+	if(fill_color != "none") {
 	    paint = this._prepare_paint_color(fill_color, fill_alpha);
 	    paint.fill(path);
 	}
-	if(stroke_color) {
+    } else {
+	black_paint.fill(path);
+    }
+    if(stroke_color) {
+	if(stroke_color != "none") {
 	    paint = this._prepare_paint_color(stroke_color, stroke_alpha);
 	    paint.stroke(path);
 	}
-	if(!stroke_color && !fill_color) {
-	    paint = this.mb_rt.paint_color_new(0, 0, 0, 1);
-	    paint.fill(path);
-	}
-
+    } else {
+	black_paint.stroke(path);
     }
     coord.add_shape(path);
 }
