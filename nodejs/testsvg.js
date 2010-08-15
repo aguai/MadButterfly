@@ -4,9 +4,9 @@ var sys=require("sys");
 
 app = new mbapp.app();
 app.loadSVG("test.svg");
-lightbar = app.get("item_lightbar")
-item=1
-lightbar[5] = app.get("item"+item)[5]
+lightbar = app.get("item_lightbar");
+item=1;
+lightbar[5] = app.get("item"+item)[5];
 
 function animated(app,obj) {
 	var d=obj.animated_loc - obj[5];
