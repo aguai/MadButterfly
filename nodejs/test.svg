@@ -55,10 +55,10 @@
     </linearGradient>
     <inkscape:perspective
        id="perspective10"
-       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
-       inkscape:vp_z="744.09448 : 526.18109 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:persp3d-origin="804.3173 : 267.38473 : 1"
+       inkscape:vp_z="1630.7262 : 376.00761 : 1"
+       inkscape:vp_y="0 : 619.30892 : 0"
+       inkscape:vp_x="-22.091594 : 376.00761 : 1"
        sodipodi:type="inkscape:persp3d" />
     <linearGradient
        inkscape:collect="always"
@@ -310,5 +310,49 @@
        xlink:href="file:logo.png"
        height="37"
        width="46" />
+    <g
+       sodipodi:type="inkscape:box3d"
+       style="fill:none;stroke:none"
+       id="g2953"
+       inkscape:perspectiveID="#perspective10"
+       inkscape:corner0="11.418244 : -1.091331 : 0 : 1"
+       inkscape:corner7="6.2635014 : -2.542367 : 0.25 : 1">
+      <path
+         sodipodi:type="inkscape:box3dside"
+         id="path2963"
+         style="fill:#afafde;fill-rule:evenodd;stroke:none"
+         inkscape:box3dsidetype="13"
+         d="M 44.456373,239.52954 91.68396,335.71719 142.89318,328.00691 75.760432,236.8548 z" />
+      <path
+         sodipodi:type="inkscape:box3dside"
+         id="path2955"
+         style="fill:#353564;fill-rule:evenodd;stroke:none"
+         inkscape:box3dsidetype="6"
+         d="m 44.456373,167.16508 0,72.36446 31.304059,-2.67474 0,-70.93639 z" />
+      <path
+         sodipodi:type="inkscape:box3dside"
+         id="path2965"
+         style="fill:#e9e9ff;fill-rule:evenodd;stroke:none"
+         inkscape:box3dsidetype="11"
+         d="m 75.760432,165.91841 67.132748,42.48521 0,119.60329 -67.132748,-91.15211 z" />
+      <path
+         sodipodi:type="inkscape:box3dside"
+         id="path2957"
+         style="fill:#4d4d9f;fill-rule:evenodd;stroke:none"
+         inkscape:box3dsidetype="5"
+         d="m 44.456373,167.16508 47.227587,44.83223 51.20922,-3.59369 -67.132748,-42.48521 z" />
+      <path
+         sodipodi:type="inkscape:box3dside"
+         id="path2961"
+         style="fill:#d7d7ff;fill-rule:evenodd;stroke:none"
+         inkscape:box3dsidetype="14"
+         d="m 91.68396,211.99731 0,123.71988 51.20922,-7.71028 0,-119.60329 z" />
+      <path
+         sodipodi:type="inkscape:box3dside"
+         id="path2959"
+         style="fill:#8686bf;fill-rule:evenodd;stroke:none"
+         inkscape:box3dsidetype="3"
+         d="m 44.456373,167.16508 47.227587,44.83223 0,123.71988 -47.227587,-96.18765 z" />
+    </g>
   </g>
 </svg>
