@@ -34,7 +34,7 @@ function animated_start(app,obj,target) {
 	animated(app,obj);
 }
 lightbar.animated_loc = 1;
-app.addKeyboardListener(6, function(evt) {
+app.addKeyboardListener(mbapp.EVT_KB_PRESS, function(evt) {
     if (evt.keycode == mbapp.KEY_UP) {
 		item = item - 1;
 		if (item == 0) item = 1;

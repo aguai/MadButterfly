@@ -24,9 +24,27 @@ app.prototype.get=function(name) {
 app.prototype.addKeyboardListener=function(type,f) {
     return this.mb_rt.kbevents.add_event_observer(type,f);    
 }
+app.prototype.refresh=function() {
+    this.mb_rt.redraw_all();
+    this.mb_rt.flush();
+}
 
 exports.app=app;
 
 // Put all key definition here
-exports.KEY_UP=111;
+exports.KEY_UP = 111;
 exports.KEY_DOWN=116;
+exports.EVT_ANY=0;
+exports.EVT_MOUSE_OVER=1;
+exports.EVT_MOUSE_OUT=2;
+exports.EVT_MOUSE_MOVE=3;
+exports.EVT_MOUSE_BUT_PRESS4;
+exports.EVT_MOUSE_BUT_RELEASE=5
+exports.EVT_KB_PRESS=6;
+exports.EVT_KB_RELEASE=7;
+exports.EVT_PROGM_COMPLETE=8;
+exports.EVT_RDMAN_REDRAW=9;
+exports.EVT_MONITOR_ADD=10;
+exports.EVT_MONITOR_REMOVE=11;
+exports.EVT_MONITOR_FREE=12;
+exports.EVT_MOUSE_MOVE_RAW=13;
