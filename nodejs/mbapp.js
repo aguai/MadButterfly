@@ -9,15 +9,24 @@ mb_rt.root.add_shape(background);
 
 app=function() {
     this.mb_rt = mb_rt;
-
 }
 app.prototype.loadSVG=function(fname) {
-    svg.loadSVG(mb_rt,mb_rt.root,fname);
+    svg.loadSVG(this.mb_rt,this.mb_rt.root,fname);
 }
 
 app.prototype.loop=function() {
-    mb_rt.redraw_all();
-    mb_rt.flush();
+    this.mb_rt.redraw_all();
+    this.mb_rt.flush();
+}
+app.prototype.get=function(name) {
+    return this.mb_rt.mbnames[name];
+}
+app.prototype.addKeyboardListener=function(type,f) {
+    return this.mb_rt.kbevents.add_event_observer(type,f);    
 }
 
 exports.app=app;
+
+// Put all key definition here
+exports.KEY_UP=111;
+exports.KEY_DOWN=116;
