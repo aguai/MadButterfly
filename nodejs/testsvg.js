@@ -10,7 +10,7 @@ item=1;
 lightbar[5] = app.get("item"+item)[5];
 
 app.addKeyboardListener(mbapp.EVT_KB_PRESS, function(evt) {
-    if (evt.keycode == mbapp.KEY_UP) {
+    if (evt.sym == mbapp.KEY_UP) {
 		item = item - 1;
 		if (item == 0) item = 1;
 		else {
@@ -18,7 +18,7 @@ app.addKeyboardListener(mbapp.EVT_KB_PRESS, function(evt) {
 			var an = new animate.linear(app,lightbar,target[2],target[5],0.3);
 		    an.start();
 		}
-	} else if (evt.keycode == mbapp.KEY_DOWN) {
+	} else if (evt.sym == mbapp.KEY_DOWN) {
 	    item = item + 1;
 		if (item == 10) {
 		    item = 9;
