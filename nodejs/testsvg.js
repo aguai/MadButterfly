@@ -15,7 +15,7 @@ app.addKeyboardListener(mbapp.EVT_KB_PRESS, function(evt) {
 		if (item == 0) item = 1;
 		else {
 		    var target = app.get("item"+item);
-			var an = new animate.linear(app,lightbar,target[5],0.3);
+			var an = new animate.linear(app,lightbar,target[2],target[5],0.3);
 		    an.start();
 		}
 	} else if (evt.keycode == mbapp.KEY_DOWN) {
@@ -24,7 +24,7 @@ app.addKeyboardListener(mbapp.EVT_KB_PRESS, function(evt) {
 		    item = 9;
 		} else {
 		    var target = app.get("item"+item);
-			var an = new animate.linear(app,lightbar,target[5],0.3);
+			var an = new animate.linear(app,lightbar,target[2],target[5],0.3);
 		    an.start();
 		}
 	}
