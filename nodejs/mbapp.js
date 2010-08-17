@@ -32,8 +32,8 @@ app.prototype.refresh=function() {
 exports.app=app;
 
 // Put all key definition here
-exports.KEY_UP = 111;
-exports.KEY_DOWN=116;
+exports.KEY_UP = 0xff52;
+exports.KEY_DOWN = 0xff54;
 exports.EVT_ANY=0;
 exports.EVT_MOUSE_OVER=1;
 exports.EVT_MOUSE_OUT=2;
