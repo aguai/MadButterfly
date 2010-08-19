@@ -1,5 +1,6 @@
 var mbfly = require("mbfly");
 var svg = require("./svg");
+var sys = require("sys");
 var mb_rt = new mbfly.mb_rt(":0.0", 720,480);
 var ldr = mbfly.img_ldr_new(".");
 var background = mb_rt.rect_new(0, 0, 720, 480, 0, 0);
@@ -8,10 +9,19 @@ paint.fill(background);
 mb_rt.root.add_shape(background);
 
 app=function() {
+    var self = this;
     this.mb_rt = mb_rt;
+	this.mb_rt.kbevents.add_event_observer(exports.EVT_KB_PRESS, function(evt) { self.KeyPress(evt);});
+	this.keymap={};
+	this.onKeyPress = null;
 }
 app.prototype.loadSVG=function(fname) {
     svg.loadSVG(this.mb_rt,this.mb_rt.root,fname);
+}
+
+app.prototype.KeyPress = function(evt) {
+    if (this.onKeyPress) this.onKeyPress(evt.sym);
+	if (evt.sym in this.keymap) this.keymap[evt.sym]();
 }
 
 app.prototype.loop=function() {
@@ -27,6 +37,13 @@ app.prototype.addKeyboardListener=function(type,f) {
 app.prototype.refresh=function() {
     this.mb_rt.redraw_all();
     this.mb_rt.flush();
+}
+app.prototype.dump=function() {
+    sys.puts(this.onKeyPress);
+}
+
+app.prototype.addKeyListener=function(key,f) {
+    this.keymap[key] = f;
 }
 
 exports.app=app;
