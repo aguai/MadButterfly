@@ -43,7 +43,13 @@ app.prototype.dump=function() {
 }
 
 app.prototype.addKeyListener=function(key,f) {
-    this.keymap[key] = f;
+    if (typeof(key) == 'number')
+        this.keymap[key] = f;
+	else {
+	    for(k in key) {
+		    this.keymap[k] = f;
+		}
+	}
 }
 
 exports.app=app;
