@@ -2,12 +2,22 @@ var svg = require("./svg");
 var mbapp = require("./mbapp");
 var sys=require("sys");
 var animate=require("./animate");
+var fs = require("fs");
 
 app = new mbapp.app();
 app.loadSVG("test.svg");
 lightbar = app.get("item_lightbar");
 item=1;
 lightbar[5] = app.get("item"+item)[5];
+
+app.files=fs.readdirSync("/tmp/");
+for(i=1;i<10;i++) {
+    var o = app.get("item"+i+"text");
+	o.set_text(app.files[i]);
+}
+
+
+
 
 app.addKeyListener(mbapp.KEY_UP, function() {
 		item = item - 1;
