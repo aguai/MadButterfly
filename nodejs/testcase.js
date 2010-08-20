@@ -19,6 +19,22 @@ var paint = mb_rt.paint_image_new(img_data);
 paint.fill(img);
 root.add_shape(img);
 
+/* test linear paint and rectangle */
+var rect = mb_rt.rect_new(100, 100, 50, 50, 10, 10);
+sys.puts(mb_rt.paint_linear_new);
+var paint = mb_rt.paint_linear_new(100, 100, 150, 150);
+paint.set_stops([[0, 0, 1, 0, 1], [1, 0, 0, 1, 1]]);
+paint.fill(rect);
+root.add_shape(rect);
+
+/* test radial paint and rectangle */
+var rect = mb_rt.rect_new(150, 100, 50, 50, 10, 10);
+sys.puts(mb_rt.paint_radial_new);
+var paint = mb_rt.paint_radial_new(175, 125, 25);
+paint.set_stops([[0, 0, 1, 0, 1], [1, 0, 0, 1, 1]]);
+paint.fill(rect);
+root.add_shape(rect);
+
 /* test alpha blending and rectangle */
 var rect = mb_rt.rect_new(40, 40, 100, 100, 10, 10);
 sys.puts(mb_rt.paint_color_new);
