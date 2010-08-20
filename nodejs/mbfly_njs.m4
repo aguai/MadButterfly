@@ -38,7 +38,7 @@ STRUCT([mb_rt], [njs_runtime_t], [],
 	       (([MOD], [xnjsmb_mb_rt_objs_mod]))),
 	METHOD([paint_radial_new], [xnjsmb_paint_radial_new],
 	       (NUMBER(cx), NUMBER(cy), NUMBER(r), ERR), 3,
-	       [OBJ([paint_linear], [paint_t])],
+	       [OBJ([paint_radial], [paint_t])],
 	       (([MOD], [xnjsmb_mb_rt_objs_mod])))],
 	((CTOR, ([_X_njs_MB_new], (SELF, STR(display_name), INT(width), INT(height)), 3)))dnl
 )

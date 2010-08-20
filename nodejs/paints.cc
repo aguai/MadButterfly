@@ -125,7 +125,7 @@ xnjsmb_paint_radial_set_stops(paint_t *paint, Handle<Value> stops) {
 		       stop_o->Get(4)->ToNumber()->Value()); /* a */
     }
     
-    old_grad_stops = paint_linear_stops(paint, nstops, grad_stops);
+    old_grad_stops = paint_radial_stops(paint, nstops, grad_stops);
     if(old_grad_stops)
 	free(old_grad_stops);	/* The stops, here, were allocated for
 				 * previous calling of this
@@ -264,6 +264,8 @@ void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
 	xnjsmb_auto_paint_init();
 	xnjsmb_auto_paint_color_init();
 	xnjsmb_auto_paint_image_init();
+	xnjsmb_auto_paint_linear_init();
+	xnjsmb_auto_paint_radial_init();
 	
 	init_flag = 1;
     }
