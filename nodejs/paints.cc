@@ -66,6 +66,72 @@ xnjsmb_paint_color_set_color(paint_t *paint, Handle<Object> self,
     rdman_paint_changed(rdman, paint);
 }
 
+/*! \brief Set stops for linear paint for Javascript code.
+ */
+static void
+xnjsmb_paint_linear_set_stops(paint_t *paint, Handle<Value> stops) {
+    Array *stops_o;
+    Array *stop_o;
+    int nstops;
+    grad_stop_t *grad_stops, *old_grad_stops;
+    int i;
+
+    stops_o = Array::Cast(*stops);
+    nstops = stops_o->Length();
+    grad_stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * nstops);
+    ASSERT(grad_stops != NULL);
+
+    for(i = 0; i < nstops; i++) {
+	stop_o = Array::Cast(*stops_o->Get(i));
+	ASSERT(stop_o->Length() == 5);
+	grad_stop_init(grad_stops + i,
+		       stop_o->Get(0)->ToNumber()->Value(),  /* off */
+		       stop_o->Get(1)->ToNumber()->Value(),  /* r */
+		       stop_o->Get(2)->ToNumber()->Value(),  /* g */
+		       stop_o->Get(3)->ToNumber()->Value(),  /* b */
+		       stop_o->Get(4)->ToNumber()->Value()); /* a */
+    }
+    
+    old_grad_stops = paint_linear_stops(paint, nstops, grad_stops);
+    if(old_grad_stops)
+	free(old_grad_stops);	/* The stops, here, were allocated for
+				 * previous calling of this
+				 * function. */
+}
+
+/*! \brief Set stops for radial paint for Javascript code.
+ */
+static void
+xnjsmb_paint_radial_set_stops(paint_t *paint, Handle<Value> stops) {
+    Array *stops_o;
+    Array *stop_o;
+    int nstops;
+    grad_stop_t *grad_stops, *old_grad_stops;
+    int i;
+
+    stops_o = Array::Cast(*stops);
+    nstops = stops_o->Length();
+    grad_stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * nstops);
+    ASSERT(grad_stops != NULL);
+
+    for(i = 0; i < nstops; i++) {
+	stop_o = Array::Cast(*stops_o->Get(i));
+	ASSERT(stop_o->Length() == 5);
+	grad_stop_init(grad_stops + i,
+		       stop_o->Get(0)->ToNumber()->Value(),  /* off */
+		       stop_o->Get(1)->ToNumber()->Value(),  /* r */
+		       stop_o->Get(2)->ToNumber()->Value(),  /* g */
+		       stop_o->Get(3)->ToNumber()->Value(),  /* b */
+		       stop_o->Get(4)->ToNumber()->Value()); /* a */
+    }
+    
+    old_grad_stops = paint_linear_stops(paint, nstops, grad_stops);
+    if(old_grad_stops)
+	free(old_grad_stops);	/* The stops, here, were allocated for
+				 * previous calling of this
+				 * function. */
+}
+
 #include "paints-inc.h"
 
 /*! \defgroup xnjsmb_paints_cons Constructor of paints
@@ -105,6 +171,40 @@ xnjsmb_paint_image_new(njs_runtime_t *rt, mb_img_data_t *img,
     return paint;
 }
 
+paint_t *
+xnjsmb_paint_linear_new(njs_runtime_t *rt,
+			float x1, float y1, float x2, float y2,
+			const char **err) {
+    paint_t *paint;
+    redraw_man_t *rdman;
+
+    rdman = X_njs_MB_rdman(rt);
+    paint = rdman_paint_linear_new(rdman, x1, y1, x2, y2);
+    if(paint == NULL) {
+	*err = "can not allocate a paint_linear_t";
+	return NULL;
+    }
+
+    return paint;
+}
+
+paint_t *
+xnjsmb_paint_radial_new(njs_runtime_t *rt,
+			float cx, float cy, float r,
+			const char **err) {
+    paint_t *paint;
+    redraw_man_t *rdman;
+
+    rdman = X_njs_MB_rdman(rt);
+    paint = rdman_paint_radial_new(rdman, cx, cy, r);
+    if(paint == NULL) {
+	*err = "can not allocate a paint_radial_t";
+	return NULL;
+    }
+
+    return paint;
+}
+
 /* @} */
 
 /*! \defgroup xnjsmb_paints_export Exported wrapper maker for paints
@@ -128,6 +228,24 @@ export_xnjsmb_auto_paint_image_new(paint_t *paint) {
     Handle<Value> ret;
     
     ret = xnjsmb_auto_paint_image_new(paint);
+    
+    return ret;
+}
+
+Handle<Value>
+export_xnjsmb_auto_paint_linear_new(paint_t *paint) {
+    Handle<Value> ret;
+    
+    ret = xnjsmb_auto_paint_linear_new(paint);
+    
+    return ret;
+}
+
+Handle<Value>
+export_xnjsmb_auto_paint_radial_new(paint_t *paint) {
+    Handle<Value> ret;
+    
+    ret = xnjsmb_auto_paint_radial_new(paint);
     
     return ret;
 }

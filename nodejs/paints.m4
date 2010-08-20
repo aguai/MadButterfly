@@ -15,3 +15,13 @@ STRUCT([paint_color], [paint_t], [],
 STRUCT([paint_image], [paint_t], [],
        [],
        (([INHERIT], [paint])))
+
+STRUCT([paint_linear], [paint_t], [],
+       [METHOD([set_stops], [xnjsmb_paint_linear_set_stops],
+       (ARRAY([stops])), 1, [])],
+       (([INHERIT], [paint])))
+
+STRUCT([paint_radial], [paint_t], [],
+       [METHOD([set_stops], [xnjsmb_paint_radial_set_stops],
+       (ARRAY([stops])), 1, [])],
+       (([INHERIT], [paint])))

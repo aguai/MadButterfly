@@ -53,8 +53,16 @@ paint_t *xnjsmb_paint_color_new(njs_runtime_t *rt,
 				const char **err);
 paint_t *xnjsmb_paint_image_new(njs_runtime_t *rt, mb_img_data_t *img,
 				const char **err);
+paint_t *xnjsmb_paint_linear_new(njs_runtime_t *rt,
+				 float x1, float y1, float x2, float y2,
+				 const char **err);
+paint_t *xnjsmb_paint_radial_new(njs_runtime_t *rt,
+				 float cx, float cy, float r,
+				 const char **err);
 v8::Handle<v8::Value> export_xnjsmb_auto_paint_color_new(paint_t *paint);
 v8::Handle<v8::Value> export_xnjsmb_auto_paint_image_new(paint_t *paint);
+v8::Handle<v8::Value> export_xnjsmb_auto_paint_linear_new(paint_t *sh);
+v8::Handle<v8::Value> export_xnjsmb_auto_paint_radial_new(paint_t *sh);
 
 /* From font.cc */
 void xnjsmb_font_init_mb_rt_temp(v8::Handle<v8::FunctionTemplate> mb_rt_temp);

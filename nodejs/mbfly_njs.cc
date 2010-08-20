@@ -94,6 +94,8 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
 #define xnjsmb_auto_rect_new export_xnjsmb_auto_rect_new
 #define xnjsmb_auto_paint_color_new export_xnjsmb_auto_paint_color_new
 #define xnjsmb_auto_paint_image_new export_xnjsmb_auto_paint_image_new
+#define xnjsmb_auto_paint_linear_new export_xnjsmb_auto_paint_linear_new
+#define xnjsmb_auto_paint_radial_new export_xnjsmb_auto_paint_radial_new
 
 #include "mbfly_njs-inc.h"
 
