@@ -114,6 +114,10 @@ function parseTextStyle(style,n)
 		}
 	}
 }
+function tspan_set_text(text)
+{
+   this.text.set_text(text); 
+}
 
 loadSVG.prototype.parseTSpan=function(coord, n,style)
 {
@@ -138,6 +142,8 @@ loadSVG.prototype.parseTSpan=function(coord, n,style)
 		} else {
 		}
 	}
+	tcoord.set_text=tspan_set_text;
+	tcoord.text = obj;
     make_mbnames(this.mb_rt, n, tcoord);
 }
 
