@@ -33,7 +33,7 @@
      inkscape:cx="267.0313"
      inkscape:cy="228.90269"
      inkscape:document-units="px"
-     inkscape:current-layer="layer4"
+     inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1347"
      inkscape:window-height="894"
@@ -267,7 +267,7 @@
        x="24.177626"
        style="font-size:24px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
        xml:space="preserve"><tspan
-         mbname="item1text"
+         mbname="title"
          y="44.383541"
          x="24.177626"
          id="tspan2418"
