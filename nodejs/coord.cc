@@ -14,6 +14,38 @@ extern "C" {
 #define ASSERT(x)
 #endif
 
+/*! \page jsgc How to Manage Life-cycle of Objects for Javascript.
+ *
+ * The life-cycle of MadButterfly ojects are simple.  A object is live
+ * when it is created and dead when it is free.  When a coord or shape
+ * is free, it is also removed from the tree.  There is not way to
+ * remove a coord or a shape without freeing it.  So, if you want to
+ * remove a coord or a shape object from the tree, you can only free
+ * it.
+ *
+ * Javascript, in conventional, does not free an object.  It has GC,
+ * the engine, being used, will free an object if it is no more
+ * referenced.  So, we had better provide a removing function, but
+ * actually free an object.  In idea situation, a new MB object would
+ * be created for and attached on the JS object, when an object added
+ * back to the tree.  But, it means we need to keep states of an
+ * object and create a new one with the same states later.  It is
+ * complicated.  So, once an object is removed, it is invalidated.
+ *
+ * I hope someone would implement a higher abstract layer, in JS, to
+ * implement the idea model that recreate a new object when an
+ * invalidated JS object being added back.
+ *
+ * An invalid object is the one with NULL internal field and obj.valid
+ * == false.  The binding of MadButterfly hold a reference to every
+ * object added to the tree of a mbrt (runtime object), and remove the
+ * reference and invalidate it when it being removed.
+ *
+ * The binding also hold a weak reference to every object, it free the
+ * object when the callback of the weak reference being called and it
+ * being valid.  If the object is invalid, the callback does nothing.
+ */
+
 using namespace v8;
 
 /*! \defgroup xnjsmb_coord JS binding for coord objects.
