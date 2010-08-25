@@ -41,9 +41,15 @@ extern "C" {
  * object added to the tree of a mbrt (runtime object), and remove the
  * reference and invalidate it when it being removed.
  *
- * The binding also hold a weak reference to every object, it free the
- * object when the callback of the weak reference being called and it
- * being valid.  If the object is invalid, the callback does nothing.
+ * For coords, they are always attached to the tree when it is valid.
+ * So, binding hold a persistent reference to it.  The reference is
+ * purged when a coord being removed from the tree and being
+ * invalidated.
+ *
+ * For any shape, it is not attached to the tree at begining, but is
+ * attached to a tree laterly, or is collected by GC.  The binding
+ * hold a weak reference for a new shape, and upgrade to a strong
+ * reference when the shape being added to the tree.
  */
 
 using namespace v8;
@@ -53,6 +59,44 @@ using namespace v8;
  *
  * @{
  */
+/*! \brief Invalidate JS objects for coords and shapes in a subtree.
+ *
+ * \param self is the object of the root of subtree.
+ *
+ * \sa \ref jsgc
+ */
+static void
+xnjsmb_coord_invalidate_subtree(Handle<Object> self) {
+    Handle<Object> *child_hdl;
+    Handle<Object> *mem_hdl;
+    redraw_man_t *rdman;
+    coord_t *coord, *child;
+    shape_t *mem;
+    Handle<Value> _false = Boolean::New(0);
+
+    if(!GET(self, "valid")->ToBoolean()->Value()) /* Invalidated object */
+	return;
+    
+    coord = (coord_t *)UNWRAP(self);
+    
+    /* Invalidate all coords in the subtree */
+    FOR_COORDS_PREORDER(coord, child) {
+	child_hdl = (Handle<Object> *)mb_prop_get(&child->obj.props,
+						   PROP_JSOBJ);
+	child = (coord_t *)UNWRAP(*child_hdl);
+	WRAP(*child_hdl, NULL);
+	SET(*child_hdl, "valid", _false);
+	
+	/* Invalidate members of a coord */
+	FOR_COORD_SHAPES(child, mem) {
+	    mem_hdl = (Handle<Object> *)mb_prop_get(&mem->obj.props,
+						    PROP_JSOBJ);
+	    WRAP(*mem_hdl, NULL);
+	    SET(*mem_hdl, "valid", _false);
+	}
+    }
+}
+
 static void
 xnjsmb_coord_mod(Handle<Object> self, coord_t *coord) {
     Persistent<Object> *self_hdl;
@@ -68,6 +112,7 @@ xnjsmb_coord_mod(Handle<Object> self, coord_t *coord) {
     subject = coord->mouse_event;
     subject_o = export_xnjsmb_auto_subject_new(subject);
     SET(self, "mouse_event", subject_o);
+    SET(self, "valid", Boolean::New(1));
 }
 
 static float
@@ -113,6 +158,20 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
     r = rdman_add_shape(rdman, shape, coord);
     if(r != 0)
 	*err = "Unknown error";
+}
+
+static void
+xnjsmb_coord_remove(coord_t *coord, Handle<Object> self, const char **err) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+
+    js_rt = GET(self, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(js_rt);
+
+    xnjsmb_coord_invalidate_subtree(self);
+    
+    /* Free all coords and shapes in the subtree */
+    rdman_coord_free(rdman, coord);
 }
 
 #include "coord-inc.h"
