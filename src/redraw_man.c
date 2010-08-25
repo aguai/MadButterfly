@@ -1226,10 +1226,11 @@ static void clean_shape(shape_t *shape) {
     }
     shape->geo->flags &= ~GEF_DIRTY;
 
-    if(is_coord_subtree_hidden(shape->coord))
-	sh_hide(shape);
+    if(sh_get_flags(shape, GEF_HIDDEN) ||
+       is_coord_subtree_hidden(shape->coord))
+	sh_set_flags(shape, GEF_NOT_SHOWED);
     else
-	sh_show(shape);
+	sh_clear_flags(shape, GEF_NOT_SHOWED);
 }
 
 /*! \brief Setup canvas_info for the coord.
@@ -2242,7 +2243,7 @@ static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
 	    child = NEXT_CHILD(child);
 	} else {
 	    ASSERT(member != NULL);
-	    if((!(member->flags & GEF_HIDDEN)) &&
+	    if((!(member->flags & GEF_NOT_SHOWED)) &&
 	       is_geo_in_areas(member, n_areas, areas)) {
 		draw_shape(rdman, canvas, member->shape);
 		dirty = 1;
