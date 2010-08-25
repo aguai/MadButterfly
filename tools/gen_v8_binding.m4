@@ -41,6 +41,8 @@ static Handle<Value>
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW("Invalid object");
     return Integer::New(data->$][1);
 }
 
@@ -52,6 +54,8 @@ static void
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW_noret("Invalid object");
     data->$][1 = value->Int32Value();
 }
 ])
@@ -62,6 +66,8 @@ static Handle<Value>
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW("Invalid object");
     return Number::New(data->$][1);
 }
 
@@ -73,6 +79,8 @@ static void
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW_noret("Invalid object");
     data->$][1 = value->NumberValue();
 }
 ])
@@ -83,6 +91,8 @@ static Handle<Value>
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW("Invalid object");
     return ]PROJ_PREFIX[$][2_new(($][3 *)data->$][1);
 }
 
@@ -96,8 +106,12 @@ static void
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW_noret("Invalid object");
     obj = value->ToObject();
     v = ($][3 *)UNWRAP(obj);
+    if(v == NULL)
+        THROW_noret("Invalid object");
     data->$][1 = v;
 }
 ])
@@ -108,6 +122,8 @@ static Handle<Value>
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW("Invalid object");
     return data->$][1;
 }
 
@@ -120,6 +136,8 @@ static void
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW_noret("Invalid object");
     data->$][1 = value;
 }
 ])
@@ -130,6 +148,8 @@ static Handle<Value>
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW("Invalid object");
     return String::New(data->$][1);
 }
 
@@ -141,6 +161,8 @@ static void
     STRUCT_TYPE *data;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW_noret("Invalid object");
     String::Utf8Value utf8(value->ToString());
     free(data->$][1);
     data->$][1 = strdup(*utf8);
@@ -158,6 +180,8 @@ static Handle<Value>
     const char *err = NULL;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW("Invalid object");
     _ret = $][2(self, data, &err);
     if(err)
 	THROW(err);
@@ -173,6 +197,8 @@ static void
     const char *err = NULL;
 
     data = (STRUCT_TYPE *)UNWRAP(self);
+    if(data == NULL)
+        THROW_noret("Invalid object");
     $][3(self, data, value, &err);
     if(err)
 	THROW_noret(err);
@@ -263,6 +289,8 @@ fdefine([NUMBER], [dnl
 ])dnl
 fdefine([OBJ], [dnl
     arg_$][1 = ($][3 *)UNWRAP(args[[i++]]->ToObject());
+    if(arg_$][1 == NULL)
+        THROW("Invalid argument");
 ])dnl
 fdefine([ARRAY], [dnl
     arg_$][1 = args[[i++]];
@@ -287,6 +315,8 @@ fdefine([NUMBER], [dnl
 ])dnl
 fdefine([OBJ], [dnl
     $1 = ($][2 *)UNWRAP($2->ToObject());
+    if($1 == NULL)
+        THROW("Invalid argument");
 ])dnl
 fdefine([ARRAY], [dnl
     $1 = $2;
@@ -422,6 +452,8 @@ foreach([ITER], $][3, [START_METHOD_ARG_VAR[]ITER[]STOP_METHOD_ARG])dnl
 START_METHOD_RET_VAL[]$][5[]STOP_METHOD_ARG
     Handle<Value> _ret_val;
 
+    if(_self == NULL)
+    	THROW("Invalid object");
     if(argc != $][4)
         THROW("Invalid number of arguments (!=$][4)");
     i = 0;
@@ -473,6 +505,8 @@ PROJ_PREFIX[]STRUCT_NAME[]_get_index(uint32_t index, const AccessorInfo &info) {
 START_METHOD_RET_VAL[]$2[]STOP_METHOD_ARG[]dnl
     Handle<Value> _ret_val;
 
+    if(obj == NULL)
+        THROW("Invalid object");
     _ret = $1(obj, self, index, &_err);
     if(_err)
         THROW(_err);
@@ -492,6 +526,8 @@ START_VAR([in_value])[]$2[]STOP_METHOD_ARG[]dnl
 START_METHOD_RET_VAL[]$2[]STOP_METHOD_ARG[]dnl
     Handle<Value> _ret_val;
 
+    if(obj == NULL)
+        THROW("Invalid object");
     if(START_TYPE_CHK(value)[]![]$2[]STOP_METHOD_ARG)
         THROW("Invalid value type");
 
