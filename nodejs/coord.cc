@@ -14,6 +14,8 @@ extern "C" {
 #define ASSERT(x)
 #endif
 
+#define OK 0
+
 /*! \page jsgc How to Manage Life-cycle of Objects for Javascript.
  *
  * The life-cycle of MadButterfly ojects are simple.  A object is live
@@ -105,7 +107,8 @@ xnjsmb_coord_mod(Handle<Object> self, coord_t *coord) {
     /* Keep associated js object in property store for retrieving,
      * later, without create new js object.
      */
-    self_hdl = new Persistent<Object>(self);
+    self_hdl = new Persistent<Object>();
+    *self_hdl = Persistent<Object>::New(self);
     mb_prop_set(&coord->obj.props, PROP_JSOBJ, self_hdl);
 
     subject = coord->mouse_event;
@@ -163,6 +166,7 @@ static void
 xnjsmb_coord_remove(coord_t *coord, Handle<Object> self, const char **err) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
+    int r;
 
     js_rt = GET(self, "mbrt")->ToObject();
     rdman = xnjsmb_rt_rdman(js_rt);
@@ -170,7 +174,9 @@ xnjsmb_coord_remove(coord_t *coord, Handle<Object> self, const char **err) {
     xnjsmb_coord_invalidate_subtree(self);
     
     /* Free all coords and shapes in the subtree */
-    rdman_coord_free(rdman, coord);
+    r = rdman_coord_free(rdman, coord);
+    if(r != OK)
+	*err = "Can not remove a coord";
 }
 
 #include "coord-inc.h"

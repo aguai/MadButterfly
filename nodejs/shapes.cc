@@ -19,6 +19,18 @@ using namespace v8;
  * @{
  */
 static void
+xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
+    Persistent<Object> *self_hdl;
+    
+    /* Keep associated js object in property store for retrieving,
+     * later, without create new js object.
+     */
+    self_hdl = new Persistent<Object>();
+    *self_hdl = Persistent<Object>::New(self);
+    mb_prop_set(&sh->obj.props, PROP_JSOBJ, self_hdl);
+}
+
+static void
 xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Object> self,
 			  Handle<Value> blks, const char **err) {
     Array *blksobj;

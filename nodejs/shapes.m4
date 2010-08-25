@@ -13,12 +13,13 @@ STRUCT([stext], [shape_t], [],
        [METHOD([set_text], [sh_stext_set_text], (STR([txt])), 1, []),
         METHOD([set_style], [xnjsmb_sh_stext_set_style],
 	       (SELF, ARRAY([blks]), ERR), 1, [])],
-       (([INHERIT], [shape])))
+       (([INHERIT], [shape]), ([STMOD], [xnjsmb_shape_mod])))
 
-STRUCT([image], [shape_t], [], [], (([INHERIT], [shape])))
+STRUCT([image], [shape_t], [], [],
+       (([INHERIT], [shape]), ([STMOD], [xnjsmb_shape_mod])))
 
 STRUCT([rect], [shape_t], [],
        [METHOD([set], [xnjsmb_sh_rect_set],
 	       (SELF, NUMBER(x), NUMBER(y), NUMBER(w), NUMBER(h),
 	        NUMBER(rx), NUMBER(ry)), 6, [])],
-       (([INHERIT], [shape])))
+       (([INHERIT], [shape]), ([STMOD], [xnjsmb_shape_mod])))
