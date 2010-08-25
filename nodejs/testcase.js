@@ -44,14 +44,24 @@ root.add_shape(rect);
 
 /* test removing a coord */
 var rm_coord = mb_rt.coord_new(root);
-var rm_rect = mb_rt.rect_new(150, 150, 50, 50, 10, 10);
-paint.fill(rm_rect);
-rm_coord.add_shape(rm_rect);
+var rm_rect1 = mb_rt.rect_new(150, 150, 50, 50, 10, 10);
+paint.fill(rm_rect1);
+rm_coord.add_shape(rm_rect1);
+var rm_rect2 = mb_rt.rect_new(100, 150, 50, 50, 10, 10);
+paint.fill(rm_rect2);
+rm_coord.add_shape(rm_rect2);
 setTimeout(function() {
 	rm_coord.remove();
 	mb_rt.redraw_changed();
 	mb_rt.flush();
     }, 3000);
+
+/* test removing a shape */
+setTimeout(function() {
+	rm_rect1.remove();
+	mb_rt.redraw_changed();
+	mb_rt.flush();
+    }, 2000);
 
 /* Moving a path */
 sys.puts(mb_rt.path_new);

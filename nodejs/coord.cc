@@ -196,6 +196,7 @@ static void
 xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
 			shape_t *shape, const char **err) {
     Handle<Object> js_rt;
+    Persistent<Object> *shape_hdl;
     redraw_man_t *rdman;
     int r;
     
@@ -204,6 +205,11 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
     r = rdman_add_shape(rdman, shape, coord);
     if(r != 0)
 	*err = "Unknown error";
+
+    /* see \ref jsgc */
+    shape_hdl = (Persistent<Object> *)mb_prop_get(&shape->obj.props,
+						  PROP_JSOBJ);
+    shape_hdl->ClearWeak();
 }
 
 static void

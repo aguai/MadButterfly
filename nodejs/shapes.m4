@@ -5,9 +5,11 @@ STRUCT([shape], [shape_t],
 		 [xnjsmb_shape_stroke_width_get],
 		 [xnjsmb_shape_stroke_width_set])],
        [METHOD([show], [sh_show], (), 0, []),
-        METHOD([hide], [sh_hide], (), 0, [])])
+        METHOD([hide], [sh_hide], (), 0, []),
+	METHOD([remove], [xnjsmb_shape_remove], (SELF), 0, [])])
 
-STRUCT([path], [shape_t], [], [], (([INHERIT], [shape])))
+STRUCT([path], [shape_t], [], [],
+       (([INHERIT], [shape]), ([STMOD], [xnjsmb_shape_mod])))
 
 STRUCT([stext], [shape_t], [],
        [METHOD([set_text], [sh_stext_set_text], (STR([txt])), 1, []),

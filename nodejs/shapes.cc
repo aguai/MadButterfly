@@ -11,6 +11,8 @@ extern "C" {
 #define ASSERT(x)
 #endif
 
+#define OK 0
+
 using namespace v8;
 
 /*! \defgroup xnjsmb_shapes JS binding for shapes.
@@ -18,6 +20,29 @@ using namespace v8;
  *
  * @{
  */
+/*! \brief This function is called when GC collecting a shape.
+ *
+ * It was installed by Persistent<Object>::MakeWeak().
+ */
+static void
+xnjsmb_shape_recycled(Persistent<Value> obj, void *parameter) {
+    Persistent<Object> *self_hdl = (Persistent<Object> *)parameter;
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    shape_t *shape;
+
+    shape = (shape_t *)UNWRAP(*self_hdl);
+    if(shape == NULL)
+	return;
+    
+    WRAP(*self_hdl, NULL);
+
+    js_rt = GET(*self_hdl, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(js_rt);
+    rdman_shape_changed(rdman, shape);
+    rdman_shape_free(rdman, shape);
+}
+
 static void
 xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
     Persistent<Object> *self_hdl;
@@ -28,6 +53,8 @@ xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
     self_hdl = new Persistent<Object>();
     *self_hdl = Persistent<Object>::New(self);
     mb_prop_set(&sh->obj.props, PROP_JSOBJ, self_hdl);
+
+    self_hdl->MakeWeak(self_hdl, xnjsmb_shape_recycled);
 }
 
 static void
@@ -99,6 +126,31 @@ xnjsmb_shape_stroke_width_set(Handle<Object> self, shape_t *sh,
     
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
+}
+
+static void
+xnjsmb_shape_remove(shape_t *sh, Handle<Object> self) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    Persistent<Object> *self_hdl;
+    int r;
+
+    self_hdl = (Persistent<Object> *)mb_prop_get(&sh->obj.props,
+						 PROP_JSOBJ);
+    
+    SET(*self_hdl, "valid", Boolean::New(0));
+    WRAP(*self_hdl, NULL);
+
+    js_rt = GET(*self_hdl, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+    
+    rdman_shape_changed(rdman, sh);
+    r = rdman_shape_free(rdman, sh);
+    if(r != OK)
+	THROW_noret("Can not free a shape for unknown reason");
+
+    delete self_hdl;
 }
 
 static void
