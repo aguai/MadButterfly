@@ -20,6 +20,8 @@ function loadSVG(mb_rt, root, filename) {
     var coord = mb_rt.coord_new(root);
 	var k;
 	this.mb_rt = mb_rt;
+	this.stop_ref={};
+	this.gradients={};
 
     for(k in nodes) {
 	    var n = nodes[k].name();
@@ -127,7 +129,6 @@ loadSVG.prototype.parseTSpan=function(coord, n,style)
 	var nodes = n.childNodes();
 	var k;
 
-    sys.puts(n.text());
     var obj = this.mb_rt.stext_new(n.text(),x,y);
     parseTextStyle(style,n);
     style.paint = this.mb_rt.paint_color_new(1,1,1,1);
@@ -183,7 +184,6 @@ loadSVG.prototype.parsePath=function(coord,id, n)
 	var alpha;
 	
 	for(i in items) {
-	    sys.puts(items[i]);
 	    var f = items[i].split(':');
 	    if (f[0] == 'opacity') {
 		alpha = f[1];
@@ -305,7 +305,6 @@ loadSVG.prototype.parseRect=function(coord, id, n)
 		var fill = '';
 		var alpha = 1;
 		for(i in items) {
-		    sys.puts(items[i]);
 			var f = items[i].split(':');
 			if (f[0] == 'opacity') {
 			    alpha = f[1];
@@ -317,21 +316,23 @@ loadSVG.prototype.parseRect=function(coord, id, n)
 			} else if (f[0] == 'stroke-opacity') {
 			}
 		}
-		sys.puts("fill="+fill);
 		if (fill[0]=='#') {
 		    var r,g,b;
 			r = parseInt(fill.substring(1,3),16)/256;
 			g = parseInt(fill.substring(3,5),16)/256;
 			b = parseInt(fill.substring(5,7),16)/256;
-			sys.puts("r="+r+" g="+g+" b="+b+" a="+alpha);
 
 		    paint = this.mb_rt.paint_color_new(r,g,b,parseFloat(alpha));
+		} else if (fill.substring(0,3) == 'url') {
+		    var id = fill.substring(5,fill.length-1);
+			var gr = this.gradients[id];
+			paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
+			paint.set_stops(this.stop_ref[id]);
 		} else {
 	        paint = this.mb_rt.paint_color_new(0,0,0,1);
 		}
 	}
 	var rect = this.mb_rt.rect_new(x,y,w,h,10, 10);
-	sys.puts("rect x="+x+" y="+y+" w="+w+" h="+h);
 	paint.fill(rect);
 	coord.add_shape(rect);
 }
@@ -372,11 +373,9 @@ loadSVG.prototype.parseGroup=function(root, group_id, n)
 
 loadSVG.prototype.parseImage=function(coord,id, n)
 {
-    sys.puts("---> image");
 	var ref = n.attr('href').value();
 
 	if (ref == null) return;
-	sys.puts(ref);
 	if (ref.substr(0,7) == "file://") {
 	    ref = ref.substring(7);
 	} else if (ref.substr(0,5)=="file:") {
@@ -401,14 +400,82 @@ loadSVG.prototype.parseImage=function(coord,id, n)
 	y = n.attr("y");
 	if (y == null) return;
 	y = parseInt(y.value());
-	sys.puts("x="+x+",y="+y+",w="+w+",h="+h);
 	var img = this.mb_rt.image_new(x,y,w,h);
 	var img_data = ldr.load(ref);
-	sys.puts(img_data);
 	var paint = this.mb_rt.paint_image_new(img_data);
 	paint.fill(img);
 	coord.add_shape(img);
     make_mbnames(this.mb_rt, n, img);
+}
+
+loadSVG.prototype._MB_parseLinearGradient=function(root,n)
+{
+    var id = n.attr('id');
+	var k;
+	var nodes = n.childNodes();
+
+	if (id == null) return;
+	var x1 = n.attr("x1");
+	var y1 = n.attr("y1");
+	var x2 = n.attr("x2");
+	var y2 = n.attr("y2");
+	var gr;
+	var color, opacity;
+	var stops;
+	var r,g,b;
+    stops=[];
+	for(k in nodes) {
+	    var ss = nodes[k];
+	    if (ss.name()=="stop") {
+		     var style = ss.attr("style").value();
+			 var items = style.split(';');
+			 var off = parseInt(ss.attr('offset').value());
+			 color = 'black';
+			 opacity = 1;
+			 for (i in items) {
+			     it = items[i];
+			     var f = it.split(':');
+				 k = f[0];
+				 v = f[1];
+				 if (k == 'stop-color') {
+				     color = v.substring(1);
+					 if (v == 'white') {
+					     r = 1;
+						 g = 1;
+						 b = 1;
+					 } else if (v == 'black') {
+					     r = 0;
+						 g = 0;
+						 b = 0;
+					 } else {
+					     r = parseInt(color.substring(0,2),16)/255.0;
+					     g = parseInt(color.substring(2,4),16)/255.0;
+					     b = parseInt(color.substring(4,6),16)/255.0;
+					}
+				 } else if (k=='stop-opacity') {
+				     opacity = parseFloat(v);
+				 }
+			 }
+			 stops.push([off, r,g,b,opacity]);
+		}
+	}
+	var href = n.attr('href');
+	if (href != null) {
+	    href = href.value();
+	    pstops = this.stop_ref[href.substring(1)];
+		stops = pstops.concat(stops);
+	}
+	id = id.value();
+	this.stop_ref[id] = stops;
+	if (x1)
+	    x1 = parseFloat(x1.value());
+	if (x2)
+	    x2 = parseFloat(x2.value());
+	if (y1)
+	    y1 = parseFloat(y1.value());
+	if (y2)
+	    y2 = parseFloat(y2.value());
+	this.gradients[id] = [x1,y1,x2,y2];
 }
 
 loadSVG.prototype.parseDefs=function(root,n) 
@@ -419,7 +486,7 @@ loadSVG.prototype.parseDefs=function(root,n)
 	for(k in nodes) {
 	    var name = nodes[k].name();
 	    if (name == "linearGradient") {
-		    //_MB_parseLinearGradient(root,nodes[k]);
+		    this._MB_parseLinearGradient(root,nodes[k]);
 		}
 	}
 }
