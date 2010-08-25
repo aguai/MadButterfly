@@ -71,30 +71,64 @@ static void
 xnjsmb_coord_invalidate_subtree(Handle<Object> self) {
     Persistent<Object> *child_hdl;
     Persistent<Object> *mem_hdl;
+    coord_t *coord, *child, *last_child;
+    Handle<Object> js_rt;
     redraw_man_t *rdman;
-    coord_t *coord, *child;
-    shape_t *mem;
+    shape_t *mem, *last_mem;
     Handle<Value> _false = Boolean::New(0);
+    int r;
 
     if(!GET(self, "valid")->ToBoolean()->Value()) /* Invalidated object */
 	return;
     
+    js_rt = GET(self, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(js_rt);
+    
     coord = (coord_t *)UNWRAP(self);
+    rdman_coord_changed(rdman, coord);
     
     /* Invalidate all coords in the subtree */
-    FOR_COORDS_PREORDER(coord, child) {
+    last_child = NULL;
+    FOR_COORDS_POSTORDER(coord, child) {
+	if(last_child != NULL) {
+	    r = rdman_coord_free(rdman, coord);
+	    if(r != OK)
+		THROW_noret("Unknown error");
+	}
+
 	child_hdl = (Persistent<Object> *)mb_prop_get(&child->obj.props,
 						      PROP_JSOBJ);
 	SET(*child_hdl, "valid", _false);
 	WRAP(*child_hdl, NULL);
 	
 	/* Invalidate members of a coord */
+	last_mem = NULL;
 	FOR_COORD_SHAPES(child, mem) {
+	    if(last_mem != NULL) {
+		r = rdman_shape_free(rdman, last_mem);
+		if(r != OK)
+		    THROW_noret("Unknown error");
+	    }
+
 	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
 							PROP_JSOBJ);
 	    SET(*mem_hdl, "valid", _false);
 	    WRAP(*mem_hdl, NULL);
+	    
+	    last_mem = mem;
 	}
+	if(last_mem != NULL) {
+	    r = rdman_shape_free(rdman, last_mem);
+	    if(r != OK)
+		THROW_noret("Unknown error");
+	}
+
+	last_child = child;
+    }
+    if(last_child != NULL) {
+	r = rdman_coord_free(rdman, coord);
+	if(r != OK)
+	    THROW_noret("Unknown error");
     }
 }
 
@@ -164,19 +198,7 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
 
 static void
 xnjsmb_coord_remove(coord_t *coord, Handle<Object> self, const char **err) {
-    Handle<Object> js_rt;
-    redraw_man_t *rdman;
-    int r;
-
-    js_rt = GET(self, "mbrt")->ToObject();
-    rdman = xnjsmb_rt_rdman(js_rt);
-
     xnjsmb_coord_invalidate_subtree(self);
-    
-    /* Free all coords and shapes in the subtree */
-    r = rdman_coord_free(rdman, coord);
-    if(r != OK)
-	*err = "Can not remove a coord";
 }
 
 #include "coord-inc.h"
