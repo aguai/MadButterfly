@@ -4,6 +4,7 @@ var sys=require("sys");
 
 function canvas(app,root) {
     this.mb_rt = app.mb_rt;
+	this.parent = root;
     this.root = this.mb_rt.coord_new(root);
 	this.bg_r = 0;
 	this.bg_g = 0;
@@ -51,6 +52,55 @@ canvas.prototype.line=function(x1,y1,x2,y2) {
 
 canvas.prototype.strokeWeight=function(w) {
     this.stroke_w = w;
+}
+
+canvas.prototype.alpha=function(c) {
+}
+
+canvas.prototype.red=function(c) {
+}
+canvas.prototype.green=function(c) {
+}
+canvas.prototype.blue=function(c) {
+}
+
+
+canvas.prototype.clear=function() {
+    this.root.remove();
+    this.root = this.mb_rt.coord_new(this.parent);
+}
+
+canvas.prototype.arc=function(x,y,w,h,start,end) {
+}
+
+canvas.prototype.ellipse=function(x, y, width, height) {
+}
+
+canvas.prototype.point=function(x,y) {
+}
+
+canvas.prototype.quad=function(x1,y1,x2,y2,x3,y3,x4,y4) {
+}
+
+canvas.prototype.triangle=function(x1,y1,x2,y2,x3,y3) {
+}
+
+canvas.prototype.bezier=function(x1, y1, cx1, cy1, cx2, cy2, x2, y2) {
+}
+
+canvas.prototype.curveTightness=function(squishy) {
+}
+
+canvas.prototype.colorMode=function() {
+}
+
+canvas.prototype.fill=function(color) {
+}
+
+canvas.prototype.noFill=function() {
+}
+
+canvas.prototype.noStroke=function() {
 }
 
 
