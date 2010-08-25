@@ -47,7 +47,11 @@ var rm_coord = mb_rt.coord_new(root);
 var rm_rect = mb_rt.rect_new(150, 150, 50, 50, 10, 10);
 paint.fill(rm_rect);
 rm_coord.add_shape(rm_rect);
-setTimeout(function() { rm_coord.remove(); }, 3000);
+setTimeout(function() {
+	rm_coord.remove();
+	mb_rt.redraw_changed();
+	mb_rt.flush();
+    }, 3000);
 
 /* Moving a path */
 sys.puts(mb_rt.path_new);
