@@ -4,8 +4,8 @@ STRUCT([shape], [shape_t],
        [ACCESSOR([stroke_width],
 		 [xnjsmb_shape_stroke_width_get],
 		 [xnjsmb_shape_stroke_width_set])],
-       [METHOD([show], [sh_show], (), 0, []),
-        METHOD([hide], [sh_hide], (), 0, []),
+       [METHOD([show], [xnjsmb_shape_show], (SELF), 0, []),
+        METHOD([hide], [xnjsmb_shape_hide], (SELF), 0, []),
 	METHOD([remove], [xnjsmb_shape_remove], (SELF), 0, [])])
 
 STRUCT([path], [shape_t], [], [],

@@ -129,6 +129,32 @@ xnjsmb_shape_stroke_width_set(Handle<Object> self, shape_t *sh,
 }
 
 static void
+xnjsmb_shape_show(shape_t *sh, Handle<Object> self) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+    
+    sh_show(sh);
+    rdman_shape_changed(rdman, sh);
+}
+
+static void
+xnjsmb_shape_hide(shape_t *sh, Handle<Object> self) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+    
+    sh_hide(sh);
+    rdman_shape_changed(rdman, sh);
+}
+
+static void
 xnjsmb_shape_remove(shape_t *sh, Handle<Object> self) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;

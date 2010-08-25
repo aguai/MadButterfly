@@ -42,6 +42,30 @@ var paint = mb_rt.paint_color_new(1, 0.5, 0.5, 0.5);
 paint.fill(rect);
 root.add_shape(rect);
 
+/* test hide of shapes */
+var sw = 1;
+setInterval(function() {
+	if(sw) {
+	    rect.hide();
+	    sw = 0;
+	} else {
+	    rect.show();
+	    sw = 1;
+	}
+    }, 1000);
+
+/* test hide of coord */
+var cw = 1;
+setInterval(function() {
+	if(sw) {
+	    coord.hide();
+	    cw = 0;
+	} else {
+	    coord.show();
+	    cw = 1;
+	}
+    }, 3000);
+
 /* test removing a coord */
 var rm_coord = mb_rt.coord_new(root);
 var rm_rect1 = mb_rt.rect_new(150, 150, 50, 50, 10, 10);
