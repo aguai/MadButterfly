@@ -135,7 +135,7 @@ typedef struct mb_obj mb_obj_t;
 #define MB_OBJ_INIT(obj, type) do { (obj)->obj_type = type; } while(0)
 
 #define GEF_OV_DRAW 0x1
-#define GEF_HIDDEN 0x2
+#define GEF_NOT_SHOWED 0x20
 
 struct shape {
     mb_obj_t obj;
@@ -611,7 +611,7 @@ static shape_t *_find_shape_in_pos(redraw_man_t *rdman,
     cr = rdman_get_cr(rdman);
     for(i = rdman_shape_gl_len(rdman) - 1; i >= 0; i--) {
 	shape = rdman_get_shape_gl(rdman, i);
-	if(sh_get_flags(shape, GEF_HIDDEN))
+	if(sh_get_flags(shape, GEF_NOT_SHOWED))
 	    continue;
 	r = _shape_pos_is_in(shape, x, y, in_stroke, cr);
 	if(r)

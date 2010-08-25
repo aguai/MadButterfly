@@ -124,6 +124,13 @@ struct _geo {
 #define GEF_FREE 0x4
 #define GEF_OV_DRAW 0x8		/*!< To flag drawed for a overlay testing. */
 #define GEF_SWAP 0x10
+#define GEF_NOT_SHOWED 0x20	/*!< This geo is not showed.
+				 *
+				 * A geo is not showed if it is hidden
+				 * or one of its ancestors is hidden.
+				 * Redraw manager uses this flag to
+				 * determine who is not showed.
+				 */
 
 extern int areas_are_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
