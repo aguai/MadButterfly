@@ -227,6 +227,32 @@ xnjsmb_coord_remove(coord_t *coord, Handle<Object> self) {
     xnjsmb_coord_free_subtree(rdman, coord);
 }
 
+static void
+xnjsmb_coord_show(coord_t *coord, Handle<Object> self) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+    
+    coord_show(coord);
+    rdman_coord_changed(rdman, coord);
+}
+
+static void
+xnjsmb_coord_hide(coord_t *coord, Handle<Object> self) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+    
+    coord_hide(coord);
+    rdman_coord_changed(rdman, coord);
+}
+
 #include "coord-inc.h"
 
 /*! \brief This function used by \ref xnjsmb_mb_rt to wrap coord object.
