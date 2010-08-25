@@ -68,26 +68,44 @@ using namespace v8;
  * \sa \ref jsgc
  */
 static void
-xnjsmb_coord_invalidate_subtree(Handle<Object> self) {
+xnjsmb_coord_invalidate_subtree(coord_t *coord) {
     Persistent<Object> *child_hdl;
     Persistent<Object> *mem_hdl;
-    coord_t *coord, *child, *last_child;
-    Handle<Object> js_rt;
-    redraw_man_t *rdman;
-    shape_t *mem, *last_mem;
+    coord_t *child;
+    shape_t *mem;
     Handle<Value> _false = Boolean::New(0);
-    int r;
 
-    if(!GET(self, "valid")->ToBoolean()->Value()) /* Invalidated object */
-	return;
+    /* Invalidate all coords in the subtree */
+    FOR_COORDS_PREORDER(coord, child) {
+	child_hdl = (Persistent<Object> *)mb_prop_get(&child->obj.props,
+						      PROP_JSOBJ);
+	SET(*child_hdl, "valid", _false);
+	WRAP(*child_hdl, NULL);
+	
+	/* Invalidate members of a coord */
+	FOR_COORD_SHAPES(child, mem) {
+	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
+							PROP_JSOBJ);
+	    SET(*mem_hdl, "valid", _false);
+	    WRAP(*mem_hdl, NULL);
+	}
+    }
+}
+
+/*! \brief Free C objects for coords and shapes in a subtree.
+ *
+ * \param self is the object of the root of subtree.
+ *
+ * \sa \ref jsgc
+ */
+static void
+xnjsmb_coord_free_subtree(redraw_man_t *rdman, coord_t *coord) {
+    coord_t *child, *last_child;
+    shape_t *mem, *last_mem;
+    int r;
     
-    js_rt = GET(self, "mbrt")->ToObject();
-    rdman = xnjsmb_rt_rdman(js_rt);
-    
-    coord = (coord_t *)UNWRAP(self);
     rdman_coord_changed(rdman, coord);
     
-    /* Invalidate all coords in the subtree */
     last_child = NULL;
     FOR_COORDS_POSTORDER(coord, child) {
 	if(last_child != NULL) {
@@ -95,13 +113,8 @@ xnjsmb_coord_invalidate_subtree(Handle<Object> self) {
 	    if(r != OK)
 		THROW_noret("Unknown error");
 	}
-
-	child_hdl = (Persistent<Object> *)mb_prop_get(&child->obj.props,
-						      PROP_JSOBJ);
-	SET(*child_hdl, "valid", _false);
-	WRAP(*child_hdl, NULL);
 	
-	/* Invalidate members of a coord */
+	/* Free members of a coord */
 	last_mem = NULL;
 	FOR_COORD_SHAPES(child, mem) {
 	    if(last_mem != NULL) {
@@ -110,11 +123,6 @@ xnjsmb_coord_invalidate_subtree(Handle<Object> self) {
 		    THROW_noret("Unknown error");
 	    }
 
-	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
-							PROP_JSOBJ);
-	    SET(*mem_hdl, "valid", _false);
-	    WRAP(*mem_hdl, NULL);
-	    
 	    last_mem = mem;
 	}
 	if(last_mem != NULL) {
@@ -197,8 +205,18 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
 }
 
 static void
-xnjsmb_coord_remove(coord_t *coord, Handle<Object> self, const char **err) {
-    xnjsmb_coord_invalidate_subtree(self);
+xnjsmb_coord_remove(coord_t *coord, Handle<Object> self) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    
+    if(!GET(self, "valid")->ToBoolean()->Value()) /* Invalidated object */
+	THROW_noret("Invalid object");
+    
+    js_rt = GET(self, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(js_rt);
+
+    xnjsmb_coord_invalidate_subtree(coord);
+    xnjsmb_coord_free_subtree(rdman, coord);
 }
 
 #include "coord-inc.h"
