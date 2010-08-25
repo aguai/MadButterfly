@@ -67,8 +67,8 @@ using namespace v8;
  */
 static void
 xnjsmb_coord_invalidate_subtree(Handle<Object> self) {
-    Handle<Object> *child_hdl;
-    Handle<Object> *mem_hdl;
+    Persistent<Object> *child_hdl;
+    Persistent<Object> *mem_hdl;
     redraw_man_t *rdman;
     coord_t *coord, *child;
     shape_t *mem;
@@ -81,18 +81,17 @@ xnjsmb_coord_invalidate_subtree(Handle<Object> self) {
     
     /* Invalidate all coords in the subtree */
     FOR_COORDS_PREORDER(coord, child) {
-	child_hdl = (Handle<Object> *)mb_prop_get(&child->obj.props,
-						   PROP_JSOBJ);
-	child = (coord_t *)UNWRAP(*child_hdl);
-	WRAP(*child_hdl, NULL);
+	child_hdl = (Persistent<Object> *)mb_prop_get(&child->obj.props,
+						      PROP_JSOBJ);
 	SET(*child_hdl, "valid", _false);
+	WRAP(*child_hdl, NULL);
 	
 	/* Invalidate members of a coord */
 	FOR_COORD_SHAPES(child, mem) {
-	    mem_hdl = (Handle<Object> *)mb_prop_get(&mem->obj.props,
-						    PROP_JSOBJ);
-	    WRAP(*mem_hdl, NULL);
+	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
+							PROP_JSOBJ);
 	    SET(*mem_hdl, "valid", _false);
+	    WRAP(*mem_hdl, NULL);
 	}
     }
 }

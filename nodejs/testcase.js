@@ -42,6 +42,13 @@ var paint = mb_rt.paint_color_new(1, 0.5, 0.5, 0.5);
 paint.fill(rect);
 root.add_shape(rect);
 
+/* test removing a coord */
+var rm_coord = mb_rt.coord_new(root);
+var rm_rect = mb_rt.rect_new(150, 150, 50, 50, 10, 10);
+paint.fill(rm_rect);
+rm_coord.add_shape(rm_rect);
+setTimeout(function() { rm_coord.remove(); }, 3000);
+
 /* Moving a path */
 sys.puts(mb_rt.path_new);
 var path = mb_rt.path_new("m 100,50 L 120,50 L 200,150 L 180,150 z");
