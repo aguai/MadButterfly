@@ -250,7 +250,7 @@ typedef void (*mb_eventcb_t )(int fd,void *arg);
  */
 typedef struct {
     
-    void *(*init)(char *display,int w,int h);
+    void *(*init)(const char *display,int w,int h);
     void (*free)(void *be);
     void (*add_event)(void *be,int type, int fd, mb_eventcb_t f,void *arg);
     void (*remove_event)(void *be,int type, int fd);

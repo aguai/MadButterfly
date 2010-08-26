@@ -591,7 +591,7 @@ xshm_init(X_MB_runtime_t *xmb_rt) {
     }
 
     xmb_rt->backend_surface =
-	mbe_image_surface_create_for_data(ximage->data,
+	mbe_image_surface_create_for_data((unsigned char *)ximage->data,
 					  surf_fmt,
 					  xmb_rt->w,
 					  xmb_rt->h,
@@ -603,22 +603,23 @@ xshm_init(X_MB_runtime_t *xmb_rt) {
 
 /*! \brief Initialize a MadButterfy runtime for Xlib.
  *
- * It setups a runtime environment to run MadButterfly with Xlib.
- * Users should specify width and height of the opening window.
+ * This one is very like X_MB_init(), except it accepts a
+ * X_MB_runtime_t object initialized with a display connected to a X
+ * server and an opened window.
+ *
+ * Following field of the X_MB_runtime_t object should be initialized.
+ *   - w, h
+ *   - win
+ *   - display
+ *   - visual
  */
-static int X_MB_init(const char *display_name,
-	      int w, int h, X_MB_runtime_t *xmb_rt) {
+static int
+X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
-    int r;
+    int w, h;
     
-    memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
-
-    xmb_rt->w = w;
-    xmb_rt->h = h;
-    r = X_init_connection(display_name, w, h, &xmb_rt->display,
-			  &xmb_rt->visual, &xmb_rt->win);
-    if(r != OK)
-	return ERR;
+    w = xmb_rt->w;
+    h = xmb_rt->h;
 
 #ifdef XSHM
     xshm_init(xmb_rt);
@@ -648,8 +649,6 @@ static int X_MB_init(const char *display_name,
     //        to get the xmb_rt->tman for the animation. We should relocate the tman
     //	      to the redraw_man_t instead.
     xmb_rt->rdman->rt = xmb_rt;
-    xmb_rt->rdman->w = w;
-    xmb_rt->rdman->h = h;
 
     xmb_rt->tman = mb_tman_new();
 
@@ -665,6 +664,29 @@ static int X_MB_init(const char *display_name,
     X_kb_init(&xmb_rt->kbinfo, xmb_rt->display, xmb_rt->rdman);
 
     return OK;
+}
+
+/*! \brief Initialize a MadButterfy runtime for Xlib.
+ *
+ * It setups a runtime environment to run MadButterfly with Xlib.
+ * Users should specify width and height of the opening window.
+ */
+static int X_MB_init(const char *display_name,
+	      int w, int h, X_MB_runtime_t *xmb_rt) {
+    int r;
+    
+    memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
+
+    xmb_rt->w = w;
+    xmb_rt->h = h;
+    r = X_init_connection(display_name, w, h, &xmb_rt->display,
+			  &xmb_rt->visual, &xmb_rt->win);
+    if(r != OK)
+	return ERR;
+
+    r = X_MB_init_with_win(xmb_rt);
+    
+    return r;
 }
 
 static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {

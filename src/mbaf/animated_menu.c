@@ -22,13 +22,8 @@ static void mb_animated_menu_fillMenuContent(mb_animated_menu_t *m)
 {
     int i;
     coord_t *textgroup;
-    shape_t *text;
     coord_t *group;
     coord_t *lightbar;
-    int tmp;
-    mb_timeval_t start, playing, now;
-    mb_progm_t *progm;
-    mb_word_t *word;
 
     // fill new item
     for(i=0;i<8;i++) {
@@ -63,7 +58,6 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
 {
     int i;
     coord_t *textgroup;
-    shape_t *text;
     coord_t *group;
     coord_t *lightbar;
     int tmp;
@@ -123,11 +117,6 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
 static void mb_animated_menu_fillMenuContentDown(mb_animated_menu_t *m)
 {
     int i;
-    coord_t *textgroup;
-    shape_t *text;
-    coord_t *group;
-    coord_t *lightbar;
-    char name[255];
     int tmp;
     mb_timeval_t start, playing, now;
     mb_progm_t *progm;
@@ -179,7 +168,6 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
     mb_timeval_t start, playing, now;
     mb_progm_t *progm;
     mb_word_t *word;
-    coord_t *group;
     coord_t *lightbar;
 
     m->progm = progm = mb_progm_new(1, MBAF_RDMAN(m->app));
@@ -324,7 +312,7 @@ static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
 mb_animated_menu_t *mb_animated_menu_new(mbaf_t *app,mb_sprite_t *sp,char *objnames,char *menus[])
 {
     mb_animated_menu_t *m;
-    int i,len;
+    int i;
     char name[255];
     mb_obj_t *l;
     int ii;
