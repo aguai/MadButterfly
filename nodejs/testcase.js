@@ -1,9 +1,15 @@
 var mbfly = require("mbfly");
 var r = mbfly.Hello(" test");
 var sys = require("sys");
+/* process module is still not supported by nodejs v0.1.97 */
+/* var process = require("process"); */
 sys.puts(r);
 
-var mb_rt = new mbfly.mb_rt(":0.0", 300, 200);
+var display_name = ":0.0";
+/* if(process.argv.length > 2)
+   display_name = process.argv[2]; */
+
+var mb_rt = new mbfly.mb_rt(display_name, 300, 200);
 var root = mb_rt.root;
 sys.puts("root matrix: " +
 	 [root[0], root[1], root[2], root[3], root[4], root[5]]);
