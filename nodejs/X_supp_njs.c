@@ -81,11 +81,7 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
 void
 X_njs_MB_init_handle_connection(njs_runtime_t *rt) {
     void *xrt = rt->xrt;
-    mb_tman_t *tman;
-    mb_timeval_t now, tmo;
-    ev_tstamp tout;
     int fd;
-    int r;
     extern int _X_MB_get_x_conn_for_nodejs(void *rt);
 
     /*
