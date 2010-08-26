@@ -428,12 +428,13 @@ void X_MB_handle_connection(void *be) {
 	    handle_x_event(rt);
 	} else {
             for(i=0;i<rt->n_monitor;i++) {
-	        if (rt->monitors[i].type == MONITOR_READ)
+	        if (rt->monitors[i].type == MONITOR_READ) {
 		    if (FD_ISSET(rt->monitors[i].fd, &rfds))
 		    	rt->monitors[i].f(rt->monitors[i].fd,rt->monitors[i].arg);
-	        else if (rt->monitors[i].type == MONITOR_WRITE)
+		} else if (rt->monitors[i].type == MONITOR_WRITE) {
 		    if (FD_ISSET(rt->monitors[i].fd, &wfds))
-		    	rt->monitors[i].f(rt->monitors[i].fd,rt->monitors[i].arg);
+			rt->monitors[i].f(rt->monitors[i].fd,rt->monitors[i].arg);
+		}
             }
 	}
     }
@@ -454,9 +455,27 @@ static int X_init_connection(const char *display_name,
     XSetWindowAttributes wattr;
     int depth;
     int x, y;
+    int draw_root = 0;
+    const char *disp_name;
+    char disp_buf[32];
+    int cp;
     int r;
 
-    display = XOpenDisplay(display_name);
+    /*
+     * Support drawing on the root window.
+     */
+    disp_name = display_name;
+    if(strstr(display_name, ":root") != NULL) {
+	draw_root = 1;
+	cp = strlen(display_name) - 5;
+	if(cp >= 32)
+	    cp = 31;
+	memcpy(disp_buf, display_name, cp);
+	disp_buf[cp] = 0;
+	disp_name = disp_buf;
+    }
+    
+    display = XOpenDisplay(disp_name);
     if(display == NULL)
 	return ERR;
 
@@ -467,15 +486,19 @@ static int X_init_connection(const char *display_name,
     wattr.override_redirect = False;
     x = 10;
     y = 10;
-    win = XCreateWindow(display, root,
-			 x, y,
-			 w, h,
-			 1, depth, InputOutput, visual,
-			 CWOverrideRedirect, &wattr);
-    r = XMapWindow(display, win);
-    if(r == -1) {
-	XCloseDisplay(display);
-	return ERR;
+    if(draw_root)
+	win = RootWindowOfScreen(ScreenOfDisplay(display, screen));
+    else {
+	win = XCreateWindow(display, root,
+			    x, y,
+			    w, h,
+			    1, depth, InputOutput, visual,
+			    CWOverrideRedirect, &wattr);
+	r = XMapWindow(display, win);
+	if(r == -1) {
+	    XCloseDisplay(display);
+	    return ERR;
+	}
     }
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask |
