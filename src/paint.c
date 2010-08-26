@@ -83,8 +83,6 @@ typedef struct _paint_linear {
 static void paint_linear_prepare(paint_t *paint, mbe_t *cr) {
     paint_linear_t *linear = (paint_linear_t *)paint;
     mbe_pattern_t *ptn;
-    grad_stop_t *stop;
-    int i;
 
     ptn = linear->ptn;
     if(linear->flags & LIF_DIRTY) {
@@ -173,7 +171,6 @@ typedef struct _paint_radial {
 static void paint_radial_prepare(paint_t *paint, mbe_t *cr) {
     paint_radial_t *radial = (paint_radial_t *)paint;
     mbe_pattern_t *ptn;
-    int i;
 
     if(radial->flags & RDF_DIRTY) {
 	ptn = mbe_pattern_create_radial(radial->cx, radial->cy, 0,
