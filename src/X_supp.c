@@ -568,11 +568,11 @@ xshm_init(X_MB_runtime_t *xmb_rt) {
     }
 
     xmb_rt->backend_surface =
-	cairo_image_surface_create_for_data(ximage->data,
-					    surf_fmt,
-					    xmb_rt->w,
-					    xmb_rt->h,
-					    ximage->bytes_per_line);
+	mbe_image_surface_create_for_data(ximage->data,
+					  surf_fmt,
+					  xmb_rt->w,
+					  xmb_rt->h,
+					  ximage->bytes_per_line);
     if(xmb_rt->backend_surface == NULL)
 	xshm_destroy(xmb_rt);
 }
