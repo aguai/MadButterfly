@@ -28,6 +28,10 @@ app.prototype.loop=function() {
     this.mb_rt.redraw_all();
     this.mb_rt.flush();
 }
+app.prototype.update=function() {
+    this.mb_rt.redraw_all();
+    this.mb_rt.flush();
+}
 app.prototype.get=function(name) {
     return this.mb_rt.mbnames[name];
 }
