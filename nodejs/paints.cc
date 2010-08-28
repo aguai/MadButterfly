@@ -18,6 +18,17 @@ using namespace v8;
  * @{
  */
 
+/*! \page paint_gc How to manage life-cycle of paints?
+ *
+ * A paint is used to fill and stroke shapes.  It should keep live
+ * before all shapes being stroked/or filled by it are dead or
+ * filled/stroked by other paints.  So, every shape that uses a paint
+ * should keep a reference to the paint.  The reference are removed
+ * when a shape is filled/or stroked by other paints.
+ *
+ * A paint should keep a weak reference to itself.  It is used to free
+ * resource before it being collected.
+ */
 static void
 xnjsmb_paint_fill(paint_t *paint, Handle<Object> self, shape_t *sh) {
     Handle<Value> rt_v;
