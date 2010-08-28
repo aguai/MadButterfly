@@ -357,7 +357,7 @@ mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
     matrix[2] = shift_x;
     matrix[3] = 0;
     matrix[4] = font_sz;
-    matrix[5] += shift_y;
+    matrix[5] = shift_y;
     matrix_mul(noshift_aggr, matrix, scaled_matrix);
     
     scaled = make_scaled_font_face_matrix(face, scaled_matrix);
