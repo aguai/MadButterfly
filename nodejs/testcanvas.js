@@ -1,3 +1,4 @@
+// vim: ts=4
 var mbapp = require("./mbapp");
 var sys=require("sys");
 var canvas=require("./canvas");
