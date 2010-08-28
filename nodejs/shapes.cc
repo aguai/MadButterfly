@@ -41,6 +41,8 @@ xnjsmb_shape_recycled(Persistent<Value> obj, void *parameter) {
     rdman = xnjsmb_rt_rdman(js_rt);
     rdman_shape_changed(rdman, shape);
     rdman_shape_free(rdman, shape);
+
+    delete self_hdl;
 }
 
 static void
