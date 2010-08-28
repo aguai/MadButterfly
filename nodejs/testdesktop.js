@@ -13,7 +13,7 @@ picture = app.get("picture");
 setting = app.get("setting");
 items=[video,audio,picture,setting];
 item = 2;
-an = new animate.scale(app,items[item],1,1.5,0.3);
+an = new animate.scale(app,items[item],1,2,0.1);
 an.start();
 
 app.addKeyListener(mbapp.KEY_UP, function() {
@@ -24,9 +24,9 @@ app.addKeyListener(mbapp.KEY_UP, function() {
 		return;
 	}
     var target = items[item];
-	var an = new animate.scale(app,old,1,1,0.3);
+	var an = new animate.scale(app,old,1,1,0.1);
     an.start();
-	an = new animate.scale(app,target,1,1.5,0.3);
+	an = new animate.scale(app,target,1,2,0.3);
     an.start();
 });
 
@@ -38,9 +38,9 @@ app.addKeyListener(mbapp.KEY_DOWN, function() {
 		return;
 	}
     var target = items[item];
-	var an = new animate.scale(app,old,1,1,0.3);
+	var an = new animate.scale(app,old,1,1,0.1);
     an.start();
-	an = new animate.scale(app,target,1,1.5,0.3);
+	an = new animate.scale(app,target,1,2,0.3);
     an.start();
 });
 
