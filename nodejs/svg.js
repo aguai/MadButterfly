@@ -19,6 +19,7 @@ function loadSVG(mb_rt, root, filename) {
     var nodes = doc.root().childNodes();
     var coord = mb_rt.coord_new(root);
 	var k;
+	var accu=[1,0,0,0,1,0];
 	this.mb_rt = mb_rt;
 	this.stop_ref={};
 	this.gradients={};
@@ -28,7 +29,7 @@ function loadSVG(mb_rt, root, filename) {
 		if (n == "defs") {
 		    this.parseDefs(root,nodes[k]);
 		} else if (n == "g") {
-		    this.parseGroup(root,'root_coord',nodes[k]);
+		    this.parseGroup(accu,root,'root_coord',nodes[k]);
 		} 
     }
 }
@@ -167,6 +168,62 @@ loadSVG.prototype._prepare_paint_color=function(color, alpha) {
     return paint;
 }
 
+function guessPathBoundingBox(coord,d)
+{
+    var items = d.split(' ');
+	var len = items.length;
+	var pair;
+	var i;
+	var minx,miny;
+
+	minx = 10000;
+	miny = 10000;
+
+	for(i=0;i<len;i++) {
+	    var type = items[i].toLowerCase();
+		x = minx;y = miny;
+		switch(type) {
+		    case 'm':
+			case 'l':
+			case 'a':
+			case 'x':
+			    pair = items[i+1].split(',');
+				if (pair.length==2) {
+				    x = parseFloat(pair[0]);
+					y = parseFloat(pair[1]);
+					i++;
+				} else {
+				    x = parseFloat(items[i+1]);
+				    y = parseFloat(items[i+2]);
+					i+=2;
+				}
+				break;
+			case 'q':
+				// Implement this latter
+				break;
+			case 'c':
+				// Implement this latter
+				break;
+			case 's':
+				// Implement this latter
+				break;
+			case 'h':
+				x = parseFloat(items[i+1]);
+				break;
+			case 'v':
+				y = parseFloat(items[i+1]);
+				break;
+		}
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+	}
+	if (coord.center.x >  minx)
+		coord.center.x = minx;
+	if (coord.center.y >  miny)
+		coord.center.y = miny;
+}
+
+
 loadSVG.prototype.parsePath=function(coord,id, n)
 {
     var d = n.attr('d').value();
@@ -179,6 +236,7 @@ loadSVG.prototype.parsePath=function(coord,id, n)
     var stroke_color;
     var black_paint;
     
+    guessPathBoundingBox(coord,d);
     if(style != null) {
 	var items = style.value().split(';');
 	var alpha;
@@ -209,6 +267,7 @@ loadSVG.prototype.parsePath=function(coord,id, n)
 	if(fill_color != "none") {
 	    paint = this._prepare_paint_color(fill_color, fill_alpha);
 	    paint.fill(path);
+	    sys.puts("paint path with "+fill_color+" "+fill_alpha);
 	}
     } else {
 	black_paint.fill(path);
@@ -217,6 +276,7 @@ loadSVG.prototype.parsePath=function(coord,id, n)
 	if(stroke_color != "none") {
 	    paint = this._prepare_paint_color(stroke_color, stroke_alpha);
 	    paint.stroke(path);
+	    sys.puts("stroke path");
 	}
     } else {
 	black_paint.stroke(path);
@@ -232,6 +292,13 @@ loadSVG.prototype.parseText=function(coord,id, n)
     var y = getInteger(n,'y');
 	var tcoord = this.mb_rt.coord_new(coord);
     var style = new Object();
+
+    if (n.attr('x'))
+  	    if (coord.center.x > x)
+		    coord.center.x = x;
+	if (n.attr('y'))
+	    if (coord.center.y > y)
+		    coord.center.y = y;
 	style.fs = 20;
 	style.family = 'courier';
 	parseTextStyle(style,n);
@@ -246,6 +313,23 @@ loadSVG.prototype.parseText=function(coord,id, n)
 	}
 	
     make_mbnames(this.mb_rt, n, tcoord);
+}
+
+
+function multiply(s,d) {
+    var m=[];
+	m[0] = s[0]*d[0]+s[1]*d[3];
+	m[1] = s[0]*d[1]+s[1]*d[4];
+	m[2] = s[0]*d[2]+s[1]*d[5]+s[2];
+	m[3] = s[3]*d[0]+s[4]*d[3];
+	m[4] = s[3]*d[1]+s[4]*d[4];
+	m[5] = s[3]*d[2]+s[4]*d[5]+s[5];
+	s[0] = m[0];
+	s[1] = m[1];
+	s[2] = m[2];
+	s[3] = m[3];
+	s[4] = m[4];
+	s[5] = m[5];
 }
 
 function parseTransform(coord, s)
@@ -267,36 +351,52 @@ function parseTransform(coord, s)
 		var x,y;
 		x = parseFloat(f[0]);
 		y = parseFloat(f[1]);
-		coord[0] = 1;
-		coord[1] = 0;
-		coord[2] = x;
-		coord[3] = 0;
-		coord[4] = 1;
-		coord[5] = y;
+		coord[2] += x;
+		coord[5] += y;
 	}
 	off = s.indexOf('matrix');
 	if (off != -1) {
 		var end = s.indexOf(')');
 		var m = s.substring(7,end);
 		var fields = m.split(',');
-		coord[0] = parseFloat(fields[0]);
-		coord[1] = parseFloat(fields[2]);
-		coord[2] = parseFloat(fields[4]);
-		coord[3] = parseFloat(fields[1]);
-		coord[4] = parseFloat(fields[3]);
-		coord[5] = parseFloat(fields[5]);
+		var newm=[];
+		newm[0] = parseFloat(fields[0]);
+		newm[1] = parseFloat(fields[2]);
+		newm[2] = parseFloat(fields[4]);
+		newm[3] = parseFloat(fields[1]);
+		newm[4] = parseFloat(fields[3]);
+		newm[5] = parseFloat(fields[5]);
+		multiply(coord,newm);
 	}
 }
 
-loadSVG.prototype.parseRect=function(coord, id, n) 
+loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n) 
 {
+    sys.puts("rect");
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
+	var rx,ry;
     var w = getInteger(n,'width');
     var h = getInteger(n,'height');
+	var trans = n.attr('transform');
 	var paint;
 	
 	var style = n.attr('style');
+
+	if (trans) {
+		parseTransform(coord,trans.value());
+		var m = [1,0,0,0,1,0];
+		parseTransform(m,trans.value());
+		rx = x+m[2];
+		ry = y+m[5];
+	}
+
+	if (coord.center.x > rx)
+		coord.center.x = rx;
+	if (coord.center.y > ry)
+		coord.center.y = ry;
+	coord.center.x += accu_matrix[2];
+	coord.center.y += accu_matrix[5];
 
 	if (style==null) {
 		paint = this.mb_rt.paint_color_new(0,0,0,0.1);
@@ -337,16 +437,23 @@ loadSVG.prototype.parseRect=function(coord, id, n)
 	coord.add_shape(rect);
 }
 
-loadSVG.prototype.parseGroup=function(root, group_id, n)
+loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n)
 {
     var k;
     var nodes = n.childNodes();
     var coord = this.mb_rt.coord_new(root);
 	// Parse the transform and style here
 	var trans = n.attr('transform');
+	var accu=[1,0,0,0,1,0];
+    coord.center= new Object();
+	coord.center.x = 10000;
+	coord.center.y = 10000;
 	if (trans!=null) {
 	    parseTransform(coord, trans.value());
-	}
+	} 
+	accu[2] = accu_matrix[2]+coord[2];
+	accu[5] = accu_matrix[5]+coord[5];
+
 
 	for(k in nodes) {
 	    var c = nodes[k].name();
@@ -356,18 +463,17 @@ loadSVG.prototype.parseGroup=function(root, group_id, n)
 		    id = attr.value();
 		}
 		if (c == "g") {
-		    this.parseGroup(coord, id, nodes[k]);
+		    this.parseGroup(accu,coord, id, nodes[k]);
 		} else if (c == "path") {
 		    this.parsePath(coord, id, nodes[k]);
 		} else if (c == "text") {
 		    this.parseText(coord, id, nodes[k]);
 		} else if (c == "rect") {
-		    this.parseRect(coord, id, nodes[k]);
+		    this.parseRect(accu_matrix,coord, id, nodes[k]);
 		} else if (c == "image") {
 			this.parseImage(coord, id, nodes[k]);
 		}
 	}
-    
     make_mbnames(this.mb_rt, n, coord);
 }
 
@@ -383,23 +489,26 @@ loadSVG.prototype.parseImage=function(coord,id, n)
 	} else {
 	    return;
 	}
-	sys.puts("Load image "+ref);
 	var w;
 	var h;
 	var x,y;
 
 	w = n.attr("width");
 	if (w == null) return;
-	w = parseInt(w.value());
+	w = parseFloat(w.value());
 	h = n.attr("height");
 	if (h == null) return;
-	h = parseInt(h.value());	
+	h = parseFloat(h.value());	
 	x = n.attr("x");
 	if (x == null) return;
-	x = parseInt(x.value());
+	x = parseFloat(x.value());
 	y = n.attr("y");
 	if (y == null) return;
-	y = parseInt(y.value());
+	y = parseFloat(y.value());
+	if (coord.center.x > x)
+		coord.center.x = x;
+	if (coord.center.y > y)
+		coord.center.y = y;
 	var img = this.mb_rt.image_new(x,y,w,h);
 	var img_data = ldr.load(ref);
 	var paint = this.mb_rt.paint_image_new(img_data);
