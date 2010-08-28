@@ -1,0 +1,17 @@
+<inkscape-extension>
+    <name>Frame</name>
+    <id>MadButterfly.Frame</id>
+	<dependency type="executable" location="extensions">MB_Frame.py</dependency>
+	<dependency type="executable" location="extensions">inkex.py</dependency>
+    <effect>
+		<object-type>any</object-type>
+		<effects-menu>
+			<submenu _name="MadButterfly">
+			</submenu>
+		</effects-menu>
+    </effect>
+    <script>
+        <command reldir="extensions" interpreter="python">MB_Frame.py</command>
+    </script>
+</inkscape-extension>
+
