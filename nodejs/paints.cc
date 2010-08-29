@@ -35,12 +35,14 @@ xnjsmb_paint_recycle(Persistent<Value> obj, void *parameter) {
     paint_t *paint;
     Handle<Object> rt;
     redraw_man_t *rdman;
+    int r;
     
     paint = (paint_t *)UNWRAP(*paint_hdl);
     rt = GET(*paint_hdl, "mbrt")->ToObject();
     rdman = xnjsmb_rt_rdman(rt);
     
-    rdman_paint_free(rdman, paint);
+    r = rdman_paint_free(rdman, paint);
+    ASSERT(r == 0);
     
     paint_hdl->Dispose();
     delete paint_hdl;
