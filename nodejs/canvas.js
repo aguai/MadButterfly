@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: nil; tab-width: 4; c-basic-offset: 4; -*-
+// vim: sw=4:ts=4:sts=4
 var mbfly = require("mbfly");
 var sys=require("sys");
 
