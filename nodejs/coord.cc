@@ -81,6 +81,7 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
 						      PROP_JSOBJ);
 	SET(*child_hdl, "valid", _false);
 	WRAP(*child_hdl, NULL);
+	child_hdl->Dispose();
 	delete child_hdl;
 	
 	/* Invalidate members of a coord */
@@ -89,6 +90,7 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
 							PROP_JSOBJ);
 	    SET(*mem_hdl, "valid", _false);
 	    WRAP(*mem_hdl, NULL);
+	    mem_hdl->Dispose();
 	    delete mem_hdl;
 	}
     }
