@@ -30,9 +30,37 @@ using namespace v8;
  * resource before it being collected.
  */
 static void
+xnjsmb_paint_recycle(Persistent<Value> obj, void *parameter) {
+    Persistent<Object> *paint_hdl = (Persistent<Object> *)parameter;
+    paint_t *paint;
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+    
+    paint = (paint_t *)UNWRAP(*paint_hdl);
+    rt = GET(*paint_hdl, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(rt);
+    
+    rdman_paint_free(rdman, paint);
+    
+    paint_hdl->Dispose();
+    delete paint_hdl;
+}
+
+static void
+xnjsmb_paint_mod(Handle<Object> self, void *paint) {
+    Persistent<Object> *paint_hdl;
+    
+    paint_hdl = new Persistent<Object>();
+    *paint_hdl = Persistent<Object>::New(self);
+
+    paint_hdl->MakeWeak(paint_hdl, xnjsmb_paint_recycle);
+}
+
+static void
 xnjsmb_paint_fill(paint_t *paint, Handle<Object> self, shape_t *sh) {
     Handle<Value> rt_v;
     Handle<Object> rt_o;
+    Handle<Object> sh_o;
     redraw_man_t *rdman;
 
     rt_v = GET(self, "mbrt");
@@ -43,12 +71,16 @@ xnjsmb_paint_fill(paint_t *paint, Handle<Object> self, shape_t *sh) {
     
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
+
+    sh_o = *(Persistent<Object> *)mb_prop_get(&sh->obj.props, PROP_JSOBJ);
+    SET(sh_o, "_fill_by", self);
 }
 
 static void
 xnjsmb_paint_stroke(paint_t *paint, Handle<Object> self, shape_t *sh) {
     Handle<Value> rt_v;
     Handle<Object> rt_o;
+    Handle<Object> sh_o;
     redraw_man_t *rdman;
 
     rt_v = GET(self, "mbrt");
@@ -59,6 +91,9 @@ xnjsmb_paint_stroke(paint_t *paint, Handle<Object> self, shape_t *sh) {
     
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
+
+    sh_o = *(Persistent<Object> *)mb_prop_get(&sh->obj.props, PROP_JSOBJ);
+    SET(sh_o, "_stroke_by", self);
 }
 
 static void

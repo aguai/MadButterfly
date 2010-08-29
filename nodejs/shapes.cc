@@ -42,12 +42,14 @@ xnjsmb_shape_recycled(Persistent<Value> obj, void *parameter) {
     rdman_shape_changed(rdman, shape);
     rdman_shape_free(rdman, shape);
 
+    self_hdl->Dispose();
     delete self_hdl;
 }
 
 static void
 xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
     Persistent<Object> *self_hdl;
+    static int count = 0;
     
     /* Keep associated js object in property store for retrieving,
      * later, without create new js object.
@@ -57,6 +59,13 @@ xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
     mb_prop_set(&sh->obj.props, PROP_JSOBJ, self_hdl);
 
     self_hdl->MakeWeak(self_hdl, xnjsmb_shape_recycled);
+
+    /* XXX: should be remove.  It is for trace recycle of shape */
+    count++;
+    if(count > 10000) {
+	V8::LowMemoryNotification();
+	count = 0;
+    }
 }
 
 static void
@@ -178,6 +187,7 @@ xnjsmb_shape_remove(shape_t *sh, Handle<Object> self) {
     if(r != OK)
 	THROW_noret("Can not free a shape for unknown reason");
 
+    self_hdl->Dispose();
     delete self_hdl;
 }
 
