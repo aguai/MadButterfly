@@ -113,7 +113,7 @@ xnjsmb_coord_free_subtree(redraw_man_t *rdman, coord_t *coord) {
     last_child = NULL;
     FOR_COORDS_POSTORDER(coord, child) {
 	if(last_child != NULL) {
-	    r = rdman_coord_free(rdman, coord);
+	    r = rdman_coord_free(rdman, last_child);
 	    if(r != OK)
 		THROW_noret("Unknown error");
 	}
@@ -138,7 +138,7 @@ xnjsmb_coord_free_subtree(redraw_man_t *rdman, coord_t *coord) {
 	last_child = child;
     }
     if(last_child != NULL) {
-	r = rdman_coord_free(rdman, coord);
+	r = rdman_coord_free(rdman, last_child);
 	if(r != OK)
 	    THROW_noret("Unknown error");
     }
