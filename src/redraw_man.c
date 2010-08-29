@@ -717,7 +717,7 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 
 void redraw_man_destroy(redraw_man_t *rdman) {
     coord_t *coord, *saved_coord;
-    shape_t *shape, *saved_shape;
+    shape_t *shape;
     geo_t *member;
 
     mb_prop_store_destroy(&rdman->props);
@@ -1435,7 +1435,7 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
  * coord, coord_canvas_info_t::pcache_cur_area, for its cached children.
  */
 static int clean_rdman_coords(redraw_man_t *rdman) {
-    coord_t *coord, *child;
+    coord_t *coord;
     coord_t **dirty_coords;
     int n_dirty_coords;
     int i, r;
@@ -1490,7 +1490,7 @@ static int clean_rdman_geos(redraw_man_t *rdman) {
 static
 void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     coord_t *cur;
-    area_t *area, *saved_area;
+    area_t *area;
     geo_t *geo;
     co_aix min_x, min_y;
     co_aix max_x, max_y;
@@ -1499,7 +1499,6 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     int c_w, c_h;
     mbe_t *canvas;
     co_aix *aggr;
-    co_aix poses[4][2];
 
     if(coord->parent == NULL)	/*! \note Should not zeroing root coord */
 	abort();
@@ -1728,9 +1727,7 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 					      coord_t *coord) {
     int i;
     int n_areas;
-    int enable_poses1 = 0;
     co_aix poses0[2][2], poses1[2][2];
-    co_aix reverse[6];
     co_aix canvas2pdev_matrix[6];
     area_t **areas, *area;
     area_t *area0, *area1;
@@ -2365,7 +2362,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     event_t event;
     subject_t *redraw;
     int i;
-    coord_t *coord, **coords;
+    coord_t *coord;
     int n_areas;
     area_t **areas;
     
