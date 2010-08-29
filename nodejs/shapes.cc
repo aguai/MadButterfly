@@ -256,6 +256,8 @@ xnjsmb_path_new(njs_runtime_t *rt, const char *d) {
     
     rdman = X_njs_MB_rdman(rt);
     sh = rdman_shape_path_new(rdman, d);
+    /* Code generator supposes that callee should free the memory */
+    free((void *)d);
     
     return sh;
 }
@@ -267,6 +269,8 @@ xnjsmb_stext_new(njs_runtime_t *rt, const char *txt, float x, float y) {
 
     rdman = X_njs_MB_rdman(rt);
     sh = rdman_shape_stext_new(rdman, txt, x, y);
+    /* Code generator supposes that callee should free the memory */
+    free((void *)txt);
 
     return sh;
 }
