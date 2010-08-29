@@ -376,6 +376,8 @@ void _sh_path_arc_path(mbe_t *cr, sh_path_t *path, const co_aix **pnts_p,
 
 static void sh_path_free(shape_t *shape) {
     sh_path_t *path = (sh_path_t *)shape;
+
+    mb_obj_destroy(path);
     if(path->user_data)
 	free(path->user_data);
     free(path);
