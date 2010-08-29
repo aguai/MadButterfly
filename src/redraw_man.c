@@ -889,7 +889,7 @@ int rdman_paint_free(redraw_man_t *rdman, paint_t *paint) {
     shape_t *shape;
 
     if(rdman_is_dirty(rdman)) {
-	if(!(paint->flags & PNTF_FREE))
+	if(paint->flags & PNTF_FREE)
 	    return ERR;
 	add_free_obj(rdman, paint, (free_func_t)rdman_paint_free);
 	paint->flags |= PNTF_FREE;
