@@ -41,7 +41,7 @@ canvas.prototype.stroke=function(r,g,b,a) {
 
 canvas.prototype.line=function(x1,y1,x2,y2) {
     var s = "M "+x1+","+y1+" L "+x2+","+y2;
-	sys.puts(s);
+    //sys.puts(s);
 
     var p = this.mb_rt.path_new(s);
 	this.root.add_shape(p);
