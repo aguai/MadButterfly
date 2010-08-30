@@ -35,17 +35,13 @@ var icon;
 for(i = 0; i < icons.length; i++) {
     icon = icons[i];
     icon.mouse_event.add_event_observer(1, function(evt) {
-	    var tgt = evt.cur_tgt;
-
-	    overholder.go_center(tgt);
+	    overholder.go_center(evt.cur_tgt);
 	});
     icon.mouse_event.add_event_observer(2, function(evt) {
 	    overholder.home();
 	});
     icon.mouse_event.add_event_observer(4, function(evt) {
-	    var tgt = evt.cur_tgt;
-
-	    pressholder.go_center(tgt);
+	    pressholder.go_center(evt.cur_tgt);
 	});
 }
 
