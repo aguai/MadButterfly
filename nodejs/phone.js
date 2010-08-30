@@ -51,10 +51,13 @@ for(i = 0; i < icons.length; i++) {
 
 var sw = 0;
 dock.mouse_event.add_event_observer(4, function(evt) {
-	if(sw == 0)
-	    dockholder.shift(0, -300);
-	else
-	    dockholder.home();
+	if(sw == 0) {
+	    var an = new animate.linear(app, dock, 0, -300, 0.5);
+	    an.start();
+	} else {
+	    var an = new animate.linear(app, dock, 0, 0, 0.5);
+	    an.start();
+	}
 	sw = (sw + 1) % 2;
     });
 
