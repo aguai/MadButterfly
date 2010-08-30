@@ -112,3 +112,35 @@ function scale(app,obj,targetx,targety, duration) {
 exports.scale = scale;
 scale.prototype.start = scale_draw;
 scale.prototype.draw = scale_draw;
+
+function holder(app, coord) {
+    var mtx = [coord[0], coord[1], coord[2], coord[3], coord[4], coord[5]];
+    
+    this._mtx = mtx;
+    this._coord = coord;
+    this._app = app;
+}
+
+holder.prototype = {
+    go_center: function(o) {
+	var sx, sy;
+
+	sx = o.center_x - this._coord.center_x;
+	sy = o.center_y - this._coord.center_y;
+	this.shift(sx, sy);
+    },
+
+    home: function() {
+	this._coord[2] = this._mtx[2];
+	this._coord[5] = this._mtx[5];
+	this._app.refresh();
+    },
+
+    shift: function(sx, sy) {
+	this._coord[2] = this._mtx[2] + sx;
+	this._coord[5] = this._mtx[5] + sy;
+	this._app.refresh();
+    }
+};
+
+exports.holder = holder;

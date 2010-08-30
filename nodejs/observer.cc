@@ -98,7 +98,7 @@ xnjsmb_event_tgt_getter(Handle<Object> self, event_t *evt, const char **err) {
     Persistent<Object> *hdl;
     
     hdl = (Persistent<Object> *)
-	mb_prop_get(&((mb_obj_t *)evt->tgt)->props,
+	mb_prop_get(&((mb_obj_t *)evt->tgt->obj)->props,
 		    PROP_JSOBJ);
     return Local<Object>::New(*hdl);
 }
@@ -115,7 +115,7 @@ xnjsmb_event_cur_tgt_getter(Handle<Object> self, event_t *evt,
     Persistent<Object> *hdl;
     
     hdl = (Persistent<Object> *)
-	mb_prop_get(&((mb_obj_t *)evt->cur_tgt)->props,
+	mb_prop_get(&((mb_obj_t *)evt->cur_tgt->obj)->props,
 		    PROP_JSOBJ);
     return Local<Object>::New(*hdl);
 }
