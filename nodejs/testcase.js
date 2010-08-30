@@ -22,8 +22,9 @@ var img = mb_rt.image_new(10, 10, 50, 50);
 var ldr = mbfly.img_ldr_new(".");
 var img_data = ldr.load("sample.png");
 var paint = mb_rt.paint_image_new(img_data);
+var img_coord = mb_rt.coord_new(root);
 paint.fill(img);
-root.add_shape(img);
+img_coord.add_shape(img);
 
 /* test linear paint and rectangle */
 var rect = mb_rt.rect_new(100, 100, 50, 50, 10, 10);
@@ -142,6 +143,23 @@ observer = root.mouse_event.add_event_observer(4, function(evt) {
 	mb_rt.redraw_changed();
 	mb_rt.flush();
     });
+
+var resize_sw = 0;
+setInterval(function() {
+	var sz;
+	
+	resize_sw++;
+	
+	sz = (resize_sw % 20) - 10;
+	if(sz < 0)
+	    sz = -sz;
+	sz = 2 - sz / 10;
+	
+	img_coord[0] = sz;
+	img_coord[4] = sz;
+	mb_rt.redraw_changed();
+	mb_rt.flush();
+    }, 50);
 
 var kbobserver;
 /* Keyboard event */

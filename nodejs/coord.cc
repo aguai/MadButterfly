@@ -212,6 +212,7 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
     shape_hdl = (Persistent<Object> *)mb_prop_get(&shape->obj.props,
 						  PROP_JSOBJ);
     shape_hdl->ClearWeak();
+    rdman_shape_changed(rdman, shape);
 }
 
 static void
