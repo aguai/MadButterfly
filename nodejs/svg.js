@@ -474,6 +474,8 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
     this._set_paint(n, rect);
     this._set_bbox(n, tcoord);
     tcoord.add_shape(rect);
+
+    make_mbnames(this.mb_rt, n, tcoord);
 };
 
 // When we parse a group, we need to calculate the origin of the group
