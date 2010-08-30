@@ -62,19 +62,13 @@ function scale_draw() {
     if (this.end == 1) return;
     var percent = (Date.now() - this.starttime)/this.duration;
 	if (percent > 1) percent = 1;
-	//sys.puts("time="+(Date.now()-this.starttime)+" percent="+percent);
     var sx = (this.targetx-this.startsx)*percent+this.startsx;
     var sy = (this.targety-this.startsy)*percent+this.startsy;
 	var t=[sx,0,0,0,sy,0];
-	//sys.puts("center="+this.obj.center.x+","+this.obj.center.y);
 	this.obj[0] = sx;
 	this.obj[4] = sy;
 	this.obj[2] = this.origin_offset_x - (sx-this.startsx)*this.obj.center.x;
 	this.obj[5] = this.origin_offset_y - (sy-this.startsy)*this.obj.center.y;
-	//sys.puts("sx="+sx);
-	//sys.puts("sy="+sy);
-	//sys.puts("offseet x="+this.obj[2]);
-	//sys.puts("offseet y="+this.obj[5]);
 
 	this.app.refresh();
 	var self = this;
