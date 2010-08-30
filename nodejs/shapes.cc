@@ -68,6 +68,13 @@ xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
     }
 }
 
+/*! \brief Set style blocks for a stext object from JS.
+ *
+ * A style block is style setting of a chip of text.  It is a 3-tuple,
+ * includes number of charaters, a font face, and font size.  This
+ * function need a list of 3-tuples to set style of text chips of the
+ * stext.
+ */
 static void
 xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Object> self,
 			  Handle<Value> blks, const char **err) {
