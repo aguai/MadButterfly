@@ -1,13 +1,11 @@
 var mbfly = require("mbfly");
 var r = mbfly.Hello(" test");
 var sys = require("sys");
-/* process module is still not supported by nodejs v0.1.97 */
-/* var process = require("process"); */
 sys.puts(r);
 
 var display_name = ":0.0";
-/* if(process.argv.length > 2)
-   display_name = process.argv[2]; */
+if(process.argv.length == 3)
+   display_name = process.argv[2];
 
 var mb_rt = new mbfly.mb_rt(display_name, 300, 200);
 var root = mb_rt.root;
