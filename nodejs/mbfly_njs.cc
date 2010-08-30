@@ -26,6 +26,7 @@ xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
         *err = "Can not allocate a redraw_man_t";
 	return NULL;
     }
+    rdman_coord_changed(rdman, coord);
 
     return coord;
 }
