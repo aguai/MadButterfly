@@ -16,6 +16,7 @@ exports.loadSVG=function(mb_rt,root,filename) {
     return new loadSVG(mb_rt, root, filename);
 };
 
+
 function loadSVG(mb_rt, root, filename) {
     var doc = libxml.parseXmlFile(filename);
     var nodes = doc.root().childNodes();
