@@ -144,12 +144,14 @@ void compute_reverse(co_aix *orig, co_aix *reverse) {
     reverse[2] = -working[2];
     reverse[5] = -working[5];
 
-    reverse[0] /= working[0];
-    reverse[1] /= working[0];
-    reverse[2] /= working[0];
-    reverse[3] /= working[4];
-    reverse[4] /= working[4];
-    reverse[5] /= working[4];
+    factor = 1 / working[0];
+    reverse[0] *= factor;
+    reverse[1] *= factor;
+    reverse[2] *= factor;
+    factor = 1 / working[4];
+    reverse[3] *= factor;
+    reverse[4] *= factor;
+    reverse[5] *= factor;
 }
 
 /*! \brief Update aggregate matrices of elements under a sub-tree.

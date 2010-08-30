@@ -70,8 +70,6 @@ static void sh_image_free(shape_t *shape);
 shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 			       co_aix x, co_aix y, co_aix w, co_aix h) {
     sh_image_t *img;
-    mb_img_fmt_t fmt;
-    int r;
 
     img = O_ALLOC(sh_image_t);
     if(img == NULL)
@@ -158,8 +156,6 @@ void sh_image_transform(shape_t *shape) {
  */
 void sh_image_draw(shape_t *shape, mbe_t *cr) {
     sh_image_t *img = (sh_image_t *)shape;
-    mbe_pattern_t *saved_source;
-    co_aix *aggr;
     
     mbe_move_to(cr, img->poses[0][0], img->poses[0][1]);
     mbe_line_to(cr, img->poses[1][0], img->poses[1][1]);
