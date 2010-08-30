@@ -19,7 +19,8 @@ exports.loadSVG=function(mb_rt,root,filename) {
 
 function loadSVG(mb_rt, root, filename) {
     var doc = libxml.parseXmlFile(filename);
-    var nodes = doc.root().childNodes();
+    var _root = doc.root();
+    var nodes = _root.childNodes();
     var coord = mb_rt.coord_new(root);
     var k;
     var accu=[1,0,0,0,1,0];
@@ -29,6 +30,15 @@ function loadSVG(mb_rt, root, filename) {
     root.center=new Object();
     root.center.x = 10000;
     root.center.y = 10000;
+    
+    if(_root.attr("width")) {
+	k = _root.attr("width").value();
+	this.width = parseFloat(k);
+    }
+    if(_root.attr("height")) {
+	k = _root.attr("height").value();
+	this.height = parseFloat(k);
+    }
     
     for(k in nodes) {
 	var n = nodes[k].name();
@@ -237,6 +247,44 @@ function guessPathBoundingBox(coord,d)
 };
 
 
+loadSVG.prototype._set_bbox = function(node, tgt) {
+    var a;
+    var vstr;
+    
+    a = node.attr("bbox-x");
+    if(!a)
+	return;
+    
+    vstr = a.value();
+    tgt.bbox_x = parseFloat(vstr);
+
+    a = node.attr("bbox-y");
+    vstr = a.value();
+    tgt.bbox_y = this.height - parseFloat(vstr);
+
+    a = node.attr("bbox-width");
+    vstr = a.value();
+    tgt.bbox_width = parseFloat(vstr);
+
+    a = node.attr("bbox-height");
+    vstr = a.value();
+    tgt.bbox_height = parseFloat(vstr);
+
+    tgt.center_x = tgt.bbox_width / 2 + tgt.bbox_x;
+    a = node.attr("transform-center-x");
+    if(a) {
+	vstr = a.value();
+	tgt.center_x += parseFloat(vstr);
+    }
+    
+    tgt.center_y = tgt.bbox_height / 2 + tgt.bbox_y;
+    a = node.attr("transform-center-y");
+    if(a) {
+	vstr = a.value();
+	tgt.center_y -= parseFloat(vstr);
+    }
+}
+
 loadSVG.prototype._set_paint = function(node, tgt) {
     var style = node.attr('style');
     var paint;
@@ -301,6 +349,7 @@ loadSVG.prototype.parsePath=function(accu, coord,id, n)
     var path = this.mb_rt.path_new(d);
     
     guessPathBoundingBox(coord,d);
+    this._set_bbox(n, path);
     this._set_paint(n, path);
     coord.add_shape(path);
 
@@ -423,6 +472,7 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
 
     var rect = this.mb_rt.rect_new(x,y,w,h,10, 10);
     this._set_paint(n, rect);
+    this._set_bbox(n, tcoord);
     tcoord.add_shape(rect);
 };
 
@@ -475,6 +525,9 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
 	root.center.x = coord.center.x;
     if (root.center.y > coord.center.y)
 	root.center.y = coord.center.y;
+
+    this._set_bbox(n, coord);
+    
     make_mbnames(this.mb_rt, n, coord);
 };
 
@@ -525,6 +578,9 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     var paint = this.mb_rt.paint_image_new(img_data);
     paint.fill(img);
     tcoord.add_shape(img);
+    
+    this._set_bbox(n, img);
+
     make_mbnames(this.mb_rt, n, img);
 };
 
