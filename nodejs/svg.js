@@ -1,5 +1,5 @@
 // -*- indent-tabs-mode: t; tab-width: 4; c-basic-offset: 4; -*-
-// vim: sw=4:ts=8:sts=4:ai
+// vim: sw=4:ts=8:sts=4
 var libxml = require('libxmljs');
 var sys=require('sys');
 var mbfly = require("mbfly");
@@ -167,84 +167,86 @@ loadSVG.prototype._prepare_paint_color = function(color, alpha) {
     } else if(_std_colors[color]) {
 	c = _std_colors[color];
 	paint = this.mb_rt.paint_color_new(c[0], c[1], c[2], alpha);
+    } else if (fill.substring(0,3) == 'url') {
+	var id = fill.substring(5,fill.length-1);
+	var gr = this.gradients[id];
+	paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
+	paint.set_stops(this.stop_ref[id]);
     } else {
 	paint = this.mb_rt.paint_color_new(0,0,0,1);
     }
     return paint;
-}
+};
 	
-    function guessPathBoundingBox(coord,d)
-    {
-	return;
-	var items = d.split(' ');
-	var len = items.length;
-	var pair;
-	var i;
-	var minx,miny;
-
-	minx = 10000;
-	miny = 10000;
-
-	for(i=0;i<len;i++) {
-	    var type = items[i].toLowerCase();
-	    x = minx;y = miny;
-	    switch(type) {
-	    case 'm':
-	    case 'l':
-	    case 'a':
-	    case 'x':
-		pair = items[i+1].split(',');
-		if (pair.length==2) {
-		    x = parseFloat(pair[0]);
-		    y = parseFloat(pair[1]);
-		    i++;
-		} else {
-		    x = parseFloat(items[i+1]);
-		    y = parseFloat(items[i+2]);
-		    i+=2;
-		}
-		break;
-	    case 'q':
-		// Implement this latter
-		break;
-	    case 'c':
-		// Implement this latter
-		break;
-	    case 's':
-		// Implement this latter
-		break;
-	    case 'h':
-		x = parseFloat(items[i+1]);
-		break;
-	    case 'v':
-		y = parseFloat(items[i+1]);
-		break;
-	    default:
-		continue;
-	    }
-	    if (x < minx) minx = x;
-	    if (y < miny) miny = y;
-	}
-	if (coord.center.x >  minx)
-	    coord.center.x = minx;
-	if (coord.center.y >  miny)
-	    coord.center.y = miny;
-    };
-
-
-loadSVG.prototype.parsePath=function(coord,id, n)
+function guessPathBoundingBox(coord,d)
 {
-    var d = n.attr('d').value();
-    var style = n.attr('style');
-    var path = this.mb_rt.path_new(d);
+    return;
+    var items = d.split(' ');
+    var len = items.length;
+    var pair;
+    var i;
+    var minx,miny;
+
+    minx = 10000;
+    miny = 10000;
+
+    for(i=0;i<len;i++) {
+	var type = items[i].toLowerCase();
+	x = minx;y = miny;
+	switch(type) {
+	case 'm':
+	case 'l':
+	case 'a':
+	case 'x':
+	    pair = items[i+1].split(',');
+	    if (pair.length==2) {
+		x = parseFloat(pair[0]);
+		y = parseFloat(pair[1]);
+		i++;
+	    } else {
+		x = parseFloat(items[i+1]);
+		y = parseFloat(items[i+2]);
+		i+=2;
+	    }
+	    break;
+	case 'q':
+	    // Implement this latter
+	    break;
+	case 'c':
+	    // Implement this latter
+	    break;
+	case 's':
+	    // Implement this latter
+	    break;
+	case 'h':
+	    x = parseFloat(items[i+1]);
+	    break;
+	case 'v':
+	    y = parseFloat(items[i+1]);
+	    break;
+	default:
+	    continue;
+	}
+	if (x < minx) minx = x;
+	if (y < miny) miny = y;
+    }
+    if (coord.center.x >  minx)
+	coord.center.x = minx;
+    if (coord.center.y >  miny)
+	coord.center.y = miny;
+};
+
+
+loadSVG.prototype._set_paint = function(node, tgt) {
+    var style = node.attr('style');
     var paint;
     var fill_alpha = 1;
     var stroke_alpha = 1;
     var fill_color;
     var stroke_color;
     var black_paint;
+    var i;
     
-    guessPathBoundingBox(coord,d);
     if(style != null) {
 	var items = style.value().split(';');
 	var alpha;
@@ -260,9 +262,12 @@ loadSVG.prototype.parsePath=function(coord,id, n)
 	    } else if (f[0] == 'stroke') {
 		stroke_color = f[1];
 	    } else if (f[0] == 'stroke-width') {
-		path.stroke_width = parseFloat(f[1]);
+		tgt.stroke_width = parseFloat(f[1]);
 	    } else if (f[0] == 'stroke-opacity') {
 		stroke_alpha = parseFloat(f[1]);
+	    } else if (f[0] == 'display') {
+		if(f[1] == 'none')
+		    return;
 	    }
 	}
 
@@ -274,19 +279,29 @@ loadSVG.prototype.parsePath=function(coord,id, n)
     if(fill_color) {
 	if(fill_color != "none") {
 	    paint = this._prepare_paint_color(fill_color, fill_alpha);
-	    paint.fill(path);
+	    paint.fill(tgt);
 	}
     } else {
-	black_paint.fill(path);
+	black_paint.fill(tgt);
     }
     if(stroke_color) {
 	if(stroke_color != "none") {
 	    paint = this._prepare_paint_color(stroke_color, stroke_alpha);
-	    paint.stroke(path);
+	    paint.stroke(tgt);
 	}
     } else {
-	black_paint.stroke(path);
+	black_paint.stroke(tgt);
     }
+};
+
+loadSVG.prototype.parsePath=function(accu, coord,id, n)
+{
+    var d = n.attr('d').value();
+    var style = n.attr('style');
+    var path = this.mb_rt.path_new(d);
+    
+    guessPathBoundingBox(coord,d);
+    this._set_paint(n, path);
     coord.add_shape(path);
 
     make_mbnames(this.mb_rt, n, path);
@@ -406,48 +421,8 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
     if (coord.center.y > ry)
         coord.center.y = ry;
 
-    if (style==null) {
-        paint = this.mb_rt.paint_color_new(0,0,0,0.1);
-    } else {
-        var items = style.value().split(';');
-        var fill = '';
-        var alpha = 1;
-        display = 'on';
-        for(i in items) {
-            var f = items[i].split(':');
-            if (f[0] == 'opacity') {
-                alpha = f[1];
-            } else if (f[0] == 'fill') {
-                fill = f[1];
-            } else if (f[0] == 'fill-opacity') {
-            } else if (f[0] == 'stroke') {
-            } else if (f[0] == 'stroken-width') {
-            } else if (f[0] == 'stroke-opacity') {
-            } else if (f[0] == 'display') {
-                display = f[1];
-            }
-        }
-        if (display == 'none') {
-            return;
-        }
-        if (fill[0]=='#') {
-            var r,g,b;
-            r = parseInt(fill.substring(1,3),16)/256;
-            g = parseInt(fill.substring(3,5),16)/256;
-            b = parseInt(fill.substring(5,7),16)/256;
-
-            paint = this.mb_rt.paint_color_new(r,g,b,parseFloat(alpha));
-        } else if (fill.substring(0,3) == 'url') {
-            var id = fill.substring(5,fill.length-1);
-            var gr = this.gradients[id];
-            paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
-            paint.set_stops(this.stop_ref[id]);
-        } else {
-            paint = this.mb_rt.paint_color_new(0,0,0,1);
-        }
-    }
     var rect = this.mb_rt.rect_new(x,y,w,h,10, 10);
-    paint.fill(rect);
+    this._set_paint(n, rect);
     tcoord.add_shape(rect);
 };
 
