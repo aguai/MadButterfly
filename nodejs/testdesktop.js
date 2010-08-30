@@ -12,8 +12,8 @@ audio = app.get("audio");
 picture = app.get("picture");
 setting = app.get("setting");
 items=[video,audio,picture,setting];
-item = 2;
-an = new animate.scale(app,items[item],1,2,0.1);
+item = 0;
+an = new animate.scale(app,items[item],1,2,10);
 an.start();
 
 app.addKeyListener(mbapp.KEY_UP, function() {
