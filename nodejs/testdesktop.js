@@ -1,3 +1,4 @@
+// vim: ts=4
 var svg = require("./svg");
 var mbapp = require("./mbapp");
 var sys=require("sys");
@@ -13,7 +14,7 @@ picture = app.get("picture");
 setting = app.get("setting");
 items=[video,audio,picture,setting];
 item = 0;
-an = new animate.scale(app,items[item],1,2,10);
+an = new animate.scale(app,items[item],1,1.5,0.1);
 an.start();
 
 app.addKeyListener(mbapp.KEY_UP, function() {
@@ -26,7 +27,7 @@ app.addKeyListener(mbapp.KEY_UP, function() {
     var target = items[item];
 	var an = new animate.scale(app,old,1,1,0.1);
     an.start();
-	an = new animate.scale(app,target,1,2,0.3);
+	an = new animate.scale(app,target,1,1.5,0.3);
     an.start();
 });
 
@@ -40,7 +41,7 @@ app.addKeyListener(mbapp.KEY_DOWN, function() {
     var target = items[item];
 	var an = new animate.scale(app,old,1,1,0.1);
     an.start();
-	an = new animate.scale(app,target,1,2,0.3);
+	an = new animate.scale(app,target,1,1.5,0.3);
     an.start();
 });
 
