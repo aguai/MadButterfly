@@ -42,19 +42,75 @@ function linear_draw_start() {
     obj.timer = setInterval(function() { self.draw(); }, frame_interval);
 }
 
-function linear(app,obj,targetx,targety,duration) {
+function linear(app,obj,shiftx,shifty,duration) {
     obj.animated_linear = this;
     this.app = app;
     this.obj = obj;
     this.end = 0;
-    this.targetx = targetx;
-    this.targety = targety;
+    this.targetx = shiftx + obj[2];
+    this.targety = shifty + obj[5];
     this.duration = duration*1000;
 }
 
 exports.linear = linear;
 linear.prototype.start = linear_draw_start;
 linear.prototype.draw = linear_draw;
+
+/* ------------------------------------------------------------ */
+function rotate(app, obj, ang, duration) {
+    this._app = app;
+    this._obj = obj;
+    this._ang = ang;
+    this._duration = duration;
+}
+
+function rotate_start() {
+    var obj = this._obj;
+    var self = this;
+    
+    this._step = 1 / (ffs * this._duration);
+    this._percent = 0;
+    this._start_mtx = [obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]];
+    obj.timer = setInterval(function() { self.draw(); }, frame_interval);
+}
+
+function rotate_draw() {
+    var percent;
+    var ang;
+    var sv, cv;
+    var obj = this._obj;
+    var mtx, shift;
+
+    this._percent = percent = this._percent + this._step;
+    if(percent > 1) {
+	percent = 1;
+	obj.timer.stop();
+    }
+
+    ang = percent * this._ang;
+    sv = Math.sin(ang);
+    cv = Math.cos(ang);
+    mtx = [cv, -sv, 0, sv, cv, 0];
+
+    shift = [1, 0, -obj.center_x, 0, 1, -obj.center_y];
+    mtx = multiply(mtx, shift);
+    shift = [1, 0, obj.center_x, 0, 1, obj.center_y];
+    mtx = multiply(shift, mtx);
+    mtx = multiply(mtx, this._start_mtx);
+
+    obj[0] = mtx[0];
+    obj[1] = mtx[1];
+    obj[2] = mtx[2];
+    obj[3] = mtx[3];
+    obj[4] = mtx[4];
+    obj[5] = mtx[5];
+
+    this._app.refresh();
+}
+
+rotate.prototype.start = rotate_start;
+rotate.prototype.draw = rotate_draw;
+exports.rotate = rotate;
 
 function multiply(s,d) {
     var m=[];
@@ -64,12 +120,7 @@ function multiply(s,d) {
     m[3] = s[3]*d[0]+s[4]*d[3];
     m[4] = s[3]*d[1]+s[4]*d[4];
     m[5] = s[3]*d[2]+s[4]*d[5]+s[5];
-    s[0] = m[0];
-    s[1] = m[1];
-    s[2] = m[2];
-    s[3] = m[3];
-    s[4] = m[4];
-    s[5] = m[5];
+    return m;
 }
 
 
