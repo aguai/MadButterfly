@@ -41,6 +41,8 @@ for(i = 0; i < icons.length; i++) {
 	});
     icon.mouse_event.add_event_observer(4, function(evt) {
 	    pressholder.go_center(evt.cur_tgt);
+	    var rotate = new animate.rotate(app, evt.cur_tgt, 2 * 3.1415, 0.7);
+	    rotate.start();
 	});
 }
 
