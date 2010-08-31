@@ -46,15 +46,15 @@ for(i = 0; i < icons.length; i++) {
 }
 
 var sw = 0;
+var dock_up = new animate.linear(app, dock, 0, -300, 0.5);
+var dock_down = new animate.linear(app, dock, 0, 0, 0.5);
 dock.mouse_event.add_event_observer(4, function(evt) {
 	if(sw == 0) {
-	    var an = new animate.linear(app, dock, 0, -300, 0.5);
-	    an.start();
+	    dock_up.start();
 	} else {
-	    var an = new animate.linear(app, dock, 0, 0, 0.5);
-	    an.start();
+	    dock_down.start();
 	}
-	sw = (sw + 1) % 2;
+	sw = sw ^ 1;
     });
 
 app.loop();
