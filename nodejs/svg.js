@@ -269,6 +269,7 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
     a = node.attr("bbox-height");
     vstr = a.value();
     tgt.bbox_height = parseFloat(vstr);
+    tgt.bbox_y -= tgt.bbox_height;
 
     tgt.center_x = tgt.bbox_width / 2 + tgt.bbox_x;
     a = node.attr("transform-center-x");
