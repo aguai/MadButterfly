@@ -546,7 +546,6 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     } else if (ref.substr(0,5)=="file:") {
 	ref = ref.substring(5);
     } else {
-	return;
     }
     var w;
     var h;
