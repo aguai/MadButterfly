@@ -11,9 +11,9 @@ var icons = [];
 var r, c;
 var mbname;
 
-for(r = 0; r < 4; r++) {
-    for(c = 0; c < 5; c++) {
-	mbname = "icon" + r + "" + c;
+for(c = 0; c < 4; c++) {	// 4 columns
+    for(r = 0; r < 5; r++) {	// 5 rows
+	mbname = "icon" + c + "" + r;
 	icons.push(app.get(mbname));
     }
 }
