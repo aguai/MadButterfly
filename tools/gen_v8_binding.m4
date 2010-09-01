@@ -213,7 +213,7 @@ UNVARFRAME[]dnl
 divert([])dnl
 ])
 
-define([SET_ACCESSSOR], [dnl
+define([SET_ACCESSOR], [dnl
 VARFRAME[]dnl
 fdefine([INT], [$][1])dnl
 fdefine([NUMBER], [$][1])dnl
@@ -635,7 +635,7 @@ static void
 ])dnl
 [    inst_temp = func_temp->InstanceTemplate();
     inst_temp->SetInternalFieldCount(1);
-]foreach([ITER], ($3), [SET_ACCESSSOR(ITER)])dnl
+]foreach([ITER], ($3), [SET_ACCESSOR(ITER)])dnl
 INSTALL_INDEX_FUNCTIONS[]dnl
 
     proto_temp = func_temp->PrototypeTemplate();
