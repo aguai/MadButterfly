@@ -8,31 +8,21 @@ var sys=require("sys");
  */
 var ffs = 20;
 var frame_interval = 1000 / ffs;
-var tm_flag = 1;
 
 function linear_draw() {
     var percent;
     
-    this.percent = this.percent + this.step;
-    percent = this.percent;
-    if (percent > 1) percent = 1;
-    
-    this.c++;
+    percent = (Date.now() - this._start_tm) / this.duration;
     if(percent >= 1) {
+	percent = 1;
+    
 	this.obj.timer.stop();
 	delete this.obj.timer;
-	sys.puts(this.c);
-	sys.puts(Date.now() - this._start_tm);
     }
     
     this.obj[2] = (this.targetx-this.startposx)*percent+this.startposx;
     this.obj[5] = (this.targety-this.startposy)*percent+this.startposy;
     this.app.refresh();
-    if(tm_flag) {
-	var self = this;
-	if(percent < 1)
-	    this.obj.timer = setTimeout(function() { self.draw(); }, frame_interval);
-    }
 }
 
 function linear_draw_start() {
@@ -44,14 +34,8 @@ function linear_draw_start() {
 
     this.startposx = obj[2];
     this.startposy = obj[5];
-    this.c = 0;
-    this.step = 1000 / (this.duration * ffs);
-    this.percent = 0;
     this._start_tm = Date.now();
-    if(tm_flag == 1)
-	obj.timer = setTimeout(function() { self.draw(); }, frame_interval);
-    else
-	obj.timer = setInterval(function() { self.draw(); }, frame_interval);
+    obj.timer = setInterval(function() { self.draw(); }, frame_interval);
 }
 
 function linear(app,obj,shiftx,shifty,duration) {
@@ -73,16 +57,15 @@ function rotate(app, obj, ang, duration) {
     this._app = app;
     this._obj = obj;
     this._ang = ang;
-    this._duration = duration;
+    this._duration = duration * 1000;
 }
 
 function rotate_start() {
     var obj = this._obj;
     var self = this;
     
-    this._step = 1 / (ffs * this._duration);
-    this._percent = 0;
     this._start_mtx = [obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]];
+    this._start_tm = Date.now();
     obj.timer = setInterval(function() { self.draw(); }, frame_interval);
 }
 
@@ -93,8 +76,8 @@ function rotate_draw() {
     var obj = this._obj;
     var mtx, shift;
 
-    this._percent = percent = this._percent + this._step;
-    if(percent > 1) {
+    percent = (Date.now() - this._start_tm) / this._duration;
+    if(percent >= 1) {
 	percent = 1;
 	obj.timer.stop();
     }
