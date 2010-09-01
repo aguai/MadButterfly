@@ -250,40 +250,42 @@ function guessPathBoundingBox(coord,d)
 loadSVG.prototype._set_bbox = function(node, tgt) {
     var a;
     var vstr;
+    var bbox, center;
     
     a = node.attr("bbox-x");
     if(!a)
 	return;
     
+    tgt.bbox = bbox = new Object();
     vstr = a.value();
-    tgt.bbox_x = parseFloat(vstr);
+    bbox.x = parseFloat(vstr);
 
     a = node.attr("bbox-y");
     vstr = a.value();
-    tgt.bbox_y = this.height - parseFloat(vstr);
+    bbox.y = this.height - parseFloat(vstr);
 
     a = node.attr("bbox-width");
     vstr = a.value();
-    tgt.bbox_width = parseFloat(vstr);
+    bbox.width = parseFloat(vstr);
 
     a = node.attr("bbox-height");
     vstr = a.value();
-    tgt.bbox_height = parseFloat(vstr);
-    tgt.bbox_y -= tgt.bbox_height;
+    bbox.height = parseFloat(vstr);
+    bbox.y -= bbox.height;
 
-    tgt.center_x = tgt.bbox_width / 2 + tgt.bbox_x;
-    a = node.attr("transform-center-x");
-    if(a) {
-	vstr = a.value();
-	tgt.center_x += parseFloat(vstr);
-    }
+    tgt.center = center = new Object();
     
-    tgt.center_y = tgt.bbox_height / 2 + tgt.bbox_y;
+    center.x = bbox.width / 2 + bbox.x;
+    center.y = bbox.height / 2 + bbox.y;
+    a = node.attr("transform-center-x");
+    if(!a)
+	return;
+    
+    vstr = a.value();
+    center.x += parseFloat(vstr);
     a = node.attr("transform-center-y");
-    if(a) {
-	vstr = a.value();
-	tgt.center_y -= parseFloat(vstr);
-    }
+    vstr = a.value();
+    center.y -= parseFloat(vstr);
 }
 
 loadSVG.prototype._set_paint = function(node, tgt) {
