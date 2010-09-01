@@ -87,9 +87,9 @@ function rotate_draw() {
     cv = Math.cos(ang);
     mtx = [cv, -sv, 0, sv, cv, 0];
 
-    shift = [1, 0, -obj.center_x, 0, 1, -obj.center_y];
+    shift = [1, 0, -obj.center.x, 0, 1, -obj.center.y];
     mtx = multiply(mtx, shift);
-    shift = [1, 0, obj.center_x, 0, 1, obj.center_y];
+    shift = [1, 0, obj.center.x, 0, 1, obj.center.y];
     mtx = multiply(shift, mtx);
     mtx = multiply(mtx, this._start_mtx);
 
@@ -183,14 +183,18 @@ function holder(app, coord) {
 }
 
 holder.prototype = {
-    go_center: function(o) {
+    go: function(pos) {
 	var sx, sy;
 
-	sx = o.center_x - this._coord.center_x;
-	sy = o.center_y - this._coord.center_y;
+	sx = pos.x - this._coord.center.x;
+	sy = pos.y - this._coord.center.y;
 	this.shift(sx, sy);
     },
 
+    go_center: function(o) {
+	this.go(o.center);
+    },
+    
     home: function() {
 	this._coord[2] = this._mtx[2];
 	this._coord[5] = this._mtx[5];
