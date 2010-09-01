@@ -1,4 +1,4 @@
-// -*- indent-tabs-mode: t; tab-width: 4; c-basic-offset: 4; -*-
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
 // vim: sw=4:ts=8:sts=4
 var libxml = require('libxmljs');
 var sys=require('sys');
@@ -177,8 +177,8 @@ loadSVG.prototype._prepare_paint_color = function(color, alpha) {
     } else if(_std_colors[color]) {
 	c = _std_colors[color];
 	paint = this.mb_rt.paint_color_new(c[0], c[1], c[2], alpha);
-    } else if (fill.substring(0,3) == 'url') {
-	var id = fill.substring(5,fill.length-1);
+    } else if (color.substring(0,3) == 'url') {
+	var id = color.substring(5, color.length-1);
 	var gr = this.gradients[id];
 	paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
 	paint.set_stops(this.stop_ref[id]);
