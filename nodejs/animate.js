@@ -8,6 +8,7 @@ var sys=require("sys");
  */
 var ffs = 20;
 var frame_interval = 1000 / ffs;
+var tm_flag = 1;
 
 function linear_draw() {
     var percent;
@@ -20,11 +21,17 @@ function linear_draw() {
     if(percent >= 1) {
 	this.obj.timer.stop();
 	delete this.obj.timer;
+	sys.puts(Date.now() - this._start_tm);
     }
     
     this.obj[2] = (this.targetx-this.startposx)*percent+this.startposx;
     this.obj[5] = (this.targety-this.startposy)*percent+this.startposy;
     this.app.refresh();
+    if(tm_flag) {
+	var self = this;
+	if(percent < 1)
+	    this.obj.timer = setTimeout(function() { self.draw(); }, frame_interval);
+    }
 }
 
 function linear_draw_start() {
@@ -39,7 +46,11 @@ function linear_draw_start() {
     this.c = 0;
     this.step = 1000 / (this.duration * ffs);
     this.percent = 0;
-    obj.timer = setInterval(function() { self.draw(); }, frame_interval);
+    this._start_tm = Date.now();
+    if(tm_flag == 1)
+	obj.timer = setTimeout(function() { self.draw(); }, frame_interval);
+    else
+	obj.timer = setInterval(function() { self.draw(); }, frame_interval);
 }
 
 function linear(app,obj,shiftx,shifty,duration) {
