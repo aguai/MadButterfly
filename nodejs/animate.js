@@ -21,6 +21,7 @@ function linear_draw() {
     if(percent >= 1) {
 	this.obj.timer.stop();
 	delete this.obj.timer;
+	sys.puts(this.c);
 	sys.puts(Date.now() - this._start_tm);
     }
     
