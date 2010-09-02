@@ -1644,7 +1644,7 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
     
     /* Add all marked coords into redraw_man_t::zeroing_coords list */
     FOR_COORDS_PREORDER(rdman->root_coord, coord) {
-	if(!coord_is_cached(coord))
+	if(!coord_is_cached(coord) || coord_is_root(coord))
 	    continue;		/* skip coords that is not cached */
 	
 	if(!coord_get_flags(coord, COF_TEMP_MARK)) {
