@@ -256,6 +256,20 @@ xnjsmb_coord_hide(coord_t *coord, Handle<Object> self) {
     rdman_coord_changed(rdman, coord);
 }
 
+static void
+xnjsmb_coord_set_opacity(coord_t *coord, Handle<Object> self,
+			 float opacity) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+    
+    coord_set_opacity(coord, opacity);
+    rdman_coord_changed(rdman, coord);
+}
+
 #include "coord-inc.h"
 
 /*! \brief This function used by \ref xnjsmb_mb_rt to wrap coord object.

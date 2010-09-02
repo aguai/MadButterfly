@@ -491,6 +491,29 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
 // Each element must be responsible to calculate its absolute origin
 // point and update the origin of its parent.
 
+function parseGroupStyle(style,n)
+{
+    var attr;
+    if (n) {
+        attr = n.attr('style');
+    } else {
+        attr = null;
+    }
+    if (attr == null) {
+        return;
+    }
+    var f = attr.value().split(';');
+
+    for(i in f) {
+        var kv = f[i].split(':');
+        if (kv[0] == 'opacity') {
+            style.opacity = parseFloat(kv[1]);
+        } else {
+            sys.puts("Unknown style: "+kv[0]);
+        }
+    }
+}
+
 loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     var k;
     var nodes = n.childNodes();
@@ -498,6 +521,8 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     // Parse the transform and style here
     var trans = n.attr('transform');
     var accu=[1,0,0,0,1,0];
+    var style;
+
     coord.center= new Object();
     coord.center.x = 10000;
     coord.center.y = 10000;
@@ -506,6 +531,13 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     } 
     multiply(accu,accu_matrix);
     multiply(accu,coord);
+
+    style = {};
+    parseGroupStyle(style, n);
+    if(style.opacity) {
+	sys.puts(style.opacity);
+	coord.set_opacity(style.opacity);
+    }
 
     for(k in nodes) {
 	var c = nodes[k].name();
