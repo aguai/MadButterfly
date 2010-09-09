@@ -17,7 +17,29 @@
    inkscape:version="0.47+devel r9312"
    sodipodi:docname="desktop.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient3706">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3708" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop3710" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3706"
+       id="linearGradient3712"
+       x1="0"
+       y1="240"
+       x2="747.27411"
+       y2="240"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -25,11 +47,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="286.57568"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="-11.924392"
      inkscape:cy="177.14286"
      inkscape:document-units="px"
-     inkscape:current-layer="g2917-8-6"
+     inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1920"
      inkscape:window-height="1006"
@@ -49,89 +71,74 @@
     </rdf:RDF>
   </metadata>
   <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="background">
+    <rect
+       style="fill:url(#linearGradient3712);fill-opacity:1"
+       id="rect2928"
+       width="747.27411"
+       height="480"
+       x="0"
+       y="0"
+       ry="3.0304577" />
+  </g>
+  <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-572.36218)">
     <g
        id="g2917"
-       transform="translate(106.06602,-7.0710678)"
+       transform="translate(34.345189,-8.0812203)"
        mbname="video">
-      <rect
-         transform="translate(0,572.36218)"
-         y="238.57355"
-         x="63.63961"
-         height="74.751289"
-         width="83.842659"
-         id="rect2915"
-         style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
       <image
-         y="809.55243"
-         x="63.266537"
-         id="image2983"
+         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/video.png"
          xlink:href="video.png"
+         width="85.598946"
          height="84.588799"
-         width="85.598946" />
+         id="image2983"
+         x="63.266537"
+         y="809.55243" />
     </g>
     <g
        id="g2917-8"
        transform="translate(194.45437,-7.071074)"
        mbname="audio">
-      <rect
-         transform="translate(0,572.36218)"
-         y="238.57355"
-         x="63.63961"
-         height="74.751289"
-         width="83.842659"
-         id="rect2915-9"
-         style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
       <image
-         y="810.67859"
-         x="63.009457"
-         id="image3048"
+         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/music.png"
          xlink:href="music.png"
+         width="86.5"
          height="76.928574"
-         width="86.5" />
+         id="image3048"
+         x="63.00946"
+         y="814.71918" />
     </g>
     <g
        id="g2917-88"
-       transform="translate(282.59017,-7.0710688)"
+       transform="translate(346.22978,-8.0812213)"
        mbname="picture">
-      <rect
-         transform="translate(0,572.36218)"
-         y="238.57355"
-         x="63.63961"
-         height="74.751289"
-         width="83.842659"
-         id="rect2915-8"
-         style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
       <image
-         y="809.93323"
-         x="63.624115"
-         id="image3049"
+         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/photo.png"
          xlink:href="photo.png"
+         width="84"
          height="76.14286"
-         width="84" />
+         id="image3049"
+         x="63.624115"
+         y="809.93323" />
     </g>
     <g
        id="g2917-8-6"
-       transform="translate(370.97852,-7.0710788)"
+       transform="translate(494.21713,-6.0609263)"
        mbname="setting">
-      <rect
-         transform="translate(0,572.36218)"
-         y="238.57355"
-         x="63.63961"
-         height="74.751289"
-         width="83.842659"
-         id="rect2915-9-8"
-         style="fill:#0000ff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
       <image
-         y="810.79041"
-         x="63.521473"
-         id="image3168"
+         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/tool.png"
          xlink:href="tool.png"
+         width="84.571426"
          height="75.14286"
-         width="84.571426" />
+         id="image3168"
+         x="63.521473"
+         y="810.79041" />
     </g>
   </g>
 </svg>
