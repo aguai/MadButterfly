@@ -16,8 +16,11 @@ items=[video,audio,picture,setting];
 item = 0;
 an = new animate.scale(app,items[item],1,1.5,0.1);
 an.start();
+setInterval(function() {
+    
 
-app.addKeyListener(mbapp.KEY_UP, function() {
+}, 300);
+app.addKeyListener(mbapp.KEY_LEFT, function() {
 	var old = items[item];
 	item = item - 1;
 	if (item == -1) {
@@ -31,7 +34,7 @@ app.addKeyListener(mbapp.KEY_UP, function() {
     an.start();
 });
 
-app.addKeyListener(mbapp.KEY_DOWN, function() {
+app.addKeyListener(mbapp.KEY_RIGHT, function() {
 	var old = items[item];
 	item = item + 1;
 	if (item == items.length) {
