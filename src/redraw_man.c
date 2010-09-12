@@ -1876,11 +1876,12 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
     n_dpca_coords = rdman->dirty_pcache_area_coords.num;
     dpca_coords = rdman->dirty_pcache_area_coords.ds;
     for(i = 0; i < n_dpca_coords; i++) {
+	coord = dpca_coords[i];
+	
 	if(coord_get_flags(coord, COF_TEMP_MARK))
 	    continue;
 	coord_set_flags(coord, COF_TEMP_MARK);
 
-	coord = dpca_coords[i];
 	pcached_coord = coord_get_cached(coord_get_parent(coord));
 	
 	if(coord_is_root(coord) || IS_CACHE_REDRAW_ALL(pcached_coord))
