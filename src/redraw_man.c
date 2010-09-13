@@ -2189,6 +2189,7 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 
 static void update_cached_canvas_2_parent(redraw_man_t *rdman,
 					  coord_t *coord) {
+#ifndef UNITTEST
     mbe_t *pcanvas, *canvas;
     mbe_surface_t *surface;
     mbe_pattern_t *pattern;
@@ -2208,6 +2209,7 @@ static void update_cached_canvas_2_parent(redraw_man_t *rdman,
     mbe_pattern_set_matrix(pattern, reverse);
     mbe_set_source(pcanvas, pattern);
     mbe_paint_with_alpha(pcanvas, coord->opacity);
+#endif
 }
 
 static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
@@ -2858,6 +2860,7 @@ test_own_canvas_redraw(void) {
     redraw_man_t _rdman;
     coord_t *coord1, *coord2;
     sh_dummy_t *sh;
+    paint_t *paint;
 
     redraw_man_init(&_rdman, NULL, NULL);
     rdman = &_rdman;
@@ -2875,10 +2878,14 @@ test_own_canvas_redraw(void) {
     rdman_add_shape(rdman, (shape_t *)sh, coord2);
     rdman_shape_changed(rdman, (shape_t *)sh);
 
-    rdman_redraw_changed(rdman);
+    paint = dummy_paint_new(rdman);
+    rdman_paint_fill(rdman, paint, (shape_t *)sh);
+    
+    rdman_redraw_all(rdman);
 
     CU_ASSERT(sh->draw_cnt == 1);
 
+    rdman_paint_free(rdman, paint);
     redraw_man_destroy(rdman);
 }
 
