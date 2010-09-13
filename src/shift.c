@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +47,7 @@ static void mb_shift_step(mb_action_t *act, const mb_timeval_t *now,
     coord_t *coord;
     float ratio;
 
-    
+
     MB_TIMEVAL_CP(&diff, now);
     MB_TIMEVAL_DIFF(&diff, &shift->start_time);
     ratio = comp_mb_timeval_ratio(&diff, shift->playing_time);

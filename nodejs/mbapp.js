@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 var mbfly = require("mbfly");
 var svg = require("./svg");
 var sys = require("sys");
@@ -30,6 +32,7 @@ app.prototype.loadSVG=function(fname) {
 }
 
 app.prototype.KeyPress = function(evt) {
+    sys.puts(evt.sym);
     if (this.onKeyPress) this.onKeyPress(evt.sym);
 	if (evt.sym in this.keymap) this.keymap[evt.sym]();
 }
@@ -69,8 +72,11 @@ app.prototype.addKeyListener=function(key,f) {
 exports.app=app;
 
 // Put all key definition here
+exports.KEY_LEFT = 0xff51;
 exports.KEY_UP = 0xff52;
+exports.KEY_RIGHT = 0xff53;
 exports.KEY_DOWN = 0xff54;
+exports.KEY_ENTER = 0xff0d;
 exports.EVT_ANY=0;
 exports.EVT_MOUSE_OVER=1;
 exports.EVT_MOUSE_OUT=2;

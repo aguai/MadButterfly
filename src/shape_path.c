@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -108,13 +110,13 @@ static int _calc_center(co_aix x0, co_aix y0,
     float _sin = sinf(x_rotate);
     float _cos = cosf(x_rotate);
     int reflect;
-    
+
     /* Compute center of the ellipse */
     nrx = x * _cos + y * _sin;
     nry = x * -_sin + y * _cos;
     nrx0 = x0 * _cos + y0 * _sin;
     nry0 = x0 * -_sin + y0 * _cos;
-    
+
     udx = (nrx - nrx0) / 2 / rx; /* ux - umx */
     udy = (nry - nry0) / 2 / ry; /* uy - umy */
     umx = (nrx + nrx0) / 2 / rx;
@@ -168,12 +170,12 @@ static co_aix _angle_rotated_ellipse(co_aix x, co_aix y,
     nrx = (x * _cos + y * _sin) / rx;
     nry = (-x * _sin + y * _cos) / ry;
     xy_tan = nry / nrx;
-    
+
     angle = atan(xy_tan);
 
     if(nrx < 0)
 	angle = PI + angle;
-    
+
     return angle;
 }
 
@@ -261,7 +263,7 @@ static int _sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 	    *pnts++ = corners[i][0] + cx;
 	    *pnts++ = corners[i][1] + cy;
 	}
-	
+
 	*(pnts++) = x;
 	*(pnts++) = y;
 
@@ -274,7 +276,7 @@ static int _sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 	    angle_stop += 2 * PI;
 	else if((!sweep) && angle_start < angle_stop)
 	    angle_start += 2 * PI;
-	
+
 	*float_args++ = cx;
 	*float_args++ = cy;
 	*float_args++ = rx;
@@ -282,7 +284,7 @@ static int _sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 	*float_args++ = angle_start;
 	*float_args++ = angle_stop;
 	*float_args++ = x_rotate;
-	
+
 	*cmds++ = toupper(cmd);
     }
 
@@ -308,7 +310,7 @@ static co_aix angle_diff(co_aix sx, co_aix sy, co_aix dx, co_aix dy) {
 
     rd2 = distance_pow2(dx, dy);
     rd = sqrtf(rd2);
-    
+
     inner = INNER(sx, sy, dx, dy);
     cross = CROSS(sx, sy, dx, dy);
     angle = acos(inner / rd);
@@ -352,7 +354,7 @@ void _sh_path_arc_path(mbe_t *cr, sh_path_t *path, const co_aix **pnts_p,
 
     _sin = sinf(x_rotate);
     _cos = cosf(x_rotate);
-    
+
     xyratio = ry / rx;
     aggr = sh_get_aggr_matrix((shape_t *)path);
     matrix[0] = _cos;
@@ -365,7 +367,7 @@ void _sh_path_arc_path(mbe_t *cr, sh_path_t *path, const co_aix **pnts_p,
     matrix_mul(aggr, matrix, dev_matrix);
     mbe_save(cr);
     mbe_transform(cr, dev_matrix);
-    mbe_arc(cr, 0, 0, rx, angle_start, angle_stop); 
+    mbe_arc(cr, 0, 0, rx, angle_start, angle_stop);
     mbe_restore(cr);
 
     *pnts_p = pnts;
@@ -531,7 +533,7 @@ static int sh_path_cmd_arg_cnt(const char *data, int *cmd_cntp, int *pnt_cntp,
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		
+
 		for(i = 0; i < 6; i++) {
 		    SKIP_SPACE(p);
 		    old = p;
@@ -717,7 +719,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		sy = y;
 	    }
 	    break;
-		
+
 	case 'l':
 	case 'L':
 	case 't':
@@ -863,9 +865,9 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     memcpy(path->user_data + cmd_cnt + pnt_cnt * sizeof(co_aix),
 	   float_args, sizeof(co_aix) * float_arg_cnt);
     memcpy(path->dev_data, path->user_data, msz);
-    
+
     path->shape.free = sh_path_free;
-    
+
     rdman_shape_man(rdman, (shape_t *)path);
 
     return (shape_t *)path;

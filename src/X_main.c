@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -191,7 +193,7 @@ void draw_path(mbe_t *cr, int w, int h) {
     rdman_add_shape(&rdman, (shape_t *)path1, coord1);
     rdman_add_shape(&rdman, (shape_t *)path2, coord2);
 
-    
+
     fill3 = rdman_paint_linear_new(&rdman, 50, 50, 150, 150);
     grad_stop_init(fill3_stops, 0, 1, 0, 0, 0.5);
     grad_stop_init(fill3_stops + 1, 0.5, 0, 1, 0, 0.5);
@@ -209,7 +211,7 @@ void draw_path(mbe_t *cr, int w, int h) {
     if(tman) {
 	/* Prepare an animation program. */
 	progm = mb_progm_new(10, &rdman);
-	
+
 	MB_TIMEVAL_SET(&start, 0, 0);
 	MB_TIMEVAL_SET(&playing, 1, 0);
 	word = mb_progm_next_word(progm, &start, &playing);
@@ -224,7 +226,7 @@ void draw_path(mbe_t *cr, int w, int h) {
 	act = mb_shift_new(0, 20, coord1, word);
 	act = mb_shift_new(0, -20, coord2, word);
 	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
-	
+
 	MB_TIMEVAL_SET(&start, 3, 0);
 	MB_TIMEVAL_SET(&playing, 2, 0);
 	word = mb_progm_next_word(progm, &start, &playing);
@@ -234,7 +236,7 @@ void draw_path(mbe_t *cr, int w, int h) {
 	act = mb_chgcolor_new(0, 0, 1, 0.5, fill1, word);
 	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
 	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
-	
+
 	/* Start playing the program. */
 	gettimeofday(&tv, NULL);
 	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);

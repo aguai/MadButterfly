@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include "mb_graph_engine.h"
@@ -143,7 +145,7 @@ grad_stop_t *paint_linear_stops(paint_t *paint,
 				grad_stop_t *stops) {
     paint_linear_t *linear = (paint_linear_t *)paint;
     grad_stop_t *old_stops;
-    
+
     old_stops = linear->stops;
     linear->n_stops = n_stops;
     linear->stops = stops;
@@ -226,7 +228,7 @@ grad_stop_t *paint_radial_stops(paint_t *paint,
 				grad_stop_t *stops) {
     paint_radial_t *radial = (paint_radial_t *)paint;
     grad_stop_t *old_stops;
-    
+
     old_stops = radial->stops;
     radial->n_stops = n_stops;
     radial->stops = stops;
@@ -260,7 +262,7 @@ static
 void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     paint_image_t *paint_img = (paint_image_t *)paint;
     mb_img_data_t *img_data;
-    
+
     mbe_surface_destroy(paint_img->surf);
     img_data = paint_img->img;
     MB_IMG_DATA_FREE(img_data);
@@ -282,7 +284,7 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
     paint = O_ALLOC(paint_image_t);
     if(paint == NULL)
 	return NULL;
-    
+
     paint_init(&paint->paint, MBP_IMAGE,
 	       paint_image_prepare, paint_image_free);
     paint->img = img;
@@ -296,7 +298,7 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 	free(paint);
 	return NULL;
     }
-    
+
     paint->ptn = mbe_pattern_create_for_surface(paint->surf);
     if(paint->ptn == NULL) {
 	paint_destroy(&paint->paint);
@@ -316,13 +318,13 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
  */
 void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     paint_image_t *img_paint = (paint_image_t *)paint;
-    
+
     mbe_pattern_set_matrix(img_paint->ptn, matrix);
 }
 
 void paint_image_get_size(paint_t *paint, int *w, int *h) {
     paint_image_t *ipaint = (paint_image_t *)paint;
-    
+
     ASSERT(paint->pnt_type == MBP_IMAGE);
     *w = ipaint->img->w;
     *h = ipaint->img->h;

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include "mb_prop.h"
 
 #define ASSERT(x)
@@ -13,7 +15,7 @@ mb_prop_entry_t *_mb_prop_find(mb_prop_store_t *prop_store, int id) {
 	if(entry->id == id)
 	    return entry;
     }
-    
+
     return NULL;
 }
 
@@ -79,6 +81,6 @@ int mb_prop_has(mb_prop_store_t *prop_store, int id) {
     entry = _mb_prop_find(prop_store, id);
     if(entry)
 	return 1;
-    
+
     return 0;
 }

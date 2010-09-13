@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <v8.h>
 
 extern "C" {
@@ -36,14 +38,14 @@ xnjsmb_paint_recycle(Persistent<Value> obj, void *parameter) {
     Handle<Object> rt;
     redraw_man_t *rdman;
     int r;
-    
+
     paint = (paint_t *)UNWRAP(*paint_hdl);
     rt = GET(*paint_hdl, "mbrt")->ToObject();
     rdman = xnjsmb_rt_rdman(rt);
-    
+
     r = rdman_paint_free(rdman, paint);
     ASSERT(r == 0);
-    
+
     paint_hdl->Dispose();
     delete paint_hdl;
 }
@@ -51,7 +53,7 @@ xnjsmb_paint_recycle(Persistent<Value> obj, void *parameter) {
 static void
 xnjsmb_paint_mod(Handle<Object> self, void *paint) {
     Persistent<Object> *paint_hdl;
-    
+
     paint_hdl = new Persistent<Object>();
     *paint_hdl = Persistent<Object>::New(self);
 
@@ -68,9 +70,9 @@ xnjsmb_paint_fill(paint_t *paint, Handle<Object> self, shape_t *sh) {
     rt_v = GET(self, "mbrt");
     rt_o = rt_v->ToObject();
     rdman = xnjsmb_rt_rdman(rt_o);
-    
+
     rdman_paint_fill(rdman, paint, sh);
-    
+
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
 
@@ -88,9 +90,9 @@ xnjsmb_paint_stroke(paint_t *paint, Handle<Object> self, shape_t *sh) {
     rt_v = GET(self, "mbrt");
     rt_o = rt_v->ToObject();
     rdman = xnjsmb_rt_rdman(rt_o);
-    
+
     rdman_paint_stroke(rdman, paint, sh);
-    
+
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
 
@@ -139,7 +141,7 @@ xnjsmb_paint_linear_set_stops(paint_t *paint, Handle<Value> stops) {
 		       stop_o->Get(3)->ToNumber()->Value(),  /* b */
 		       stop_o->Get(4)->ToNumber()->Value()); /* a */
     }
-    
+
     old_grad_stops = paint_linear_stops(paint, nstops, grad_stops);
     if(old_grad_stops)
 	free(old_grad_stops);	/* The stops, here, were allocated for
@@ -172,7 +174,7 @@ xnjsmb_paint_radial_set_stops(paint_t *paint, Handle<Value> stops) {
 		       stop_o->Get(3)->ToNumber()->Value(),  /* b */
 		       stop_o->Get(4)->ToNumber()->Value()); /* a */
     }
-    
+
     old_grad_stops = paint_radial_stops(paint, nstops, grad_stops);
     if(old_grad_stops)
 	free(old_grad_stops);	/* The stops, here, were allocated for
@@ -265,36 +267,36 @@ xnjsmb_paint_radial_new(njs_runtime_t *rt,
 Handle<Value>
 export_xnjsmb_auto_paint_color_new(paint_t *paint) {
     Handle<Value> ret;
-    
+
     ret = xnjsmb_auto_paint_color_new(paint);
-    
+
     return ret;
 }
 
 Handle<Value>
 export_xnjsmb_auto_paint_image_new(paint_t *paint) {
     Handle<Value> ret;
-    
+
     ret = xnjsmb_auto_paint_image_new(paint);
-    
+
     return ret;
 }
 
 Handle<Value>
 export_xnjsmb_auto_paint_linear_new(paint_t *paint) {
     Handle<Value> ret;
-    
+
     ret = xnjsmb_auto_paint_linear_new(paint);
-    
+
     return ret;
 }
 
 Handle<Value>
 export_xnjsmb_auto_paint_radial_new(paint_t *paint) {
     Handle<Value> ret;
-    
+
     ret = xnjsmb_auto_paint_radial_new(paint);
-    
+
     return ret;
 }
 /* @} */
@@ -314,7 +316,7 @@ void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
 	xnjsmb_auto_paint_image_init();
 	xnjsmb_auto_paint_linear_init();
 	xnjsmb_auto_paint_radial_init();
-	
+
 	init_flag = 1;
     }
 }

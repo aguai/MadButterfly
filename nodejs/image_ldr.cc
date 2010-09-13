@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \file
  * This file implements Javascript binding for img_ldr_t of MadButterfly.
  */
@@ -46,14 +48,14 @@ xnjsmb_img_ldr_load(const Arguments &args) {
 
     img_data_obj = img_data_temp->NewInstance();
     ASSERT(img_data_obj);
-    
+
     img_data = MB_IMG_LDR_LOAD(img_ldr, img_id);
     if(img_data == NULL)
 	THROW("Can not load an image");
     WRAP(img_data_obj, img_data);
 
     scope.Close(img_data_obj);
-    
+
     return img_data_obj;
 }
 
@@ -66,12 +68,12 @@ xnjsmb_img_ldr(const Arguments &args) {
     Handle<Object> self = args.This();
     char *path;
     mb_img_ldr_t *img_ldr;
-    
+
     if(argc != 1)
 	THROW("Invalid number of arguments (!= 1)");
     if(!args[0]->IsString())
 	THROW("Invalid argument type");
-    
+
     String::Utf8Value pathutf8(args[0]->ToString());
     path = *pathutf8;
 
@@ -92,7 +94,7 @@ xnjsmb_img_ldr_new(const Arguments &args) {
     Handle<Value> il_args[1];
     Handle<Object> img_ldr;
     Handle<Function> func;
-    
+
     if(argc != 1)
 	THROW("Invalid number of arguments (!= 1)");
     if(!args[0]->IsString())
@@ -127,7 +129,7 @@ xnjsmb_img_ldr_init_mb_rt_temp(Handle<Object> rt_temp) {
     _img_data_temp = ObjectTemplate::New();
     _img_data_temp->SetInternalFieldCount(1);
     img_data_temp = Persistent<ObjectTemplate>::New(_img_data_temp);
-    
+
     /* Setup img_ldr class */
     img_ldr_temp = FunctionTemplate::New(xnjsmb_img_ldr);
     img_ldr_temp->SetClassName(String::New("img_ldr"));

@@ -1,3 +1,5 @@
+# -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+# vim: sw=4:ts=8:sts=4
 
 mbfly_node_SRCS = mbfly_njs.cc X_supp_njs.c coord.cc shapes.cc paints.cc \
 		font.cc

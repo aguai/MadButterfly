@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <v8.h>
 #include "mbfly_njs.h"
 
@@ -34,7 +36,7 @@ xnjsmb_shape_recycled(Persistent<Value> obj, void *parameter) {
     shape = (shape_t *)UNWRAP(*self_hdl);
     if(shape == NULL)
 	return;
-    
+
     WRAP(*self_hdl, NULL);
 
     js_rt = GET(*self_hdl, "mbrt")->ToObject();
@@ -50,7 +52,7 @@ static void
 xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
     Persistent<Object> *self_hdl;
     static int count = 0;
-    
+
     /* Keep associated js object in property store for retrieving,
      * later, without create new js object.
      */
@@ -86,7 +88,7 @@ xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Object> self,
     redraw_man_t *rdman;
     int r;
     int i;
-    
+
     blksobj = Array::Cast(*blks);
     nblks = blksobj->Length();
     mb_blks = new mb_style_blk_t[nblks];
@@ -96,23 +98,23 @@ xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Object> self,
 	mb_blks[i].face = (mb_font_face_t *)UNWRAP(blkobj->Get(1)->ToObject());
 	mb_blks[i].font_sz = blkobj->Get(2)->ToNumber()->Value();
     }
-    
+
     r = sh_stext_set_style(sh, mb_blks, nblks);
     if(r != 0) {
 	*err = "Unknown error";
 	return;
     }
-    
+
     /*
      * Mark changed.
      */
     rt = GET(self, "mbrt")->ToObject();
     ASSERT(rt != NULL);
     rdman = xnjsmb_rt_rdman(rt);
-    
+
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
-    
+
     delete mb_blks;
 }
 
@@ -131,17 +133,17 @@ xnjsmb_shape_stroke_width_set(Handle<Object> self, shape_t *sh,
     float stroke_width;
     Handle<Object> rt;
     redraw_man_t *rdman;
-    
+
     stroke_width = value->Int32Value();
     sh_set_stroke_width(sh, stroke_width);
-    
+
     /*
      * Mark changed.
      */
     rt = GET(self, "mbrt")->ToObject();
     ASSERT(rt != NULL);
     rdman = xnjsmb_rt_rdman(rt);
-    
+
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
 }
@@ -150,11 +152,11 @@ static void
 xnjsmb_shape_show(shape_t *sh, Handle<Object> self) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-    
+
     sh_show(sh);
     rdman_shape_changed(rdman, sh);
 }
@@ -163,11 +165,11 @@ static void
 xnjsmb_shape_hide(shape_t *sh, Handle<Object> self) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-    
+
     sh_hide(sh);
     rdman_shape_changed(rdman, sh);
 }
@@ -181,14 +183,14 @@ xnjsmb_shape_remove(shape_t *sh, Handle<Object> self) {
 
     self_hdl = (Persistent<Object> *)mb_prop_get(&sh->obj.props,
 						 PROP_JSOBJ);
-    
+
     SET(*self_hdl, "valid", Boolean::New(0));
     WRAP(*self_hdl, NULL);
 
     js_rt = GET(*self_hdl, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-    
+
     rdman_shape_changed(rdman, sh);
     r = rdman_shape_free(rdman, sh);
     if(r != OK)
@@ -203,16 +205,16 @@ xnjsmb_sh_rect_set(shape_t *sh, Handle<Object> self, float x, float y,
 		   float w, float h, float rx, float ry) {
     Handle<Object> rt;
     redraw_man_t *rdman;
-    
+
     sh_rect_set(sh, x, y, w, h, rx, ry);
-    
+
     /*
      * Mark changed.
      */
     rt = GET(self, "mbrt")->ToObject();
     ASSERT(rt != NULL);
     rdman = xnjsmb_rt_rdman(rt);
-    
+
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
 }
@@ -223,7 +225,7 @@ xnjsmb_sh_rect_set(shape_t *sh, Handle<Object> self, float x, float y,
 
 /*! \defgroup xnjsmb_shapes_wraps Exported wrapper makers for shapes
  * \ingroup xnjsmb_shapes
- * 
+ *
  * These functions are used by methods of mb_rt to wrap shape objects
  * as Javascript objects.
  *
@@ -260,12 +262,12 @@ shape_t *
 xnjsmb_path_new(njs_runtime_t *rt, const char *d) {
     redraw_man_t *rdman;
     shape_t *sh;
-    
+
     rdman = X_njs_MB_rdman(rt);
     sh = rdman_shape_path_new(rdman, d);
     /* Code generator supposes that callee should free the memory */
     free((void *)d);
-    
+
     return sh;
 }
 

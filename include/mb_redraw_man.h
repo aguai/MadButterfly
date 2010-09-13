@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #ifndef __REDRAW_MAN_H_
 #define __REDRAW_MAN_H_
 
@@ -78,8 +80,8 @@ struct _redraw_man {
 				 *	    \see addrm_monitor_hdlr()
 				 */
     mb_obj_t *last_mouse_over;
-    void *rt;                  /*!< \brief This is a pointer to the current 
-                                *          graphic backend. 
+    void *rt;                  /*!< \brief This is a pointer to the current
+                                *          graphic backend.
 				*          \see rdman_attach_backend()
 				*/
     mb_prop_store_t props;
@@ -215,8 +217,8 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
  *
  */
 #define rdman_attach_backend(rdman,backend) (((rdman)->rt)=(backend))
-/*! \brief Load sprite dymanicly from the shared object module. 
- *  
+/*! \brief Load sprite dymanicly from the shared object module.
+ *
  * The search path can be changed by sprite_set_search_path. The name
  * can have a relative path in the front of it.
  * This function will search the object in the current working directory
@@ -249,7 +251,7 @@ typedef void (*mb_eventcb_t )(int fd,void *arg);
  * - render manager(?)
  */
 typedef struct {
-    
+
     void *(*init)(const char *display,int w,int h);
     void (*free)(void *be);
     void (*add_event)(void *be,int type, int fd, mb_eventcb_t f,void *arg);

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <mb.h>
 #include <string.h>
@@ -94,7 +96,7 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
 
     lightbar = (coord_t *) m->lightbar;
     mb_shift_new(0,m->menus_y[m->cur]-coord_y(lightbar),lightbar,word);
-    
+
     MB_TIMEVAL_SET(&start, 0, m->speed);
     MB_TIMEVAL_SET(&playing, 0, 0);
     word = mb_progm_next_word(progm, &start, &playing);
@@ -197,7 +199,7 @@ static void mb_animated_menu_up(mb_animated_menu_t *m)
             mb_animated_menu_fillMenuContentUp(m);
 	    mb_animated_menu_update(m);
         } else {
-	    if (m->cur == 0) 
+	    if (m->cur == 0)
 	        return;
 	    m->cur--;
             mb_animated_menu_moveLightBar(m);
@@ -256,7 +258,7 @@ static void mb_animated_menu_send_pending_key(event_t *ev,void *arg)
 {
     mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
     X_kb_event_t *xkey;
-    
+
     xkey = &m->pending_keys[m->pending_pos];
     m->pending_pos = (m->pending_pos + 1) & 0xf;
     mb_animated_menu_keyHandler((event_t *) xkey, m);
@@ -302,9 +304,9 @@ static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
     }
 }
 
-/** \brief Create an instace of animated menu. 
+/** \brief Create an instace of animated menu.
  *
- *   The objectnames is used to extract symbols from the SVG file. 
+ *   The objectnames is used to extract symbols from the SVG file.
  *         ${objectnames}0 - ${objectnames}8 is the text object.
  *         ${objectnames}_lightbar is the lightbar.
  *
@@ -322,7 +324,7 @@ mb_animated_menu_t *mb_animated_menu_new(mbaf_t *app,mb_sprite_t *sp,char *objna
     else
 	    for(i=0;menus[i];i++);
     ii=9;
-    
+
     m = (mb_animated_menu_t *) malloc(sizeof(mb_animated_menu_t));
     m->items = (int *) malloc(sizeof(int)*ii*2+sizeof(mb_obj_t *)*ii);
     m->app = app;

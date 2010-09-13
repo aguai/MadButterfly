@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #ifndef __MB_TYPES_H_
 #define __MB_TYPES_H_
 
@@ -227,7 +229,7 @@ struct _coord {
 #define COF_DIRTY 0x1
 #define COF_HIDDEN 0x2	        /*!< A coord is hidden. */
 #define COF_OWN_CANVAS 0x4	/*!< A coord owns a canvas or inherit it
-				 * from an ancestor. 
+				 * from an ancestor.
 				 */
 #define COF_SKIP_TRIVAL 0x8	/*!< temporary skip descendants
 				 * when trivaling.
@@ -251,7 +253,7 @@ struct _coord {
 				 */
 #define COF_TEMP_MARK 0x400	/*!< \brief Temporary mark a coord. */
 #define COF_JUST_ZERO 0x800	/*!< \brief The coord is real peformed zeroing.
-				 * 
+				 *
 				 * It's canvas is changed by zeroing.
 				 */
 #define COF_DIRTY_PCACHE_AREA 0x1000 /*!< \brief pcache_area shoud be
@@ -437,7 +439,7 @@ struct _mb_sprite {
 
 /*! \defgroup mb_sprite_lsym Sprite with linear symbol table.
  * @{
- */ 
+ */
 struct _mb_sprite_lsym_entry {
     const char *sym;
     const int offset;

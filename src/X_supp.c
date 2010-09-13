@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,7 +74,7 @@ struct _X_MB_runtime {
 static void
 XSHM_update(X_MB_runtime_t *xmb_rt) {
     GC gc;
-    
+
     gc = DefaultGC(xmb_rt->display, DefaultScreen(xmb_rt->display));
     if(xmb_rt->ximage) {	/* support XSHM */
 	XShmPutImage(xmb_rt->display,
@@ -166,7 +168,7 @@ static unsigned int get_button_state(unsigned int state) {
 	but |= MOUSE_BUT2;
     if(state & Button3Mask)
 	but |= MOUSE_BUT3;
-    
+
     return but;
 }
 
@@ -202,12 +204,12 @@ static void notify_coord_or_shape(redraw_man_t *rdman,
     mouse_event.y = y;
     mouse_event.but_state = state;
     mouse_event.button = button;
-    
+
     if(IS_MBO_SHAPES(obj))
 	subject = sh_get_mouse_event_subject((shape_t *)obj);
     else
 	subject = coord_get_mouse_event((coord_t *)obj);
-    
+
     subject_notify(subject, (event_t *)&mouse_event);
 }
 
@@ -284,7 +286,7 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	    }
 	    if(r == -1)
 		break;
-	    
+
 	    mevt = (XMotionEvent *)&evt;
 	    x = mevt->x;
 	    y = mevt->y;
@@ -400,7 +402,7 @@ void X_MB_handle_connection(void *be) {
 	    else if (rt->monitors[i].type == MONITOR_WRITE)
 		FD_SET(rt->monitors[i].fd, &wfds);
         }
-	
+
 	get_now(&now);
 	r = mb_tman_next_timeout(tman, &now, &tmo);
 
@@ -474,7 +476,7 @@ static int X_init_connection(const char *display_name,
 	disp_buf[cp] = 0;
 	disp_name = disp_buf;
     }
-    
+
     display = XOpenDisplay(disp_name);
     if(display == NULL)
 	return ERR;
@@ -519,21 +521,21 @@ xshm_destroy(X_MB_runtime_t *xmb_rt) {
     XShmSegmentInfo *shminfo;
 
     shminfo = &xmb_rt->shminfo;
-    
+
     if(xmb_rt->shminfo.shmaddr) {
 	XShmDetach(xmb_rt->display, shminfo);
     }
-    
+
     if(xmb_rt->ximage) {
 	XDestroyImage(xmb_rt->ximage);
 	xmb_rt->ximage = NULL;
     }
-    
+
     if(shminfo->shmaddr) {
 	shmdt(shminfo->shmaddr);
 	shminfo->shmaddr = NULL;
     }
-    
+
     if(shminfo->shmid) {
 	shmctl(shminfo->shmid, IPC_RMID, 0);
 	shminfo->shmid = 0;
@@ -555,22 +557,22 @@ xshm_init(X_MB_runtime_t *xmb_rt) {
     display = xmb_rt->display;
     visual = xmb_rt->visual;
     shminfo = &xmb_rt->shminfo;
-    
+
     support_shm = XShmQueryExtension(display);
     if(!support_shm)
 	return;
-    
+
     screen = DefaultScreen(display);
     depth = DefaultDepth(display, screen);
-    
+
     if(depth != 24 && depth != 32)
 	return;
-    
+
     xmb_rt->ximage = XShmCreateImage(display, visual, depth,
 				     ZPixmap, NULL, shminfo,
 				     xmb_rt->w, xmb_rt->h);
     ximage = xmb_rt->ximage;
-    
+
     mem_sz = ximage->bytes_per_line * ximage->height;
     shminfo->shmid = shmget(IPC_PRIVATE, mem_sz, IPC_CREAT | 0777);
     if(shminfo->shmid == -1) {
@@ -580,7 +582,7 @@ xshm_init(X_MB_runtime_t *xmb_rt) {
 
     shminfo->shmaddr = shmat(shminfo->shmid, 0, 0);
     ximage->data = shminfo->shmaddr;
-    
+
     shminfo->readOnly = 0;
 
     XShmAttach(display, shminfo);
@@ -617,7 +619,7 @@ static int
 X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
     int w, h;
-    
+
     w = xmb_rt->w;
     h = xmb_rt->h;
 
@@ -630,7 +632,7 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
 
     xmb_rt->surface_ptn =
 	mbe_pattern_create_for_surface(xmb_rt->surface);
-    
+
     if(xmb_rt->backend_surface == NULL) /* xshm_init() may create one */
 	xmb_rt->backend_surface =
 	    mbe_xlib_surface_create(xmb_rt->display,
@@ -645,7 +647,7 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
 
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
-    // FIXME: This is a wired loopback reference. This is inly required when we need 
+    // FIXME: This is a wired loopback reference. This is inly required when we need
     //        to get the xmb_rt->tman for the animation. We should relocate the tman
     //	      to the redraw_man_t instead.
     xmb_rt->rdman->rt = xmb_rt;
@@ -656,7 +658,7 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
     xmb_rt->img_ldr = img_ldr;
     rdman_set_img_ldr(xmb_rt->rdman, img_ldr);
     memset(xmb_rt->monitors,0,sizeof(xmb_rt->monitors));
-    
+
 #ifndef ONLY_MOUSE_MOVE_RAW
     xmb_rt->last = NULL;
 #endif
@@ -674,7 +676,7 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
 static int X_MB_init(const char *display_name,
 	      int w, int h, X_MB_runtime_t *xmb_rt) {
     int r;
-    
+
     memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
 
     xmb_rt->w = w;
@@ -685,7 +687,7 @@ static int X_MB_init(const char *display_name,
 	return ERR;
 
     r = X_MB_init_with_win(xmb_rt);
-    
+
     return r;
 }
 
@@ -829,7 +831,7 @@ mb_backend_t backend = { X_MB_new,
  *
  * These functions are for internal using.
  * @{
- */			 
+ */
 /*! \brief Exported for nodejs plugin to call handle_x_event.
  */
 void _X_MB_handle_x_event_for_nodejs(void *rt) {
