@@ -528,13 +528,15 @@ static mbe_t *canvas_new(int w, int h) {
 
     return cr;
 #else
-    return NULL;
+    return (mbe_t *)malloc(16);
 #endif
 }
 
 static void canvas_free(mbe_t *canvas) {
 #ifndef UNITTEST
     mbe_destroy(canvas);
+#else
+    free(canvas);
 #endif
 }
 
@@ -2613,6 +2615,7 @@ struct _sh_dummy {
     co_aix w, h;
     int trans_cnt;
     int draw_cnt;
+    redraw_man_t *last_draw;
 };
 
 void sh_dummy_free(shape_t *sh) {
@@ -2671,6 +2674,7 @@ void sh_dummy_fill(shape_t *shape, mbe_t *cr) {
 
     dummy = (sh_dummy_t *)shape;
     dummy->draw_cnt++;
+    dummy->last_draw = cr;
 }
 
 static void dummy_paint_prepare(paint_t *paint, mbe_t *cr) {
@@ -2884,6 +2888,7 @@ test_own_canvas_redraw(void) {
     rdman_redraw_all(rdman);
 
     CU_ASSERT(sh->draw_cnt == 1);
+    CU_ASSERT(sh->last_draw == _coord_get_canvas(coord2));
 
     rdman_paint_free(rdman, paint);
     redraw_man_destroy(rdman);
