@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #ifndef __ANIMATED_MENU_H
 #define __ANIMATED_MENU_H
 typedef struct _mb_animated_menu {
@@ -19,9 +21,9 @@ typedef struct _mb_animated_menu {
 	X_kb_event_t pending_keys[16];
     int pending_pos, pending_last;
 } mb_animated_menu_t;
-/** \brief Create an instace of animated menu. 
+/** \brief Create an instace of animated menu.
  *
- *   The objectnames is used to extract symbols from the SVG file. 
+ *   The objectnames is used to extract symbols from the SVG file.
  *         ${objectnames}0 - ${objectnames}8 is the text object.
  *         ${objectnames}_lightbar is the lightbar.
  *

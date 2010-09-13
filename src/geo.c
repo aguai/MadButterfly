@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \brief Determine who should be re-drawed.
  * \file
  * When part of graphic are chagned, not mater size, shape, or position,
@@ -23,7 +25,7 @@ static int _areas_are_overlay(area_t *r1, area_t *r2) {
     if(is_scale_overlay(r1->x, r1->w, r2->x, r2->w) &&
        is_scale_overlay(r1->y, r1->h, r2->y, r2->h))
 	return 1;
-    
+
     return 0;
 }
 
@@ -36,7 +38,7 @@ void area_init(area_t *area, int n_pos, co_aix pos[][2]) {
     co_aix min_y, max_y;
     co_aix x, y;
     int i;
-    
+
     /*! \note {x=0, y=0, w=0, h=0} geometry value for a n_pos=0 request
      * can prevent cursor flasing for Cairo XLib.
      * (see changeset 21db69d46835)
@@ -102,7 +104,7 @@ void test_geo_from_positions(void) {
 	{33, 25}, {49, 12},
 	{14, 28}, {39, 56}};
     geo_t g;
-    
+
     geo_init(&g);
     geo_from_positions(&g, 4, data);
     CU_ASSERT(g.cur_area->x == 14);

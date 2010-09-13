@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \brief Implement coordination tranform mechanism.
  * \file
  * This file implements coordination transforming for containers.
@@ -28,10 +30,10 @@ static void mul_matrix(co_aix *m1, co_aix *m2, co_aix *dst) {
 void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst) {
     co_aix *_dst = dst;
     co_aix fake_dst[6];
-    
+
     if(m1 == dst || m2 == dst)
 	_dst = fake_dst;
-    
+
     mul_matrix(m1, m2, _dst);
 
     if(m1 == dst || m2 == dst) {
@@ -60,7 +62,7 @@ void matrix_trans_pos(co_aix *matrix, co_aix *x, co_aix *y) {
 /*! \brief Compute aggregated transform matrix.
  *
  * Base on parent's aggregated matrix if it is existed, or use transform
- * matrix as aggregated matrix. 
+ * matrix as aggregated matrix.
  */
 static void compute_transform_function(coord_t *visit) {
     if(!coord_is_root(visit))
@@ -82,7 +84,7 @@ static void compute_transform_function_cached(coord_t *visit) {
     co_aix *p_matrix;
     co_aix cache_p_matrix[6];
     co_aix cache_scale_x, cache_scale_y;
-    
+
     if(!coord_is_root(visit)) {
 	p_matrix = coord_get_aggr_matrix(visit->parent);
 	cache_scale_x =
@@ -116,7 +118,7 @@ compute_aggr(coord_t *coord) {
 void compute_reverse(co_aix *orig, co_aix *reverse) {
     co_aix working[6];
     co_aix factor;
-    
+
 #define VEC_MAC(src, factor, dst)		\
     do {					\
 	(dst)[0] += (src)[0] * (factor);	\
@@ -130,7 +132,7 @@ void compute_reverse(co_aix *orig, co_aix *reverse) {
     reverse[3] = 0;
     reverse[4] = 1;
     reverse[5] = 0;
-    
+
     memcpy(working, orig, sizeof(co_aix) * 6);
 
     factor = -working[3] / working[0];
@@ -245,7 +247,7 @@ coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
     coord_t *next = NULL;
 
     ASSERT(last != NULL);
-    
+
     if((!(last->flags & COF_SKIP_TRIVAL)) &&
        STAILQ_HEAD(last->children)) {
 	next = STAILQ_HEAD(last->children);
@@ -272,7 +274,7 @@ coord_t *postorder_coord_subtree(coord_t *root, coord_t *last) {
 
     if(root == last)
 	return NULL;
-    
+
     if(last == NULL) {
 	/* Go most left leaf. */
 	next = root;
@@ -325,7 +327,7 @@ void test_update_aggr_matrix(void) {
     update_aggr_matrix(elms);
 
     /* | -3 5 0 |
-     * | 5  1 0 | 
+     * | 5  1 0 |
      * | 0  0 1 |
      */
     CU_ASSERT(elms[3].aggr_matrix[0] == -3);

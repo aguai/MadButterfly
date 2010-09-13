@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <string.h>
 #include "mb_graph_engine.h"
@@ -53,11 +55,11 @@
  */
 typedef struct _sh_image {
     shape_t shape;
-    
+
     co_aix x, y;
     co_aix w, h;
     co_aix poses[4][2];
-    
+
     redraw_man_t *rdman;
 } sh_image_t;
 
@@ -86,7 +88,7 @@ shape_t *rdman_shape_image_new(redraw_man_t *rdman,
     img->h = h;
 
     rdman_shape_man(rdman, (shape_t *)img);
-    
+
     return (shape_t *)img;
 }
 
@@ -106,7 +108,7 @@ void sh_image_transform(shape_t *shape) {
     co_aix x_factor, y_factor;
     int img_w, img_h;
     int i;
-    
+
     poses = img->poses;
     poses[0][0] = img->x;
     poses[0][1] = img->y;
@@ -118,7 +120,7 @@ void sh_image_transform(shape_t *shape) {
     poses[3][1] = img->y + img->h;
     for(i = 0; i < 4; i++)
 	coord_trans_pos(img->shape.coord, &poses[i][0], &poses[i][1]);
-    
+
     geo_from_positions(sh_get_geo(shape), 4, poses);
 
     paint = sh_get_fill(shape);
@@ -126,9 +128,9 @@ void sh_image_transform(shape_t *shape) {
 	return;
 
     ASSERT(paint.pnt_type == MBP_IMAGE);
-    
+
     paint_image_get_size(paint, &img_w, &img_h);
-    
+
     /* Transformation from image space to user space */
     img_matrix[0] = (poses[1][0] - poses[0][0]) / img->w;
     img_matrix[1] = (poses[3][0] - poses[3][0]) / img->h;
@@ -156,7 +158,7 @@ void sh_image_transform(shape_t *shape) {
  */
 void sh_image_draw(shape_t *shape, mbe_t *cr) {
     sh_image_t *img = (sh_image_t *)shape;
-    
+
     mbe_move_to(cr, img->poses[0][0], img->poses[0][1]);
     mbe_line_to(cr, img->poses[1][0], img->poses[1][1]);
     mbe_line_to(cr, img->poses[2][0], img->poses[2][1]);

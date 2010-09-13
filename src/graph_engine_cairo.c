@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <fontconfig/fontconfig.h>
 #include <cairo-ft.h>
 #include "mb_graph_engine_cairo.h"
@@ -37,11 +39,11 @@ FcPattern *query_font_pattern(const char *family, int slant, int weight) {
     val.type = FcTypeString;
     val.u.s = family;
     FcPatternAdd(ptn, "family", val, FcTrue);
-    
+
     val.type = FcTypeInteger;
     val.u.i = slant_map[slant];
     FcPatternAdd(ptn, "slant", val, FcTrue);
-    
+
     val.type = FcTypeInteger;
     val.u.i = weight;
     FcPatternAdd(ptn, "weight", val, FcTrue);
@@ -49,7 +51,7 @@ FcPattern *query_font_pattern(const char *family, int slant, int weight) {
     r = FcConfigSubstituteWithPat(cfg, ptn, NULL, FcMatchPattern);
     if(!r)
 	goto err;
-    
+
     r = FcConfigSubstituteWithPat(cfg, p, ptn, FcMatchFont);
     if(!r)
 	goto err;
@@ -72,9 +74,9 @@ FcPattern *query_font_pattern(const char *family, int slant, int weight) {
 
     FcPatternDestroy(ptn);
     FcPatternDestroy(p);
-    
+
     return fn_ptn;
-    
+
 err:
     if(ptn)
 	FcPatternDestroy(ptn);
@@ -94,11 +96,11 @@ mbe_font_face_t *
 mbe_query_font_face(const char *family, int slant, int weight) {
     mbe_font_face_t *cface;
     FcPattern *ptn;
-    
+
     ptn = query_font_pattern(family, slant, weight);
     cface = cairo_ft_font_face_create_for_pattern(ptn);
     FcPatternDestroy(ptn);
-    
+
     return cface;
 }
 
@@ -121,7 +123,7 @@ mbe_pattern_create_radial(co_aix cx0, co_aix cy0, co_aix radius0,
 				      cx1, cy1, radius1);
     if(ptn == NULL)
 	return NULL;
-    
+
     stop = stops;
     for(i = 0; i < stop_cnt; i++) {
 	cairo_pattern_add_color_stop_rgba(ptn, stop->offset,

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \file
  * \brief Animation tools.
  *
@@ -41,7 +43,7 @@
  *
  * \code
  *	progm = mb_progm_new(10, &rdman);
- *	
+ *
  *	MB_TIMEVAL_SET(&start, 0, 0);
  *	MB_TIMEVAL_SET(&playing, 1, 0);
  *	word = mb_progm_next_word(progm, &start, &playing);
@@ -288,7 +290,7 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	if(MB_TIMEVAL_LATER(&word->abs_start, &next_tmo))
 	    MB_TIMEVAL_CP(&next_tmo, &word->abs_start);
 	timer = mb_tman_timeout(progm->tman, &next_tmo,
-				mb_progm_step, progm);	
+				mb_progm_step, progm);
 	progm->cur_timer = timer;
     } else {
 	/* Make program to complete. */
@@ -327,7 +329,7 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
 	mb_progm_step(now, now, progm);
 	return;
     }
-    
+
     timer = mb_tman_timeout(tman, &progm->words[0].abs_start,
 			    mb_progm_step, progm);
     ASSERT(timer != NULL);
@@ -489,7 +491,7 @@ void test_animate_words(void) {
     CU_ASSERT(r == 0);
     CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
 	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
-    
+
     /* 1.1s */
     MB_TIMEVAL_ADD(&now, &tmo_after);
     mb_tman_handle_timeout(tman, &now);
@@ -499,7 +501,7 @@ void test_animate_words(void) {
     CU_ASSERT(r == 0);
     CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
 	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
-    
+
     /* 1.2s */
     MB_TIMEVAL_ADD(&now, &tmo_after);
     mb_tman_handle_timeout(tman, &now);
@@ -509,7 +511,7 @@ void test_animate_words(void) {
     CU_ASSERT(r == 0);
     CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
 	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
-    
+
     /* 1.3s */
     MB_TIMEVAL_ADD(&now, &tmo_after);
     mb_tman_handle_timeout(tman, &now);
@@ -519,7 +521,7 @@ void test_animate_words(void) {
     CU_ASSERT(r == 0);
     CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
 	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
-    
+
     /* 1.4s */
     MB_TIMEVAL_ADD(&now, &tmo_after);
     mb_tman_handle_timeout(tman, &now);
@@ -529,7 +531,7 @@ void test_animate_words(void) {
     CU_ASSERT(r == 0);
     CU_ASSERT(MB_TIMEVAL_SEC(&tmo_after) == 0 &&
 	      MB_TIMEVAL_USEC(&tmo_after) == STEP_INTERVAL);
-    
+
     /* 1.5s */
     MB_TIMEVAL_ADD(&now, &tmo_after);
     mb_tman_handle_timeout(tman, &now);
@@ -550,7 +552,7 @@ CU_pSuite get_animate_suite(void) {
 	return NULL;
 
     CU_ADD_TEST(suite, test_animate_words);
-    
+
     return suite;
 }
 
