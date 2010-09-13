@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include "mb_types.h"
 #include "mb_obj.h"
 
@@ -12,7 +14,7 @@ void mb_obj_set_pos(mb_obj_t *obj, co_aix x, co_aix y)
     } else {
 	    return;
     }
-    
+
 }
 
 void mb_obj_get_pos(mb_obj_t *obj, co_aix *x, co_aix *y)
@@ -25,7 +27,7 @@ void mb_obj_get_pos(mb_obj_t *obj, co_aix *x, co_aix *y)
     } else {
 	    return;
     }
-    
+
 }
 
 void mb_obj_set_text(mb_obj_t *obj, const char *text)
@@ -47,7 +49,7 @@ void mb_obj_set_text(mb_obj_t *obj, const char *text)
     } else {
 	    return;
     }
-    
+
 }
 
 

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include "mb_redraw_man.h"
 #include "mb_observer.h"
@@ -41,7 +43,7 @@ void subject_free(subject_t *subject) {
 	subject->flags |= SUBF_FREE;
 	return;
     }
-    
+
     if(subject->monitor_sub) {
 	mevt.event.type = EVT_MONITOR_FREE;
 	mevt.subject = subject;
@@ -81,7 +83,7 @@ void subject_notify(subject_t *subject, event_t *evt) {
 	    observer = STAILQ_NEXT(observer_t, next, observer)) {
 	    if (observer->type == EVT_ANY || observer->type == evt->type) {
 		observer->hdr(evt, observer->arg);
-		
+
 		if(evt->flags & EVTF_STOP_NOTIFY) {
 		    stop_propagate = 1;
 			break;
@@ -168,7 +170,7 @@ void subject_remove_observer(subject_t *subject,
     monitor_event_t mevt;
 
     STAILQ_REMOVE(subject->observers, observer_t, next, observer);
-    
+
     if(subject->monitor_sub) {
 	mevt.event.type = EVT_MONITOR_REMOVE;
 	mevt.subject = subject;

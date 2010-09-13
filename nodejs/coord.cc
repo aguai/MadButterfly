@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <v8.h>
 
@@ -83,7 +85,7 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
 	WRAP(*child_hdl, NULL);
 	child_hdl->Dispose();
 	delete child_hdl;
-	
+
 	/* Invalidate members of a coord */
 	FOR_COORD_SHAPES(child, mem) {
 	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
@@ -107,9 +109,9 @@ xnjsmb_coord_free_subtree(redraw_man_t *rdman, coord_t *coord) {
     coord_t *child, *last_child;
     shape_t *mem, *last_mem;
     int r;
-    
+
     rdman_coord_changed(rdman, coord);
-    
+
     last_child = NULL;
     FOR_COORDS_POSTORDER(coord, child) {
 	if(last_child != NULL) {
@@ -117,7 +119,7 @@ xnjsmb_coord_free_subtree(redraw_man_t *rdman, coord_t *coord) {
 	    if(r != OK)
 		THROW_noret("Unknown error");
 	}
-	
+
 	/* Free members of a coord */
 	last_mem = NULL;
 	FOR_COORD_SHAPES(child, mem) {
@@ -149,7 +151,7 @@ xnjsmb_coord_mod(Handle<Object> self, coord_t *coord) {
     Persistent<Object> *self_hdl;
     subject_t *subject;
     Handle<Value> subject_o;
-    
+
     /* Keep associated js object in property store for retrieving,
      * later, without create new js object.
      */
@@ -179,14 +181,14 @@ coord_set_index(coord_t *coord, Handle<Object> self,
 		int idx, float v, const char **err) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    
+
     if(idx < 0 || idx >= 6) {
         *err = "Invalid index: out of range";
         return 0;
     }
 
     coord_get_matrix(coord)[idx] = v;
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     rdman = xnjsmb_rt_rdman(js_rt);
     rdman_coord_changed(rdman, coord);
@@ -201,7 +203,7 @@ xnjsmb_coord_add_shape(coord_t *coord, Handle<Object> self,
     Persistent<Object> *shape_hdl;
     redraw_man_t *rdman;
     int r;
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     rdman = xnjsmb_rt_rdman(js_rt);
     r = rdman_add_shape(rdman, shape, coord);
@@ -219,10 +221,10 @@ static void
 xnjsmb_coord_remove(coord_t *coord, Handle<Object> self) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    
+
     if(!GET(self, "valid")->ToBoolean()->Value()) /* Invalidated object */
 	THROW_noret("Invalid object");
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     rdman = xnjsmb_rt_rdman(js_rt);
 
@@ -234,11 +236,11 @@ static void
 xnjsmb_coord_show(coord_t *coord, Handle<Object> self) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-    
+
     coord_show(coord);
     rdman_coord_changed(rdman, coord);
 }
@@ -247,11 +249,11 @@ static void
 xnjsmb_coord_hide(coord_t *coord, Handle<Object> self) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-    
+
     coord_hide(coord);
     rdman_coord_changed(rdman, coord);
 }
@@ -261,11 +263,11 @@ xnjsmb_coord_set_opacity(coord_t *coord, Handle<Object> self,
 			 float opacity) {
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-    
+
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-    
+
     coord_set_opacity(coord, opacity);
     rdman_coord_changed(rdman, coord);
 }
@@ -296,7 +298,7 @@ xnjsmb_coord_mkroot(Handle<Object> js_rt) {
 	xnjsmb_auto_coord_init();
 	init_flag = 1;
     }
-    
+
     rdman = xnjsmb_rt_rdman(js_rt);
     root = rdman_get_root(rdman);
     obj = xnjsmb_auto_coord_new(root).As<Object>();

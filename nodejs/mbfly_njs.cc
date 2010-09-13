@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <string.h>
 #include <v8.h>
@@ -70,7 +72,7 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
 				 * here. */
     X_njs_MB_init_handle_connection(obj);
     xnjsmb_coord_mkroot(self);
-    
+
     subject = X_njs_MB_kbevents(obj);
     subject_o = export_xnjsmb_auto_subject_new(subject);
     SET(self, "kbevents", subject_o);
@@ -112,7 +114,7 @@ xnjsmb_rt_rdman(Handle<Object> mbrt) {
 
     rt = (njs_runtime_t *)UNWRAP(mbrt);
     rdman = X_njs_MB_rdman(rt);
-    
+
     return rdman;
 }
 
@@ -145,9 +147,9 @@ init(Handle<Object> target) {
     xnjsmb_font_init_mb_rt_temp(xnjsmb_auto_mb_rt_temp);
     xnjsmb_img_ldr_init_mb_rt_temp(target);
     xnjsmb_observer_init();
-    
+
     target->Set(String::New("mb_rt"),
-		xnjsmb_auto_mb_rt_temp->GetFunction());    
+		xnjsmb_auto_mb_rt_temp->GetFunction());
 }
 
 /* @} */

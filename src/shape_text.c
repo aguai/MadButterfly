@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,7 +67,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     text->attrs = attrs;
     text->align = TEXTALIGN_START;
     text->w = text->h = 0;
-    
+
     rdman_shape_man(rdman, (shape_t *)text);
 
     return (shape_t *)text;
@@ -222,9 +224,9 @@ void sh_text_transform(shape_t *shape) {
     int r;
 
     text = (sh_text_t *)shape;
-    
+
     text->d_font_size = coord_trans_size(shape->coord, text->font_size);
-    
+
     coord = sh_get_coord(shape);
     canvas = _coord_get_canvas(coord);
     sh_text_P_generate_layout(text, (mbe_t *)canvas);

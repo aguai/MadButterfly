@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 
 #include <stdio.h>
 #include <mb.h>
@@ -24,16 +26,16 @@ void mb_button_refresh(mb_button_t *btn)
     rdman_redraw_changed(btn->rdman);
 }
 
-static void mb_button_move(event_t *evt, void *arg) 
+static void mb_button_move(event_t *evt, void *arg)
 {
     mb_button_t *btn = (mb_button_t *) arg;
 
-    
+
     printf("Mouse move\n");
     coord_show(btn->active);
     mb_button_refresh(btn);
 }
-static void mb_button_out(event_t *evt, void *arg) 
+static void mb_button_out(event_t *evt, void *arg)
 {
     mb_button_t *btn = (mb_button_t *) arg;
 
@@ -61,7 +63,7 @@ static void mb_button_end_animated_cb(event_t *evt, void *arg)
     mb_button_t *btn = (mb_button_t *) arg;
 
     btn->progm = NULL;
-    
+
 }
 
 static void mb_button_pressed(event_t *evt, void *arg)

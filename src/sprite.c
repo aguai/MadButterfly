@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,10 +24,10 @@ static char *sprite_search_so(const char *name) {
     int fsz;
     char *fullname;
     int r;
-    
+
     if(sprite_search_path == NULL)
 	sprite_search_path = strdup("/usr/share/madbutterffly");
-    
+
     fsz = strlen(sprite_search_path) + strlen(name) + 5;
     fullname = (char *)malloc(fsz);
 
@@ -41,12 +43,12 @@ static char *sprite_search_so(const char *name) {
 
 void sprite_set_search_path(char *path) {
     int sz;
-    
+
     if (sprite_search_path)
 	free(sprite_search_path);
-    
+
     sprite_search_path = strdup(path);
-    
+
     sz = strlen(sprite_search_path);
     if(sprite_search_path[sz - 1] == '/')
 	sprite_search_path[sz - 1] = 0;
@@ -61,33 +63,31 @@ sprite_load(const char *name, redraw_man_t *rdman, coord_t *root) {
     mb_sprite_t *(*cnstr)(redraw_man_t *, coord_t *);
     mb_sprite_t *obj;
     int r;
-    
+
     so_path = sprite_search_so(name);
     if(so_path == NULL)
 	return NULL;
-    
+
     handle = dlopen(so_path, RTLD_LAZY);
     free(so_path);
     if (handle == NULL)
 	return NULL;
-    
+
     bname = strrchr(name, '/');
     if(bname != NULL && strlen(bname) > 250)
 	return NULL;
-    
+
     if(bname == NULL)
 	bname = name;
     else
 	bname++;
-    
+
     snprintf(cnstr_name, sizeof(cnstr_name), "%s_new", bname);
     cnstr = dlsym(handle, cnstr_name);
     if (cnstr == NULL)
 	return NULL;
-    
+
     obj = cnstr(rdman, root);
-    
+
     return obj;
 }
-
-/* vim: set ts=4 */
