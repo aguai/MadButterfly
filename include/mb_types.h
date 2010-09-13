@@ -260,6 +260,7 @@ struct _coord {
 #define COF_SKIP_ZERO 0x2000	/*!< \brief The coord just skip zeroing.
 				 * No real zeroing was performed.
 				 */
+#define COF_ALWAYS_CACHE 0x4000	/*!< \brief The coord always own a canvas */
 /* @} */
 
 extern void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst);
@@ -298,6 +299,7 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
     } while(0)
 #define coord_is_root(co) ((co)->parent == NULL)
 #define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
+#define coord_is_always_cached(co) ((co)->flags & COF_ALWAYS_CACHE)
 #define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
 #define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
 #define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
