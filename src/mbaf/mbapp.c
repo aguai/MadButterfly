@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <mb.h>
 #include <mb_af.h>
 
@@ -15,17 +17,17 @@ mbaf_t *mbaf_init(const char *module, const char *module_dir)
     app->rt = rt;
     app->rdman =  backend.rdman(rt);
     app->kbevents = backend.kbevents(rt);
-    
+
     app->rootsprite= sprite_load(module,app->rdman, app->rdman->root_coord);
     if(app->rootsprite == NULL) {
 	backend.free(rt);
 	free(app);
 	return NULL;
     }
-    
+
     rdman_attach_backend(app->rdman, rt);
     MB_SPRITE_GOTO_SCENE(app->rootsprite, 1);
-    
+
     return app;
 }
 

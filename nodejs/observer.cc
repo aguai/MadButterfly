@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <v8.h>
 #include "mbfly_njs.h"
 
@@ -30,7 +32,7 @@ static void
 xnjsmb_event_mod(Handle<Object> self, event_t *evt) {
     mouse_event_t *mevt;
     X_kb_event_t *xkbevt;
-    
+
     switch(evt->type) {
     case EVT_ANY:
     case EVT_MOUSE_OVER:
@@ -44,14 +46,14 @@ xnjsmb_event_mod(Handle<Object> self, event_t *evt) {
 	SET(self, "but_state", Integer::New(mevt->but_state));
 	SET(self, "button", Integer::New(mevt->button));
 	break;
-	
+
     case EVT_KB_PRESS:
     case EVT_KB_RELEASE:
 	xkbevt = (X_kb_event_t *)evt;
 	SET(self, "keycode", Integer::New(xkbevt->keycode));
 	SET(self, "sym", Integer::New(xkbevt->sym));
 	break;
-	
+
     case EVT_PROGM_COMPLETE:
     case EVT_RDMAN_REDRAW:
     case EVT_MONITOR_ADD:
@@ -70,7 +72,7 @@ _subject_add_event_observer(subject_t *subject, int type,
     observer_t *observer;
     xnjsmb_observer_data *data;
     Handle<Context> ctx;
-    
+
     data = new xnjsmb_observer_data;
     if(data == NULL)
 	return NULL;
@@ -96,7 +98,7 @@ _subject_remove_observer(subject_t *subject, observer_t *observer) {
 static Handle<Value>
 xnjsmb_event_tgt_getter(Handle<Object> self, event_t *evt, const char **err) {
     Persistent<Object> *hdl;
-    
+
     hdl = (Persistent<Object> *)
 	mb_prop_get(&((mb_obj_t *)evt->tgt->obj)->props,
 		    PROP_JSOBJ);
@@ -113,7 +115,7 @@ static Handle<Value>
 xnjsmb_event_cur_tgt_getter(Handle<Object> self, event_t *evt,
 			    const char **err) {
     Persistent<Object> *hdl;
-    
+
     hdl = (Persistent<Object> *)
 	mb_prop_get(&((mb_obj_t *)evt->cur_tgt->obj)->props,
 		    PROP_JSOBJ);
@@ -152,7 +154,7 @@ event_handler(event_t *evt, void *arg) {
 Handle<Value>
 export_xnjsmb_auto_subject_new(subject_t *subject) {
     Handle<Value> val;
-    
+
     val = xnjsmb_auto_subject_new(subject);
     return val;
 }

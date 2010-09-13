@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,21 +79,21 @@ void sh_rect_transform(shape_t *shape) {
 	poses[1][1] = y;
 	poses[2][0] = x + w;
 	poses[2][1] = y + ry;
-	
+
 	poses[3][0] = x + w;
 	poses[3][1] = y + h - ry;
 	poses[4][0] = x + w;
 	poses[4][1] = y + h;
 	poses[5][0] = x + w - rx;
 	poses[5][1] = y + h;
-	
+
 	poses[6][0] = x + rx;
 	poses[6][1] = y + h;
 	poses[7][0] = x;
 	poses[7][1] = y + h;
 	poses[8][0] = x;
 	poses[8][1] = y + h - ry;
-	
+
 	poses[9][0] = x;
 	poses[9][1] = y + ry;
 	poses[10][0] = x;

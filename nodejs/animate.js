@@ -1,5 +1,5 @@
 // -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
-// vim: sw=4:ts=8:sts=4:ai
+// vim: sw=4:ts=8:sts=4
 var sys=require("sys");
 
 /*

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include "mb_types.h"
 #include "mb_redraw_man.h"
 
@@ -10,20 +12,20 @@ static void mouse_event_interpreter(event_t *evt, void *arg) {
     mouse_event_t new_evt;
     coord_t *coord;
     shape_t *shape;
-    
+
     ASSERT(evt->type == EVT_MOUSE_MOVE_RAW);
-    
+
     obj = (mb_obj_t *)subject_get_object(evt->cur_tgt);
     if(rdman->last_mouse_over == obj) {
 	evt->type = EVT_MOUSE_MOVE;
 	return;
     }
-    
+
     new_evt.x = mevt->x;
     new_evt.y = mevt->y;
     new_evt.but_state = mevt->but_state;
     new_evt.button = mevt->button;
-    
+
     if(rdman->last_mouse_over != NULL) {
 	new_evt.event.type = EVT_MOUSE_OUT;
 	if(IS_MBO_COORD(rdman->last_mouse_over)) {
@@ -33,14 +35,14 @@ static void mouse_event_interpreter(event_t *evt, void *arg) {
 	    shape = (shape_t *)rdman->last_mouse_over;
 	    ASSERT(shape->geo != NULL);
 	    subject_notify(sh_get_mouse_event_subject(shape),
-			   (event_t *)&new_evt); 
+			   (event_t *)&new_evt);
 	}
     }
 
     new_evt.event.type = EVT_MOUSE_OVER;
     subject_notify(evt->cur_tgt, (event_t *)&new_evt);
     rdman->last_mouse_over = obj;
-    
+
     evt->flags |= EVTF_STOP_NOTIFY;
 }
 
@@ -61,7 +63,7 @@ void addrm_monitor_hdlr(event_t *evt, void *arg) {
     mb_prop_store_t *props;
     observer_t *observer;
     int cnt = 0;
-    
+
     mevt = (monitor_event_t *)evt;
     rdman = (redraw_man_t *)arg;
     obj = (mb_obj_t *)subject_get_object(mevt->subject);
@@ -73,7 +75,7 @@ void addrm_monitor_hdlr(event_t *evt, void *arg) {
 	    cnt = 0;
 	else
 	    cnt = (int)mb_prop_get(props, PROP_MEVT_OB_CNT);
-	
+
 	cnt++;
 	mb_prop_set(props, PROP_MEVT_OB_CNT, (void *)cnt);
 	if(cnt == 1) {
@@ -86,7 +88,7 @@ void addrm_monitor_hdlr(event_t *evt, void *arg) {
 	    mb_prop_set(props, PROP_MEVT_OBSERVER, observer);
 	}
 	break;
-	
+
     case EVT_MONITOR_REMOVE:
 	cnt = (int)mb_prop_get(props, PROP_MEVT_OB_CNT);
 	cnt--;
@@ -97,7 +99,7 @@ void addrm_monitor_hdlr(event_t *evt, void *arg) {
 	    mb_prop_del(props, PROP_MEVT_OBSERVER);
 	}
 	break;
-	
+
     case EVT_MONITOR_FREE:
 	break;
     }

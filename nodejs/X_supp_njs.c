@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \brief Implement X11 backend for nodejs plugin.
  *
  * Since nodejs use libev to handle event loops, part of X11 backend
@@ -26,7 +28,7 @@ set_next_timeout(njs_runtime_t *rt) {
     mb_timeval_t now, tmo;
     ev_tstamp tout;
     int r;
-    
+
     tman = X_MB_tman(rt->xrt);
     get_now(&now);
     r = mb_tman_next_timeout(tman, &now, &tmo);
@@ -50,7 +52,7 @@ x_conn_cb(EV_P_ ev_io *iowatcher, int revent) {
     rdman = X_MB_rdman(rt->xrt);
     _X_MB_handle_x_event_for_nodejs(rt->xrt);
     rdman_redraw_changed(rdman);
-    
+
     if(rt->enable_timer == 0) /* no installed timeout */
 	set_next_timeout(rt);
 }
@@ -62,7 +64,7 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
     redraw_man_t *rdman;
     mb_timeval_t now;
     extern int _X_MB_flush_x_conn_for_nodejs(void *rt);
-    
+
     tman = X_MB_tman(rt->xrt);
     get_now(&now);
     mb_tman_handle_timeout(tman, &now);
@@ -70,7 +72,7 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
     rdman = X_MB_rdman(rt->xrt);
     rdman_redraw_changed(rdman);
     _X_MB_flush_x_conn_for_nodejs(rt->xrt);
-    
+
     set_next_timeout(rt);
 }
 
@@ -106,7 +108,7 @@ X_njs_MB_free(njs_runtime_t *rt) {
 	ev_io_stop(&rt->iowatcher);
     if(rt->enable_timer)
 	ev_timer_stop(&rt->tmwatcher);
-    
+
     X_MB_free(rt->xrt);
     free(rt);
 }
@@ -118,7 +120,7 @@ X_njs_MB_flush(njs_runtime_t *rt) {
     extern int _X_MB_flush_x_conn_for_nodejs(void *rt);
 
     _X_MB_flush_x_conn_for_nodejs(xrt);
-    
+
     return r;
 }
 
@@ -126,7 +128,7 @@ njs_runtime_t *
 X_njs_MB_new(char *display_name, int w, int h) {
     njs_runtime_t *rt;
     void *xrt;
-    
+
     rt = (njs_runtime_t *)malloc(sizeof(njs_runtime_t));
     ASSERT(rt != NULL);
 
@@ -135,7 +137,7 @@ X_njs_MB_new(char *display_name, int w, int h) {
     rt->xrt = xrt;
     rt->enable_io = 0;
     rt->enable_timer = 0;	/* no timer, now */
-    
+
     return rt;
 }
 

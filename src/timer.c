@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -23,7 +25,7 @@ struct _mb_tman {
 
 mb_tman_t *mb_tman_new(void) {
     mb_tman_t *tman;
-    
+
     tman = (mb_tman_t *)malloc(sizeof(mb_tman_t));
     if(tman == NULL)
 	return NULL;
@@ -76,7 +78,7 @@ mb_timer_t *mb_tman_timeout(mb_tman_t *tman,
 
     return timer;
 }
-			    
+
 int mb_tman_remove(mb_tman_t *tman, mb_timer_t *timer) {
     STAILQ_REMOVE(tman->timers, mb_timer_t, next, timer);
     elmpool_elm_free(tman->timer_pool, timer);

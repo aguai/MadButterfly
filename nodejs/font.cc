@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <v8.h>
 #include "mbfly_njs.h"
 
@@ -62,10 +64,10 @@ xnjsmb_font_face_init_temp(void) {
 
     temp = FunctionTemplate::New();
     temp->SetClassName(String::New("font_face"));
-    
+
     inst_temp = temp->InstanceTemplate();
     inst_temp->SetInternalFieldCount(1);
-    
+
     xnjsmb_font_face_temp = Persistent<FunctionTemplate>::New(temp);
 }
 

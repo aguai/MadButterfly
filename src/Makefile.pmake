@@ -1,3 +1,5 @@
+# -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+# vim: sw=4:ts=8:sts=4
 SRCS =	coord.c geo.c shape_path.c shape_text.c shape_rect.c \
      	shape_image.c \
 	redraw_man.c timer.c animate.c paint.c event.c observer.c \
