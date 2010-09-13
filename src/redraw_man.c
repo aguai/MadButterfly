@@ -2812,6 +2812,8 @@ test_own_canvas_area(void) {
     CU_ASSERT(geo_get_area(coord2)->y == 100);
     CU_ASSERT(geo_get_area(coord2)->w <= 22 && geo_get_area(coord2)->w >= 19);
     CU_ASSERT(geo_get_area(coord2)->h <= 22 && geo_get_area(coord2)->h >= 19);
+
+    redraw_man_destroy(rdman);
 }
 
 static void
@@ -2847,10 +2849,37 @@ test_own_canvas(void) {
     CU_ASSERT(geo_get_area(coord2)->w <= 22 && geo_get_area(coord2)->w >= 19);
     CU_ASSERT(geo_get_area(coord2)->h <= 22 && geo_get_area(coord2)->h >= 19);
     
-    CU_ASSERT(geo_get_area(coord1)->x == 100);
-    CU_ASSERT(geo_get_area(coord1)->y == 100);
-    CU_ASSERT(geo_get_area(coord1)->w <= 22 && geo_get_area(coord1)->w >= 19);
-    CU_ASSERT(geo_get_area(coord1)->h <= 22 && geo_get_area(coord1)->h >= 19);
+    redraw_man_destroy(rdman);
+}
+
+static void
+test_own_canvas_redraw(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord1, *coord2;
+    sh_dummy_t *sh;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+    
+    coord1 = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord1->parent == rdman->root_coord);
+
+    coord2 = rdman_coord_new(rdman, coord1);
+    CU_ASSERT(coord2->parent == coord1);
+
+    coord_set_opacity(coord2, 0.9);
+    rdman_coord_changed(rdman, coord2);
+
+    sh = (shape_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    rdman_add_shape(rdman, (shape_t *)sh, coord2);
+    rdman_shape_changed(rdman, (shape_t *)sh);
+
+    rdman_redraw_changed(rdman);
+
+    CU_ASSERT(sh->draw_cnt == 1);
+
+    redraw_man_destroy(rdman);
 }
 
 CU_pSuite get_redraw_man_suite(void) {
@@ -2862,6 +2891,7 @@ CU_pSuite get_redraw_man_suite(void) {
     CU_ADD_TEST(suite, test_setup_canvas_info);
     CU_ADD_TEST(suite, test_own_canvas_area);
     CU_ADD_TEST(suite, test_own_canvas);
+    CU_ADD_TEST(suite, test_own_canvas_redraw);
 
     return suite;
 }
