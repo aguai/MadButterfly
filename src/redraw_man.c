@@ -584,9 +584,11 @@ static void geo_detach_coord(geo_t *geo, coord_t *coord) {
     coord->num_members--;
 }
 
-static coord_canvas_info_t *coord_canvas_info_new(redraw_man_t *rdman,
-						  coord_t *coord,
-						  mbe_t *canvas) {
+/*! \brief Create a new canvas and respective info struct for a coord.
+ */
+static coord_canvas_info_t *
+coord_canvas_info_new(redraw_man_t *rdman, coord_t *coord,
+		      mbe_t *canvas) {
     coord_canvas_info_t *info;
 
     info = (coord_canvas_info_t *)elmpool_elm_alloc(rdman->coord_canvas_pool);
@@ -1243,7 +1245,7 @@ static void setup_canvas_info(redraw_man_t *rdman, coord_t *coord) {
     if(coord->parent == NULL)
 	return;
 
-    if(coord->opacity != 1 || coord_is_cached(coord)) {
+    if(coord->opacity != 1 || coord_is_always_cached(coord)) {
 	if(!coord_is_cached(coord)) {
 	    /* canvas is assigned latter, in zeroing_coord() */
 	    coord->canvas_info = coord_canvas_info_new(rdman, coord, NULL);
@@ -1280,7 +1282,7 @@ static void compute_cached_2_pdev_matrix(coord_t *coord,
     paggr = coord_get_aggr_matrix(parent);
     
     scale_x = matrix[0] / aggr[0];
-    scale_y = matrix[3] / aggr[3];
+    scale_y = matrix[4] / aggr[4];
     shift_x = matrix[2] - scale_x * aggr[2];
     shift_y = matrix[5] - scale_y * aggr[5];
 
@@ -1577,7 +1579,7 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 	}
 	/* Shift space */
 	aggr = coord_get_aggr_matrix(cur);
-	aggr[3] -= min_x;
+	aggr[2] -= min_x;
 	aggr[5] -= min_y;
 	
 	FOR_COORD_MEMBERS(coord, geo) {
@@ -1850,11 +1852,12 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
     n_zeroing = rdman->zeroing_coords.num;
     zeroings = rdman->zeroing_coords.ds;
     for(i = 0; i < n_zeroing; i++) {
+	coord = zeroings[i];
+	
 	if(coord_get_flags(coord, COF_TEMP_MARK))
 	    continue;
 	coord_set_flags(coord, COF_TEMP_MARK);
 	
-	coord = zeroings[i];
 	pcached_coord = coord_get_cached(coord_get_parent(coord));
 	
 	if(coord_is_root(coord) || IS_CACHE_REDRAW_ALL(pcached_coord))
@@ -1876,11 +1879,12 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
     n_dpca_coords = rdman->dirty_pcache_area_coords.num;
     dpca_coords = rdman->dirty_pcache_area_coords.ds;
     for(i = 0; i < n_dpca_coords; i++) {
+	coord = dpca_coords[i];
+	
 	if(coord_get_flags(coord, COF_TEMP_MARK))
 	    continue;
 	coord_set_flags(coord, COF_TEMP_MARK);
 
-	coord = dpca_coords[i];
 	pcached_coord = coord_get_cached(coord_get_parent(coord));
 	
 	if(coord_is_root(coord) || IS_CACHE_REDRAW_ALL(pcached_coord))
@@ -1980,6 +1984,8 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
 	}
     }
     
+    /* XXX: some geo may swap two times.  Should avoid it.
+     */
     geos = rdman->dirty_geos.ds;
     for(i = 0; i < rdman->dirty_geos.num; i++) {
 	geo = geos[i];
@@ -2753,12 +2759,109 @@ static void test_rdman_free_objs(void) {
     CU_ASSERT(test_free_pass == 4);
 }
 
+static void
+test_setup_canvas_info(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+    
+    coord = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord->parent == rdman->root_coord);
+
+    coord_set_opacity(coord, 0.9);
+    setup_canvas_info(rdman, coord);
+
+    CU_ASSERT(coord->canvas_info != rdman->root_coord->canvas_info);
+
+    coord_set_opacity(coord, 1);
+    setup_canvas_info(rdman, coord);
+
+    CU_ASSERT(coord->canvas_info == rdman->root_coord->canvas_info);
+}
+
+static void
+test_own_canvas_area(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord1, *coord2;
+    sh_dummy_t *sh;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+    
+    coord1 = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord1->parent == rdman->root_coord);
+
+    coord2 = rdman_coord_new(rdman, coord1);
+    CU_ASSERT(coord2->parent == coord1);
+
+    coord_set_opacity(coord2, 0.9);
+    rdman_coord_changed(rdman, coord2);
+
+    sh = (shape_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    rdman_add_shape(rdman, (shape_t *)sh, coord2);
+    rdman_shape_changed(rdman, (shape_t *)sh);
+
+    clean_coord(rdman, coord2);
+
+    /* Parent cached coord must be updated */
+    CU_ASSERT(geo_get_area(coord2)->x == 100);
+    CU_ASSERT(geo_get_area(coord2)->y == 100);
+    CU_ASSERT(geo_get_area(coord2)->w <= 22 && geo_get_area(coord2)->w >= 19);
+    CU_ASSERT(geo_get_area(coord2)->h <= 22 && geo_get_area(coord2)->h >= 19);
+}
+
+static void
+test_own_canvas(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord1, *coord2;
+    sh_dummy_t *sh;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+    
+    coord1 = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord1->parent == rdman->root_coord);
+
+    coord2 = rdman_coord_new(rdman, coord1);
+    CU_ASSERT(coord2->parent == coord1);
+
+    coord_set_opacity(coord2, 0.9);
+    rdman_coord_changed(rdman, coord2);
+
+    sh = (shape_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    rdman_add_shape(rdman, (shape_t *)sh, coord2);
+    rdman_shape_changed(rdman, (shape_t *)sh);
+
+    rdman_clean_dirties(rdman);
+
+    /* Parent cached coord must be updated */
+    CU_ASSERT(_coord_get_dirty_areas(rdman->root_coord)->num == 1);
+
+    CU_ASSERT(geo_get_area(coord2)->x == 0);
+    CU_ASSERT(geo_get_area(coord2)->y == 0);
+    CU_ASSERT(geo_get_area(coord2)->w <= 22 && geo_get_area(coord2)->w >= 19);
+    CU_ASSERT(geo_get_area(coord2)->h <= 22 && geo_get_area(coord2)->h >= 19);
+    
+    CU_ASSERT(geo_get_area(coord1)->x == 100);
+    CU_ASSERT(geo_get_area(coord1)->y == 100);
+    CU_ASSERT(geo_get_area(coord1)->w <= 22 && geo_get_area(coord1)->w >= 19);
+    CU_ASSERT(geo_get_area(coord1)->h <= 22 && geo_get_area(coord1)->h >= 19);
+}
+
 CU_pSuite get_redraw_man_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_redraw_man", NULL, NULL);
     CU_ADD_TEST(suite, test_rdman_redraw_changed);
     CU_ADD_TEST(suite, test_rdman_free_objs);
+    CU_ADD_TEST(suite, test_setup_canvas_info);
+    CU_ADD_TEST(suite, test_own_canvas_area);
+    CU_ADD_TEST(suite, test_own_canvas);
 
     return suite;
 }
