@@ -91,3 +91,4 @@ exports.EVT_MONITOR_ADD=10;
 exports.EVT_MONITOR_REMOVE=11;
 exports.EVT_MONITOR_FREE=12;
 exports.EVT_MOUSE_MOVE_RAW=13;
+exports.ldr = ldr;
