@@ -259,17 +259,27 @@ xnjsmb_coord_hide(coord_t *coord, Handle<Object> self) {
 }
 
 static void
-xnjsmb_coord_set_opacity(coord_t *coord, Handle<Object> self,
-			 float opacity) {
+xnjsmb_coord_set_opacity(Handle<Object> self, coord_t *coord, Handle<Value> value, const char **str)
+{
     Handle<Object> js_rt;
     redraw_man_t *rdman;
-
+    
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
 
-    coord_set_opacity(coord, opacity);
+    
+    coord_set_opacity(coord, value->NumberValue());
     rdman_coord_changed(rdman, coord);
+}
+
+static Handle<Value>
+xnjsmb_coord_get_opacity(Handle<Object> self, coord_t *coord,
+			      const char **err) {
+    float opacity;
+
+    opacity = coord_get_opacity(coord);
+    return Number::New(opacity);
 }
 
 #include "coord-inc.h"
