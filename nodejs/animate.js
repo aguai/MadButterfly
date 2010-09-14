@@ -209,3 +209,46 @@ holder.prototype = {
 };
 
 exports.holder = holder;
+
+
+
+function alpha_draw() {
+
+    if (this.end == 1) return;
+    var percent = (Date.now() - this.starttime)/this.duration;
+    if (percent > 1) percent = 1;
+    var sx = (this.targetalpha-this.startalpha)*percent+this.startalpha;
+    sys.puts("opacity="+sx);
+    this.obj.opacity=sx;
+
+    this.app.refresh();
+    var self = this;
+    if (percent < 1) {
+	this.obj.timer=setTimeout(function() { self.draw();}, 20);
+	return;
+    }
+    this.app.refresh();
+    this.obj.animated_alpha = null;
+}
+
+function alpha(app,obj,alpha, duration) {
+    try {
+        if (obj.animated_alpha) {
+	    obj.animated_alpha.end = 1;
+	}
+    } catch(e) {
+	    
+    }
+    obj.animated_alpha = this;
+    this.app = app;
+    this.obj = obj;
+    this.end = 0;
+    this.starttime = Date.now();
+    this.startalpha = obj.opacity;
+    this.targetalpha = alpha;
+    this.duration = duration*1000;
+}
+
+alpha.prototype.start = alpha_draw;
+alpha.prototype.draw = alpha_draw;
+exports.alpha = alpha;
