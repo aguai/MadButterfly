@@ -536,7 +536,7 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     parseGroupStyle(style, n);
     if(style.opacity) {
 	sys.puts(style.opacity);
-	coord.set_opacity(style.opacity);
+	coord.opacity=style.opacity;
     }
 
     for(k in nodes) {
