@@ -1676,8 +1676,6 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 	    continue;		/* skip coords that is not cached */
 
 	if(!coord_get_flags(coord, COF_TEMP_MARK)) {
-	    if(coord_get_flags(coord, COF_DIRTY_PCACHE_AREA))
-		add_dirty_pcache_area_coord(rdman, coord);
 	    preorder_coord_skip_subtree(coord);
 	    continue;
 	}
