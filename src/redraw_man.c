@@ -517,7 +517,13 @@ static void free_objs_destroy(redraw_man_t *rdman) {
 	free(rdman->free_objs.objs);
 }
 
-
+#ifdef UNITTEST
+/*! \brief This is only used for unittest.
+ */
+typedef struct {
+    co_aix parent_2_cache[6];
+} mock_mbe_t;
+#endif
 
 static mbe_t *canvas_new(int w, int h) {
 #ifndef UNITTEST
@@ -530,7 +536,7 @@ static mbe_t *canvas_new(int w, int h) {
 
     return cr;
 #else
-    return (mbe_t *)malloc(16);
+    return (mbe_t *)malloc(sizeof(mock_mbe_t));
 #endif
 }
 
@@ -2191,12 +2197,23 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 }
 #endif /* UNITTEST */
 
-static void update_cached_canvas_2_parent(redraw_man_t *rdman,
-					  coord_t *coord) {
-#ifndef UNITTEST
-    mbe_t *pcanvas, *canvas;
+static void
+_update_cached_canvas_2_parent(redraw_man_t *rdman, co_aix reverse[6],
+			       mbe_t *canvas, mbe_t *pcanvas,
+			       co_aix opacity) {
     mbe_surface_t *surface;
     mbe_pattern_t *pattern;
+    
+    surface = mbe_get_target(canvas);
+    pattern = mbe_pattern_create_for_surface(surface);
+    mbe_pattern_set_matrix(pattern, reverse);
+    mbe_set_source(pcanvas, pattern);
+    mbe_paint_with_alpha(pcanvas, opacity);
+}
+
+static void update_cached_canvas_2_parent(redraw_man_t *rdman,
+					  coord_t *coord) {
+    mbe_t *pcanvas, *canvas;
     co_aix reverse[6];
     co_aix canvas2pdev_matrix[6];
 
@@ -2208,11 +2225,12 @@ static void update_cached_canvas_2_parent(redraw_man_t *rdman,
 
     canvas = _coord_get_canvas(coord);
     pcanvas = _coord_get_canvas(coord->parent);
-    surface = mbe_get_target(canvas);
-    pattern = mbe_pattern_create_for_surface(surface);
-    mbe_pattern_set_matrix(pattern, reverse);
-    mbe_set_source(pcanvas, pattern);
-    mbe_paint_with_alpha(pcanvas, coord->opacity);
+#ifndef UNITTEST
+    _update_cached_canvas_2_parent(rdman, reverse, canvas, pcanvas,
+				   coord->opacity);
+#else
+    memcpy(((mock_mbe_t *)canvas)->parent_2_cache, reverse,
+	   sizeof(co_aix) * 6);
 #endif
 }
 
@@ -2617,7 +2635,7 @@ struct _sh_dummy {
     co_aix w, h;
     int trans_cnt;
     int draw_cnt;
-    redraw_man_t *last_draw;
+    mbe_t *last_draw;
 };
 
 void sh_dummy_free(shape_t *sh) {
@@ -2809,7 +2827,7 @@ test_own_canvas_area(void) {
     coord_set_opacity(coord2, 0.9);
     rdman_coord_changed(rdman, coord2);
 
-    sh = (shape_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    sh = (sh_dummy_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
     rdman_add_shape(rdman, (shape_t *)sh, coord2);
     rdman_shape_changed(rdman, (shape_t *)sh);
 
@@ -2843,7 +2861,7 @@ test_own_canvas(void) {
     coord_set_opacity(coord2, 0.9);
     rdman_coord_changed(rdman, coord2);
 
-    sh = (shape_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    sh = (sh_dummy_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
     rdman_add_shape(rdman, (shape_t *)sh, coord2);
     rdman_shape_changed(rdman, (shape_t *)sh);
 
@@ -2867,6 +2885,7 @@ test_own_canvas_redraw(void) {
     coord_t *coord1, *coord2;
     sh_dummy_t *sh;
     paint_t *paint;
+    co_aix *parent_2_cache;
 
     redraw_man_init(&_rdman, NULL, NULL);
     rdman = &_rdman;
@@ -2880,7 +2899,7 @@ test_own_canvas_redraw(void) {
     coord_set_opacity(coord2, 0.9);
     rdman_coord_changed(rdman, coord2);
 
-    sh = (shape_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    sh = (sh_dummy_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
     rdman_add_shape(rdman, (shape_t *)sh, coord2);
     rdman_shape_changed(rdman, (shape_t *)sh);
 
@@ -2892,6 +2911,14 @@ test_own_canvas_redraw(void) {
     CU_ASSERT(sh->draw_cnt == 1);
     CU_ASSERT(sh->last_draw == _coord_get_canvas(coord2));
 
+    parent_2_cache = ((mock_mbe_t *)_coord_get_canvas(coord2))->parent_2_cache;
+    CU_ASSERT(parent_2_cache[0] == 1);
+    CU_ASSERT(parent_2_cache[1] == 0);
+    CU_ASSERT(parent_2_cache[2] == -100);
+    CU_ASSERT(parent_2_cache[3] == 0);
+    CU_ASSERT(parent_2_cache[4] == 1);
+    CU_ASSERT(parent_2_cache[5] == -100);
+    
     rdman_paint_free(rdman, paint);
     redraw_man_destroy(rdman);
 }
