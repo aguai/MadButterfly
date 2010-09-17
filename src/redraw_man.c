@@ -1544,6 +1544,17 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 	    area = coord_get_pcache_area(cur);
 	} else
 	    area = coord_get_area(cur);
+
+	if(area->w == 0 && area->h == 0)
+	    continue;
+	
+	if(min_x == max_x && min_y == max_y) {
+	    min_x = area->x;
+	    max_x = area->x + area->w;
+	    min_y = area->y;
+	    max_y = area->y + area->h;
+	    continue;
+	}
 	
 	if(area->x < min_x)
 	    min_x = area->x;
@@ -2031,28 +2042,28 @@ static void set_shape_stroke_param(shape_t *shape, mbe_t *cr) {
     mbe_set_line_width(cr, shape->stroke_width);
 }
 
-static void fill_path_preserve(redraw_man_t *rdman) {
-    mbe_fill_preserve(rdman->cr);
+static void fill_path_preserve(redraw_man_t *rdman, mbe_t *cr) {
+    mbe_fill_preserve(cr);
 }
 
-static void fill_path(redraw_man_t *rdman) {
-    mbe_fill(rdman->cr);
+static void fill_path(redraw_man_t *rdman, mbe_t *cr) {
+    mbe_fill(cr);
 }
 
-static void stroke_path(redraw_man_t *rdman) {
-    mbe_stroke(rdman->cr);
+static void stroke_path(redraw_man_t *rdman, mbe_t *cr) {
+    mbe_stroke(cr);
 }
 #else
 static void set_shape_stroke_param(shape_t *shape, mbe_t *cr) {
 }
 
-static void fill_path_preserve(redraw_man_t *rdman) {
+static void fill_path_preserve(redraw_man_t *rdman, mbe_t *cr) {
 }
 
-static void fill_path(redraw_man_t *rdman) {
+static void fill_path(redraw_man_t *rdman, mbe_t *cr) {
 }
 
-static void stroke_path(redraw_man_t *rdman) {
+static void stroke_path(redraw_man_t *rdman, mbe_t *cr) {
 }
 #endif
 
@@ -2094,16 +2105,16 @@ static void draw_shape(redraw_man_t *rdman, mbe_t *cr, shape_t *shape) {
 	if(shape->fill) {
 	    fill->prepare(fill, cr);
 	    if(shape->stroke)
-		fill_path_preserve(rdman);
+		fill_path_preserve(rdman, cr);
 	    else
-		fill_path(rdman);
+		fill_path(rdman, cr);
 	}
 
 	stroke = shape->stroke;
 	if(stroke) {
 	    stroke->prepare(stroke, cr);
 	    set_shape_stroke_param(shape, cr);
-	    stroke_path(rdman);
+	    stroke_path(rdman, cr);
 	}
     }
 }
