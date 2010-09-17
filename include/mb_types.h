@@ -256,9 +256,12 @@ struct _coord {
 				 *
 				 * It's canvas is changed by zeroing.
 				 */
-#define COF_DIRTY_PCACHE_AREA 0x1000 /*!< \brief pcache_area shoud be
-                                      *  updated.
-				      */
+/*! \brief pcache_area shoud be updated.
+ *
+ * A coord is marked with COF_DIRTY_PCACHE_AREA means it is added to
+ * dirty_pcache_area_coords of a rdman. */
+ */
+#define COF_DIRTY_PCACHE_AREA 0x1000 
 #define COF_SKIP_ZERO 0x2000	/*!< \brief The coord just skip zeroing.
 				 * No real zeroing was performed.
 				 */
