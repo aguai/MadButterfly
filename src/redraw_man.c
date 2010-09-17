@@ -1435,8 +1435,12 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
     if(r != OK)
 	return ERR;
 
-    add_dirty_area(rdman, coord, coord->cur_area);
-    add_dirty_area(rdman, coord, coord->last_area);
+    /* Dirty areas of cached one is added after update pcache_areas.
+     */
+    if(!coord_is_cached(coord)) {
+	add_dirty_area(rdman, coord, coord->cur_area);
+	add_dirty_area(rdman, coord, coord->last_area);
+    }
 
     coord_clear_flags(coord, COF_DIRTY);
     coord_set_flags(coord, COF_JUST_CLEAN);
