@@ -476,7 +476,7 @@ static int add_zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 static int add_dirty_pcache_area_coord(redraw_man_t *rdman, coord_t *coord) {
     if(!coord_get_flags(coord, COF_DIRTY_PCACHE_AREA)) {
 	coord_set_flags(coord, COF_DIRTY_PCACHE_AREA);
-	ADD_DATA(coords, dirty_pcache_area_coords, coord);
+	ADD_DATA(coords, zeroing_coords, coord);
     }
     return OK;
 }
@@ -646,7 +646,6 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     memset(rdman, 0, sizeof(redraw_man_t));
 
     DARRAY_INIT(&rdman->dirty_coords);
-    DARRAY_INIT(&rdman->dirty_pcache_area_coords);
     DARRAY_INIT(&rdman->dirty_geos);
     DARRAY_INIT(&rdman->gen_geos);
     DARRAY_INIT(&rdman->zeroing_coords);
@@ -732,7 +731,6 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     if(rdman->coord_canvas_pool)
 	elmpool_free(rdman->coord_canvas_pool);
     DARRAY_DESTROY(&rdman->dirty_coords);
-    DARRAY_DESTROY(&rdman->dirty_pcache_area_coords);
     DARRAY_DESTROY(&rdman->dirty_geos);
     DARRAY_DESTROY(&rdman->gen_geos);
     DARRAY_DESTROY(&rdman->zeroing_coords);
@@ -753,7 +751,6 @@ void redraw_man_destroy(redraw_man_t *rdman) {
      *  successfully.
      */
     DARRAY_CLEAN(&rdman->dirty_coords);
-    DARRAY_CLEAN(&rdman->dirty_pcache_area_coords);
     DARRAY_CLEAN(&rdman->dirty_geos);
 
     coord = postorder_coord_subtree(rdman->root_coord, NULL);
@@ -789,7 +786,6 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->coord_canvas_pool);
 
     DARRAY_DESTROY(&rdman->dirty_coords);
-    DARRAY_DESTROY(&rdman->dirty_pcache_area_coords);
     DARRAY_DESTROY(&rdman->dirty_geos);
     DARRAY_DESTROY(&rdman->gen_geos);
     DARRAY_DESTROY(&rdman->zeroing_coords);
@@ -1421,7 +1417,6 @@ static int coord_clean_members_n_compute_area(coord_t *coord) {
  * \note coords their opacity != 1 are also traded as cached ones.
  */
 static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
-    coord_t *child;
     int r;
 
     setup_canvas_info(rdman, coord);
@@ -1540,7 +1535,16 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     for(cur = preorder_coord_subtree(coord, coord);
 	cur != NULL;
 	cur = preorder_coord_subtree(coord, cur)) {
-	area = coord_get_area(cur);
+	if(coord_is_cached(cur)) {
+	    preorder_coord_skip_subtree(cur);
+	    /* This means pcache_area of descendants must be computed
+	     * before zeroing ancestor cached one.
+	     * (See add_rdman_zeroing_n_pcache_coords())
+	     */
+	    area = coord_get_pcache_area(cur);
+	} else
+	    area = coord_get_area(cur);
+	
 	if(area->x < min_x)
 	    min_x = area->x;
 	if(area->y < min_y)
@@ -1553,8 +1557,6 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 	    max_x = x;
 	if(y > max_y)
 	    max_y = y;
-	if(coord_is_cached(cur))
-	    preorder_coord_skip_subtree(cur);
     }
 
     w = max_x - min_x;
@@ -1625,16 +1627,29 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     coord_set_flags(coord, COF_JUST_ZERO);
 }
 
-/*! \brief Add canvas owner of dirty geos to redraw_man_t::zeroing_coords.
+/*! \brief Add coords that need to perform zeroing or re-compute pcache_area.
  *
- * All possible coords that need a zeroing have at least one dirty geo.
+ * A coord that need to perform zeroing has one or more dirty members
+ * in its descendants.
+ *
+ * To zeroing a coord, pcache_area of first level cached descendants
+ * must be updated.  To update the pcache_area of a cached coord, the
+ * cached coord also need to perform zeroing.  So, zeroing and
+ * re-computing pcache_area are interleaved.
+ *
+ * The pcache_area of a cached coord must be re-computed if its
+ * parent/ancestors is dirty/just cleaned, or it must be zeroed.  It
+ * means cached coord with jsut cleaned parent should also re-compute
+ * pcache_area.  So, this function also check and add coords for this
+ * situation.
  */
-static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
+static int add_rdman_zeroing_n_pcache_coords(redraw_man_t *rdman) {
     int i;
     int n_dirty_geos;
     geo_t **dirty_geos, *geo;
     int n_dirty_coords;
     coord_t **dirty_coords, *coord;
+    coord_t *parent_coord;
 
     /* Mark all cached ancestral coords of dirty geos */
     n_dirty_geos = rdman->dirty_geos.num;
@@ -1669,6 +1684,13 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 	    continue;		/* skip coords that is not cached */
 
 	if(!coord_get_flags(coord, COF_TEMP_MARK)) {
+	    parent_coord = coord_get_parent(coord);
+	    /* The pcache_area of a cached coord that is a child of a
+	     * just cleaned one must be recomputed.
+	     */
+	    if(coord_get_flags(parent_coord, COF_JUST_CLEAN))
+		add_dirty_pcache_area_coord(rdman, coord);
+	    
 	    preorder_coord_skip_subtree(coord);
 	    continue;
 	}
@@ -1705,33 +1727,14 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
      */
     for(i = all_zeroing->num - 1; i >= 0; i--) {
 	coord = all_zeroing->ds[i];
-	zeroing_coord(rdman, coord);
+	if(coord_is_zeroing(coord))
+	    zeroing_coord(rdman, coord);
+	/* This is required by ancester cached ones to perform
+	 * zeroing.
+	 */
+	compute_pcache_area(coord);
     }
 
-    return OK;
-}
-
-/*! \brief Compute pcache_area for coords whoes pcache_area is dirty.
- *
- * coord_t::dirty_pcache_area_coords also includes part of coords in
- * coord_t::zeroing_coords.  The pcache_area of coords that is in
- * coord_t::dirty_pcache_area_coords, but is not in
- * coord_t::zeroing_coords should be computed here.
- * zeroing_rdman_coords() is responsible for computing pcache_area for
- * zeroing ones.
- */
-static int
-compute_rdman_coords_pcache_area(redraw_man_t *rdman) {
-    coords_t *all_coords;
-    coord_t *coord;
-    int i;
-
-    all_coords = &rdman->dirty_pcache_area_coords;
-    for(i = 0; i < all_coords->num; i++) {
-	coord = all_coords->ds[i];
-	if(coord_get_flags(coord, COF_DIRTY_PCACHE_AREA))
-	    compute_pcache_area(coord);
-    }
     return OK;
 }
 
@@ -1856,30 +1859,18 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
  */
 static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
     int i;
-    int n_zeroing;
-    coord_t **zeroings;
-    coord_t *coord, *pcached_coord;
-    int n_dpca_coords;		/* number of dirty pcache area coords */
-    coord_t **dpca_coords;	/* dirty pcache area coords */
+    coord_t *coord, *parent_coord, *pcached_coord;
+    int n_zeroing_coords;     /* number of dirty pcache area coords */
+    coord_t **zeroing_coords; /* dirty pcache area coords */
 
-    /* Add aggregated areas to parent cached one for coords in zeroing
-     * list
-     */
-    n_zeroing = rdman->zeroing_coords.num;
-    zeroings = rdman->zeroing_coords.ds;
-    for(i = 0; i < n_zeroing; i++) {
-	coord = zeroings[i];
-
-	if(coord_get_flags(coord, COF_TEMP_MARK))
-	    continue;
-	coord_set_flags(coord, COF_TEMP_MARK);
-
-	pcached_coord = coord_get_cached(coord_get_parent(coord));
-
-	if(coord_is_root(coord) || IS_CACHE_REDRAW_ALL(pcached_coord))
-	    continue;
-
+    n_zeroing_coords = rdman->zeroing_coords.num;
+    zeroing_coords = rdman->zeroing_coords.ds;
+    for(i = n_zeroing_coords - 1; i >= 0; i--) {
+	coord = zeroing_coords[i];
 	if(IS_CACHE_REDRAW_ALL(coord)) {
+	    parent_coord = coord_get_parent(coord);
+	    pcached_coord = coord_get_cached(parent_coord);
+	    
 	    add_dirty_area(rdman, pcached_coord,
 			   coord_get_pcache_area(coord));
 	    add_dirty_area(rdman, pcached_coord,
@@ -1889,58 +1880,7 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
 	}
     }
 
-    /* Add pcache_areas to parent cached one for coord that is
-     * non-zeroing and its parent is changed.
-     */
-    n_dpca_coords = rdman->dirty_pcache_area_coords.num;
-    dpca_coords = rdman->dirty_pcache_area_coords.ds;
-    for(i = 0; i < n_dpca_coords; i++) {
-	coord = dpca_coords[i];
-
-	if(coord_get_flags(coord, COF_TEMP_MARK))
-	    continue;
-	coord_set_flags(coord, COF_TEMP_MARK);
-
-	pcached_coord = coord_get_cached(coord_get_parent(coord));
-
-	if(coord_is_root(coord) || IS_CACHE_REDRAW_ALL(pcached_coord))
-	    continue;
-
-	add_dirty_area(rdman, pcached_coord,
-		       coord_get_pcache_area(coord));
-	add_dirty_area(rdman, pcached_coord,
-		       coord_get_pcache_last_area(coord));
-    }
-
-    /* Remove temporary mark */
-    for(i = 0; i < n_zeroing; i++) {
-	coord_clear_flags(zeroings[i], COF_TEMP_MARK);
-    }
-    for(i = 0; i < n_dpca_coords; i++) {
-	coord_clear_flags(dpca_coords[i], COF_TEMP_MARK);
-    }
-
     return OK;
-}
-
-static int
-add_rdman_coords_pcache_area(redraw_man_t *rdman) {
-    coord_t *root, *cur;
-    coord_t *parent;
-
-    root = rdman->root_coord;
-    FOR_COORDS_POSTORDER(root, cur) {
-	if(coord_is_root(cur))
-	    continue;
-	if(!coord_is_cached(cur))
-	    continue;
-	if(!coord_get_flags(cur, COF_JUST_ZERO | COF_JUST_CLEAN)) {
-	    parent = coord_get_parent(cur);
-	    if(!coord_get_flags(parent, COF_JUST_CLEAN))
-		continue;
-	}
-	add_dirty_pcache_area_coord(rdman, cur);
-    }
 }
 
 /*! \brief Swap geo_t::cur_area and geo_t::last_area for a geo_t.
@@ -2043,19 +1983,11 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     /* Zeroing must be performed after clearing to get latest position
      * of shapes for computing new bounding box
      */
-    r = add_rdman_zeroing_coords(rdman);
+    r = add_rdman_zeroing_n_pcache_coords(rdman);
     if(r != OK)
 	return ERR;
 
     r = zeroing_rdman_coords(rdman);
-    if(r != OK)
-	return ERR;
-
-    r = add_rdman_coords_pcache_area(rdman);
-    if(r != OK)
-	return ERR;
-
-    r = compute_rdman_coords_pcache_area(rdman);
     if(r != OK)
 	return ERR;
 
@@ -2079,11 +2011,7 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     for(i = 0; i < rdman->zeroing_coords.num; i++)
 	coord_clear_flags(coords[i],
 			  COF_JUST_CLEAN | COF_JUST_ZERO | COF_SKIP_ZERO);
-    coords = rdman->dirty_pcache_area_coords.ds;
-    for(i = 0; i < rdman->dirty_pcache_area_coords.num; i++)
-	coord_clear_flags(coords[i],
-			  COF_JUST_CLEAN | COF_JUST_ZERO | COF_SKIP_ZERO);
-
+    
     /* \see GEO_SWAP() */
     for(i = 0; i < rdman->dirty_geos.num; i++) {
 	geo = geos[i];
@@ -2289,7 +2217,8 @@ static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
 	if(child && child->before_pmem == mem_idx) {
 	    if(coord_is_cached(child)) {
 		if(!(child->flags & COF_HIDDEN) &&
-		   is_area_in_areas(coord_get_area(child), n_areas, areas)) {
+		   is_area_in_areas(coord_get_pcache_area(child),
+				    n_areas, areas)) {
 		    update_cached_canvas_2_parent(rdman, child);
 		    dirty = 1;
 		}
@@ -2450,7 +2379,6 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     DARRAY_CLEAN(&rdman->dirty_coords);
     DARRAY_CLEAN(&rdman->dirty_geos);
     DARRAY_CLEAN(&rdman->zeroing_coords);
-    DARRAY_CLEAN(&rdman->dirty_pcache_area_coords);
 
     /* Free postponsed removing */
     free_free_objs(rdman);
