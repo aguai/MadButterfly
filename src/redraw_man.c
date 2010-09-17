@@ -1439,18 +1439,11 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
 
     /* Dirty areas of cached one is added after update pcache_areas.
      */
-    if(!coord_is_cached(coord)) {
-	add_dirty_area(rdman, coord, coord->cur_area);
-	add_dirty_area(rdman, coord, coord->last_area);
-    }
-
+    add_dirty_area(rdman, coord, coord->cur_area);
+    add_dirty_area(rdman, coord, coord->last_area);
+    
     coord_clear_flags(coord, COF_DIRTY);
     coord_set_flags(coord, COF_JUST_CLEAN);
-
-    FORCHILDREN(coord, child) {
-	if(coord_is_cached(child))
-	    add_dirty_pcache_area_coord(rdman, child);
-    }
 
     return OK;
 }
@@ -1713,7 +1706,6 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
     for(i = all_zeroing->num - 1; i >= 0; i--) {
 	coord = all_zeroing->ds[i];
 	zeroing_coord(rdman, coord);
-	compute_pcache_area(coord);
     }
 
     return OK;
@@ -1931,6 +1923,26 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
     return OK;
 }
 
+static int
+add_rdman_coords_pcache_area(redraw_man_t *rdman) {
+    coord_t *root, *cur;
+    coord_t *parent;
+
+    root = rdman->root_coord;
+    FOR_COORDS_POSTORDER(root, cur) {
+	if(coord_is_root(cur))
+	    continue;
+	if(!coord_is_cached(cur))
+	    continue;
+	if(!coord_get_flags(cur, COF_JUST_ZERO | COF_JUST_CLEAN)) {
+	    parent = coord_get_parent(cur);
+	    if(!coord_get_flags(parent, COF_JUST_CLEAN))
+		continue;
+	}
+	add_dirty_pcache_area_coord(rdman, cur);
+    }
+}
+
 /*! \brief Swap geo_t::cur_area and geo_t::last_area for a geo_t.
  *
  * It is call by rdman_clean_dirties() to swap areas for members of
@@ -2036,6 +2048,10 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
 	return ERR;
 
     r = zeroing_rdman_coords(rdman);
+    if(r != OK)
+	return ERR;
+
+    r = add_rdman_coords_pcache_area(rdman);
     if(r != OK)
 	return ERR;
 
