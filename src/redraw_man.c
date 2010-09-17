@@ -2918,6 +2918,19 @@ test_own_canvas_redraw(void) {
     CU_ASSERT(parent_2_cache[3] == 0);
     CU_ASSERT(parent_2_cache[4] == 1);
     CU_ASSERT(parent_2_cache[5] == -100);
+
+    coord2->matrix[2] = 20;
+    coord2->matrix[5] = 30;
+    rdman_coord_changed(rdman, coord2);
+    
+    /* To test if transform matrix of cached coord working */
+    parent_2_cache = ((mock_mbe_t *)_coord_get_canvas(coord2))->parent_2_cache;
+    CU_ASSERT(parent_2_cache[0] == 1);
+    CU_ASSERT(parent_2_cache[1] == 0);
+    CU_ASSERT(parent_2_cache[2] == -120);
+    CU_ASSERT(parent_2_cache[3] == 0);
+    CU_ASSERT(parent_2_cache[4] == 1);
+    CU_ASSERT(parent_2_cache[5] == -130);    
     
     rdman_paint_free(rdman, paint);
     redraw_man_destroy(rdman);
