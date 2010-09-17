@@ -522,6 +522,7 @@ static void free_objs_destroy(redraw_man_t *rdman) {
  */
 typedef struct {
     co_aix parent_2_cache[6];
+    int w, h;
 } mock_mbe_t;
 #endif
 
@@ -536,7 +537,13 @@ static mbe_t *canvas_new(int w, int h) {
 
     return cr;
 #else
-    return (mbe_t *)malloc(sizeof(mock_mbe_t));
+    mock_mbe_t *mbe;
+
+    mbe = malloc(sizeof(mock_mbe_t));
+    mbe->w = w;
+    mbe->h = h;
+    
+    return (mbe_t *)mbe;
 #endif
 }
 
@@ -556,8 +563,11 @@ static void canvas_get_size(mbe_t *canvas, int *w, int *h) {
     *w = mbe_image_surface_get_width(surface);
     *h = mbe_image_surface_get_height(surface);
 #else
-    *w = 0;
-    *h = 0;
+    mock_mbe_t *mbe;
+
+    mbe = (mock_mbe_t *)canvas;
+    *w = mbe->w;
+    *h = mbe->h;
 #endif
 }
 
@@ -1347,7 +1357,7 @@ static void compute_pcache_area(coord_t *coord) {
 
     area_init(coord_get_pcache_area(coord), 4, poses);
 
-    coord_set_flags(coord, COF_DIRTY_PCACHE_AREA);
+    coord_clear_flags(coord, COF_DIRTY_PCACHE_AREA);
 }
 
 /*! \brief Compute area of a coord.
@@ -2922,6 +2932,7 @@ test_own_canvas_redraw(void) {
     coord2->matrix[2] = 20;
     coord2->matrix[5] = 30;
     rdman_coord_changed(rdman, coord2);
+    rdman_redraw_changed(rdman);
     
     /* To test if transform matrix of cached coord working */
     parent_2_cache = ((mock_mbe_t *)_coord_get_canvas(coord2))->parent_2_cache;
