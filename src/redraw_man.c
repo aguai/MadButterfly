@@ -474,8 +474,10 @@ static int add_zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 }
 
 static int add_dirty_pcache_area_coord(redraw_man_t *rdman, coord_t *coord) {
-    coord_set_flags(coord, COF_DIRTY_PCACHE_AREA);
-    ADD_DATA(coords, dirty_pcache_area_coords, coord);
+    if(!coord_get_flags(coord, COF_DIRTY_PCACHE_AREA)) {
+	coord_set_flags(coord, COF_DIRTY_PCACHE_AREA);
+	ADD_DATA(coords, dirty_pcache_area_coords, coord);
+    }
     return OK;
 }
 
