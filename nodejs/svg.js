@@ -254,7 +254,7 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
     
     a = node.attr("bbox-x");
     if(!a)
-	return;
+	return 0;
     
     tgt.bbox = bbox = new Object();
     vstr = a.value();
@@ -275,17 +275,20 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
 
     tgt.center = center = new Object();
     
-    center.x = bbox.width / 2 + bbox.x;
-    center.y = bbox.height / 2 + bbox.y;
+    //center.x = bbox.width / 2 + bbox.x;
+    //center.y = bbox.height / 2 + bbox.y;
+    center.x = bbox.x;
+    center.y = bbox.y;
     a = node.attr("transform-center-x");
     if(!a)
-	return;
+	return 1;
     
     vstr = a.value();
     center.x += parseFloat(vstr);
     a = node.attr("transform-center-y");
     vstr = a.value();
     center.y -= parseFloat(vstr);
+    return 1;
 }
 
 loadSVG.prototype._set_paint = function(node, tgt) {
@@ -460,22 +463,26 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
 	
     var style = n.attr('style');
 
-    if (trans) {
+    if (trans)
         parseTransform(tcoord,trans.value());
-        //var m = [1,0,0,0,1,0];
-        //multiply(m,tcoord);
-        rx = tcoord[0]*x+tcoord[1]*y+tcoord[2];
-        ry = tcoord[3]*x+tcoord[4]*y+tcoord[5];
-    }
-
-    if (coord.center.x > rx)
-        coord.center.x = rx;
-    if (coord.center.y > ry)
-        coord.center.y = ry;
 
     var rect = this.mb_rt.rect_new(x,y,w,h,10, 10);
     this._set_paint(n, rect);
-    this._set_bbox(n, tcoord);
+    if (this._set_bbox(n, tcoord)) {
+        rx = accu_matrix[0]*tcoord.center.x+accu_matrix[1]*tcoord.center.y+accu_matrix[2];
+        ry = accu_matrix[3]*tcoord.center.x+accu_matrix[4]*tcoord.center.y+accu_matrix[5];
+	tcoord.center.x -= accu_matrix[2]+tcoord[2];
+	tcoord.center.y -= accu_matrix[2]+tcoord[2];
+    } else {
+        if (trans) {
+            rx = tcoord[0]*x+tcoord[1]*y+tcoord[2];
+            ry = tcoord[3]*x+tcoord[4]*y+tcoord[5];
+            if (tcoord.center.x > rx)
+                tcoord.center.x = rx;
+            if (tcoord.center.y > ry)
+                tcoord.center.y = ry;
+	}
+    }
     tcoord.add_shape(rect);
 
     make_mbnames(this.mb_rt, n, tcoord);
@@ -563,7 +570,11 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     if (root.center.y > coord.center.y)
 	root.center.y = coord.center.y;
 
-    this._set_bbox(n, coord);
+    if (this._set_bbox(n, coord)) {
+        coord.center.x -= accu[2];
+        coord.center.y -= accu[5];
+    }
+    sys.puts("coord.center.x="+coord.center.x+",coord.center.y="+coord.center.y);
     
     make_mbnames(this.mb_rt, n, coord);
 };
@@ -615,7 +626,10 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     paint.fill(img);
     tcoord.add_shape(img);
     
-    this._set_bbox(n, img);
+    if (this._set_bbox(n, img)) {
+        img.center.x -= accu[2]+coord[2];
+        img.center.y -= accu[5]+coord[5];
+    }
 
     make_mbnames(this.mb_rt, n, img);
 };
