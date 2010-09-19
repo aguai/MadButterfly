@@ -1,6 +1,10 @@
 define([PROJ_PREFIX], [xnjsmb_auto_])dnl
 STRUCT([coord], [coord_t], 
-        [ACCESSOR([opacity], [xnjsmb_coord_get_opacity],[xnjsmb_coord_set_opacity])],
+        [
+	ACCESSOR([opacity], [xnjsmb_coord_get_opacity],[xnjsmb_coord_set_opacity]),
+	ACCESSOR([x], [xnjsmb_coord_get_x],[xnjsmb_coord_set_x]),
+	ACCESSOR([y], [xnjsmb_coord_get_y],[xnjsmb_coord_set_y]),
+	],
 	[METHOD([add_shape], [xnjsmb_coord_add_shape],
 		(SELF, OBJ([shape], [shape], [shape_t]), ERR), 1, []),
 	 METHOD([remove], [xnjsmb_coord_remove], (SELF), 0, []),
