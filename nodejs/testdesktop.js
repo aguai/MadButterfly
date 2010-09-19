@@ -1,4 +1,3 @@
-// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
 // vim: sw=4:ts=8:sts=4
 var svg = require("./svg");
 var mbapp = require("./mbapp");
@@ -10,13 +9,17 @@ app = new mbapp.app();
 app.loadSVG("desktop.svg");
 
 video = app.get("video");
+//var an = new animate.alpha(app,video,0,1);
+//an.start();
 audio = app.get("audio");
 picture = app.get("picture");
 setting = app.get("setting");
+
 items=[video,audio,picture,setting];
 item = 0;
 an = new animate.scale(app,items[item],1,1.5,0.1);
 an.start();
+app.refresh();
 setInterval(function() {
     
 
@@ -28,11 +31,11 @@ app.addKeyListener(mbapp.KEY_LEFT, function() {
 		item = 0;
 		return;
 	}
-    var target = items[item];
+        var target = items[item];
 	var an = new animate.scale(app,old,1,1,0.1);
-    an.start();
+        an.start();
 	an = new animate.scale(app,target,1,1.5,0.3);
-    an.start();
+        an.start();
 });
 
 app.addKeyListener(mbapp.KEY_RIGHT, function() {
@@ -42,11 +45,36 @@ app.addKeyListener(mbapp.KEY_RIGHT, function() {
 		item = item - 1;
 		return;
 	}
-    var target = items[item];
+        var target = items[item];
 	var an = new animate.scale(app,old,1,1,0.1);
-    an.start();
+        an.start();
 	an = new animate.scale(app,target,1,1.5,0.3);
-    an.start();
+        an.start();
+});
+
+
+app.addKeyListener(mbapp.KEY_ENTER, function() {
+	var target = items[item];
+	var sx = 500-target.x;
+	var sy = 220-target.y;
+	sys.puts("target "+sx+','+sy);
+	var an = new animate.linear(app,target,sx,sy,1);
+	an.start();
+	for(i=0;i<items.length;i++) {
+	    if (i == item) continue;
+	    var x = Math.random();
+	    var y = Math.random();
+	    if (x > 0.5) x = 900;
+	    else x = -500;
+	    if (y > 0.5) y = 900;
+	    else y = -500;
+	    sx = x-items[i].x;
+	    sy = y-items[i].y;
+	    an = new animate.linear(app,items[i], sx,sy,2);
+	    an.start();
+	    alpha = new animate.alpha(app,items[i],0, 1);
+	    alpha.start();
+	}
 });
 
 app.loop();
