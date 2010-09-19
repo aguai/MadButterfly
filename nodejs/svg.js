@@ -574,6 +574,8 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
         coord.center.x -= accu[2];
         coord.center.y -= accu[5];
     }
+    coord._x = coord.center.x;
+    coord._y = coord.center.y;
     sys.puts("coord.center.x="+coord.center.x+",coord.center.y="+coord.center.y);
     
     make_mbnames(this.mb_rt, n, coord);
