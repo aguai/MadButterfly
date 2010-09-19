@@ -6,7 +6,7 @@ var sys=require("sys");
  * This is configuration for animate module.  For slower or speeder
  * machines, ffs can be decreased or increased respective.
  */
-var ffs = 20;
+var ffs = 12;
 var frame_interval = 1000 / ffs;
 
 function linear_draw() {
@@ -15,13 +15,13 @@ function linear_draw() {
     percent = (Date.now() - this._start_tm) / this.duration;
     if(percent >= 1) {
 	percent = 1;
-    
-	this.obj.timer.stop();
-	delete this.obj.timer;
+        if (this.obj.timer) {
+	    this.obj.timer.stop();
+	    delete this.obj.timer;
+	}
     }
-    
-    this.obj[2] = (this.targetx-this.startposx)*percent+this.startposx;
-    this.obj[5] = (this.targety-this.startposy)*percent+this.startposy;
+    this.obj.x = (this.targetx-this.startposx)*percent+this.startposx;
+    this.obj.y = (this.targety-this.startposy)*percent+this.startposy;
     this.app.refresh();
 }
 
@@ -32,8 +32,6 @@ function linear_draw_start() {
     if(obj.timer)
 	obj.timer.stop();
 
-    this.startposx = obj[2];
-    this.startposy = obj[5];
     this._start_tm = Date.now();
     obj.timer = setInterval(function() { self.draw(); }, frame_interval);
 }
@@ -43,8 +41,10 @@ function linear(app,obj,shiftx,shifty,duration) {
     this.app = app;
     this.obj = obj;
     this.end = 0;
-    this.targetx = shiftx + obj[2];
-    this.targety = shifty + obj[5];
+    this.targetx = shiftx + obj.x;
+    this.targety = shifty + obj.y;
+    this.startposx = obj.x;
+    this.startposy = obj.y;
     this.duration = duration*1000;
 }
 
@@ -134,7 +134,7 @@ function scale_draw() {
     this.app.refresh();
     var self = this;
     if (percent < 1) {
-	this.obj.timer=setTimeout(function() { self.draw();}, 20);
+	this.obj.timer=setTimeout(function() { self.draw();}, frame_interval);
 	return;
     }
     this.app.refresh();
@@ -218,13 +218,12 @@ function alpha_draw() {
     var percent = (Date.now() - this.starttime)/this.duration;
     if (percent > 1) percent = 1;
     var sx = (this.targetalpha-this.startalpha)*percent+this.startalpha;
-    sys.puts("opacity="+sx);
     this.obj.opacity=sx;
 
     this.app.refresh();
     var self = this;
     if (percent < 1) {
-	this.obj.timer=setTimeout(function() { self.draw();}, 20);
+	this.obj.timer=setTimeout(function() { self.draw();}, frame_interval);
 	return;
     }
     this.app.refresh();
