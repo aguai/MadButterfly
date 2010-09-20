@@ -178,6 +178,9 @@ typedef struct _coord_canvas_info {
     co_aix cache_2_pdev[6];	/*!< Transfrom matrix from space of
 				 * cached one to its parent. */
     co_aix cache_2_pdev_rev[6];	/*!< Reverse of cache_2_pdev. */
+    co_aix aggr_2_pdev[6];	/*!< Aggregation of cache_2_pdev from root  */
+    co_aix aggr_2_pdev_rev[6];	/*!< Aggregation of cache_2_pdev_rev
+				 * from root  */
 } coord_canvas_info_t;
 
 /*! \brief A coordination system.
@@ -372,6 +375,8 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
     ((coord)->canvas_info->aggr_dirty_areas)
 #define coord_get_2pdev(coord) ((coord)->canvas_info->cache_2_pdev)
 #define coord_get_2pdev_rev(coord) ((coord)->canvas_info->cache_2_pdev_rev)
+#define coord_get_aggr2pdev(coord) ((coord)->canvas_info->aggr_2_pdev)
+#define coord_get_aggr2pdev_rev(coord) ((coord)->canvas_info->aggr_2_pdev_rev)
 
 /* @} */
 

@@ -612,6 +612,7 @@ static coord_canvas_info_t *
 coord_canvas_info_new(redraw_man_t *rdman, coord_t *coord,
 		      mbe_t *canvas) {
     coord_canvas_info_t *info;
+    static co_aix id[6] = {1, 0, 0, 0, 1, 0};
 
     info = (coord_canvas_info_t *)elmpool_elm_alloc(rdman->coord_canvas_pool);
     if(info == NULL)
@@ -624,6 +625,10 @@ coord_canvas_info_new(redraw_man_t *rdman, coord_t *coord,
     bzero(info->pcache_areas, sizeof(area_t) * 2);
     info->pcache_cur_area = &info->pcache_areas[0];
     info->pcache_last_area = &info->pcache_areas[1];
+    memcpy(info->cache_2_pdev, id, sizeof(co_aix) * 6);
+    memcpy(info->cache_2_pdev_rev, id, sizeof(co_aix) * 6);
+    memcpy(info->aggr_2_pdev, id, sizeof(co_aix) * 6);
+    memcpy(info->aggr_2_pdev_rev, id, sizeof(co_aix) * 6);
 
     return info;
 }
@@ -1751,6 +1756,34 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
     return OK;
 }
 
+/*! \brief Update aggregated cache_2_pdev matrix for cached coords.
+ *
+ * This is perfromed from root to leaves.  Aggregated cache_2_pdev is
+ * named as aggr_2_pdev field of canvas_info_t.  It is the matrix to
+ * transform a point from space of a cached coord to the space of root
+ * coord.
+ */
+static int
+update_aggr_pdev(redraw_man_t *rdman) {
+    int i;
+    coords_t *all_zeroing;
+    coord_t *coord, *parent_cached;
+
+    all_zeroing = &rdman->zeroing_coords;
+    for(i = 0; i < all_zeroing->num; i++) {
+	coord = all_zeroing->ds[i];
+	parent_cached = coord_get_cached(coord_get_parent(coord));
+	matrix_mul(coord_get_2pdev(parent_cached),
+		   coord_get_2pdev(coord),
+		   coord_get_aggr2pdev(coord));
+	matrix_mul(coord_get_2pdev_rev(coord),
+		   coord_get_2pdev_rev(parent_cached),
+		   coord_get_aggr2pdev_rev(coord));
+    }
+
+    return OK;
+}
+
 /*! \brief Add aggregated dirty areas to ancestor.
  *
  * Dirty areas are aggregated into two areas.  It assumes that even or odd
@@ -2005,6 +2038,10 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
 	return ERR;
 
     r = add_rdman_aggr_dirty_areas(rdman);
+    if(r != OK)
+	return ERR;
+
+    r = update_aggr_pdev(rdman);
     if(r != OK)
 	return ERR;
 
