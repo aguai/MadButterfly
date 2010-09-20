@@ -11,6 +11,7 @@ var frame_interval = 1000 / ffs;
 
 function linear_draw() {
     var percent;
+    var x, y;
     
     percent = (Date.now() - this._start_tm) / this.duration;
     if(percent >= 1) {
@@ -20,8 +21,9 @@ function linear_draw() {
 	    delete this.obj.timer;
 	}
     }
-    this.obj.x = (this.targetx-this.startposx)*percent+this.startposx;
-    this.obj.y = (this.targety-this.startposy)*percent+this.startposy;
+    x = (this.targetx-this.startposx)*percent+this.startposx;
+    y = (this.targety-this.startposy)*percent+this.startposy;
+    this.obj.center.move(x, y);
     this.app.refresh();
 }
 
@@ -41,10 +43,10 @@ function linear(app,obj,shiftx,shifty,duration) {
     this.app = app;
     this.obj = obj;
     this.end = 0;
-    this.targetx = shiftx + obj.x;
-    this.targety = shifty + obj.y;
-    this.startposx = obj.x;
-    this.startposy = obj.y;
+    this.targetx = shiftx + obj.center.x;
+    this.targety = shifty + obj.center.y;
+    this.startposx = obj.center.x;
+    this.startposy = obj.center.y;
     this.duration = duration*1000;
 }
 
