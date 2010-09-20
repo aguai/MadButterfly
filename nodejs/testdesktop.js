@@ -63,7 +63,7 @@ app.addKeyListener(mbapp.KEY_UP, function() {
 		return;
 	}
         var target = lines[line];
-	var sy = target.y-20-lightbar.y;
+	var sy = target.y-lightbar.y;
 	sys.puts(sy);
 	var an = new animate.linear(app,lightbar,0,sy,0.3);
         an.start();
@@ -76,7 +76,7 @@ app.addKeyListener(mbapp.KEY_DOWN, function() {
 		return;
 	}
         var target = lines[line];
-	var sy = target.y-20-lightbar.y;
+	var sy = target.y-lightbar.y;
 	sys.puts("line="+line);
 	sys.puts("sy="+sy);
 	sys.puts("target.y="+target.y);
