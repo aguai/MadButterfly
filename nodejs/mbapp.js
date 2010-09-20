@@ -5,16 +5,73 @@ var svg = require("./svg");
 var sys = require("sys");
 var ldr = mbfly.img_ldr_new(".");
 
+function _reverse(m1) {
+    var rev = new Array(1, 0, 0, 0, 1, 0);
+    var m = new Array(m1[0], m1[1], m1[2], m1[3], m1[4], m1[5]);
+
+    rev[3] = -m[3] / m[0];
+    m[3] = 0;
+    m[4] += rev[3] * m[1];
+    m[5] += rev[3] * m[2];
+    
+    rev[1] = -m[1] / m[4];
+    rev[0] += rev[1] * rev[3];
+    m[1] = 0;
+    m[2] += rev[1] * m[5];
+    
+    rev[2] = -m[2];
+    rev[5] = -m[5];
+    
+    rev[0] = rev[0] / m[0];
+    rev[1] = rev[1] / m[0];
+    rev[2] = rev[2] / m[0];
+    
+    rev[3] = rev[3] / m[4];
+    rev[4] = rev[4] / m[4];
+    rev[5] = rev[5] / m[4];
+
+    return rev;
+}
+
 function _decorate_mb_rt(mb_rt) {
+    var coord;
+    
     mb_rt._mbapp_saved_coord_new = mb_rt.coord_new;
     mb_rt.coord_new = function(parent) {
 	var coord;
 	
 	coord = this._mbapp_saved_coord_new(parent);
+	coord.type = "coord";
 	coord._mbapp_saved_mtx = [coord[0], coord[1], coord[2],
 				  coord[3], coord[4], coord[5]];
+	coord._mbapp_saved_rev_mtx = _reverse(coord._mbapp_saved_mtx);
+	coord.parent = parent;
+	coord._mbapp_saved_add_shape = coord.add_shape;
+	coord.add_shape = function(shape) {
+	    var coord;
+	    
+	    this._mbapp_saved_add_shape(shape);
+	    shape.parent = this;
+	}
+	
 	return coord;
     };
+
+    /*
+     * Decorate root coord
+     */
+    coord = mb_rt.root;
+    coord.type = "coord";
+    coord._mbapp_saved_mtx = [coord[0], coord[1], coord[2],
+			      coord[3], coord[4], coord[5]];
+	coord._mbapp_saved_rev_mtx = _reverse(coord._mbapp_saved_mtx);
+    coord._mbapp_saved_add_shape = coord.add_shape;
+    coord.add_shape = function(shape) {
+	var coord;
+	
+	this._mbapp_saved_add_shape(shape);
+	shape.parent = this;
+    }
 }
 
 app=function(display, w, h) {
