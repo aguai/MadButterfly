@@ -17,13 +17,15 @@ picture = app.get("picture");
 setting = app.get("setting");
 
 lightbar = app.get("lightbar");
-lines=[app.get("line1"),app.get("line2"),app.get("line3"), app.get("line4"),app.get("line5")];
-for(i=0;i<lines.length;i++) {
-    sys.puts("["+i+"]="+lines[i].center.x);
+lines = [];
+for(i = 0; i < 5; i++) {
+    line = app.get("line" + (i + 1));
+    lines.push(line);
 }
 line=0;
 
-items=[video,audio,picture,setting];
+items=[video, audio, picture, setting];
+
 item = 0;
 an = new animate.scale(app,items[item],1,1.5,0.1);
 an.start();
@@ -35,10 +37,15 @@ app.addKeyListener(mbapp.KEY_LEFT, function() {
 	item = 0;
 	return;
     }
+    
     var target = items[item];
-    var an = new animate.scale(app,old,1,1/1.5,0.1);
+
+    old.bbox.update();
+    target.bbox.update();
+    
+    var an = new animate.scale(app, old, 1, 1, 0.1);
     an.start();
-    an = new animate.scale(app,target,1,1.5,0.3);
+    an = new animate.scale(app, target, 1, 1.5, 0.3);
     an.start();
 });
 
@@ -49,10 +56,15 @@ app.addKeyListener(mbapp.KEY_RIGHT, function() {
 	item = item - 1;
 	return;
     }
+    
     var target = items[item];
-    var an = new animate.scale(app,old,1,1/1.5,0.1);
+
+    old.bbox.update();
+    target.bbox.update();
+    
+    var an = new animate.scale(app, old, 1, 1, 0.1);
     an.start();
-    an = new animate.scale(app,target,1,1.5,0.3);
+    an = new animate.scale(app, target, 1, 1.5, 0.3);
     an.start();
 });
 
