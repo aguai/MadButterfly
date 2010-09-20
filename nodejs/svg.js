@@ -276,10 +276,10 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
 
     tgt.center = center = new Object();
     
-    //center.x = bbox.width / 2 + bbox.x;
-    //center.y = bbox.height / 2 + bbox.y;
-    center.x = bbox.x;
-    center.y = bbox.y;
+    center.x = bbox.width / 2 + bbox.x;
+    center.y = bbox.height / 2 + bbox.y;
+    //center.x = bbox.x;
+    //center.y = bbox.y;
     a = node.attr("transform-center-x");
     if(!a)
 	return 1;
