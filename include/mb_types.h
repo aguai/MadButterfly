@@ -175,6 +175,9 @@ typedef struct _coord_canvas_info {
                                  *   cached. */
     area_t *pcache_cur_area;	/*!< Current area for parent cached. */
     area_t *pcache_last_area;	/*!< Last area for parent cached. */
+    co_aix cache_2_pdev[6];	/*!< Transfrom matrix from space of
+				 * cached one to its parent. */
+    co_aix cache_2_pdev_rev[6];	/*!< Reverse of cache_2_pdev. */
 } coord_canvas_info_t;
 
 /*! \brief A coordination system.
@@ -367,6 +370,8 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 #define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
 #define _coord_get_aggr_dirty_areas(coord)	\
     ((coord)->canvas_info->aggr_dirty_areas)
+#define coord_get_2pdev(coord) ((coord)->canvas_info->cache_2_pdev)
+#define coord_get_2pdev_rev(coord) ((coord)->canvas_info->cache_2_pdev_rev)
 
 /* @} */
 
