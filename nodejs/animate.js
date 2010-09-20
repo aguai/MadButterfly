@@ -139,7 +139,6 @@ function scale_draw() {
     mtx = multiply(scale, sh1);
     mtx = multiply(sh2, mtx);
     mtx = multiply(this.orig_mtx, mtx);
-    sys.puts([obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]]);
     obj[0] = mtx[0];
     obj[1] = mtx[1];
     obj[2] = mtx[2];
