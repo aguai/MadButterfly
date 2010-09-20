@@ -128,8 +128,8 @@ function scale_draw() {
     if (this.end == 1) return;
     var percent = (Date.now() - this.starttime)/this.duration;
     if (percent > 1) percent = 1;
-    var sx = 1 + (this.targetx - 1) * percent;
-    var sy = 1 + (this.targety - 1) * percent;
+    var sx = 1 + (this.totalsx - 1) * percent;
+    var sy = 1 + (this.totalsy - 1) * percent;
     var sh1 = [1, 0, -this.center_x, 0, 1, -this.center_y];
     var sh2 = [1, 0, this.center_x, 0, 1, this.center_y];
     var scale=[sx, 0, 0, 0, sy, 0];
@@ -156,25 +156,26 @@ function scale_draw() {
     obj.animated_scale = null;
 }
 
-function scale(app,obj,targetx,targety, duration) {
+function scale(app, obj, fact_x, fact_y, duration) {
+    var bbox;
+    
     try {
         if (obj.animated_scale) {
-	    //obj[0] = obj.animated_scale.targetx;
-	    //obj[4] = obj.animated_scale.targety;
-	    //obj[2] = obj.animated_scale.final_offset_x;
-	    //obj[5] = obj.aninated_scale.final_offset_y;
 	    obj.animated_scale.end = 1;
 	}
     } catch(e) {
 	    
     }
+
+    bbox = obj.bbox;
+    bbox.update();
     obj.animated_scale = this;
     this.app = app;
     this.obj = obj;
     this.end = 0;
     this.starttime = Date.now();
-    this.targetx = targetx;
-    this.targety = targety;
+    this.totalsx = fact_x * bbox.orig.width / bbox.width;
+    this.totalsy = fact_y * bbox.orig.height / bbox.height;
     this.duration = duration*1000;
     this.center_x = obj.center.rel.x;
     this.center_y = obj.center.rel.y;
