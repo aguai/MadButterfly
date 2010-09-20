@@ -64,7 +64,7 @@ app.addKeyListener(mbapp.KEY_UP, function() {
 	return;
     }
     var target = lines[line];
-    var sy = target.center.y - 20 - lightbar.center.y;
+    var sy = target.center.y - lightbar.center.y;
     sys.puts(sy);
     var an = new animate.linear(app,lightbar,0,sy,0.3);
     an.start();
