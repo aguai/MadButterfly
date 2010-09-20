@@ -385,10 +385,10 @@ var _bbox_proto = {
     update: function() {
 	var mtx;
 
-	this.x = this._svg_saved_x;
-	this.y = this._svg_saved_y;
-	this.width = this._svg_saved_width;
-	this.height = this._svg_saved_height;
+	this.x = this.orig.x;
+	this.y = this.orig.y;
+	this.width = this.orig.width;
+	this.height = this.orig.height;
 	
 	mtx = this._saved_to_current();
 	_transform_bbox(this, mtx);
@@ -459,7 +459,7 @@ var _center_proto = {
 	var xy;
 
 	mtx = this._saved_to_current();
-	xy = _pnt_transform(this._svg_saved_x, this._svg_saved_y, mtx);
+	xy = _pnt_transform(this.orig.x, this.orig.y, mtx);
 
 	this._x = xy[0];
 	this._y = xy[1];
@@ -507,7 +507,7 @@ var _center_proto = {
 	var xy;
 	
 	rev = this._get_ac_rev();
-	xy = _pnt_transform(this._svg_saved_x, this._svg_saved_y, rev);
+	xy = _pnt_transform(this.orig.x, this.orig.y, rev);
 
 	return {x: xy[0], y: xy[1]};
     },
@@ -517,44 +517,54 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
     var a;
     var vstr;
     var bbox, center;
+    var orig;
     
     a = node.attr("bbox-x");
     sys.puts("a="+a);
     if(!a)
 	return 0;
     
+    /* bbox.orig is initial values of bbox.  The bbox is recomputed
+     * according bbox.orig and current matrix.  See bbox.update().
+     */
     tgt.bbox = bbox = new Object();
+    bbox.orig = orig = new Object();
     bbox.owner = tgt;
     bbox.__proto__ = _bbox_proto;
     vstr = a.value();
-    bbox._svg_saved_x = parseFloat(vstr);
+    orig.x = parseFloat(vstr);
 
     a = node.attr("bbox-y");
     vstr = a.value();
-    bbox._svg_saved_y = this.height - parseFloat(vstr);
+    orig.y = this.height - parseFloat(vstr);
 
     a = node.attr("bbox-width");
     vstr = a.value();
-    bbox._svg_saved_width = parseFloat(vstr);
+    orig.width = parseFloat(vstr);
 
     a = node.attr("bbox-height");
     vstr = a.value();
-    bbox._svg_saved_height = parseFloat(vstr);
-    bbox._svg_saved_y -= bbox._svg_saved_height;
+    orig.height = parseFloat(vstr);
+    orig.y -= orig.height;
     
     bbox.update();
 
+    /* center.orig is initial values of center.  The center is
+     * recomputed according center.orig and current matrix.  See
+     * center.update().
+     */
     tgt.center = center = new Object();
+    center.orig = orig = new Object();
     
-    center._svg_saved_x = bbox._svg_saved_width / 2 + bbox._svg_saved_x;
-    center._svg_saved_y = bbox._svg_saved_height / 2 + bbox._svg_saved_y;
+    orig.x = bbox.orig.width / 2 + bbox.orig.x;
+    orig.y = bbox.orig.height / 2 + bbox.orig.y;
     a = node.attr("transform-center-x");
     if(a) {
 	vstr = a.value();
-	center._svg_saved_x += parseFloat(vstr);
+	orig.x += parseFloat(vstr);
 	a = node.attr("transform-center-y");
 	vstr = a.value();
-	center._svg_saved_y -= parseFloat(vstr);
+	orig.y -= parseFloat(vstr);
     }
     center.__proto__ = _center_proto;
     center.owner = tgt;
