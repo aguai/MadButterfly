@@ -66,6 +66,9 @@ function rotate_start() {
     var obj = this._obj;
     var self = this;
     
+    if(obj.timer)
+	obj.timer.stop();
+
     this._start_mtx = [obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]];
     this._start_tm = Date.now();
     obj.timer = setInterval(function() { self.draw(); }, frame_interval);

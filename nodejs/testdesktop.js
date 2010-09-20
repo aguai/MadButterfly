@@ -77,8 +77,7 @@ app.addKeyListener(mbapp.KEY_DOWN, function() {
 	return;
     }
     var target = lines[line];
-    sys.puts(target);
-    var sy = target.cnter.y - 20 - lightbar.center.y;
+    var sy = target.center.y - lightbar.center.y;
     sys.puts("line="+line);
     sys.puts("sy="+sy);
     sys.puts("target.y="+target.center.y);
