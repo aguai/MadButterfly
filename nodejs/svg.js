@@ -501,6 +501,16 @@ var _center_proto = {
     /*! \brief Prevent user to modify value.
      */
     get y() { return this._y; },
+
+    get rel() {
+	var rev;
+	var xy;
+	
+	rev = this._get_ac_rev();
+	xy = _pnt_transform(this._svg_saved_x, this._svg_saved_y, rev);
+
+	return {x: xy[0], y: xy[1]};
+    },
 };
 
 loadSVG.prototype._set_bbox = function(node, tgt) {

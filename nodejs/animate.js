@@ -128,22 +128,33 @@ function scale_draw() {
     if (this.end == 1) return;
     var percent = (Date.now() - this.starttime)/this.duration;
     if (percent > 1) percent = 1;
-    var sx = (this.targetx-this.startsx)*percent+this.startsx;
-    var sy = (this.targety-this.startsy)*percent+this.startsy;
-    var t=[sx,0,0,0,sy,0];
-    this.obj[0] = sx;
-    this.obj[4] = sy;
-    this.obj[2] = this.origin_offset_x - (sx-this.startsx)*this.obj.center.x;
-    this.obj[5] = this.origin_offset_y - (sy-this.startsy)*this.obj.center.y;
+    var sx = 1 + (this.targetx - 1) * percent;
+    var sy = 1 + (this.targety - 1) * percent;
+    var sh1 = [1, 0, -this.center_x, 0, 1, -this.center_y];
+    var sh2 = [1, 0, this.center_x, 0, 1, this.center_y];
+    var scale=[sx, 0, 0, 0, sy, 0];
+    var obj = this.obj;
+    var mtx;
+
+    mtx = multiply(scale, sh1);
+    mtx = multiply(sh2, mtx);
+    mtx = multiply(this.orig_mtx, mtx);
+    sys.puts([obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]]);
+    obj[0] = mtx[0];
+    obj[1] = mtx[1];
+    obj[2] = mtx[2];
+    obj[3] = mtx[3];
+    obj[4] = mtx[4];
+    obj[5] = mtx[5];
 
     this.app.refresh();
     var self = this;
     if (percent < 1) {
-	this.obj.timer=setTimeout(function() { self.draw();}, frame_interval);
+	obj.timer=setTimeout(function() { self.draw();}, frame_interval);
 	return;
     }
     this.app.refresh();
-    this.obj.animated_scale = null;
+    obj.animated_scale = null;
 }
 
 function scale(app,obj,targetx,targety, duration) {
@@ -168,10 +179,9 @@ function scale(app,obj,targetx,targety, duration) {
     this.targetx = targetx;
     this.targety = targety;
     this.duration = duration*1000;
-    this.origin_offset_x = obj[2];
-    this.origin_offset_y = obj[5];
-    this.final_offset_x = this.origin_offset_x-(targetx-this.startsx)*obj.center.x;
-    this.final_offset_y = this.origin_offset_y-(targety-this.startsy)*obj.center.y;
+    this.center_x = obj.center.rel.x;
+    this.center_y = obj.center.rel.y;
+    this.orig_mtx = [obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]];
 }
 
 

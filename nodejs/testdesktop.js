@@ -36,7 +36,7 @@ app.addKeyListener(mbapp.KEY_LEFT, function() {
 	return;
     }
     var target = items[item];
-    var an = new animate.scale(app,old,1,1,0.1);
+    var an = new animate.scale(app,old,1,1/1.5,0.1);
     an.start();
     an = new animate.scale(app,target,1,1.5,0.3);
     an.start();
@@ -50,7 +50,7 @@ app.addKeyListener(mbapp.KEY_RIGHT, function() {
 	return;
     }
     var target = items[item];
-    var an = new animate.scale(app,old,1,1,0.1);
+    var an = new animate.scale(app,old,1,1/1.5,0.1);
     an.start();
     an = new animate.scale(app,target,1,1.5,0.3);
     an.start();
