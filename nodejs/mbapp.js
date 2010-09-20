@@ -5,6 +5,17 @@ var svg = require("./svg");
 var sys = require("sys");
 var ldr = mbfly.img_ldr_new(".");
 
+function _decorate_mb_rt(mb_rt) {
+    mb_rt._mbapp_saved_coord_new = mb_rt.coord_new;
+    mb_rt.coord_new = function(parent) {
+	var coord;
+	
+	coord = this._mbapp_saved_coord_new(parent);
+	coord._mbapp_saved_mtx = [coord[0], coord[1], coord[2],
+				  coord[3], coord[4], coord[5]];
+	return coord;
+    };
+}
 
 app=function(display, w, h) {
     var self = this;
@@ -18,6 +29,7 @@ app=function(display, w, h) {
 	h = 480;
     
     mb_rt = this.mb_rt = new mbfly.mb_rt(display, w, h);
+    _decorate_mb_rt(mb_rt);
     var background = mb_rt.rect_new(0, 0, 720, 480, 0, 0);
     var paint = mb_rt.paint_color_new(1, 1, 1, 1);
     paint.fill(background);
