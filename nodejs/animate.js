@@ -173,8 +173,6 @@ function scale(app,obj,targetx,targety, duration) {
     this.obj = obj;
     this.end = 0;
     this.starttime = Date.now();
-    this.startsx = obj[0];
-    this.startsy = obj[4];
     this.targetx = targetx;
     this.targety = targety;
     this.duration = duration*1000;
