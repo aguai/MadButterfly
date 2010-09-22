@@ -1362,7 +1362,7 @@ static void compute_pcache_area(coord_t *coord) {
  */
 static int
 compute_area(coord_t *coord) {
-    static co_aix (*poses)[2];
+    static co_aix (*poses)[2] = NULL;
     static int max_poses = 0;
     geo_t *geo;
     int cnt, pos_cnt;
@@ -1373,7 +1373,8 @@ compute_area(coord_t *coord) {
     }
 
     if(max_poses < (cnt * 2)) {
-	free(poses);
+	if(poses)
+	    free(poses);
 	max_poses = cnt * 2;
 	poses = (co_aix (*)[2])malloc(sizeof(co_aix [2]) * max_poses);
 	if(poses == NULL)
