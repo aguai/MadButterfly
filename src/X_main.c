@@ -210,7 +210,7 @@ void draw_path(mbe_t *cr, int w, int h) {
     tman = mb_tman_new();
     if(tman) {
 	/* Prepare an animation program. */
-	progm = mb_progm_new(10, &rdman);
+	progm = mb_progm_new(30, &rdman);
 
 	MB_TIMEVAL_SET(&start, 0, 0);
 	MB_TIMEVAL_SET(&playing, 1, 0);
@@ -234,6 +234,166 @@ void draw_path(mbe_t *cr, int w, int h) {
 	act = mb_shift_new(0, -20, coord1, word);
 	act = mb_shift_new(0, 20, coord2, word);
 	act = mb_chgcolor_new(0, 0, 1, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 5, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill1, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 7, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 9, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 11, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 13, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 15, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 17, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 19, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 21, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 23, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 25, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 27, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 29, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 31, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 33, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 35, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
 	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
 	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
 
