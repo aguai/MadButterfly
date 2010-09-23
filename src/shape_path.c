@@ -25,8 +25,12 @@ typedef struct _sh_path {
     int float_arg_len;
     char *user_data;
     char *dev_data;		/* device space data */
+    
+    redraw_man_t *rdman;	/*!< \brief This is used by sh_path_free() */
 } sh_path_t;
 #define RESERVED_AIXS sizeof(co_aix[2])
+
+int _sh_path_size = sizeof(sh_path_t);
 
 #define ASSERT(x)
 #define SKIP_SPACE(x) while(*(x) && (isspace(*(x)) || *(x) == ',')) { (x)++; }
@@ -47,6 +51,20 @@ typedef struct _sh_path {
 #ifdef UNITTEST
 #undef rdman_shape_man
 #define rdman_shape_man(x, y)
+
+#undef elmpool_elm_alloc
+#define elmpool_elm_alloc(pool) _elmpool_elm_alloc(pool)
+static void *
+_elmpool_elm_alloc(void *dummy) {
+    return malloc(sizeof(sh_path_t));
+}
+
+#undef elmpool_elm_free
+#define elmpool_elm_free(pool, elm) _elmpool_elm_free(pool, elm)
+static void
+_elmpool_elm_free(void *pool, void *elm) {
+    free(elm);
+}
 #endif
 
 /* ============================================================
@@ -382,7 +400,7 @@ static void sh_path_free(shape_t *shape) {
     mb_obj_destroy(path);
     if(path->user_data)
 	free(path->user_data);
-    free(path);
+    elmpool_elm_free(path->rdman->sh_path_pool, path);
 }
 
 /*! \brief Count number of arguments.
@@ -800,7 +818,7 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
     cmd_cnt = (cmd_cnt + 3) & ~0x3;
 
     /*! \todo Use elmpool to manage sh_path_t objects. */
-    path = (sh_path_t *)malloc(sizeof(sh_path_t));
+    path = (sh_path_t *)elmpool_elm_alloc(rdman->sh_path_pool);
     /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
     mb_obj_init(path, MBO_PATH);
@@ -812,7 +830,7 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
 	sizeof(co_aix) * float_arg_cnt;
     path->user_data = (char *)malloc(msz * 2);
     if(path->user_data == NULL) {
-	free(path);
+	elmpool_elm_free(rdman->sh_path_pool, path);
 	return NULL;
     }
 
@@ -821,12 +839,13 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
     r = sh_path_cmd_arg_fill(data, path);
     if(r == ERR) {
 	free(path->user_data);
-	free(path);
+	elmpool_elm_free(rdman->sh_path_pool, path);
 	return NULL;
     }
     memcpy(path->dev_data, path->user_data, msz);
 
     path->shape.free = sh_path_free;
+    path->rdman = rdman;
 
     rdman_shape_man(rdman, (shape_t *)path);
 
@@ -843,7 +862,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     int cmd_cnt = strlen(commands);
 
     /*! \todo Use elmpool to manage sh_path_t objects. */
-    path = (sh_path_t *)malloc(sizeof(sh_path_t));
+    path = (sh_path_t *)elmpool_elm_alloc(rdman->sh_path_pool);
     /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
     mb_obj_init(path, MBO_PATH);
@@ -855,7 +874,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
 	sizeof(co_aix) * float_arg_cnt;
     path->user_data = (char *)malloc(msz * 2);
     if(path->user_data == NULL) {
-	free(path);
+	elmpool_elm_free(rdman->sh_path_pool, path);
 	return NULL;
     }
 
@@ -867,6 +886,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     memcpy(path->dev_data, path->user_data, msz);
 
     path->shape.free = sh_path_free;
+    path->rdman = rdman;
 
     rdman_shape_man(rdman, (shape_t *)path);
 
@@ -1003,8 +1023,9 @@ void sh_path_draw(shape_t *shape, mbe_t *cr) {
 void test_rdman_shape_path_new(void) {
     sh_path_t *path;
     co_aix *pnts;
+    redraw_man_t rdman;
 
-    path = (sh_path_t *)rdman_shape_path_new(NULL, "M 33 25l33 55c 33 87 44 22 55 99L33 77z");
+    path = (sh_path_t *)rdman_shape_path_new(&rdman, "M 33 25l33 55c 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->pnt_len == 12);
@@ -1032,8 +1053,9 @@ void test_path_transform(void) {
     co_aix *pnts;
     coord_t coord;
     geo_t geo;
+    redraw_man_t rdman;
 
-    path = (sh_path_t *)rdman_shape_path_new(NULL, "M 33 25l33 55C 33 87 44 22 55 99L33 77z");
+    path = (sh_path_t *)rdman_shape_path_new(&rdman, "M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->pnt_len == 12);
@@ -1072,9 +1094,10 @@ void test_path_transform(void) {
 
 void test_spaces_head_tail(void) {
     sh_path_t *path;
+    redraw_man_t rdman;
 
     path = (sh_path_t *)
-	rdman_shape_path_new(NULL,
+	rdman_shape_path_new(&rdman,
 			     " M 33 25l33 55C 33 87 44 22 55 99L33 77z ");
     CU_ASSERT(path != NULL);
     sh_path_free((shape_t *)path);
