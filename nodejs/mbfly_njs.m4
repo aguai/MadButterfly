@@ -39,6 +39,10 @@ STRUCT([mb_rt], [njs_runtime_t], [],
 	METHOD([paint_radial_new], [xnjsmb_paint_radial_new],
 	       (NUMBER(cx), NUMBER(cy), NUMBER(r), ERR), 3,
 	       [OBJ([paint_radial], [paint_t])],
-	       (([MOD], [xnjsmb_mb_rt_objs_mod])))],
+	       (([MOD], [xnjsmb_mb_rt_objs_mod]))),
+	METHOD([handle_single_event], [xnjsmb_handle_single_event],
+	       (OBJ([evt], [event], [void])), 1, []),
+	METHOD([no_more_event], [xnjsmb_no_more_event],
+	       (), 0, [])],
 	((CTOR, ([_X_njs_MB_new], (SELF, STR(display_name), INT(width), INT(height)), 3)))dnl
 )
