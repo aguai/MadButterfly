@@ -640,6 +640,7 @@ static void mouse_event_root_dummy(event_t *evt, void *arg) {
 int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
     extern int _sh_path_size;
+    extern int _sh_rect_size;
     extern int _paint_color_size;
     observer_t *addrm_ob;
     extern void addrm_monitor_hdlr(event_t *evt, void *arg);
@@ -655,6 +656,7 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     rdman->coord_pool = elmpool_new(sizeof(coord_t), 16);
     rdman->shnode_pool = elmpool_new(sizeof(shnode_t), 16);
     rdman->sh_path_pool = elmpool_new(_sh_path_size, 16);
+    rdman->sh_rect_pool = elmpool_new(_sh_rect_size, 16);
     rdman->observer_pool = elmpool_new(sizeof(observer_t), 32);
     rdman->subject_pool = elmpool_new(sizeof(subject_t), 32);
     rdman->paint_color_pool = elmpool_new(_paint_color_size, 64);
@@ -724,6 +726,8 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 	elmpool_free(rdman->shnode_pool);
     if(rdman->sh_path_pool)
 	elmpool_free(rdman->sh_path_pool);
+    if(rdman->sh_rect_pool)
+	elmpool_free(rdman->sh_rect_pool);
     if(rdman->observer_pool)
 	elmpool_free(rdman->observer_pool);
     if(rdman->subject_pool)
@@ -784,6 +788,7 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->geo_pool);
     elmpool_free(rdman->shnode_pool);
     elmpool_free(rdman->sh_path_pool);
+    elmpool_free(rdman->sh_rect_pool);
     elmpool_free(rdman->observer_pool);
     elmpool_free(rdman->subject_pool);
     elmpool_free(rdman->paint_color_pool);

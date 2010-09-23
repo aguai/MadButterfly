@@ -12,10 +12,16 @@ typedef struct _sh_rect {
     co_aix w, h;
     co_aix rx, ry;
     co_aix poses[12][2];
+
+    redraw_man_t *rdman;	/*!< \brief This is used by sh_rect_free() */
 } sh_rect_t;
 
+int _sh_rect_size = sizeof(sh_rect_t);
+
 static void sh_rect_free(shape_t *shape) {
-    free(shape);
+    sh_rect_t *rect = (sh_rect_t *)shape;
+    
+    elmpool_elm_free(rect->rdman->sh_rect_pool, rect);
 }
 
 shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
@@ -23,7 +29,7 @@ shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
 			      co_aix rx, co_aix ry) {
     sh_rect_t *rect;
 
-    rect = (sh_rect_t *)malloc(sizeof(sh_rect_t));
+    rect = (sh_rect_t *)elmpool_elm_alloc(rdman->sh_rect_pool);
     if(rect == NULL)
 	return NULL;
 
@@ -37,6 +43,7 @@ shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
     rect->rx = rx;
     rect->ry = ry;
     rect->shape.free = sh_rect_free;
+    rect->rdman = rdman;
 
     rdman_shape_man(rdman, (shape_t *)rect);
 
