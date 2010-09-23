@@ -78,8 +78,6 @@ typedef struct _paint_linear {
     grad_stop_t *stops;
     int flags;
     mbe_pattern_t *ptn;
-
-    redraw_man_t *rdman;	/*!< \brief Used by paint_linear_free(). */
 } paint_linear_t;
 
 #define LIF_DIRTY 0x1
@@ -111,7 +109,7 @@ static void paint_linear_free(redraw_man_t *rdman, paint_t *paint) {
     if(linear->ptn)
 	mbe_pattern_destroy(linear->ptn);
     paint_destroy(paint);
-    elmpool_elm_free(linear->rdman->paint_linear_pool, linear);
+    elmpool_elm_free(rdman->paint_linear_pool, linear);
 }
 
 paint_t *rdman_paint_linear_new(redraw_man_t *rdman,
@@ -134,7 +132,6 @@ paint_t *rdman_paint_linear_new(redraw_man_t *rdman,
     linear->stops = NULL;
     linear->flags = LIF_DIRTY;
     linear->ptn = NULL;
-    linear->rdman = rdman;
 
     return (paint_t *)linear;
 }
@@ -171,8 +168,6 @@ typedef struct _paint_radial {
     grad_stop_t *stops;
     int flags;
     mbe_pattern_t *ptn;
-
-    redraw_man_t *rdman;	/*!< \brief Used by paint_radial_free() */
 } paint_radial_t;
 
 #define RDF_DIRTY 0x1
@@ -202,7 +197,7 @@ static void paint_radial_free(redraw_man_t *rdman, paint_t *paint) {
     if(radial->ptn)
 	mbe_pattern_destroy(radial->ptn);
     paint_destroy(paint);
-    elmpool_elm_free(radial->rdman->paint_radial_pool, radial);
+    elmpool_elm_free(rdman->paint_radial_pool, radial);
 }
 
 paint_t *rdman_paint_radial_new(redraw_man_t *rdman,
@@ -222,7 +217,6 @@ paint_t *rdman_paint_radial_new(redraw_man_t *rdman,
     radial->stops = NULL;
     radial->flags = RDF_DIRTY;
     radial->ptn = NULL;
-    radial->rdman = rdman;
 
     return (paint_t *)radial;
 }
@@ -257,8 +251,6 @@ typedef struct _paint_image {
     mb_img_data_t *img;
     mbe_surface_t *surf;
     mbe_pattern_t *ptn;
-
-    redraw_man_t *rdman;	/*!< \brief Used by paint_image_free() */
 } paint_image_t;
 
 int _paint_image_size = sizeof(paint_image_t);
@@ -281,7 +273,7 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     img_data = paint_img->img;
     MB_IMG_DATA_FREE(img_data);
     paint_destroy(&paint_img->paint);
-    elmpool_elm_free(paint_img->rdman->paint_image_pool, paint_img);
+    elmpool_elm_free(rdman->paint_image_pool, paint_img);
 }
 
 /*! \brief Create an image painter.
@@ -302,7 +294,6 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
     paint_init(&paint->paint, MBP_IMAGE,
 	       paint_image_prepare, paint_image_free);
     paint->img = img;
-    paint->rdman = rdman;
     paint->surf = mbe_image_surface_create_for_data(img->content,
 						      img->fmt,
 						      img->w,
