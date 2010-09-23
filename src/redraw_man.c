@@ -642,6 +642,9 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     extern int _sh_path_size;
     extern int _sh_rect_size;
     extern int _paint_color_size;
+    extern int _paint_linear_size;
+    extern int _paint_radial_size;
+    extern int _paint_image_size;
     observer_t *addrm_ob;
     extern void addrm_monitor_hdlr(event_t *evt, void *arg);
 
@@ -660,6 +663,9 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     rdman->observer_pool = elmpool_new(sizeof(observer_t), 32);
     rdman->subject_pool = elmpool_new(sizeof(subject_t), 32);
     rdman->paint_color_pool = elmpool_new(_paint_color_size, 64);
+    rdman->paint_linear_pool = elmpool_new(_paint_linear_size, 64);
+    rdman->paint_radial_pool = elmpool_new(_paint_radial_size, 64);
+    rdman->paint_image_pool = elmpool_new(_paint_image_size, 64);
     rdman->pent_pool = elmpool_new(sizeof(mb_prop_entry_t), 128);
     rdman->coord_canvas_pool = elmpool_new(sizeof(coord_canvas_info_t), 16);
     if(!(rdman->geo_pool && rdman->coord_pool && rdman->shnode_pool &&
@@ -734,6 +740,12 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 	elmpool_free(rdman->subject_pool);
     if(rdman->paint_color_pool)
 	elmpool_free(rdman->paint_color_pool);
+    if(rdman->paint_linear_pool)
+	elmpool_free(rdman->paint_linear_pool);
+    if(rdman->paint_radial_pool)
+	elmpool_free(rdman->paint_radial_pool);
+    if(rdman->paint_image_pool)
+	elmpool_free(rdman->paint_image_pool);
     if(rdman->pent_pool)
 	elmpool_free(rdman->pent_pool);
     if(rdman->coord_canvas_pool)
@@ -792,6 +804,9 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->observer_pool);
     elmpool_free(rdman->subject_pool);
     elmpool_free(rdman->paint_color_pool);
+    elmpool_free(rdman->paint_linear_pool);
+    elmpool_free(rdman->paint_radial_pool);
+    elmpool_free(rdman->paint_image_pool);
     elmpool_free(rdman->pent_pool);
     elmpool_free(rdman->coord_canvas_pool);
 

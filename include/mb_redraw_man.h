@@ -55,6 +55,9 @@ struct _redraw_man {
     elmpool_t *observer_pool;
     elmpool_t *subject_pool;
     elmpool_t *paint_color_pool;
+    elmpool_t *paint_linear_pool;
+    elmpool_t *paint_radial_pool;
+    elmpool_t *paint_image_pool;
     elmpool_t *pent_pool;
     elmpool_t *coord_canvas_pool;
 
