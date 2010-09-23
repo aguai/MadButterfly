@@ -58,6 +58,16 @@ xnjsmb_redraw_all(njs_runtime_t *rt) {
     rdman_redraw_all(rdman);
 }
 
+static void
+xnjsmb_handle_single_event(njs_runtime_t *rt, void *evt) {
+    X_njs_MB_handle_single_event(rt, evt);
+}
+
+static void
+xnjsmb_no_more_event(njs_runtime_t *rt) {
+    X_njs_MB_no_more_event(rt);
+}
+
 static njs_runtime_t *
 _X_njs_MB_new(Handle<Object> self, char *display_name,
 	      int width, int height) {

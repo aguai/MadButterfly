@@ -141,6 +141,25 @@ X_njs_MB_new(char *display_name, int w, int h) {
     return rt;
 }
 
+/*! \brief Pass a X event to X runtime.
+ */
+void
+X_njs_MB_handle_single_event(njs_runtime_t *rt, void *evt) {
+    void *xrt = rt->xrt;
+    extern void _X_MB_handle_single_event(void *rt, void *evt);
+
+    _X_MB_handle_single_event(xrt, evt);
+}
+
+/*! \brief Called at end of an iteration of event loop.
+ */
+void
+X_njs_MB_no_more_event(njs_runtime_t *rt) {
+    void *xrt = rt->xrt;
+
+    _X_MB_no_more_event(xrt);
+}
+
 /*! \brief Get X runtime that is backend of this njs runtime.
  */
 void *

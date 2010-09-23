@@ -43,6 +43,7 @@ typedef struct {
     mb_eventcb_t f;
     void *arg;
 }  monitor_t;
+
 struct _X_MB_runtime {
     Display *display;
     Window win;
@@ -68,6 +69,16 @@ struct _X_MB_runtime {
     XImage *ximage;
     XShmSegmentInfo shminfo;
 #endif
+
+    /*
+     * Following variables are used by handle_single_x_event()
+     */
+    int last_evt_type;	       /* Type of last event */
+    int eflag;
+    int ex1, ey1, ex2, ey2;    /* Aggregate expose events */
+    int mflag;
+    int mx, my;		       /* Position of last motion event */
+    int mbut_state;	       /* Button state of last motion event */
 };
 
 #ifdef XSHM
@@ -213,26 +224,184 @@ static void notify_coord_or_shape(redraw_man_t *rdman,
     subject_notify(subject, (event_t *)&mouse_event);
 }
 
-/*! \brief Dispatch all X events in the queue.
+/*! \brief Handle motion event.
  */
-static void handle_x_event(X_MB_runtime_t *rt) {
-    Display *display = rt->display;
+static void
+handle_motion_event(X_MB_runtime_t *rt) {
     redraw_man_t *rdman = rt->rdman;
-    XEvent evt, peek_evt;
+    int x, y;
+    int state;
+    shape_t *shape;
+    coord_t *root;
+    int in_stroke;
+    
+    x = rt->mx;
+    y = rt->my;
+    state = rt->mbut_state;
+    
+    shape = find_shape_at_pos(rdman, x, y,
+			      &in_stroke);
+#ifdef ONLY_MOUSE_MOVE_RAW
+    if(shape != NULL) {
+	notify_coord_or_shape(rdman, (mb_obj_t *)shape,
+			      x, y, EVT_MOUSE_MOVE_RAW, state, 0);
+    } else {
+	root = rdman_get_root(rdman);
+	notify_coord_or_shape(rdman, (mb_obj_t *)root,
+			      x, y, EVT_MOUSE_MOVE_RAW, state, 0);
+    }
+#else
+    if(shape != NULL) {
+	if(rt->last != shape) {
+	    if(rt->last)
+		notify_coord_or_shape(rdman, rt->last, x, y,
+				      EVT_MOUSE_OUT, state, 0);
+	    notify_coord_or_shape(rdman, shape, x, y,
+				  EVT_MOUSE_OVER, state, 0);
+	    rt->last = shape;
+	} else
+	    notify_coord_or_shape(rdman, shape, x, y,
+				  EVT_MOUSE_MOVE, state, 0);
+    } else {
+	if(rt->last) {
+	    notify_coord_or_shape(rdman, rt->last, x, y,
+				  EVT_MOUSE_OUT, state, 0);
+	    rt->last = NULL;
+	}
+    }
+#endif
+    
+    rt->mflag = 0;
+}
+
+/*! \brief Redraw exposed area.
+ */
+static void
+handle_expose_event(X_MB_runtime_t *rt) {
+    redraw_man_t *rdman = rt->rdman;
+    int ex1, ey1, ex2, ey2;
+
+    ex1 = rt->ex1;
+    ey1 = rt->ey1;
+    ex2 = rt->ex2;
+    ey2 = rt->ey2;
+    
+    rdman_redraw_area(rdman, ex1, ey1, (ex2 - ex1), (ey2 - ey1));
+    
+    rt->eflag = 0;
+}
+
+/*! \brief Handle single X event and maintain internal states.
+ *
+ * It keeps internal state in rt to improve performance.
+ */
+static void
+handle_single_x_event(X_MB_runtime_t *rt, XEvent *evt) {
+    redraw_man_t *rdman = rt->rdman;
     XMotionEvent *mevt;
     XButtonEvent *bevt;
     XExposeEvent *eevt;
     XKeyEvent *xkey;
-    co_aix x, y, w, h;
-
-    int eflag = 0;
-    int ex1=0, ey1=0, ex2=0, ey2=0;
+    int x, y, w, h;
 
     shape_t *shape;
-    coord_t *root;
 
     unsigned int state, button;
     int in_stroke;
+
+    if(evt->type != MotionNotify && rt->mflag)
+	handle_motion_event(rt);
+
+    switch(evt->type) {
+    case ButtonPress:
+	bevt = (XButtonEvent *)evt;
+	x = bevt->x;
+	y = bevt->y;
+	state = get_button_state(bevt->state);
+	button = get_button(bevt->button);
+
+	shape = find_shape_at_pos(rdman, x, y,
+				  &in_stroke);
+	if(shape)
+	    notify_coord_or_shape(rdman, (mb_obj_t *)shape,
+				  x, y, EVT_MOUSE_BUT_PRESS,
+				  state, button);
+	break;
+
+    case ButtonRelease:
+	bevt = (XButtonEvent *)evt;
+	x = bevt->x;
+	y = bevt->y;
+	state = get_button_state(bevt->state);
+	button = get_button(bevt->button);
+
+	shape = find_shape_at_pos(rdman, x, y,
+				  &in_stroke);
+	if(shape)
+	    notify_coord_or_shape(rdman, (mb_obj_t *)shape,
+				  x, y, EVT_MOUSE_BUT_RELEASE,
+				  state, button);
+	break;
+
+    case MotionNotify:
+	mevt = (XMotionEvent *)evt;
+	rt->mx = mevt->x;
+	rt->my = mevt->y;
+	rt->mbut_state = get_button_state(mevt->state);
+	rt->mflag = 1;
+	break;
+
+    case KeyPress:
+    case KeyRelease:
+	xkey = &evt->xkey;
+	X_kb_handle_event(&rt->kbinfo, xkey);
+	break;
+
+    case Expose:
+	eevt = &evt->xexpose;
+	x = eevt->x;
+	y = eevt->y;
+	w = eevt->width;
+	h = eevt->height;
+
+	if(rt->eflag) {
+	    if(x < rt->ex1)
+		rt->ex1 = x;
+	    if(y < rt->ey1)
+		rt->ey1 = y;
+	    if((x + w) > rt->ex2)
+		rt->ex2 = x + w;
+	    if((y + h) > rt->ey2)
+		rt->ey2 = y + h;
+	} else {
+	    rt->ex1 = x;
+	    rt->ey1 = y;
+	    rt->ex2 = x + w;
+	    rt->ey2 = y + h;
+	    rt->eflag = 1;
+	}
+	break;
+    }
+}
+
+/*! \brief Call when no more event in an event iteration.
+ *
+ * No more event means event queue is emplty.  This function will
+ * perform some actions according current internal state.
+ */
+static void
+no_more_event(X_MB_runtime_t *rt) {
+    if(rt->mflag)
+	handle_motion_event(rt);
+    if(rt->eflag)
+	handle_expose_event(rt);
+}
+
+/*! \brief Dispatch all X events in the queue.
+ */
+static void handle_x_event(X_MB_runtime_t *rt) {
+    Display *display = rt->display;
+    XEvent evt;
     int r;
 
     /* XXX: For some unknown reason, it causes a segmentation fault to
@@ -244,123 +413,10 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	if(r == -1)
 	    break;
 
-	switch(evt.type) {
-	case ButtonPress:
-	    bevt = (XButtonEvent *)&evt;
-	    x = bevt->x;
-	    y = bevt->y;
-	    state = get_button_state(bevt->state);
-	    button = get_button(bevt->button);
-
-	    shape = find_shape_at_pos(rdman, x, y,
-				      &in_stroke);
-	    if(shape)
-		notify_coord_or_shape(rdman, (mb_obj_t *)shape,
-				      x, y, EVT_MOUSE_BUT_PRESS,
-				      state, button);
-	    break;
-
-	case ButtonRelease:
-	    bevt = (XButtonEvent *)&evt;
-	    x = bevt->x;
-	    y = bevt->y;
-	    state = get_button_state(bevt->state);
-	    button = get_button(bevt->button);
-
-	    shape = find_shape_at_pos(rdman, x, y,
-				      &in_stroke);
-	    if(shape)
-		notify_coord_or_shape(rdman, (mb_obj_t *)shape,
-			      x, y, EVT_MOUSE_BUT_RELEASE,
-			      state, button);
-	    break;
-
-	case MotionNotify:
-	    while(XEventsQueued(display, QueuedAfterReading) > 0) {
-		r = XPeekEvent(display, &peek_evt);
-		if(r == -1)
-		    break;
-		if(peek_evt.type != MotionNotify)
-		    break;
-		XNextEvent(display, &evt);
-	    }
-	    if(r == -1)
-		break;
-
-	    mevt = (XMotionEvent *)&evt;
-	    x = mevt->x;
-	    y = mevt->y;
-	    state = get_button_state(mevt->state);
-
-	    shape = find_shape_at_pos(rdman, x, y,
-				      &in_stroke);
-#ifdef ONLY_MOUSE_MOVE_RAW
-	    if(shape != NULL) {
-		notify_coord_or_shape(rdman, (mb_obj_t *)shape,
-			      x, y, EVT_MOUSE_MOVE_RAW, state, 0);
-	    } else {
-		root = rdman_get_root(rdman);
-		notify_coord_or_shape(rdman, (mb_obj_t *)root,
-			      x, y, EVT_MOUSE_MOVE_RAW, state, 0);
-	    }
-#else
-	    if(shape != NULL) {
-		if(rt->last != shape) {
-		    if(rt->last)
-			notify_coord_or_shape(rdman, rt->last, x, y,
-				      EVT_MOUSE_OUT, state, 0);
-		    notify_coord_or_shape(rdman, shape, x, y,
-				  EVT_MOUSE_OVER, state, 0);
-		    rt->last = shape;
-		} else
-		    notify_coord_or_shape(rdman, shape, x, y,
-				  EVT_MOUSE_MOVE, state, 0);
-	    } else {
-		if(rt->last) {
-		    notify_coord_or_shape(rdman, rt->last, x, y,
-				  EVT_MOUSE_OUT, state, 0);
-		    rt->last = NULL;
-		}
-	    }
-#endif
-	    break;
-
-	case KeyPress:
-	case KeyRelease:
-	    xkey = &evt.xkey;
-	    X_kb_handle_event(&rt->kbinfo, xkey);
-	    break;
-
-	case Expose:
-	    eevt = &evt.xexpose;
-	    x = eevt->x;
-	    y = eevt->y;
-	    w = eevt->width;
-	    h = eevt->height;
-
-	    if(eflag) {
-		if(x < ex1)
-		    ex1 = x;
-		if(y < ey1)
-		    ey1 = y;
-		if((x + w) > ex2)
-		    ex2 = x + w;
-		if((y + h) > ey2)
-		    ey2 = y + h;
-	    } else {
-		ex1 = x;
-		ey1 = y;
-		ex2 = x + w;
-		ey2 = y + h;
-		eflag = 1;
-	    }
-	    break;
-	}
+	handle_single_x_event(rt, &evt);
     }
-    if(eflag) {
-	rdman_redraw_area(rdman, ex1, ey1, (ex2 - ex1), (ey2 - ey1));
-	eflag = 0;
-    }
+    no_more_event(rt);
+    
 #ifdef XSHM
     XSHM_update(rt);
 #endif
@@ -852,6 +908,24 @@ int _X_MB_flush_x_conn_for_nodejs(void *rt) {
     XSHM_update(xmb_rt);
 #endif
     return XFlush(xmb_rt->display);
+}
+
+/*! \brief Handle single X event.
+ */
+void
+_X_MB_handle_single_event(void *rt, void *evt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
+    
+    handle_single_x_event(xmb_rt, (XEvent *)evt);
+}
+
+/*! \brief Called at end of an iteration of X event loop.
+ */
+void
+_X_MB_no_more_event(void *rt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
+    
+    no_more_event(xmb_rt);
 }
 
 /* @} */
