@@ -16,6 +16,8 @@ typedef struct _njs_runtime {
 extern void X_njs_MB_init_handle_connection(njs_runtime_t *rt);
 extern void X_njs_MB_free(njs_runtime_t *rt);
 extern njs_runtime_t *X_njs_MB_new(char *display_name, int w, int h);
+extern void X_njs_MB_free_keep_win(njs_runtime_t *rt);
+extern njs_runtime_t *X_njs_MB_new_with_win(void *display, long win);
 extern int X_njs_MB_flush(njs_runtime_t *rt);
 extern void X_njs_MB_handle_single_event(njs_runtime_t *rt, void *evt);
 extern void X_njs_MB_no_more_event(njs_runtime_t *rt);

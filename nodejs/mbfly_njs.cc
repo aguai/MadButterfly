@@ -90,6 +90,27 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
     return obj;
 }
 
+static njs_runtime_t *
+_X_njs_MB_new_with_win(Handle<Object> self, void *display,
+		       long win) {
+    njs_runtime_t *obj;
+    subject_t *subject;
+    Handle<Value> subject_o;
+
+    obj = X_njs_MB_new_with_win(display, win);
+    WRAP(self, obj);		/* mkroot need a wrapped object, but
+				 * it is wrapped after returning of
+				 * this function.  So, we wrap it
+				 * here. */
+    xnjsmb_coord_mkroot(self);
+
+    subject = X_njs_MB_kbevents(obj);
+    subject_o = export_xnjsmb_auto_subject_new(subject);
+    SET(self, "kbevents", subject_o);
+
+    return obj;
+}
+
 /*! \defgroup njs_template_cb Callback functions for v8 engine and nodejs.
  *
  * @{
@@ -148,6 +169,8 @@ init(Handle<Object> target) {
      * Initialize template for MadButterfly runtime objects.
      */
     xnjsmb_auto_mb_rt_init();
+    xnjsmb_auto_mb_rt_display_init();
+    xnjsmb_auto_mb_rt_with_win_init();
 
     /*
      * Add properties to mb_rt templates for other modules.
@@ -160,6 +183,8 @@ init(Handle<Object> target) {
 
     target->Set(String::New("mb_rt"),
 		xnjsmb_auto_mb_rt_temp->GetFunction());
+    target->Set(String::New("mb_rt_with_win"),
+		xnjsmb_auto_mb_rt_with_win_temp->GetFunction());
 }
 
 /* @} */
