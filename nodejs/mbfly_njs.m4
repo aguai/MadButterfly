@@ -46,3 +46,20 @@ STRUCT([mb_rt], [njs_runtime_t], [],
 	       (), 0, [])],
 	((CTOR, ([_X_njs_MB_new], (SELF, STR(display_name), INT(width), INT(height)), 3)))dnl
 )
+dnl
+dnl
+dnl
+STRUCT([mb_rt_display], [void], [],
+       [],
+       ())dnl
+dnl
+dnl Function to create mb_rt for an existed window.
+dnl
+STRUCT([mb_rt_with_win], [njs_runtime_t], [],
+       [],
+       ((CTOR, ([_X_njs_MB_new_with_win],dnl
+       	        (SELF, OBJ([display], [mb_rt_display], [void]),dnl
+		 INT([window])),dnl
+		 2)),dnl
+        ([INHERIT], [mb_rt]))dnl
+)
