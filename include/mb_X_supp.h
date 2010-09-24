@@ -27,7 +27,9 @@ typedef struct _X_MB_runtime X_MB_runtime_t;
 
 extern void X_MB_handle_connection(void *rt);
 extern void *X_MB_new(const char *display_name, int w, int h);
+extern void *X_MB_new_with_win(Display *display, Window win);
 extern void X_MB_free(void *xmb_rt);
+extern void X_MB_free_keep_win(void *rt);
 
 extern subject_t *X_MB_kbevents(void *xmb_rt);
 extern redraw_man_t *X_MB_rdman(void *xmb_rt);
