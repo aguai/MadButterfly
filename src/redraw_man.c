@@ -612,6 +612,7 @@ static coord_canvas_info_t *
 coord_canvas_info_new(redraw_man_t *rdman, coord_t *coord,
 		      mbe_t *canvas) {
     coord_canvas_info_t *info;
+    static co_aix id[6] = {1, 0, 0, 0, 1, 0};
 
     info = (coord_canvas_info_t *)elmpool_elm_alloc(rdman->coord_canvas_pool);
     if(info == NULL)
@@ -624,6 +625,10 @@ coord_canvas_info_new(redraw_man_t *rdman, coord_t *coord,
     bzero(info->pcache_areas, sizeof(area_t) * 2);
     info->pcache_cur_area = &info->pcache_areas[0];
     info->pcache_last_area = &info->pcache_areas[1];
+    memcpy(info->cache_2_pdev, id, sizeof(co_aix) * 6);
+    memcpy(info->cache_2_pdev_rev, id, sizeof(co_aix) * 6);
+    memcpy(info->aggr_2_pdev, id, sizeof(co_aix) * 6);
+    memcpy(info->aggr_2_pdev_rev, id, sizeof(co_aix) * 6);
 
     return info;
 }
@@ -1310,8 +1315,8 @@ static void setup_canvas_info(redraw_man_t *rdman, coord_t *coord) {
 
 /* \brief Compute matrix from cached canvas to parent device space.
  */
-static void compute_cached_2_pdev_matrix(coord_t *coord,
-					   co_aix canvas2pdev_matrix[6]) {
+static void compute_cached_2_pdev_matrix(coord_t *coord) {
+    co_aix *canvas2pdev_matrix = coord_get_2pdev(coord);
     coord_t *parent;
     co_aix *aggr;
     co_aix *matrix, *paggr;
@@ -1337,6 +1342,8 @@ static void compute_cached_2_pdev_matrix(coord_t *coord,
     canvas2p[5] = shift_y;
 
     matrix_mul(paggr, canvas2p, canvas2pdev_matrix);
+
+    compute_reverse(canvas2pdev_matrix, coord_get_2pdev_rev(coord));
 }
 
 /*! \brief Compute area in parent cached coord for a cached coord.
@@ -1351,7 +1358,7 @@ static void compute_cached_2_pdev_matrix(coord_t *coord,
  * ancestral cached coord.
  */
 static void compute_pcache_area(coord_t *coord) {
-    co_aix cached2pdev[6];
+    co_aix *cached2pdev = coord_get_2pdev(coord);
     int c_w, c_h;
     canvas_t *canvas;
     coord_canvas_info_t *canvas_info;
@@ -1360,7 +1367,6 @@ static void compute_pcache_area(coord_t *coord) {
     canvas_info = coord->canvas_info;
     SWAP(canvas_info->pcache_cur_area, canvas_info->pcache_last_area,
 	 area_t *);
-    compute_cached_2_pdev_matrix(coord, cached2pdev);
 
     canvas = _coord_get_canvas(coord);
     canvas_get_size(canvas, &c_w, &c_h);
@@ -1766,10 +1772,39 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
 	coord = all_zeroing->ds[i];
 	if(coord_is_zeroing(coord))
 	    zeroing_coord(rdman, coord);
+	compute_cached_2_pdev_matrix(coord);
 	/* This is required by ancester cached ones to perform
 	 * zeroing.
 	 */
 	compute_pcache_area(coord);
+    }
+
+    return OK;
+}
+
+/*! \brief Update aggregated cache_2_pdev matrix for cached coords.
+ *
+ * This is perfromed from root to leaves.  Aggregated cache_2_pdev is
+ * named as aggr_2_pdev field of canvas_info_t.  It is the matrix to
+ * transform a point from space of a cached coord to the space of root
+ * coord.
+ */
+static int
+update_aggr_pdev(redraw_man_t *rdman) {
+    int i;
+    coords_t *all_zeroing;
+    coord_t *coord, *parent_cached;
+
+    all_zeroing = &rdman->zeroing_coords;
+    for(i = 0; i < all_zeroing->num; i++) {
+	coord = all_zeroing->ds[i];
+	parent_cached = coord_get_cached(coord_get_parent(coord));
+	matrix_mul(coord_get_2pdev(parent_cached),
+		   coord_get_2pdev(coord),
+		   coord_get_aggr2pdev(coord));
+	matrix_mul(coord_get_2pdev_rev(coord),
+		   coord_get_2pdev_rev(parent_cached),
+		   coord_get_aggr2pdev_rev(coord));
     }
 
     return OK;
@@ -1786,7 +1821,7 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
     int i;
     int n_areas;
     co_aix poses0[2][2], poses1[2][2];
-    co_aix canvas2pdev_matrix[6];
+    co_aix *canvas2pdev_matrix;
     area_t **areas, *area;
     area_t *area0, *area1;
     coord_t *parent, *pcached_coord;
@@ -1863,7 +1898,7 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
     parent = coord_get_parent(coord);
     pcached_coord = coord_get_cached(parent);
 
-    compute_cached_2_pdev_matrix(coord, canvas2pdev_matrix);
+    canvas2pdev_matrix = coord_get_2pdev(coord);
 
     /* Add dirty areas to parent cached coord. */
     matrix_trans_pos(canvas2pdev_matrix, poses0[0], poses0[0] + 1);
@@ -2029,6 +2064,10 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
 	return ERR;
 
     r = add_rdman_aggr_dirty_areas(rdman);
+    if(r != OK)
+	return ERR;
+
+    r = update_aggr_pdev(rdman);
     if(r != OK)
 	return ERR;
 
@@ -2209,22 +2248,20 @@ _update_cached_canvas_2_parent(redraw_man_t *rdman, co_aix reverse[6],
 static void update_cached_canvas_2_parent(redraw_man_t *rdman,
 					  coord_t *coord) {
     mbe_t *pcanvas, *canvas;
-    co_aix reverse[6];
-    co_aix canvas2pdev_matrix[6];
+    co_aix *c2pdev_reverse;
 
     if(coord_is_root(coord))
 	return;
 
-    compute_cached_2_pdev_matrix(coord, canvas2pdev_matrix);
-    compute_reverse(canvas2pdev_matrix, reverse);
+    c2pdev_reverse = coord_get_2pdev_rev(coord);
 
     canvas = _coord_get_canvas(coord);
     pcanvas = _coord_get_canvas(coord->parent);
 #ifndef UNITTEST
-    _update_cached_canvas_2_parent(rdman, reverse, canvas, pcanvas,
+    _update_cached_canvas_2_parent(rdman, c2pdev_reverse, canvas, pcanvas,
 				   coord->opacity);
 #else
-    memcpy(((mock_mbe_t *)canvas)->parent_2_cache, reverse,
+    memcpy(((mock_mbe_t *)canvas)->parent_2_cache, c2pdev_reverse,
 	   sizeof(co_aix) * 6);
 #endif
 }

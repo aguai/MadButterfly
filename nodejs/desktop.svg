@@ -154,15 +154,15 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.56875"
      inkscape:cx="207.9"
-     inkscape:cy="240"
+     inkscape:cy="290.99601"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1006"
-     inkscape:window-x="0"
-     inkscape:window-y="25"
-     inkscape:window-maximized="1" />
+     inkscape:window-width="1440"
+     inkscape:window-height="900"
+     inkscape:window-x="-1"
+     inkscape:window-y="-1"
+     inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -217,13 +217,13 @@
        transform="translate(-27.274116,-798.02051)"
        mbname="video"
        inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
+       inkscape:transform-center-y="42.294399"
        inkscape:bbox-x="35.992421"
        inkscape:bbox-y="383.87928"
        inkscape:bbox-width="85.598946"
        inkscape:bbox-height="84.588799">
       <image
-         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/video.png"
+         sodipodi:absref="/usr/home/thinker/progm/MadButterfly/nodejs/video.png"
          xlink:href="video.png"
          width="85.598946"
          height="84.588799"
@@ -242,13 +242,13 @@
        transform="translate(126.77414,-798.02053)"
        mbname="audio"
        inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
+       inkscape:transform-center-y="38.464287"
        inkscape:bbox-x="189.7836"
        inkscape:bbox-y="386.37278"
        inkscape:bbox-width="86.5"
        inkscape:bbox-height="76.928574">
       <image
-         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/music.png"
+         sodipodi:absref="/usr/home/thinker/progm/MadButterfly/nodejs/music.png"
          xlink:href="music.png"
          width="86.5"
          height="76.928574"
@@ -267,13 +267,13 @@
        transform="translate(290.67139,-799.03067)"
        mbname="picture"
        inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
+       inkscape:transform-center-y="38.07143"
        inkscape:bbox-x="354.2955"
        inkscape:bbox-y="392.95458"
        inkscape:bbox-width="84"
        inkscape:bbox-height="76.14286">
       <image
-         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/photo.png"
+         sodipodi:absref="/usr/home/thinker/progm/MadButterfly/nodejs/photo.png"
          xlink:href="photo.png"
          width="84"
          height="76.14286"
@@ -292,13 +292,13 @@
        transform="translate(462.9024,-794.99007)"
        mbname="setting"
        inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
+       inkscape:transform-center-y="37.57143"
        inkscape:bbox-x="526.42387"
        inkscape:bbox-y="389.0568"
        inkscape:bbox-width="84.571426"
        inkscape:bbox-height="75.14286">
       <image
-         sodipodi:absref="/home/wycc/devel/md3/MadButterfly/nodejs/tool.png"
+         sodipodi:absref="/usr/home/thinker/progm/MadButterfly/nodejs/tool.png"
          xlink:href="tool.png"
          width="84.571426"
          height="75.14286"
@@ -336,8 +336,8 @@
        id="text2931"
        inkscape:transform-center-x="0"
        inkscape:transform-center-y="0"
-       inkscape:bbox-x="140.30434"
-       inkscape:bbox-y="273.84843"
+       inkscape:bbox-x="126.28044"
+       inkscape:bbox-y="271.84843"
        inkscape:bbox-width="488.15625"
        inkscape:bbox-height="32.382812"
        mbname="line1"><tspan
@@ -348,8 +348,8 @@
          y="185.925"
          id="tspan2935"
          style="font-size:16px"
-         inkscape:bbox-x="140.56215"
-         inkscape:bbox-y="290.74687"
+         inkscape:bbox-x="126.53825"
+         inkscape:bbox-y="288.74687"
          inkscape:bbox-width="487.89844"
          inkscape:bbox-height="15.484375">Lim JeongHee (J.Lim) &amp; JoKwon (2AM) - The Road to Break Up</tspan><tspan
          sodipodi:role="line"
@@ -358,8 +358,8 @@
          x="124.96794"
          y="205.925"
          style="font-size:16px"
-         inkscape:bbox-x="140.30434"
-         inkscape:bbox-y="273.84843"
+         inkscape:bbox-x="126.28044"
+         inkscape:bbox-y="271.84843"
          inkscape:bbox-width="75.335938"
          inkscape:bbox-height="12.101562"
          id="tspan2941">7:00-7:30</tspan></text>
@@ -372,7 +372,7 @@
        inkscape:transform-center-x="0"
        inkscape:transform-center-y="0"
        inkscape:bbox-x="126.28044"
-       inkscape:bbox-y="212.01578"
+       inkscape:bbox-y="210.01578"
        inkscape:bbox-width="488.15625"
        inkscape:bbox-height="32.382812"
        mbname="line2"><tspan
@@ -384,7 +384,7 @@
          id="tspan2935-1"
          style="font-size:16px"
          inkscape:bbox-x="126.53825"
-         inkscape:bbox-y="228.91422"
+         inkscape:bbox-y="226.91422"
          inkscape:bbox-width="487.89844"
          inkscape:bbox-height="15.484375">Lim JeongHee (J.Lim) &amp; JoKwon (2AM) - The Road to Break Up</tspan><tspan
          sodipodi:role="line"
@@ -394,7 +394,7 @@
          y="267.75766"
          style="font-size:16px"
          inkscape:bbox-x="126.28044"
-         inkscape:bbox-y="212.01578"
+         inkscape:bbox-y="210.01578"
          inkscape:bbox-width="75.335938"
          inkscape:bbox-height="12.101562"
          id="tspan2941-9">7:30-8:30</tspan></text>
@@ -407,7 +407,7 @@
        inkscape:transform-center-x="0"
        inkscape:transform-center-y="0"
        inkscape:bbox-x="126.05388"
-       inkscape:bbox-y="150.18311"
+       inkscape:bbox-y="152.18311"
        inkscape:bbox-width="488.38281"
        inkscape:bbox-height="32.382812"
        mbname="line3"><tspan
@@ -419,7 +419,7 @@
          id="tspan2935-2"
          style="font-size:16px"
          inkscape:bbox-x="126.53825"
-         inkscape:bbox-y="167.08154"
+         inkscape:bbox-y="169.08154"
          inkscape:bbox-width="487.89844"
          inkscape:bbox-height="15.484375">Lim JeongHee (J.Lim) &amp; JoKwon (2AM) - The Road to Break Up</tspan><tspan
          sodipodi:role="line"
@@ -429,8 +429,8 @@
          y="329.59033"
          style="font-size:16px"
          inkscape:bbox-x="126.05388"
-         inkscape:bbox-y="150.18311"
-         inkscape:bbox-width="85.75"
+         inkscape:bbox-y="152.18311"
+         inkscape:bbox-width="75.5625"
          inkscape:bbox-height="12.101562"
          id="tspan2941-0">8:30-9:30</tspan></text>
     <text
@@ -442,7 +442,7 @@
        inkscape:transform-center-x="0"
        inkscape:transform-center-y="0"
        inkscape:bbox-x="125.97575"
-       inkscape:bbox-y="88.350433"
+       inkscape:bbox-y="90.350433"
        inkscape:bbox-width="488.46094"
        inkscape:bbox-height="32.382812"
        mbname="line4"><tspan
@@ -454,7 +454,7 @@
          id="tspan2935-11"
          style="font-size:16px"
          inkscape:bbox-x="126.53825"
-         inkscape:bbox-y="105.24887"
+         inkscape:bbox-y="107.24887"
          inkscape:bbox-width="487.89844"
          inkscape:bbox-height="15.484375">Lim JeongHee (J.Lim) &amp; JoKwon (2AM) - The Road to Break Up</tspan><tspan
          sodipodi:role="line"
@@ -464,7 +464,7 @@
          y="391.423"
          style="font-size:16px"
          inkscape:bbox-x="125.97575"
-         inkscape:bbox-y="88.350433"
+         inkscape:bbox-y="90.350433"
          inkscape:bbox-width="85.828125"
          inkscape:bbox-height="12.101562"
          id="tspan2941-90">9:30-10:30</tspan></text>
@@ -477,7 +477,7 @@
        inkscape:transform-center-x="0"
        inkscape:transform-center-y="0"
        inkscape:bbox-x="126.53825"
-       inkscape:bbox-y="26.517761"
+       inkscape:bbox-y="28.517761"
        inkscape:bbox-width="487.89844"
        inkscape:bbox-height="32.382812"
        mbname="line5"><tspan
@@ -489,7 +489,7 @@
          id="tspan2935-7"
          style="font-size:16px"
          inkscape:bbox-x="126.53825"
-         inkscape:bbox-y="43.416199"
+         inkscape:bbox-y="45.416199"
          inkscape:bbox-width="487.89844"
          inkscape:bbox-height="15.484375">Lim JeongHee (J.Lim) &amp; JoKwon (2AM) - The Road to Break Up</tspan><tspan
          sodipodi:role="line"
@@ -499,7 +499,7 @@
          y="453.25568"
          style="font-size:16px"
          inkscape:bbox-x="126.72575"
-         inkscape:bbox-y="26.517761"
+         inkscape:bbox-y="28.517761"
          inkscape:bbox-width="95.265625"
          inkscape:bbox-height="12.101562"
          id="tspan2941-7">10:30-11:30</tspan></text>

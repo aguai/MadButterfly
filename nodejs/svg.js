@@ -246,49 +246,330 @@ function guessPathBoundingBox(coord,d)
 	coord.center.y = miny;
 };
 
+function _mul(m1, m2) {
+    var res = new Array();
+
+    res.push(m1[0] * m2[0] + m1[1] * m2[3]);
+    res.push(m1[0] * m2[1] + m1[1] * m2[4]);
+    res.push(m1[0] * m2[2] + m1[1] * m2[5] + m1[2]);
+    res.push(m1[3] * m2[0] + m1[4] * m2[3]);
+    res.push(m1[3] * m2[1] + m1[4] * m2[4]);
+    res.push(m1[3] * m2[2] + m1[4] * m2[5] + m1[5]);
+
+    return res;
+}
+
+function _pnt_transform(x, y, matrix) {
+    var rx, ry;
+
+    rx = x * matrix[0] + y * matrix[1] + matrix[2];
+    ry = x * matrix[3] + y * matrix[4] + matrix[5];
+    return new Array(rx, ry);
+}
+
+function _shift_transform(x, y, matrix) {
+    var rx, ry;
+
+    rx = x * matrix[0] + y * matrix[1];
+    ry = x * matrix[3] + y * matrix[4];
+    return new Array(rx, ry);
+}
+
+function _transform_bbox(bbox, matrix) {
+    var min_x, min_y, max_x, max_y;
+    var x, y;
+    var pnt;
+    var pnts = new Array();
+    var i;
+
+    pnt = _pnt_transform(bbox.x, bbox.y, matrix);
+    pnts.push(pnt);
+    pnt = _pnt_transform(bbox.x + bbox.width, bbox.y, matrix);
+    pnts.push(pnt);
+    pnt = _pnt_transform(bbox.x, bbox.y + bbox.height, matrix);
+    pnts.push(pnt);
+    pnt = _pnt_transform(bbox.x + bbox.width, bbox.y + bbox.height, matrix);
+    pnts.push(pnt);
+
+    min_x = max_x = pnts[0][0];
+    min_y = max_y = pnts[0][1];
+    for(i = 1; i < pnts.length; i++) {
+	pnt = pnts[i];
+	if(pnt[0] < min_x)
+	    min_x = pnt[0];
+	if(pnt[1] < min_y)
+	    min_y = pnt[1];
+	if(pnt[0] > max_x)
+	    max_x = pnt[0];
+	if(pnt[1] > max_y)
+	    max_y = pnt[1];
+    }
+
+    bbox.x = min_x;
+    bbox.y = min_y;
+    bbox.width = max_x - min_x;
+    bbox.height = max_y - min_y;
+}
+
+function _reverse(m1) {
+    var rev = new Array(1, 0, 0, 0, 1, 0);
+    var m = new Array(m1[0], m1[1], m1[2], m1[3], m1[4], m1[5]);
+
+    rev[3] = -m[3] / m[0];
+    m[3] = 0;
+    m[4] += rev[3] * m[1];
+    m[5] += rev[3] * m[2];
+    
+    rev[1] = -m[1] / m[4];
+    rev[0] += rev[1] * rev[3];
+    m[1] = 0;
+    m[2] += rev[1] * m[5];
+    
+    rev[2] = -m[2];
+    rev[5] = -m[5];
+    
+    rev[0] = rev[0] / m[0];
+    rev[1] = rev[1] / m[0];
+    rev[2] = rev[2] / m[0];
+    
+    rev[3] = rev[3] / m[4];
+    rev[4] = rev[4] / m[4];
+    rev[5] = rev[5] / m[4];
+
+    return rev;
+}
+
+var _bbox_proto = {
+    _get_ac_saved_rev: function() {
+	var c = this.owner;
+	var mtx;
+	
+	if(c.type != "coord")
+	    c = c.parent;	// is a shape!
+	
+	mtx = c._mbapp_saved_rev_mtx;
+	while(c.parent && typeof c.parent != "undefined") {
+	    c = c.parent;
+	    mtx = _mul(mtx, c._mbapp_saved_rev_mtx);
+	}
+
+	return mtx;
+    },
+    
+    _get_ac_mtx: function() {
+	var c = this.owner;
+	var mtx;
+	
+	if(c.type != "coord")
+	    c = c.parent;	// is a shape!
+
+	mtx = [c[0], c[1], c[2], c[3], c[4], c[5]];
+	while(c.parent) {
+	    c = c.parent;
+	    mtx = _mul(c, mtx);
+	}
+
+	return mtx;
+    },
+
+    _saved_to_current: function() {
+	var r;
+	
+	r = _mul(this._get_ac_mtx(), this._get_ac_saved_rev());
+	
+	return r;
+    },
+
+    /*! \brief Update x, y, width, and height of the bbox.
+     */
+    update: function() {
+	var mtx;
+
+	this.x = this.orig.x;
+	this.y = this.orig.y;
+	this.width = this.orig.width;
+	this.height = this.orig.height;
+	
+	mtx = this._saved_to_current();
+	_transform_bbox(this, mtx);
+    },    
+};
+
+var _center_proto = {
+    _get_ac_saved_rev: function() {
+	var c = this.owner;
+	var mtx;
+	
+	if(c.type != "coord")
+	    c = c.parent;	// is a shape!
+	
+	mtx = c._mbapp_saved_rev_mtx;
+	while(c.parent && typeof c.parent != "undefined") {
+	    c = c.parent;
+	    mtx = _mul(mtx, c._mbapp_saved_rev_mtx);
+	}
+
+	return mtx;
+    },
+    
+    _get_ac_mtx: function() {
+	var c = this.owner;
+	var mtx;
+	
+	if(c.type != "coord")
+	    c = c.parent;	// is a shape!
+
+	mtx = [c[0], c[1], c[2], c[3], c[4], c[5]];
+	while(c.parent) {
+	    c = c.parent;
+	    mtx = _mul(c, mtx);
+	}
+
+	return mtx;
+    },
+
+    _get_ac_rev: function() {
+	var c = this.owner;
+	var mtx;
+	
+	if(c.type != "coord")
+	    c = c.parent;	// is a shape!
+
+	mtx = _reverse([c[0], c[1], c[2], c[3], c[4], c[5]]);
+	while(c.parent) {
+	    c = c.parent;
+	    mtx = _mul(mtx, _reverse([c[0], c[1], c[2], c[3], c[4], c[5]]));
+	}
+
+	return mtx;
+    },
+
+    _saved_to_current: function() {
+	var r;
+	
+	r = _mul(this._get_ac_mtx(), this._get_ac_saved_rev());
+	
+	return r;
+    },
+
+    /*! \brief Update x, y of center point of an object.
+     */
+    update: function() {
+	var mtx;
+	var xy;
+
+	mtx = this._saved_to_current();
+	xy = _pnt_transform(this.orig.x, this.orig.y, mtx);
+
+	this._x = xy[0];
+	this._y = xy[1];
+    },
+
+    /*! \brief Move owner object to make center at (x, y).
+     */
+    move: function(x, y) {
+	var mtx;
+	var xdiff = x - this._x;
+	var ydiff = y - this._y;
+	var shiftxy;
+	var c;
+
+	mtx = this._get_ac_rev();
+	shiftxy = _shift_transform(xdiff, ydiff, mtx);
+
+	c = this.owner;
+	if(c.type != "coord")
+	    c = c.parent;
+
+	c[2] += shiftxy[0];
+	c[5] += shiftxy[1];
+
+	this._x = x;
+	this._y = y;
+    },
+
+    /*! \brief Move owner object to make center at position specified by pnt.
+     */
+    move_pnt: function(pnt) {
+	this.move(pnt.x, pnt.y);
+    },
+
+    /*! \brief Prevent user to modify value.
+     */
+    get x() { return this._x; },
+    
+    /*! \brief Prevent user to modify value.
+     */
+    get y() { return this._y; },
+
+    get rel() {
+	var rev;
+	var xy;
+	
+	rev = this._get_ac_rev();
+	xy = _pnt_transform(this.orig.x, this.orig.y, rev);
+
+	return {x: xy[0], y: xy[1]};
+    },
+};
 
 loadSVG.prototype._set_bbox = function(node, tgt) {
     var a;
     var vstr;
     var bbox, center;
+    var orig;
     
     a = node.attr("bbox-x");
     sys.puts("a="+a);
     if(!a)
 	return 0;
     
+    /* bbox.orig is initial values of bbox.  The bbox is recomputed
+     * according bbox.orig and current matrix.  See bbox.update().
+     */
     tgt.bbox = bbox = new Object();
+    bbox.orig = orig = new Object();
+    bbox.owner = tgt;
+    bbox.__proto__ = _bbox_proto;
     vstr = a.value();
-    bbox.x = parseFloat(vstr);
+    orig.x = parseFloat(vstr);
 
     a = node.attr("bbox-y");
     vstr = a.value();
-    bbox.y = this.height - parseFloat(vstr);
+    orig.y = this.height - parseFloat(vstr);
 
     a = node.attr("bbox-width");
     vstr = a.value();
-    bbox.width = parseFloat(vstr);
+    orig.width = parseFloat(vstr);
 
     a = node.attr("bbox-height");
     vstr = a.value();
-    bbox.height = parseFloat(vstr);
-    bbox.y -= bbox.height;
+    orig.height = parseFloat(vstr);
+    orig.y -= orig.height;
+    
+    bbox.update();
 
+    /* center.orig is initial values of center.  The center is
+     * recomputed according center.orig and current matrix.  See
+     * center.update().
+     */
     tgt.center = center = new Object();
+    center.orig = orig = new Object();
     
-    center.x = bbox.width / 2 + bbox.x;
-    center.y = bbox.height / 2 + bbox.y;
-    //center.x = bbox.x;
-    //center.y = bbox.y;
+    orig.x = bbox.orig.width / 2 + bbox.orig.x;
+    orig.y = bbox.orig.height / 2 + bbox.orig.y;
     a = node.attr("transform-center-x");
-    if(!a)
-	return 1;
+    if(a) {
+	vstr = a.value();
+	orig.x += parseFloat(vstr);
+	a = node.attr("transform-center-y");
+	vstr = a.value();
+	orig.y -= parseFloat(vstr);
+    }
+    center.__proto__ = _center_proto;
+    center.owner = tgt;
+    center.update();
     
-    vstr = a.value();
-    center.x += parseFloat(vstr);
-    a = node.attr("transform-center-y");
-    vstr = a.value();
-    center.y -= parseFloat(vstr);
     return 1;
 }
 
@@ -356,9 +637,9 @@ loadSVG.prototype.parsePath=function(accu, coord,id, n)
     var path = this.mb_rt.path_new(d);
     
     guessPathBoundingBox(coord,d);
-    this._set_bbox(n, path);
-    this._set_paint(n, path);
     coord.add_shape(path);
+    this._set_paint(n, path);
+    this._set_bbox(n, path);
 
     make_mbnames(this.mb_rt, n, path);
 };
@@ -393,15 +674,7 @@ loadSVG.prototype.parseText=function(accu,coord,id, n)
 	}
     }
     sys.puts(y);
-    if (this._set_bbox(n, tcoord)) {
-        tcoord.center.x -= tcoord[2];
-        tcoord.center.y -= tcoord[5];
-        tcoord._x = tcoord.center.x;
-        tcoord._y = tcoord.center.y;
-    } else {
-        tcoord._x = coord.center.x;
-        tcoord._y = coord.center.y;
-    }
+    this._set_bbox(n, tcoord);
 	
     make_mbnames(this.mb_rt, n, tcoord);
 };
@@ -478,25 +751,9 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
         parseTransform(tcoord,trans.value());
 
     var rect = this.mb_rt.rect_new(x,y,w,h,10, 10);
-    this._set_paint(n, rect);
-    if (this._set_bbox(n, tcoord)) {
-	tcoord.center.x -= tcoord[2];
-	tcoord.center.y -= tcoord[5];
-    } else {
-        if (trans) {
-            rx = tcoord[0]*x+tcoord[1]*y+tcoord[2];
-            ry = tcoord[3]*x+tcoord[4]*y+tcoord[5];
-            if (tcoord.center.x > rx)
-                tcoord.center.x = rx;
-            if (tcoord.center.y > ry)
-                tcoord.center.y = ry;
-	}
-    }
-    sys.puts("center.x="+tcoord.center.x);
-    sys.puts("center.y="+tcoord.center.y);
-    tcoord._x = tcoord.center.x;
-    tcoord._y = tcoord.center.y;
     tcoord.add_shape(rect);
+    this._set_paint(n, rect);
+    this._set_bbox(n, tcoord);
 
     make_mbnames(this.mb_rt, n, tcoord);
 };
@@ -583,13 +840,7 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     if (root.center.y > coord.center.y)
 	root.center.y = coord.center.y;
 
-    if (this._set_bbox(n, coord)) {
-        coord.center.x -= accu[2];
-        coord.center.y -= accu[5];
-    }
-    coord._x = coord.center.x;
-    coord._y = coord.center.y;
-    sys.puts("coord.center.x="+coord.center.x+",coord.center.y="+coord.center.y);
+    this._set_bbox(n, coord);
     
     make_mbnames(this.mb_rt, n, coord);
 };
@@ -641,11 +892,8 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     paint.fill(img);
     tcoord.add_shape(img);
     
-    if (this._set_bbox(n, img)) {
-        img.center.x -= accu[2]+coord[2];
-        img.center.y -= accu[5]+coord[5];
-    }
-
+    this._set_bbox(n, img);
+    
     make_mbnames(this.mb_rt, n, img);
 };
 
