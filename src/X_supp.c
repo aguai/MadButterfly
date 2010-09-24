@@ -672,7 +672,7 @@ xshm_init(X_MB_runtime_t *xmb_rt) {
  *   - visual
  */
 static int
-X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
+X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
     int w, h;
 
@@ -729,8 +729,8 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt) {
  * It setups a runtime environment to run MadButterfly with Xlib.
  * Users should specify width and height of the opening window.
  */
-static int X_MB_init(const char *display_name,
-	      int w, int h, X_MB_runtime_t *xmb_rt) {
+static int X_MB_init(X_MB_runtime_t *xmb_rt, const char *display_name,
+		     int w, int h) {
     int r;
 
     memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
@@ -742,7 +742,35 @@ static int X_MB_init(const char *display_name,
     if(r != OK)
 	return ERR;
 
-    r = X_MB_init_with_win(xmb_rt);
+    r = X_MB_init_with_win_internal(xmb_rt);
+
+    return r;
+}
+
+/*! \brief Initialize a MadButterfly runtime for a window of X.
+ *
+ * Runtimes initialized with this function should be destroyed with
+ * X_MB_destroy_keep_win().
+ */
+static int
+X_MB_init_with_win(X_MB_runtime_t *xmb_rt,
+		   Display *display, Window win) {
+    XWindowAttributes attrs;
+    int r;
+
+    r = XGetWindowAttributes(display, win, &attrs);
+    if(r == 0)
+	return ERR;
+    
+    memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
+
+    xmb_rt->display = display;
+    xmb_rt->win = win;
+    xmb_rt->visual = attrs.visual;
+    xmb_rt->w = attrs.width;
+    xmb_rt->h = attrs.height;
+
+    r = X_MB_init_with_win_internal(xmb_rt);
 
     return r;
 }
@@ -777,6 +805,28 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
     X_kb_destroy(&xmb_rt->kbinfo);
 }
 
+/*! \brief Destroy a MadButterfly runtime initialized with
+ *	X_MB_init_with_win().
+ *
+ * Destroying a runtime with this function prevent the window and
+ * display associated with the runtime being closed.
+ */
+static void
+X_MB_destroy_keep_win(X_MB_runtime_t *xmb_rt) {
+    Display *display;
+    Window win;
+
+    display = xmb_rt->display;
+    xmb_rt->display = NULL;
+    win = xmb_rt->win;
+    xmb_rt->win = 0;
+
+    X_MB_destroy(xmb_rt);
+    
+    xmb_rt->display = display;
+    xmb_rt->win = win;
+}
+
 void *X_MB_new(const char *display_name, int w, int h) {
     X_MB_runtime_t *rt;
     int r;
@@ -785,7 +835,29 @@ void *X_MB_new(const char *display_name, int w, int h) {
     if(rt == NULL)
 	return NULL;
 
-    r = X_MB_init(display_name, w, h, rt);
+    r = X_MB_init(rt, display_name, w, h);
+    if(r != OK) {
+	free(rt);
+	return NULL;
+    }
+
+    return rt;
+}
+
+/*! \brief Create a new runtime for existed window for X.
+ *
+ * The object returned by this function must be free with
+ * X_MB_free_keep_win() to prevent the window from closed.
+ */
+void *X_MB_new_with_win(Display *display, Window win) {
+    X_MB_runtime_t *rt;
+    int r;
+
+    rt = O_ALLOC(X_MB_runtime_t);
+    if(rt == NULL)
+	return NULL;
+
+    r = X_MB_init_with_win(rt, display, win);
     if(r != OK) {
 	free(rt);
 	return NULL;
@@ -796,6 +868,14 @@ void *X_MB_new(const char *display_name, int w, int h) {
 
 void X_MB_free(void *rt) {
     X_MB_destroy((X_MB_runtime_t *) rt);
+    free(rt);
+}
+
+/*! \brief Free runtime created with X_MB_new_with_win().
+ */
+void
+X_MB_free_keep_win(void *rt) {
+    X_MB_destroy_keep_win((X_MB_runtime_t *) rt);
     free(rt);
 }
 
