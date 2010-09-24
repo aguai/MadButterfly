@@ -138,7 +138,32 @@ app.prototype.addKeyListener=function(key,f) {
 	}
 }
 
+var app_with_win = function(display, win) {
+    var self = this;
+    var mb_rt;
+    var background;
+    var paint;
+
+    if(typeof display == "undefined" || typeof win == "undefined")
+	throw "Invalid argument";
+    
+    mb_rt = this.mb_rt = new mbfly.mb_rt_with_win(display, win);
+    background = mb_rt.rect_new(0, 0, 720, 480, 0, 0);
+    paint = mb_rt.paint_color_new(1, 1, 1, 1);
+    paint.fill(background);
+    mb_rt.root.add_shape(background);
+
+    this.mb_rt.kbevents.
+	add_event_observer(exports.EVT_KB_PRESS,
+			   function(evt) { self.KeyPress(evt); });
+    this.keymap = {};
+    this.onKeyPress = null;
+}
+
+app_with_win.prototype = app.prototype;
+
 exports.app=app;
+exports.app_with_win = app_with_win;
 
 // Put all key definition here
 exports.KEY_LEFT = 0xff51;

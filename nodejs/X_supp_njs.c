@@ -113,6 +113,22 @@ X_njs_MB_free(njs_runtime_t *rt) {
     free(rt);
 }
 
+/*! \brief Free njs_runtime_t.
+ */
+void
+X_njs_MB_free_keep_win(njs_runtime_t *rt) {
+    /*
+     * stop IO and timer watcher
+     */
+    if(rt->enable_io)
+	ev_io_stop(&rt->iowatcher);
+    if(rt->enable_timer)
+	ev_timer_stop(&rt->tmwatcher);
+
+    X_MB_free_keep_win(rt->xrt);
+    free(rt);
+}
+
 int
 X_njs_MB_flush(njs_runtime_t *rt) {
     void *xrt = rt->xrt;
@@ -139,6 +155,48 @@ X_njs_MB_new(char *display_name, int w, int h) {
     rt->enable_timer = 0;	/* no timer, now */
 
     return rt;
+}
+
+/*! \brief Create a njs_runtime_t for an existed window.
+ *
+ * The njs_runtime_t created by this function must be free by
+ * X_njs_MB_free_keep_win().
+ */
+njs_runtime_t *
+X_njs_MB_new_with_win(void *display, long win) {
+    njs_runtime_t *rt;
+    void *xrt;
+
+    rt = (njs_runtime_t *)malloc(sizeof(njs_runtime_t));
+    ASSERT(rt != NULL);
+
+    xrt = X_MB_new_with_win((Display *)display, win);
+
+    rt->xrt = xrt;
+    rt->enable_io = 0;
+    rt->enable_timer = 0;	/* no timer, now */
+
+    return rt;
+}
+
+/*! \brief Pass a X event to X runtime.
+ */
+void
+X_njs_MB_handle_single_event(njs_runtime_t *rt, void *evt) {
+    void *xrt = rt->xrt;
+    extern void _X_MB_handle_single_event(void *rt, void *evt);
+
+    _X_MB_handle_single_event(xrt, evt);
+}
+
+/*! \brief Called at end of an iteration of event loop.
+ */
+void
+X_njs_MB_no_more_event(njs_runtime_t *rt) {
+    void *xrt = rt->xrt;
+    extern void _X_MB_no_more_event(void *rt);
+
+    _X_MB_no_more_event(xrt);
 }
 
 /*! \brief Get X runtime that is backend of this njs runtime.

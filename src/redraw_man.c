@@ -644,7 +644,12 @@ static void mouse_event_root_dummy(event_t *evt, void *arg) {
 
 int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
+    extern int _sh_path_size;
+    extern int _sh_rect_size;
     extern int _paint_color_size;
+    extern int _paint_linear_size;
+    extern int _paint_radial_size;
+    extern int _paint_image_size;
     observer_t *addrm_ob;
     extern void addrm_monitor_hdlr(event_t *evt, void *arg);
 
@@ -658,9 +663,14 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     rdman->geo_pool = elmpool_new(sizeof(geo_t), 128);
     rdman->coord_pool = elmpool_new(sizeof(coord_t), 16);
     rdman->shnode_pool = elmpool_new(sizeof(shnode_t), 16);
+    rdman->sh_path_pool = elmpool_new(_sh_path_size, 16);
+    rdman->sh_rect_pool = elmpool_new(_sh_rect_size, 16);
     rdman->observer_pool = elmpool_new(sizeof(observer_t), 32);
     rdman->subject_pool = elmpool_new(sizeof(subject_t), 32);
     rdman->paint_color_pool = elmpool_new(_paint_color_size, 64);
+    rdman->paint_linear_pool = elmpool_new(_paint_linear_size, 64);
+    rdman->paint_radial_pool = elmpool_new(_paint_radial_size, 64);
+    rdman->paint_image_pool = elmpool_new(_paint_image_size, 64);
     rdman->pent_pool = elmpool_new(sizeof(mb_prop_entry_t), 128);
     rdman->coord_canvas_pool = elmpool_new(sizeof(coord_canvas_info_t), 16);
     if(!(rdman->geo_pool && rdman->coord_pool && rdman->shnode_pool &&
@@ -725,12 +735,22 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 	elmpool_free(rdman->coord_pool);
     if(rdman->shnode_pool)
 	elmpool_free(rdman->shnode_pool);
+    if(rdman->sh_path_pool)
+	elmpool_free(rdman->sh_path_pool);
+    if(rdman->sh_rect_pool)
+	elmpool_free(rdman->sh_rect_pool);
     if(rdman->observer_pool)
 	elmpool_free(rdman->observer_pool);
     if(rdman->subject_pool)
 	elmpool_free(rdman->subject_pool);
     if(rdman->paint_color_pool)
 	elmpool_free(rdman->paint_color_pool);
+    if(rdman->paint_linear_pool)
+	elmpool_free(rdman->paint_linear_pool);
+    if(rdman->paint_radial_pool)
+	elmpool_free(rdman->paint_radial_pool);
+    if(rdman->paint_image_pool)
+	elmpool_free(rdman->paint_image_pool);
     if(rdman->pent_pool)
 	elmpool_free(rdman->pent_pool);
     if(rdman->coord_canvas_pool)
@@ -784,9 +804,14 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     elmpool_free(rdman->coord_pool);
     elmpool_free(rdman->geo_pool);
     elmpool_free(rdman->shnode_pool);
+    elmpool_free(rdman->sh_path_pool);
+    elmpool_free(rdman->sh_rect_pool);
     elmpool_free(rdman->observer_pool);
     elmpool_free(rdman->subject_pool);
     elmpool_free(rdman->paint_color_pool);
+    elmpool_free(rdman->paint_linear_pool);
+    elmpool_free(rdman->paint_radial_pool);
+    elmpool_free(rdman->paint_image_pool);
     elmpool_free(rdman->pent_pool);
     elmpool_free(rdman->coord_canvas_pool);
 
@@ -1368,7 +1393,7 @@ static void compute_pcache_area(coord_t *coord) {
  */
 static int
 compute_area(coord_t *coord) {
-    static co_aix (*poses)[2];
+    static co_aix (*poses)[2] = NULL;
     static int max_poses = 0;
     geo_t *geo;
     int cnt, pos_cnt;
@@ -1379,7 +1404,8 @@ compute_area(coord_t *coord) {
     }
 
     if(max_poses < (cnt * 2)) {
-	free(poses);
+	if(poses)
+	    free(poses);
 	max_poses = cnt * 2;
 	poses = (co_aix (*)[2])malloc(sizeof(co_aix [2]) * max_poses);
 	if(poses == NULL)
