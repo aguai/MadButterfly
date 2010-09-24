@@ -148,6 +148,7 @@ var app_with_win = function(display, win) {
 	throw "Invalid argument";
     
     mb_rt = this.mb_rt = new mbfly.mb_rt_with_win(display, win);
+    _decorate_mb_rt(mb_rt);
     background = mb_rt.rect_new(0, 0, 720, 480, 0, 0);
     paint = mb_rt.paint_color_new(1, 1, 1, 1);
     paint.fill(background);
