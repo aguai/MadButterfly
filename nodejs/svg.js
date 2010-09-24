@@ -12,6 +12,26 @@ var _std_colors = {
     "red": [1, 0, 0]
 };
 
+function parse_color(color) {
+    var r, g, b;
+    var c;
+    
+    if (color[0] == "#") {
+	r = parseInt(color.substring(1, 3), 16) / 255;
+	g = parseInt(color.substring(3, 5), 16) / 255;
+	b = parseInt(color.substring(5, 7), 16) / 255;
+    } else if(_std_colors[color]) {
+	c = _std_colors[color];
+	r = c[0];
+	g = c[1];
+	b = c[2];
+    } else {
+	r = g = b = 0;
+    }
+    
+    return [r, g, b];
+}
+
 exports.loadSVG=function(mb_rt,root,filename) {
     return new loadSVG(mb_rt, root, filename);
 };
@@ -27,6 +47,7 @@ function loadSVG(mb_rt, root, filename) {
     this.mb_rt = mb_rt;
     this.stop_ref={};
     this.gradients={};
+    this.radials = {};
     root.center=new Object();
     root.center.x = 10000;
     root.center.y = 10000;
@@ -83,6 +104,33 @@ function parsePointSize(s)
     }
     return fs;
 	
+}
+
+function parse_style(node) {
+    var style_attr;
+    var style;
+    var parts, part;
+    var kv, key, value;
+    var content = {};
+    var i;
+    
+    style_attr = node.attr('style');
+    if(!style_attr)
+	return content;
+
+    style = style_attr.value();
+    parts = style.split(';');
+    for(i = 0; i < parts.length; i++) {
+	part = parts[i].trim();
+	if(part) {
+	    kv = part.split(':');
+	    key = kv[0].trim();
+	    value = kv[1].trim();
+	    content[key] = value;
+	}
+    }
+
+    return content;
 }
 
 function parseColor(c)
@@ -180,7 +228,14 @@ loadSVG.prototype._prepare_paint_color = function(color, alpha) {
     } else if (color.substring(0,3) == 'url') {
 	var id = color.substring(5, color.length-1);
 	var gr = this.gradients[id];
-	paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
+	if(gr) {
+	    paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
+	} else {
+	    var radial = this.radials[id];
+	    paint = this.mb_rt.paint_radial_new(radial[0],
+						radial[1],
+						radial[2]);
+	}
 	paint.set_stops(this.stop_ref[id]);
     } else {
 	paint = this.mb_rt.paint_color_new(0,0,0,1);
@@ -812,7 +867,7 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     style = {};
     parseGroupStyle(style, n);
     if(style.opacity) {
-	sys.puts(style.opacity);
+	sys.puts("opacity=" + style.opacity);
 	coord.opacity=style.opacity;
     }
 
@@ -897,6 +952,51 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     make_mbnames(this.mb_rt, n, img);
 };
 
+function _parse_stops(n) {
+    var children;
+    var child;
+    var style;
+    var color;
+    var rgb;
+    var opacity;
+    var r, g, b, a;
+    var offset_atr, offset;
+    var stops = [];
+    var i;
+
+    children = n.childNodes();
+    for(i = 0; i < children.length; i++) {
+	child = children[i];
+	if(child.name() == "stop") {
+	    style = parse_style(child);
+	    
+	    color = style["stop-color"];
+	    if(color) {
+		rgb = parse_color(color);
+		r = rgb[0];
+		g = rgb[1];
+		b = rgb[2];
+	    }
+	    
+	    opacity = style["stop-opacity"];
+	    if(opacity)
+		a = parseFloat(opacity);
+	    else
+		a = 1;
+	}
+
+	offset_attr = child.attr("offset");
+	if(offset_attr)
+	    offset = parseFloat(offset_attr.value());
+	else
+	    offset = 0;
+
+	stops.push([offset, r, g, b, a]);
+    }
+
+    return stops;
+};
+
 loadSVG.prototype._MB_parseLinearGradient=function(root,n)
 {
     var id = n.attr('id');
@@ -912,47 +1012,27 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
     var color, opacity;
     var stops;
     var r,g,b;
-    stops=[];
-    for(k in nodes) {
-	var ss = nodes[k];
-	if (ss.name()=="stop") {
-	    var style = ss.attr("style").value();
-	    var items = style.split(';');
-	    var off = parseInt(ss.attr('offset').value());
-	    color = 'black';
-	    opacity = 1;
-	    for (i in items) {
-		it = items[i];
-		var f = it.split(':');
-		k = f[0];
-		v = f[1];
-		if (k == 'stop-color') {
-		    color = v.substring(1);
-		    if (v == 'white') {
-			r = 1;
-			g = 1;
-			b = 1;
-		    } else if (v == 'black') {
-			r = 0;
-			g = 0;
-			b = 0;
-		    } else {
-			r = parseInt(color.substring(0,2),16)/255.0;
-			g = parseInt(color.substring(2,4),16)/255.0;
-			b = parseInt(color.substring(4,6),16)/255.0;
-		    }
-		} else if (k=='stop-opacity') {
-		    opacity = parseFloat(v);
-		}
-	    }
-	    stops.push([off, r,g,b,opacity]);
-	}
-    }
+    
+    stops = _parse_stops(n);
+    
     var href = n.attr('href');
     if (href != null) {
 	href = href.value();
-	pstops = this.stop_ref[href.substring(1)];
+	var hrefid = href.substring(1);
+	pstops = this.stop_ref[hrefid];
 	stops = pstops.concat(stops);
+	
+	var hrefgr = this.gradients[hrefid];
+	if (typeof x1 == "undefined")
+	    x1 = hrefgr[0];
+	if (typeof x2 == "undefined")
+	    x2 = hrefgr[2];
+	if (typeof y1 == "undefined")
+	    y1 = hrefgr[1];
+	if (typeof y2 == "undefined")
+	    y2 = hrefgr[3];
+	sys.puts(hrefid);
+	sys.puts([x1, y1, x2, y2]);
     }
     id = id.value();
     this.stop_ref[id] = stops;
@@ -967,6 +1047,44 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
     this.gradients[id] = [x1,y1,x2,y2];
 };
 
+loadSVG.prototype._MB_parseRadialGradient = function(root,n) {
+    var stops;
+    var cx, cy;
+    var id;
+    var href;
+    var r;
+
+    id = n.attr("id");
+    if(!id)
+	throw "Require an id";
+    id = id.value();
+
+    stops = _parse_stops(n);
+    
+    cx = n.attr("cx");
+    if(!cx)
+	throw "Miss cx attribute";
+    cy = n.attr("cy");
+    if(!cy)
+	throw "Miss cy attribute";
+    cx = parseFloat(cx.value());
+    cy = parseFloat(cy.value());
+
+    r = n.attr("r");
+    if(!r)
+	throw "Miss r attribute";
+    r = parseFloat(r.value());
+
+    href = n.attr("href");
+    if(href) {
+	href = href.value().substring(1);
+	stops = this.stop_ref[href];
+    }
+
+    this.radials[id] = [cx, cy, r];
+    this.stop_ref[id] = stops;
+}
+
 loadSVG.prototype.parseDefs=function(root,n)
 {
     var k;
@@ -976,6 +1094,8 @@ loadSVG.prototype.parseDefs=function(root,n)
 	var name = nodes[k].name();
 	if (name == "linearGradient") {
 	    this._MB_parseLinearGradient(root,nodes[k]);
+	} else if(name == "radialGradient") {
+	    this._MB_parseRadialGradient(root,nodes[k]);
 	}
     }
 };
