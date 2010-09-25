@@ -2168,7 +2168,7 @@ static void draw_shape(redraw_man_t *rdman, mbe_t *cr, shape_t *shape) {
 
 	fill = shape->fill;
 	if(shape->fill) {
-	    fill->prepare(fill, cr);
+	    fill->prepare(fill, cr, shape);
 	    if(shape->stroke)
 		fill_path_preserve(rdman, cr);
 	    else
@@ -2177,7 +2177,7 @@ static void draw_shape(redraw_man_t *rdman, mbe_t *cr, shape_t *shape) {
 
 	stroke = shape->stroke;
 	if(stroke) {
-	    stroke->prepare(stroke, cr);
+	    stroke->prepare(stroke, cr, shape);
 	    set_shape_stroke_param(shape, cr);
 	    stroke_path(rdman, cr);
 	}

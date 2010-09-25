@@ -1100,8 +1100,8 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
 	    y2 = hrefgr[3];
     }
 
-    if(n.attr('gradientTransform')) {
-	parseTransform(mtx, n.attr('gradientTransform').value());
+    if(n.attr("gradientTransform")) {
+	parseTransform(mtx, n.attr("gradientTransform").value());
 	xy = _pnt_transform(x1, y1, mtx);
 	x1 = xy[0];
 	y1 = xy[1];
@@ -1150,9 +1150,12 @@ loadSVG.prototype._MB_parseRadialGradient = function(root,n) {
 	stops = this.stop_ref[href];
     }
 
-    if(n.attr('gradientTransform')) {
-	parseTransform(mtx, n.attr('gradientTransform').value());
+    if(n.attr("gradientTransform")) {
+	parseTransform(mtx, n.attr("gradientTransform").value());
 	xy = _pnt_transform(cx, cy, mtx);
+	sys.puts(mtx);
+	sys.puts(xy);
+	sys.puts([cx, cy]);
 	cx = xy[0];
 	cy = xy[1];
     }

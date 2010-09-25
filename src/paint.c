@@ -17,7 +17,7 @@ typedef struct _paint_color {
 int _paint_color_size = sizeof(paint_color_t);
 
 
-static void paint_color_prepare(paint_t *paint, mbe_t *cr) {
+static void paint_color_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_color_t *color = (paint_color_t *)paint;
 
     mbe_set_source_rgba(cr, color->r, color->g, color->b, color->a);
@@ -84,17 +84,27 @@ typedef struct _paint_linear {
 
 int _paint_linear_size = sizeof(paint_linear_t);
 
-static void paint_linear_prepare(paint_t *paint, mbe_t *cr) {
+static void paint_linear_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_linear_t *linear = (paint_linear_t *)paint;
     mbe_pattern_t *ptn;
+    co_aix x1, y1;
+    co_aix x2, y2;
+    co_aix *mtx;
 
     ptn = linear->ptn;
     if(linear->flags & LIF_DIRTY) {
+	mtx = sh_get_aggr_matrix(sh);
+	x1 = linear->x1;
+	y1 = linear->y1;
+	matrix_trans_pos(mtx, &x1, &y1);
+	x2 = linear->x2;
+	y2 = linear->y2;
+	matrix_trans_pos(mtx, &x2, &y2);
+
 	if(ptn)
 	    mbe_pattern_destroy(ptn);
 	linear->flags &= ~LIF_DIRTY;
-	ptn = mbe_pattern_create_linear(linear->x1, linear->y1,
-					linear->x2, linear->y2,
+	ptn = mbe_pattern_create_linear(x1, y1, x2, y2,
 					linear->stops, linear->n_stops);
 	ASSERT(ptn != NULL);
 	linear->ptn = ptn;
@@ -174,13 +184,20 @@ typedef struct _paint_radial {
 
 int _paint_radial_size = sizeof(paint_radial_t);
 
-static void paint_radial_prepare(paint_t *paint, mbe_t *cr) {
+static void paint_radial_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_radial_t *radial = (paint_radial_t *)paint;
     mbe_pattern_t *ptn;
+    co_aix cx, cy;
+    co_aix *mtx;
 
     if(radial->flags & RDF_DIRTY) {
-	ptn = mbe_pattern_create_radial(radial->cx, radial->cy, 0,
-					  radial->cx, radial->cy,
+	mtx = sh_get_aggr_matrix(sh);
+	cx = radial->cx;
+	cy = radial->cy;
+	matrix_trans_pos(mtx, &cx, &cy);
+	
+	ptn = mbe_pattern_create_radial(cx, cy, 0,
+					cx, cy,
 					radial->r,
 					radial->stops,
 					radial->n_stops);
@@ -256,7 +273,7 @@ typedef struct _paint_image {
 int _paint_image_size = sizeof(paint_image_t);
 
 static
-void paint_image_prepare(paint_t *paint, mbe_t *cr) {
+void paint_image_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_image_t *paint_img = (paint_image_t *)paint;
     mb_img_data_t *img_data;
 
