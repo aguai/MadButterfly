@@ -575,7 +575,6 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
     var orig;
     
     a = node.attr("bbox-x");
-    sys.puts("a="+a);
     if(!a)
 	return 0;
     
@@ -728,7 +727,6 @@ loadSVG.prototype.parseText=function(accu,coord,id, n)
 	} else {
 	}
     }
-    sys.puts(y);
     this._set_bbox(n, tcoord);
 	
     make_mbnames(this.mb_rt, n, tcoord);
@@ -983,15 +981,15 @@ function _parse_stops(n) {
 		a = parseFloat(opacity);
 	    else
 		a = 1;
+	    
+	    offset_attr = child.attr("offset");
+	    if(offset_attr)
+		offset = parseFloat(offset_attr.value());
+	    else
+		offset = 0;
+	    
+	    stops.push([offset, r, g, b, a]);
 	}
-
-	offset_attr = child.attr("offset");
-	if(offset_attr)
-	    offset = parseFloat(offset_attr.value());
-	else
-	    offset = 0;
-
-	stops.push([offset, r, g, b, a]);
     }
 
     return stops;
@@ -1004,6 +1002,8 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
     var nodes = n.childNodes();
 
     if (id == null) return;
+    id = id.value();
+
     var x1 = n.attr("x1");
     var y1 = n.attr("y1");
     var x2 = n.attr("x2");
@@ -1013,37 +1013,35 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
     var stops;
     var r,g,b;
     
+    if(x1)
+	x1 = parseFloat(x1.value());
+    if(x2)
+	x2 = parseFloat(x2.value());
+    if(y1)
+	y1 = parseFloat(y1.value());
+    if(y2)
+	y2 = parseFloat(y2.value());
+    
     stops = _parse_stops(n);
     
     var href = n.attr('href');
-    if (href != null) {
+    if(href != null) {
 	href = href.value();
 	var hrefid = href.substring(1);
 	pstops = this.stop_ref[hrefid];
 	stops = pstops.concat(stops);
 	
 	var hrefgr = this.gradients[hrefid];
-	if (typeof x1 == "undefined")
+	if(typeof x1 == "undefined")
 	    x1 = hrefgr[0];
-	if (typeof x2 == "undefined")
-	    x2 = hrefgr[2];
-	if (typeof y1 == "undefined")
+	if(typeof y1 == "undefined")
 	    y1 = hrefgr[1];
-	if (typeof y2 == "undefined")
+	if(typeof x2 == "undefined")
+	    x2 = hrefgr[2];
+	if(typeof y2 == "undefined")
 	    y2 = hrefgr[3];
-	sys.puts(hrefid);
-	sys.puts([x1, y1, x2, y2]);
     }
-    id = id.value();
     this.stop_ref[id] = stops;
-    if (x1)
-	x1 = parseFloat(x1.value());
-    if (x2)
-	x2 = parseFloat(x2.value());
-    if (y1)
-	y1 = parseFloat(y1.value());
-    if (y2)
-	y2 = parseFloat(y2.value());
     this.gradients[id] = [x1,y1,x2,y2];
 };
 
