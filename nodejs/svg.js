@@ -1158,9 +1158,6 @@ loadSVG.prototype._MB_parseRadialGradient = function(root,n) {
     if(n.attr("gradientTransform")) {
 	parseTransform(mtx, n.attr("gradientTransform").value());
 	xy = _pnt_transform(cx, cy, mtx);
-	sys.puts(mtx);
-	sys.puts(xy);
-	sys.puts([cx, cy]);
 	cx = xy[0];
 	cy = xy[1];
     }
