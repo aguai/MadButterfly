@@ -82,7 +82,7 @@ enum { MBO_DUMMY,
 struct _paint {
     int pnt_type;
     int flags;
-    void (*prepare)(paint_t *paint, mbe_t *cr);
+    void (*prepare)(paint_t *paint, mbe_t *cr, shape_t *sh);
     void (*free)(struct _redraw_man *rdman, paint_t *paint);
     STAILQ(shnode_t) members;
     paint_t *pnt_next;		/*!< \brief Collect all paints of a rdman. */
