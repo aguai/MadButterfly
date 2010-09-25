@@ -42,6 +42,7 @@ function _decorate_mb_rt(mb_rt) {
 	
 	coord = this._mbapp_saved_coord_new(parent);
 	coord.type = "coord";
+	coord.children = [];
 	coord._mbapp_saved_mtx = [coord[0], coord[1], coord[2],
 				  coord[3], coord[4], coord[5]];
 	coord._mbapp_saved_rev_mtx = _reverse(coord._mbapp_saved_mtx);
@@ -52,7 +53,10 @@ function _decorate_mb_rt(mb_rt) {
 	    
 	    this._mbapp_saved_add_shape(shape);
 	    shape.parent = this;
+	    this.children.push(shape);
 	}
+
+	parent.children.push(coord);
 	
 	return coord;
     };
@@ -62,6 +66,7 @@ function _decorate_mb_rt(mb_rt) {
      */
     coord = mb_rt.root;
     coord.type = "coord";
+    coord.children = [];
     coord._mbapp_saved_mtx = [coord[0], coord[1], coord[2],
 			      coord[3], coord[4], coord[5]];
 	coord._mbapp_saved_rev_mtx = _reverse(coord._mbapp_saved_mtx);
