@@ -628,39 +628,32 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
 }
 
 loadSVG.prototype._set_paint = function(node, tgt) {
-    var style = node.attr('style');
+    var style;
     var paint;
     var fill_alpha = 1;
     var stroke_alpha = 1;
+    var alpha = 1;
     var fill_color;
     var stroke_color;
     var black_paint;
     var i;
     
-    if(style != null) {
-	var items = style.value().split(';');
-	var alpha;
-	
-	for(i in items) {
-	    var f = items[i].split(':');
-	    if (f[0] == 'opacity') {
-		alpha = f[1];
-	    } else if (f[0] == 'fill') {
-		fill_color = f[1];
-	    } else if (f[0] == 'fill-opacity') {
-		fill_alpha = parseFloat(f[1]);
-	    } else if (f[0] == 'stroke') {
-		stroke_color = f[1];
-	    } else if (f[0] == 'stroke-width') {
-		tgt.stroke_width = parseFloat(f[1]);
-	    } else if (f[0] == 'stroke-opacity') {
-		stroke_alpha = parseFloat(f[1]);
-	    } else if (f[0] == 'display') {
-		if(f[1] == 'none')
-		    return;
-	    }
-	}
-
+    style = parse_style(node);
+    if(style) {
+	if('opacity' in style)
+	    alpha = parseFloat(style['opacity']);
+	if('fill' in style)
+	    fill_color = style['fill'];
+	if('fill-opacity' in style)
+	    fill_alpha = parseFloat(style['fill-opacity']);
+	if('stroke' in style)
+	    stroke_color = style['stroke'];
+	if('stroke-width' in style)
+	    stroke_width = parseFloat(style['stroke-width']);
+	if('stroke-opacity' in style)
+	    stroke_alpha = parseFloat(style['stroke-opacity']);
+	if('display' in style && style['display'] == 'none')
+	    return;
     }
 
     if(!fill_color || !stroke_color)
