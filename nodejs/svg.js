@@ -703,12 +703,51 @@ loadSVG.prototype._set_paint = function(node, tgt) {
     tgt.stroke_width = stroke_width;
 };
 
+function formalize_path_data(d) {
+    var posM, posm;
+    var pos;
+    var nums = "0123456789+-.";
+    var rel = false;
+    var cmd;
+
+    posM = d.search("M");
+    posm = d.search("m");
+    pos = posm < posM? posm: posM;
+    if(pos == -1)
+	pos = posM == -1? posm: posM;
+    if(pos == -1)
+	return d;
+
+    if(posm == pos)
+	rel = true;
+    
+    pos = pos + 1;
+    while(pos < d.length && " ,".search(d[pos]) >= 0)
+	pos++;
+    while(pos < d.length && nums.search(d[pos]) >= 0)
+	pos++;
+    while(pos < d.length && " ,".search(d[pos]) >= 0)
+	pos++;
+    while(pos < d.length && nums.search(d[pos]) >= 0)
+	pos++;
+    while(pos < d.length && " ,".search(d[pos]) >= 0)
+	pos++;
+    if(nums.search(d[pos]) >= 0) {
+	if(rel)
+	    cmd = "l";
+	else
+	    cmd = "L";
+	d = d.substring(0, pos) + cmd + formalize_path_data(d.substring(pos));
+    }
+    return d;
+}
+
 loadSVG.prototype.parsePath=function(accu, coord,id, n)
 {
-    var d = n.attr('d').value();
+    var d = formalize_path_data(n.attr('d').value());
     var style = n.attr('style');
     var path = this.mb_rt.path_new(d);
-    
+
     guessPathBoundingBox(coord,d);
     coord.add_shape(path);
     this._set_paint(n, path);
