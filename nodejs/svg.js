@@ -229,7 +229,7 @@ loadSVG.prototype.parseTSpan = function(coord, n, pstyle) {
     tcoord.set_text = tspan_set_text;
     tcoord.text = obj;
     
-    this._set_paint(n, obj);
+    this._set_paint_style(style, obj);
     this._set_bbox(n, obj);
     
     make_mbnames(this.mb_rt, n, tcoord);
@@ -650,8 +650,7 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
     return 1;
 }
 
-loadSVG.prototype._set_paint = function(node, tgt) {
-    var style;
+loadSVG.prototype._set_paint_style = function(style, tgt) {
     var paint;
     var fill_alpha = 1;
     var stroke_alpha = 1;
@@ -662,7 +661,6 @@ loadSVG.prototype._set_paint = function(node, tgt) {
     var black_paint;
     var i;
     
-    style = parse_style(node);
     if(style) {
 	if('opacity' in style)
 	    alpha = parseFloat(style['opacity']);
@@ -701,6 +699,13 @@ loadSVG.prototype._set_paint = function(node, tgt) {
     }
 
     tgt.stroke_width = stroke_width;
+};
+
+loadSVG.prototype._set_paint = function(node, tgt) {
+    var style;
+
+    style = parse_style(node);
+    this._set_paint_style(style, tgt);
 };
 
 function formalize_path_data(d) {
