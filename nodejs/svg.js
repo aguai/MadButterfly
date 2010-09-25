@@ -186,29 +186,52 @@ function tspan_set_text(text)
     this.text.set_text(text); 
 }
 
-loadSVG.prototype.parseTSpan = function(coord, n,style) {
+function _parse_font_size(fn_sz_str) {
+    var pos;
+
+    pos = fn_sz_str.search("px");
+    if(pos >= 0)
+	fn_sz_str = fn_sz_str.substring(0, pos);
+    pos = fn_sz_str.search("pt");
+    if(pos >= 0)
+	fn_sz_str = fn_sz_str.substring(0, pos);
+
+    return parseFloat(fn_sz_str);
+}
+
+loadSVG.prototype.parseTSpan = function(coord, n, pstyle) {
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
     var tcoord = this.mb_rt.coord_new(coord);
-    var nodes = n.childNodes();
+    var style;
+    var family = "Courier";
+    var sz = 10;
+    var face;
     var k;
-    
     var obj = this.mb_rt.stext_new(n.text(),x,y);
-    parseTextStyle(style,n);
-    style.paint = this.mb_rt.paint_color_new(1,1,1,1);
-    style.face=this.mb_rt.font_face_query(style.family, 2, 100);
-    obj.set_style([[20,style.face,style.fs]]);
-    style.paint.fill(obj);
-    tcoord.add_shape(obj);
-    for(k in nodes) {
-        var name = nodes[k].name();
-        if (name == "tspan") {
-            this.parseTSpan(tcoord,nodes[k]);
-        } else {
-        }
+    
+    style = parse_style(n);
+    for(k in pstyle) {
+	if(k in style)
+	    continue;
+	style[k] = pstyle[k];
     }
-    tcoord.set_text=tspan_set_text;
+
+    if("font-family" in style)
+	family = style["font-family"];
+    if("font-size" in style)
+	sz = _parse_font_size(style["font-size"]);
+
+    face = this.mb_rt.font_face_query(family, 100, 210);
+    obj.set_style([[20, face, sz]]);
+
+    tcoord.add_shape(obj);
+    tcoord.set_text = tspan_set_text;
     tcoord.text = obj;
+    
+    this._set_paint(n, obj);
+    this._set_bbox(n, obj);
+    
     make_mbnames(this.mb_rt, n, tcoord);
 };
 
@@ -227,10 +250,8 @@ loadSVG.prototype._prepare_paint_color = function(color, alpha) {
 	paint = this.mb_rt.paint_color_new(c[0], c[1], c[2], alpha);
     } else if (color.substring(0,3) == 'url') {
 	var id = color.substring(5, color.length-1);
-	sys.puts(id);
 	if(id in this.gradients) {
 	    var gr = this.gradients[id];
-	    sys.puts(gr);
 	    paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
 	} else {
 	    var radial = this.radials[id];
@@ -239,7 +260,6 @@ loadSVG.prototype._prepare_paint_color = function(color, alpha) {
 						radial[2]);
 	}
 	paint.set_stops(this.stop_ref[id]);
-	sys.puts(this.stop_ref[id]);
     } else {
 	paint = this.mb_rt.paint_color_new(0,0,0,1);
     }
@@ -702,7 +722,7 @@ loadSVG.prototype.parseText=function(accu,coord,id, n)
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
     var tcoord = this.mb_rt.coord_new(coord);
-    var style = new Object();
+    var style;
 
     if (n.attr('x')) {
 	var nx = coord[0]*x+coord[1]*y+coord[2];
@@ -714,9 +734,7 @@ loadSVG.prototype.parseText=function(accu,coord,id, n)
 	if (coord.center.y > ny)
 	    coord.center.y = ny;
     }
-    style.fs = 20;
-    style.family = 'courier';
-    parseTextStyle(style,n);
+    style = parse_style(n);
     var nodes = n.childNodes();
     var k;
     for(k in nodes) {
