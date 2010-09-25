@@ -227,8 +227,10 @@ loadSVG.prototype._prepare_paint_color = function(color, alpha) {
 	paint = this.mb_rt.paint_color_new(c[0], c[1], c[2], alpha);
     } else if (color.substring(0,3) == 'url') {
 	var id = color.substring(5, color.length-1);
-	var gr = this.gradients[id];
-	if(gr) {
+	sys.puts(id);
+	if(id in this.gradients) {
+	    var gr = this.gradients[id];
+	    sys.puts(gr);
 	    paint = this.mb_rt.paint_linear_new(gr[0],gr[1],gr[2],gr[3]);
 	} else {
 	    var radial = this.radials[id];
@@ -237,6 +239,7 @@ loadSVG.prototype._prepare_paint_color = function(color, alpha) {
 						radial[2]);
 	}
 	paint.set_stops(this.stop_ref[id]);
+	sys.puts(this.stop_ref[id]);
     } else {
 	paint = this.mb_rt.paint_color_new(0,0,0,1);
     }
@@ -635,6 +638,7 @@ loadSVG.prototype._set_paint = function(node, tgt) {
     var alpha = 1;
     var fill_color;
     var stroke_color;
+    var stroke_width = 1;
     var black_paint;
     var i;
     
@@ -675,6 +679,8 @@ loadSVG.prototype._set_paint = function(node, tgt) {
     } else {
 	black_paint.stroke(tgt);
     }
+
+    tgt.stroke_width = stroke_width;
 };
 
 loadSVG.prototype.parsePath=function(accu, coord,id, n)
@@ -993,6 +999,7 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
     var id = n.attr('id');
     var k;
     var nodes = n.childNodes();
+    var mtx = [1, 0, 0, 0, 1, 0];
 
     if (id == null) return;
     id = id.value();
@@ -1001,6 +1008,7 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
     var y1 = n.attr("y1");
     var x2 = n.attr("x2");
     var y2 = n.attr("y2");
+    var xy;
     var gr;
     var color, opacity;
     var stops;
@@ -1034,6 +1042,17 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
 	if(typeof y2 == "undefined")
 	    y2 = hrefgr[3];
     }
+
+    if(n.attr('gradientTransform')) {
+	parseTransform(mtx, n.attr('gradientTransform').value());
+	xy = _pnt_transform(x1, y1, mtx);
+	x1 = xy[0];
+	y1 = xy[1];
+	xy = _pnt_transform(x2, y2, mtx);
+	x2 = xy[0];
+	y2 = xy[1];
+    }
+
     this.stop_ref[id] = stops;
     this.gradients[id] = [x1,y1,x2,y2];
 };
@@ -1041,6 +1060,8 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
 loadSVG.prototype._MB_parseRadialGradient = function(root,n) {
     var stops;
     var cx, cy;
+    var xy;
+    var mtx = [1, 0, 0, 0, 1, 0];
     var id;
     var href;
     var r;
@@ -1070,6 +1091,13 @@ loadSVG.prototype._MB_parseRadialGradient = function(root,n) {
     if(href) {
 	href = href.value().substring(1);
 	stops = this.stop_ref[href];
+    }
+
+    if(n.attr('gradientTransform')) {
+	parseTransform(mtx, n.attr('gradientTransform').value());
+	xy = _pnt_transform(cx, cy, mtx);
+	cx = xy[0];
+	cy = xy[1];
     }
 
     this.radials[id] = [cx, cy, r];
