@@ -2381,8 +2381,10 @@ static void draw_shapes_in_dirty_areas(redraw_man_t *rdman) {
 	draw_dirty_cached_coord(rdman, coord);
 	coord_set_flags(coord, COF_TEMP_MARK);
     }
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; i++) {
+	coord = zeroings[i];
 	coord_clear_flags(coord, COF_TEMP_MARK);
+    }
 
     draw_dirty_cached_coord(rdman, rdman->root_coord);
 }
