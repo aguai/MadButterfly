@@ -658,7 +658,6 @@ loadSVG.prototype._set_paint_style = function(style, tgt) {
     var fill_color;
     var stroke_color;
     var stroke_width = 1;
-    var black_paint;
     var i;
     
     if(style) {
@@ -678,24 +677,17 @@ loadSVG.prototype._set_paint_style = function(style, tgt) {
 	    return;
     }
 
-    if(!fill_color || !stroke_color)
-	black_paint = this.mb_rt.paint_color_new(0, 0, 0, 1);
-    
     if(fill_color) {
 	if(fill_color != "none") {
 	    paint = this._prepare_paint_color(fill_color, fill_alpha);
 	    paint.fill(tgt);
 	}
-    } else {
-	black_paint.fill(tgt);
     }
     if(stroke_color) {
 	if(stroke_color != "none") {
 	    paint = this._prepare_paint_color(stroke_color, stroke_alpha);
 	    paint.stroke(tgt);
 	}
-    } else {
-	black_paint.stroke(tgt);
     }
 
     tgt.stroke_width = stroke_width;
