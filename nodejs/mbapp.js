@@ -126,7 +126,7 @@ app.prototype.addKeyboardListener=function(type,f) {
     return this.mb_rt.kbevents.add_event_observer(type,f);    
 }
 app.prototype.refresh=function() {
-    this.mb_rt.redraw_all();
+    this.mb_rt.redraw_changed();
     this.mb_rt.flush();
 }
 app.prototype.dump=function() {
