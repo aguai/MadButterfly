@@ -699,6 +699,9 @@ loadSVG.prototype._set_paint_style = function(style, tgt) {
     }
 
     tgt.stroke_width = stroke_width;
+    
+    if(alpha < 1)
+	tgt.parent.opacity = alpha;
 };
 
 loadSVG.prototype._set_paint = function(node, tgt) {
@@ -752,13 +755,14 @@ loadSVG.prototype.parsePath=function(accu, coord,id, n)
     var d = formalize_path_data(n.attr('d').value());
     var style = n.attr('style');
     var path = this.mb_rt.path_new(d);
+    var pcoord = this.mb_rt.coord_new(coord);
 
-    guessPathBoundingBox(coord,d);
-    coord.add_shape(path);
+    guessPathBoundingBox(pcoord,d);
+    pcoord.add_shape(path);
     this._set_paint(n, path);
     this._set_bbox(n, path);
 
-    make_mbnames(this.mb_rt, n, path);
+    make_mbnames(this.mb_rt, n, pcoord);
 };
 
 loadSVG.prototype.parseText=function(accu,coord,id, n)
