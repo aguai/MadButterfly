@@ -106,7 +106,6 @@ app.prototype.loadSVG=function(fname) {
 }
 
 app.prototype.KeyPress = function(evt) {
-    sys.puts(evt.sym);
     if (this.onKeyPress) this.onKeyPress(evt.sym);
 	if (evt.sym in this.keymap) this.keymap[evt.sym]();
 }
