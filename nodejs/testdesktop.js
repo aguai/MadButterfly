@@ -17,14 +17,16 @@ setting = app.get("setting");
 
 lightbar = app.get("lightbar");
 lines=[app.get("line1"),app.get("line2"),app.get("line3"), app.get("line4"),app.get("line5")];
+for(i=0;i<lines.length;i++) {
+    sys.puts("["+i+"]="+lines[i].y);
+}
 line=0;
 
 items=[video,audio,picture,setting];
 item = 0;
-
-animate.run([new animate.scale(app,items[item],1,1.5)],0,0.1);
+an = new animate.scale(app,items[item],1,1.5,0.1);
+an.start();
 app.refresh();
-
 app.addKeyListener(mbapp.KEY_LEFT, function() {
 	var old = items[item];
 	item = item - 1;
@@ -33,8 +35,10 @@ app.addKeyListener(mbapp.KEY_LEFT, function() {
 		return;
 	}
         var target = items[item];
-	animate.run([new animate.scale(app,old,1,1)],0,0.1);
-	animate.run([new animate.scale(app,target,1,1.5)],0,0.3);
+	var an = new animate.scale(app,old,1,1,0.1);
+        an.start();
+	an = new animate.scale(app,target,1,1.5,0.3);
+        an.start();
 });
 
 app.addKeyListener(mbapp.KEY_RIGHT, function() {
@@ -45,8 +49,10 @@ app.addKeyListener(mbapp.KEY_RIGHT, function() {
 		return;
 	}
         var target = items[item];
-	animate.run([new animate.scale(app,old,1,1)],0,0.1);
-	animate.run([new animate.scale(app,target,1,1.5)],0,0.3);
+	var an = new animate.scale(app,old,1,1,0.1);
+        an.start();
+	an = new animate.scale(app,target,1,1.5,0.3);
+        an.start();
 });
 
 app.addKeyListener(mbapp.KEY_UP, function() {
@@ -59,7 +65,8 @@ app.addKeyListener(mbapp.KEY_UP, function() {
         var target = lines[line];
 	var sy = target.y-lightbar.y;
 	sys.puts(sy);
-	animate.run([new animate.shift(app,lightbar,0,sy)],0,0.3);
+	var an = new animate.linear(app,lightbar,0,sy,0.3);
+        an.start();
 });
 app.addKeyListener(mbapp.KEY_DOWN, function() {
 	var old = lines[line];
@@ -74,7 +81,8 @@ app.addKeyListener(mbapp.KEY_DOWN, function() {
 	sys.puts("sy="+sy);
 	sys.puts("target.y="+target.y);
 	sys.puts("lightbar.y="+lightbar.y);
-	animate.run([new animate.shift(app,lightbar,0,sy)],0,0.3);
+	var an = new animate.linear(app,lightbar,0,sy,0.3);
+        an.start();
 });
 
 app.addKeyListener(mbapp.KEY_ENTER, function() {
@@ -82,7 +90,8 @@ app.addKeyListener(mbapp.KEY_ENTER, function() {
 	var sx = 500-target.x;
 	var sy = 220-target.y;
 	sys.puts("target "+sx+','+sy);
-	animate.run([new animate.shift(app,target,sx,sy)],0,1);
+	var an = new animate.linear(app,target,sx,sy,1);
+	an.start();
 	for(i=0;i<items.length;i++) {
 	    if (i == item) continue;
 	    var x = Math.random();
@@ -93,8 +102,10 @@ app.addKeyListener(mbapp.KEY_ENTER, function() {
 	    else y = -500;
 	    sx = x-items[i].x;
 	    sy = y-items[i].y;
-	    animate.run([new animate.shift(app,items[i], sx,sy)],0,2);
-	    animate.run([new animate.alpha(app,items[i],0)],0, 1);
+	    an = new animate.linear(app,items[i], sx,sy,2);
+	    an.start();
+	    alpha = new animate.alpha(app,items[i],0, 1);
+	    alpha.start();
 	}
 });
 
