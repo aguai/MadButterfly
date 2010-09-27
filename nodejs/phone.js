@@ -41,19 +41,16 @@ for(i = 0; i < icons.length; i++) {
 	});
     icon.mouse_event.add_event_observer(4, function(evt) {
 	    pressholder.go_center(evt.cur_tgt);
-	    var rotate = new animate.rotate(app, evt.cur_tgt, 2 * 3.1415, 0.7);
-	    rotate.start();
+	    animate.run([new animate.rotate(app, evt.cur_tgt, 2 * 3.1415)],0, 0.7);
 	});
 }
 
 var sw = 0;
-var dock_up = new animate.linear(app, dock, 0, -300, 0.5);
-var dock_down = new animate.linear(app, dock, 0, 0, 0.2);
 dock.mouse_event.add_event_observer(4, function(evt) {
 	if(sw == 0) {
-	    dock_up.start();
+            animate.run([new animate.shift(app, dock, 0, -300)],0, 0.5);
 	} else {
-	    dock_down.start();
+            animate.run([new animate.shift(app, dock, 0, 0)],0, 0.2);
 	}
 	sw = sw ^ 1;
     });
