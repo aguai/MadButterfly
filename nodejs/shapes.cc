@@ -70,6 +70,25 @@ xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
     }
 }
 
+static void
+xnjsmb_sh_stext_set_text(shape_t *sh, Handle<Object> self,
+			 const char *txt) {
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+    
+    sh_stext_set_text(sh, txt);
+    
+    /*
+     * Mark changed.
+     */
+    rt = GET(self, "mbrt")->ToObject();
+    ASSERT(rt != NULL);
+    rdman = xnjsmb_rt_rdman(rt);
+
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+}
+
 /*! \brief Set style blocks for a stext object from JS.
  *
  * A style block is style setting of a chip of text.  It is a 3-tuple,
