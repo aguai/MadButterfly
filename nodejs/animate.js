@@ -268,7 +268,10 @@ program.prototype.start=function() {
     }
 }
 
-program.prototype.stop=function(s) {
+program.prototype.step=function(s) {
+    sys.puts("This function is not implemented yet");
+}
+program.prototype.stop=function() {
     for(w in this.words) {
         w.stop();
     }
@@ -287,4 +290,6 @@ exports.run = function(actions,start,duration) {
     }
 }
 exports.runexp=function(actions,start,exp) {
+    sys.puts("This function is not implemented yet");
 }
+
