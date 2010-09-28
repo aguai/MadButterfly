@@ -10,9 +10,11 @@ var ffs = 12;
 var frame_interval = 1000 / ffs;
 
 function shift_draw(percent) {
-    var percent;
-    this.obj.x = (this.targetx-this.startposx)*percent+this.startposx;
-    this.obj.y = (this.targety-this.startposy)*percent+this.startposy;
+    var x, y;
+    
+    x = (this.targetx - this.startposx) * percent + this.startposx;
+    y = (this.targety - this.startposy) * percent + this.startposy;
+    this.obj.center.move(x, y);
     this.app.refresh();
 }
 
@@ -21,10 +23,10 @@ function shift(app,obj,shiftx,shifty) {
     this.app = app;
     this.obj = obj;
     this.end = 0;
-    this.targetx = shiftx + obj.x;
-    this.targety = shifty + obj.y;
-    this.startposx = obj.x;
-    this.startposy = obj.y;
+    this.targetx = shiftx + obj.center.x;
+    this.targety = shifty + obj.center.y;
+    this.startposx = obj.center.x;
+    this.startposy = obj.center.y;
 }
 
 exports.shift = shift;
@@ -83,48 +85,51 @@ function multiply(s,d) {
 
 
 function scale_draw(percent) {
-    if (this.end == 1) return;
-    var sx = (this.targetx-this.startsx)*percent+this.startsx;
-    var sy = (this.targety-this.startsy)*percent+this.startsy;
-    var t=[sx,0,0,0,sy,0];
-    this.obj[0] = sx;
-    this.obj[4] = sy;
-    this.obj[2] = this.origin_offset_x - (sx-this.startsx)*this.obj.center.x;
-    this.obj[5] = this.origin_offset_y - (sy-this.startsy)*this.obj.center.y;
-    sys.puts('x='+this.obj.center.x+',y='+this.obj.center.y);
+    var sx = 1 + (this.totalsx - 1) * percent;
+    var sy = 1 + (this.totalsy - 1) * percent;
+    var sh1 = [1, 0, -this.center_x, 0, 1, -this.center_y];
+    var sh2 = [1, 0, this.center_x, 0, 1, this.center_y];
+    var scale = [sx, 0, 0, 0, sy, 0];
+    var obj = this.obj;
+    var mtx;
+
+    mtx = multiply(scale, sh1);
+    mtx = multiply(sh2, mtx);
+    mtx = multiply(this.orig_mtx, mtx);
+    obj[0] = mtx[0];
+    obj[1] = mtx[1];
+    obj[2] = mtx[2];
+    obj[3] = mtx[3];
+    obj[4] = mtx[4];
+    obj[5] = mtx[5];
 
     this.app.refresh();
-    var self = this;
-    this.app.refresh();
-    this.obj.animated_scale = null;
 }
 
-function scale(app,obj,targetx,targety, duration) {
+function scale(app, obj, fact_x, fact_y, duration) {
+    var bbox;
+    
     try {
         if (obj.animated_scale) {
-	    //obj[0] = obj.animated_scale.targetx;
-	    //obj[4] = obj.animated_scale.targety;
-	    //obj[2] = obj.animated_scale.final_offset_x;
-	    //obj[5] = obj.aninated_scale.final_offset_y;
 	    obj.animated_scale.end = 1;
 	}
     } catch(e) {
 	    
     }
+
+    bbox = obj.bbox;
+    bbox.update();
     obj.animated_scale = this;
     this.app = app;
     this.obj = obj;
     this.end = 0;
     this.starttime = Date.now();
-    this.startsx = obj[0];
-    this.startsy = obj[4];
-    this.targetx = targetx;
-    this.targety = targety;
+    this.totalsx = fact_x * bbox.orig.width / bbox.width;
+    this.totalsy = fact_y * bbox.orig.height / bbox.height;
     this.duration = duration*1000;
-    this.origin_offset_x = obj[2];
-    this.origin_offset_y = obj[5];
-    this.final_offset_x = this.origin_offset_x-(targetx-this.startsx)*obj.center.x;
-    this.final_offset_y = this.origin_offset_y-(targety-this.startsy)*obj.center.y;
+    this.center_x = obj.center.rel.x;
+    this.center_y = obj.center.rel.y;
+    this.orig_mtx = [obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]];
 }
 
 
@@ -202,6 +207,8 @@ exports.alpha = alpha;
 function linear_update()
 {
     var now = Date.now();
+    var i;
+    
     sys.puts("real time is "+now);
     sys.puts("end is "+this.end);
     if (now >= this.end) {
