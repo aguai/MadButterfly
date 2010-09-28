@@ -9,37 +9,17 @@ var sys=require("sys");
 var ffs = 12;
 var frame_interval = 1000 / ffs;
 
-function linear_draw() {
-    var percent;
+function shift_draw(percent) {
     var x, y;
     
-    percent = (Date.now() - this._start_tm) / this.duration;
-    if(percent >= 1) {
-	percent = 1;
-        if (this.obj.timer) {
-	    this.obj.timer.stop();
-	    delete this.obj.timer;
-	}
-    }
-    x = (this.targetx-this.startposx)*percent+this.startposx;
-    y = (this.targety-this.startposy)*percent+this.startposy;
+    x = (this.targetx - this.startposx) * percent + this.startposx;
+    y = (this.targety - this.startposy) * percent + this.startposy;
     this.obj.center.move(x, y);
     this.app.refresh();
 }
 
-function linear_draw_start() {
-    var obj = this.obj;
-    var self = this;
-    
-    if(obj.timer)
-	obj.timer.stop();
-
-    this._start_tm = Date.now();
-    obj.timer = setInterval(function() { self.draw(); }, frame_interval);
-}
-
-function linear(app,obj,shiftx,shifty,duration) {
-    obj.animated_linear = this;
+function shift(app,obj,shiftx,shifty) {
+    obj.animated_shift = this;
     this.app = app;
     this.obj = obj;
     this.end = 0;
@@ -47,51 +27,32 @@ function linear(app,obj,shiftx,shifty,duration) {
     this.targety = shifty + obj.center.y;
     this.startposx = obj.center.x;
     this.startposy = obj.center.y;
-    this.duration = duration*1000;
 }
 
-exports.linear = linear;
-linear.prototype.start = linear_draw_start;
-linear.prototype.draw = linear_draw;
+exports.shift = shift;
+shift.prototype.draw = shift_draw;
 
 /* ------------------------------------------------------------ */
 function rotate(app, obj, ang, duration) {
     this._app = app;
     this._obj = obj;
     this._ang = ang;
-    this._duration = duration * 1000;
-}
-
-function rotate_start() {
-    var obj = this._obj;
-    var self = this;
-    
-    if(obj.timer)
-	obj.timer.stop();
-
     this._start_mtx = [obj[0], obj[1], obj[2], obj[3], obj[4], obj[5]];
-    this._start_tm = Date.now();
-    obj.timer = setInterval(function() { self.draw(); }, frame_interval);
 }
 
-function rotate_draw() {
+function rotate_draw(percent) {
     var percent;
     var ang;
     var sv, cv;
     var obj = this._obj;
     var mtx, shift;
 
-    percent = (Date.now() - this._start_tm) / this._duration;
-    if(percent >= 1) {
-	percent = 1;
-	obj.timer.stop();
-    }
 
     ang = percent * this._ang;
     sv = Math.sin(ang);
     cv = Math.cos(ang);
     mtx = [cv, -sv, 0, sv, cv, 0];
-
+    sys.puts('x='+obj.center.x+',y='+obj.center.y);
     shift = [1, 0, -obj.center.x, 0, 1, -obj.center.y];
     mtx = multiply(mtx, shift);
     shift = [1, 0, obj.center.x, 0, 1, obj.center.y];
@@ -108,7 +69,6 @@ function rotate_draw() {
     this._app.refresh();
 }
 
-rotate.prototype.start = rotate_start;
 rotate.prototype.draw = rotate_draw;
 exports.rotate = rotate;
 
@@ -124,15 +84,12 @@ function multiply(s,d) {
 }
 
 
-function scale_draw() {
-    if (this.end == 1) return;
-    var percent = (Date.now() - this.starttime)/this.duration;
-    if (percent > 1) percent = 1;
+function scale_draw(percent) {
     var sx = 1 + (this.totalsx - 1) * percent;
     var sy = 1 + (this.totalsy - 1) * percent;
     var sh1 = [1, 0, -this.center_x, 0, 1, -this.center_y];
     var sh2 = [1, 0, this.center_x, 0, 1, this.center_y];
-    var scale=[sx, 0, 0, 0, sy, 0];
+    var scale = [sx, 0, 0, 0, sy, 0];
     var obj = this.obj;
     var mtx;
 
@@ -147,13 +104,6 @@ function scale_draw() {
     obj[5] = mtx[5];
 
     this.app.refresh();
-    var self = this;
-    if (percent < 1) {
-	obj.timer=setTimeout(function() { self.draw();}, frame_interval);
-	return;
-    }
-    this.app.refresh();
-    obj.animated_scale = null;
 }
 
 function scale(app, obj, fact_x, fact_y, duration) {
@@ -184,7 +134,6 @@ function scale(app, obj, fact_x, fact_y, duration) {
 
 
 exports.scale = scale;
-scale.prototype.start = scale_draw;
 scale.prototype.draw = scale_draw;
 
 function holder(app, coord) {
@@ -225,20 +174,11 @@ exports.holder = holder;
 
 
 
-function alpha_draw() {
+function alpha_draw(percent) {
 
     if (this.end == 1) return;
-    var percent = (Date.now() - this.starttime)/this.duration;
-    if (percent > 1) percent = 1;
     var sx = (this.targetalpha-this.startalpha)*percent+this.startalpha;
     this.obj.opacity=sx;
-
-    this.app.refresh();
-    var self = this;
-    if (percent < 1) {
-	this.obj.timer=setTimeout(function() { self.draw();}, frame_interval);
-	return;
-    }
     this.app.refresh();
     this.obj.animated_alpha = null;
 }
@@ -261,6 +201,90 @@ function alpha(app,obj,alpha, duration) {
     this.duration = duration*1000;
 }
 
-alpha.prototype.start = alpha_draw;
 alpha.prototype.draw = alpha_draw;
 exports.alpha = alpha;
+
+function linear_update()
+{
+    var now = Date.now();
+    var i;
+    
+    sys.puts("real time is "+now);
+    sys.puts("end is "+this.end);
+    if (now >= this.end) {
+        this.timer.stop();
+	now = this.end;
+    }
+    if (now < this.startmove) return;
+    sys.puts("now is "+now+" offset is "+(now-this.startmove));
+    var per = (now-this.startmove)/this.duration/1000;
+    if (per > 1) per = 1;
+    this.action.draw(per);
+}
+
+function linear_start()
+{
+    var self = this;
+    if (this.timer)
+        this.timer.stop();
+    this.timer = setInterval(function() { self.update();}, frame_interval);
+    this.startmove = Date.now()+this.starttime*1000;
+    this.end = this.startmove+this.duration*1000;
+}
+function linear_stop() 
+{
+    if (this.timer) {
+        this.timer.stop();
+	this.timer = null;
+    }
+}
+
+function linear_finish()
+{
+    this.action.draw(1);
+}
+function linear(action,start, duration) 
+{
+    this.action = action;
+    this.duration = duration;
+    this.starttime = start;
+    this.timer=null;
+}
+linear.prototype.update = linear_update;
+linear.prototype.start = linear_start;
+linear.prototype.stop = linear_stop;
+linear.prototype.finish = linear_finish;
+exports.linear = linear;
+
+
+function program(words)
+{
+    this.words = wrods;
+}
+
+program.prototype.start=function() {
+    for(w in this.words) {
+        w.start();
+    }
+}
+
+program.prototype.stop=function(s) {
+    for(w in this.words) {
+        w.stop();
+    }
+}
+program.prototype.finish=function() {
+    for(w in this.words) {
+        w.finish();
+    }
+}
+
+exports.run = function(actions,start,duration) {
+    for(a in actions) {
+        var li = new linear(actions[a],start,duration);
+	sys.puts(li);
+	li.start();
+    }
+}
+exports.runexp=function(actions,start,exp) {
+}
