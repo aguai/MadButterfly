@@ -19,7 +19,7 @@
  */
 static
 FcPattern *query_font_pattern(const char *family, int slant, int weight) {
-    FcPattern *ptn, *p, *fn_ptn;
+    FcPattern *ptn, *fn_ptn;
     FcValue val;
     FcConfig *cfg;
     FcBool r;
@@ -32,8 +32,7 @@ FcPattern *query_font_pattern(const char *family, int slant, int weight) {
 
     cfg = FcConfigGetCurrent();
     ptn = FcPatternCreate();
-    p = FcPatternCreate();
-    if(ptn == NULL || p == NULL)
+    if(ptn == NULL)
 	goto err;
 
     val.type = FcTypeString;
@@ -48,17 +47,17 @@ FcPattern *query_font_pattern(const char *family, int slant, int weight) {
     val.u.i = weight;
     FcPatternAdd(ptn, "weight", val, FcTrue);
 
-    r = FcConfigSubstituteWithPat(cfg, ptn, NULL, FcMatchPattern);
+    FcDefaultSubstitute(ptn);
+
+    r = FcConfigSubstituteWithPat(cfg, ptn, ptn, FcMatchPattern);
     if(!r)
 	goto err;
 
-    r = FcConfigSubstituteWithPat(cfg, p, ptn, FcMatchFont);
+    r = FcConfigSubstituteWithPat(cfg, ptn, ptn, FcMatchFont);
     if(!r)
 	goto err;
 
-    FcDefaultSubstitute(p);
-
-    fn_ptn = FcFontMatch(cfg, p, &result);
+    fn_ptn = FcFontMatch(cfg, ptn, &result);
 
     /* It is supposed to return FcResultMatch.  But, it is no, now.
      * I don't know why.  Someone should figure out the issue.
@@ -73,15 +72,12 @@ FcPattern *query_font_pattern(const char *family, int slant, int weight) {
 	goto err;
 
     FcPatternDestroy(ptn);
-    FcPatternDestroy(p);
 
     return fn_ptn;
 
 err:
     if(ptn)
 	FcPatternDestroy(ptn);
-    if(p)
-	FcPatternDestroy(p);
     return NULL;
 
 }
