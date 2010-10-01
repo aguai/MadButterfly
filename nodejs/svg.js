@@ -223,7 +223,7 @@ loadSVG.prototype.parseTSpan = function(coord, n, pstyle) {
 	sz = _parse_font_size(style["font-size"]);
 
     face = this.mb_rt.font_face_query(family, 100, 210);
-    obj.set_style([[20, face, sz]]);
+    obj.set_style([[n.text().length, face, sz]]);
 
     tcoord.add_shape(obj);
     tcoord.set_text = tspan_set_text;
