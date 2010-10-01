@@ -205,6 +205,8 @@ loadSVG.prototype.parseTSpan = function(coord, n, pstyle) {
     var tcoord = this.mb_rt.coord_new(coord);
     var style;
     var family = "Courier";
+    var weight = 80;
+    var slant = 0;
     var sz = 10;
     var face;
     var k;
@@ -221,8 +223,16 @@ loadSVG.prototype.parseTSpan = function(coord, n, pstyle) {
 	family = style["font-family"];
     if("font-size" in style)
 	sz = _parse_font_size(style["font-size"]);
+    if("font-weight" in style) {
+	if(style["font-weight"] == "bold")
+	    weight = 200;
+    }
+    if("font-style" in style) {
+	if(style["font-style"] == "oblique")
+	    slant = 110;
+    }
 
-    face = this.mb_rt.font_face_query(family, 100, 210);
+    face = this.mb_rt.font_face_query(family, slant, weight);
     obj.set_style([[n.text().length, face, sz]]);
 
     tcoord.add_shape(obj);
