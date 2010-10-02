@@ -257,9 +257,21 @@ linear.prototype.finish = linear_finish;
 exports.linear = linear;
 
 
-/* Following functions is not defined completed.
-   Mark it out to prevent error message.
+function multilinear_update()
+{
+}
 
+function multilinear_start()
+{
+}
+
+function multilinear_stop()
+{
+}
+
+function multilinear_finish()
+{
+}
 function multilinear(action,start,stages) {
     sys.puts("Multilinear word is not implemented yet");
 }
@@ -269,7 +281,18 @@ multilinear.prototype.update = multilinear_update;
 multilinear.prototype.start = multilinear_start;
 multilinear.prototype.stop = multilinear_stop;
 multilinear.prototype.finish = multilinear_finish;
-
+function exponential_update()
+{
+}
+function exponential_start()
+{
+}
+function exponential_stop()
+{
+}
+function exponential_finish()
+{
+}
 function exponential(action,start,stages) {
     sys.puts("exponential word is not implemented yet");
 }
@@ -279,8 +302,6 @@ exponential.prototype.update = exponential_update;
 exponential.prototype.start = exponential_start;
 exponential.prototype.stop = exponential_stop;
 exponential.prototype.finish = exponential_finish;
-
-*/
 
 function program(words)
 {
