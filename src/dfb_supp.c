@@ -3,11 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <directfb.h>
+#include <cairo/cairo.h>
 #include <cairo-directfb.h>
 #include "mb_graph_engine.h"
 #include "mb_redraw_man.h"
 #include "mb_timer.h"
-#include "mb_X_supp.h"
+#include "mb_dfb_supp.h"
 #include "config.h"
 
 #define ERR -1
@@ -21,7 +23,6 @@
 struct _X_kb_info {
     int keycode_min, keycode_max;
     int ksym_per_code;
-    KeySym *syms;
     subject_t *kbevents;
     ob_factory_t *ob_factory;
 };
@@ -36,9 +37,8 @@ typedef struct {
 }  monitor_t;
 
 struct _X_MB_runtime {
-    Display *display;
-    Window win;
-    Visual *visual;
+    IDirectFB *dfb;
+    IDirectFBSurface *primary;
     mbe_surface_t *surface, *backend_surface;
     mbe_pattern_t *surface_ptn;
     mbe_t *cr, *backend_cr;
@@ -79,88 +79,21 @@ static int keycode2sym(X_kb_info_t *kbinfo, unsigned int keycode) {
     int sym;
 
     sym_idx = kbinfo->ksym_per_code * (keycode - kbinfo->keycode_min);
-    sym =  kbinfo->syms[sym_idx];
+/*    sym =  kbinfo->syms[sym_idx];*/
     return sym;
-}
-
-static int X_kb_init(X_kb_info_t *kbinfo, Display *display,
-		     redraw_man_t *rdman) {
-    int n_syms;
-    ob_factory_t *factory;
-    int r;
-
-    r = XDisplayKeycodes(display,
-			 &kbinfo->keycode_min,
-			 &kbinfo->keycode_max);
-    if(r == 0)
-	return ERR;
-
-    n_syms = kbinfo->keycode_max - kbinfo->keycode_min + 1;
-    kbinfo->syms = XGetKeyboardMapping(display, kbinfo->keycode_min,
-				       n_syms,
-				       &kbinfo->ksym_per_code);
-    if(kbinfo->syms == NULL)
-	return ERR;
-
-    factory = rdman_get_ob_factory(rdman);
-    kbinfo->kbevents = subject_new(factory, kbinfo, OBJT_KB);
-    if(kbinfo->kbevents == NULL)
-	return ERR;
-    /*! \todo Make sure ob_factory is still need. */
-    kbinfo->ob_factory = factory;
-
-    return OK;
 }
 
 static void X_kb_destroy(X_kb_info_t *kbinfo) {
     subject_free(kbinfo->kbevents);
-    XFree(kbinfo->syms);
-}
-
-/*! \brief Accept X keyboard events from handle_x_event() and dispatch it.
- */
-static void X_kb_handle_event(X_kb_info_t *kbinfo, XKeyEvent *xkey) {
-    unsigned int code;
-    int sym;
-    X_kb_event_t event;
-
-    code = xkey->keycode;
-    sym = keycode2sym(kbinfo, code);
-    if(xkey->type == KeyPress)
-	event.event.type = EVT_KB_PRESS;
-    else if(xkey->type == KeyRelease)
-	event.event.type = EVT_KB_RELEASE;
-    event.event.tgt = event.event.cur_tgt = kbinfo->kbevents;
-    event.keycode = code;
-    event.sym = sym;
-
-    subject_notify(kbinfo->kbevents, &event.event);
 }
 
 /* @} */
 
 static unsigned int get_button_state(unsigned int state) {
-    unsigned int but = 0;
-
-    if(state & Button1Mask)
-	but |= MOUSE_BUT1;
-    if(state & Button2Mask)
-	but |= MOUSE_BUT2;
-    if(state & Button3Mask)
-	but |= MOUSE_BUT3;
-
-    return but;
+    return 0;
 }
 
 static unsigned int get_button(unsigned int button) {
-    switch(button) {
-    case Button1:
-	return MOUSE_BUT1;
-    case Button2:
-	return MOUSE_BUT2;
-    case Button3:
-	return MOUSE_BUT3;
-    }
     return 0;
 }
 
@@ -260,99 +193,6 @@ handle_expose_event(X_MB_runtime_t *rt) {
     rt->eflag = 0;
 }
 
-/*! \brief Handle single X event and maintain internal states.
- *
- * It keeps internal state in rt to improve performance.
- */
-static void
-handle_single_x_event(X_MB_runtime_t *rt, XEvent *evt) {
-    redraw_man_t *rdman = rt->rdman;
-    XMotionEvent *mevt;
-    XButtonEvent *bevt;
-    XExposeEvent *eevt;
-    XKeyEvent *xkey;
-    int x, y, w, h;
-
-    shape_t *shape;
-
-    unsigned int state, button;
-    int in_stroke;
-
-    if(evt->type != MotionNotify && rt->mflag)
-	handle_motion_event(rt);
-
-    switch(evt->type) {
-    case ButtonPress:
-	bevt = (XButtonEvent *)evt;
-	x = bevt->x;
-	y = bevt->y;
-	state = get_button_state(bevt->state);
-	button = get_button(bevt->button);
-
-	shape = find_shape_at_pos(rdman, x, y,
-				  &in_stroke);
-	if(shape)
-	    notify_coord_or_shape(rdman, (mb_obj_t *)shape,
-				  x, y, EVT_MOUSE_BUT_PRESS,
-				  state, button);
-	break;
-
-    case ButtonRelease:
-	bevt = (XButtonEvent *)evt;
-	x = bevt->x;
-	y = bevt->y;
-	state = get_button_state(bevt->state);
-	button = get_button(bevt->button);
-
-	shape = find_shape_at_pos(rdman, x, y,
-				  &in_stroke);
-	if(shape)
-	    notify_coord_or_shape(rdman, (mb_obj_t *)shape,
-				  x, y, EVT_MOUSE_BUT_RELEASE,
-				  state, button);
-	break;
-
-    case MotionNotify:
-	mevt = (XMotionEvent *)evt;
-	rt->mx = mevt->x;
-	rt->my = mevt->y;
-	rt->mbut_state = get_button_state(mevt->state);
-	rt->mflag = 1;
-	break;
-
-    case KeyPress:
-    case KeyRelease:
-	xkey = &evt->xkey;
-	X_kb_handle_event(&rt->kbinfo, xkey);
-	break;
-
-    case Expose:
-	eevt = &evt->xexpose;
-	x = eevt->x;
-	y = eevt->y;
-	w = eevt->width;
-	h = eevt->height;
-
-	if(rt->eflag) {
-	    if(x < rt->ex1)
-		rt->ex1 = x;
-	    if(y < rt->ey1)
-		rt->ey1 = y;
-	    if((x + w) > rt->ex2)
-		rt->ex2 = x + w;
-	    if((y + h) > rt->ey2)
-		rt->ey2 = y + h;
-	} else {
-	    rt->ex1 = x;
-	    rt->ey1 = y;
-	    rt->ex2 = x + w;
-	    rt->ey2 = y + h;
-	    rt->eflag = 1;
-	}
-	break;
-    }
-}
-
 /*! \brief Call when no more event in an event iteration.
  *
  * No more event means event queue is emplty.  This function will
@@ -366,29 +206,6 @@ no_more_event(X_MB_runtime_t *rt) {
 	handle_expose_event(rt);
 }
 
-/*! \brief Dispatch all X events in the queue.
- */
-static void handle_x_event(X_MB_runtime_t *rt) {
-    Display *display = rt->display;
-    XEvent evt;
-    int r;
-
-    /* XXX: For some unknown reason, it causes a segmentation fault to
-     *      called XEventsQueued() after receiving first Expose event
-     *      and before redraw for the event.
-     */
-    while(XEventsQueued(display, QueuedAfterReading) > 0) {
-	r = XNextEvent(display, &evt);
-	if(r == -1)
-	    break;
-
-	handle_single_x_event(rt, &evt);
-    }
-    no_more_event(rt);
-
-    XFlush(display);
-}
-
 /*! \brief Handle connection coming data and timeout of timers.
  *
  * \param display is a Display returned by XOpenDisplay().
@@ -400,10 +217,9 @@ static void handle_x_event(X_MB_runtime_t *rt) {
  */
 void X_MB_handle_connection(void *be) {
     X_MB_runtime_t *rt = (X_MB_runtime_t *) be;
-    Display *display = rt->display;
     redraw_man_t *rdman = rt->rdman;
     mb_tman_t *tman = rt->tman;
-    int fd;
+    int fd = 0;
     mb_timeval_t now, tmo;
     struct timeval tv;
     fd_set rfds,wfds;
@@ -412,7 +228,7 @@ void X_MB_handle_connection(void *be) {
 
     handle_x_event(rt);
 
-    fd = XConnectionNumber(display);
+/*    fd = XConnectionNumber(display);*/
     nfds = fd + 1;
     while(1) {
 	FD_ZERO(&rfds);
@@ -444,7 +260,6 @@ void X_MB_handle_connection(void *be) {
 	    get_now(&now);
 	    mb_tman_handle_timeout(tman, &now);
 	    rdman_redraw_changed(rdman);
-	    XFlush(display);
 	} else if(FD_ISSET(fd, &rfds)){
 	    handle_x_event(rt);
 	} else {
@@ -464,90 +279,37 @@ void X_MB_handle_connection(void *be) {
 #define ERR -1
 #define OK 0
 
-static int X_init_connection(const char *display_name,
-			     int w, int h,
-			     Display **displayp,
-			     Visual **visualp,
-			     Window *winp) {
-    Display *display;
-    Window root, win;
-    Visual *visual;
-    int screen;
-    XSetWindowAttributes wattr;
-    int depth;
-    int x, y;
-    int draw_root = 0;
-    const char *disp_name;
-    char disp_buf[32];
-    int cp;
-    int r;
+static int dfb_init_connection(int w, int h,
+			     IDirectFB **dfb,
+			     IDirectFBSurface **primary) {
+    DFBSurfaceDescription dsc;
 
-    /*
-     * Support drawing on the root window.
-     */
-    disp_name = display_name;
-    if(strstr(display_name, ":root") != NULL) {
-	draw_root = 1;
-	cp = strlen(display_name) - 5;
-	if(cp >= 32)
-	    cp = 31;
-	memcpy(disp_buf, display_name, cp);
-	disp_buf[cp] = 0;
-	disp_name = disp_buf;
-    }
-
-    display = XOpenDisplay(disp_name);
-    if(display == NULL)
-	return ERR;
-
-    screen = DefaultScreen(display);
-    root = DefaultRootWindow(display);
-    visual = DefaultVisual(display, screen);
-    depth = DefaultDepth(display, screen);
-    wattr.override_redirect = False;
-    x = 10;
-    y = 10;
-    if(draw_root)
-	win = RootWindowOfScreen(ScreenOfDisplay(display, screen));
-    else {
-	win = XCreateWindow(display, root,
-			    x, y,
-			    w, h,
-			    1, depth, InputOutput, visual,
-			    CWOverrideRedirect, &wattr);
-	r = XMapWindow(display, win);
-	if(r == -1) {
-	    XCloseDisplay(display);
-	    return ERR;
-	}
-    }
-
-    XSelectInput(display, win, PointerMotionMask | ExposureMask |
-		 ButtonPressMask | ButtonReleaseMask |
-		 KeyPressMask | KeyReleaseMask);
-    XFlush(display);
-
-    *displayp = display;
-    *visualp = visual;
-    *winp = win;
+    DirectFBInit(NULL, NULL);
+    DirectFBCreate(dfb);
+    (*dfb)->SetCooperativeLevel(*dfb, DFSCL_FULLSCREEN);
+    dsc.flags = DSDESC_CAPS;
+    dsc.caps  = DSCAPS_PRIMARY;
+    (*dfb)->CreateSurface(*dfb, &dsc, primary);
+    (*primary)->GetSize(*primary, &w, &h);
+    (*primary)->SetColor(*primary, 0xff, 0xff, 0xff, 0xff);
+    (*primary)->FillRectangle(*primary, 0, 0, w, h);
 
     return OK;
 }
 
-/*! \brief Initialize a MadButterfy runtime for Xlib.
+/*! \brief Initialize a MadButterfy runtime for DirectFB.
  *
  * This one is very like X_MB_init(), except it accepts a
- * X_MB_runtime_t object initialized with a display connected to a X
+ * X_MB_runtime_t object initialized with a display connected to a DirectFB
  * server and an opened window.
  *
  * Following field of the X_MB_runtime_t object should be initialized.
  *   - w, h
  *   - win
- *   - display
- *   - visual
+ *   - dfb
+ *   - primary
  */
-static int
-X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
+static int X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
     int w, h;
 
@@ -560,12 +322,9 @@ X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
     xmb_rt->surface_ptn =
 	mbe_pattern_create_for_surface(xmb_rt->surface);
 
-    if(xmb_rt->backend_surface == NULL) /* xshm_init() may create one */
+    if (xmb_rt->backend_surface == NULL)
 	xmb_rt->backend_surface =
-	    mbe_xlib_surface_create(xmb_rt->display,
-				    xmb_rt->win,
-				    xmb_rt->visual,
-				    w, h);
+	    mbe_directfb_surface_create(xmb_rt->dfb, xmb_rt->primary);
 
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
@@ -590,14 +349,14 @@ X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
     xmb_rt->last = NULL;
 #endif
 
-    X_kb_init(&xmb_rt->kbinfo, xmb_rt->display, xmb_rt->rdman);
+/*    X_kb_init(&xmb_rt->kbinfo, xmb_rt->display, xmb_rt->rdman);*/
 
     return OK;
 }
 
-/*! \brief Initialize a MadButterfy runtime for Xlib.
+/*! \brief Initialize a MadButterfy runtime for DirectFB.
  *
- * It setups a runtime environment to run MadButterfly with Xlib.
+ * It setups a runtime environment to run MadButterfly with DirectFB.
  * Users should specify width and height of the opening window.
  */
 static int X_MB_init(X_MB_runtime_t *xmb_rt, const char *display_name,
@@ -608,8 +367,8 @@ static int X_MB_init(X_MB_runtime_t *xmb_rt, const char *display_name,
 
     xmb_rt->w = w;
     xmb_rt->h = h;
-    r = X_init_connection(display_name, w, h, &xmb_rt->display,
-			  &xmb_rt->visual, &xmb_rt->win);
+    r = dfb_init_connection(w, h, &xmb_rt->dfb, &xmb_rt->primary);
+
     if(r != OK)
 	return ERR;
 
@@ -618,84 +377,38 @@ static int X_MB_init(X_MB_runtime_t *xmb_rt, const char *display_name,
     return r;
 }
 
-/*! \brief Initialize a MadButterfly runtime for a window of X.
- *
- * Runtimes initialized with this function should be destroyed with
- * X_MB_destroy_keep_win().
- */
-static int
-X_MB_init_with_win(X_MB_runtime_t *xmb_rt,
-		   Display *display, Window win) {
-    XWindowAttributes attrs;
-    int r;
-
-    r = XGetWindowAttributes(display, win, &attrs);
-    if(r == 0)
-	return ERR;
-
-    memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
-
-    xmb_rt->display = display;
-    xmb_rt->win = win;
-    xmb_rt->visual = attrs.visual;
-    xmb_rt->w = attrs.width;
-    xmb_rt->h = attrs.height;
-
-    r = X_MB_init_with_win_internal(xmb_rt);
-
-    return r;
-}
-
 static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
-    if(xmb_rt->rdman) {
+    if (xmb_rt->rdman) {
 	redraw_man_destroy(xmb_rt->rdman);
 	free(xmb_rt->rdman);
     }
 
-    if(xmb_rt->tman)
+    if (xmb_rt->tman)
 	mb_tman_free(xmb_rt->tman);
 
-    if(xmb_rt->img_ldr)
+    if (xmb_rt->img_ldr)
 	MB_IMG_LDR_FREE(xmb_rt->img_ldr);
 
-    if(xmb_rt->cr)
+    if (xmb_rt->cr)
 	mbe_destroy(xmb_rt->cr);
-    if(xmb_rt->backend_cr)
+
+    if (xmb_rt->backend_cr)
 	mbe_destroy(xmb_rt->backend_cr);
 
     if(xmb_rt->surface)
 	mbe_surface_destroy(xmb_rt->surface);
+
     if(xmb_rt->surface_ptn)
 	mbe_pattern_destroy(xmb_rt->surface_ptn);
+
     if(xmb_rt->backend_surface)
 	mbe_surface_destroy(xmb_rt->backend_surface);
 
-    if(xmb_rt->display)
-	XCloseDisplay(xmb_rt->display);
+    if (xmb_rt->primary)
+	xmb_rt->primary->Release(xmb_rt->primary);
 
-    X_kb_destroy(&xmb_rt->kbinfo);
-}
-
-/*! \brief Destroy a MadButterfly runtime initialized with
- *	X_MB_init_with_win().
- *
- * Destroying a runtime with this function prevent the window and
- * display associated with the runtime being closed.
- */
-static void
-X_MB_destroy_keep_win(X_MB_runtime_t *xmb_rt) {
-    Display *display;
-    Window win;
-
-    display = xmb_rt->display;
-    xmb_rt->display = NULL;
-    win = xmb_rt->win;
-    xmb_rt->win = 0;
-
-    X_MB_destroy(xmb_rt);
-
-    xmb_rt->display = display;
-    xmb_rt->win = win;
+    if (xmb_rt->dfb)
+	xmb_rt->dfb->Release(xmb_rt->dfb);
 }
 
 void *X_MB_new(const char *display_name, int w, int h) {
@@ -703,33 +416,13 @@ void *X_MB_new(const char *display_name, int w, int h) {
     int r;
 
     rt = O_ALLOC(X_MB_runtime_t);
-    if(rt == NULL)
+
+    if (rt == NULL)
 	return NULL;
 
     r = X_MB_init(rt, display_name, w, h);
-    if(r != OK) {
-	free(rt);
-	return NULL;
-    }
 
-    return rt;
-}
-
-/*! \brief Create a new runtime for existed window for X.
- *
- * The object returned by this function must be free with
- * X_MB_free_keep_win() to prevent the window from closed.
- */
-void *X_MB_new_with_win(Display *display, Window win) {
-    X_MB_runtime_t *rt;
-    int r;
-
-    rt = O_ALLOC(X_MB_runtime_t);
-    if(rt == NULL)
-	return NULL;
-
-    r = X_MB_init_with_win(rt, display, win);
-    if(r != OK) {
+    if (r != OK) {
 	free(rt);
 	return NULL;
     }
@@ -823,6 +516,7 @@ void X_MB_remove_event(void *rt, int type, int fd)
 	}
     }
 }
+
 mb_backend_t backend = { X_MB_new,
 			 X_MB_free,
 			 X_MB_add_event,
@@ -834,6 +528,7 @@ mb_backend_t backend = { X_MB_new,
 			 X_MB_ob_factory,
 			 X_MB_img_ldr
 		};
+
 /*! \defgroup x_supp_nodejs_sup Export functions for supporting nodejs plugin.
  *
  * These functions are for internal using.
@@ -843,28 +538,6 @@ mb_backend_t backend = { X_MB_new,
  */
 void _X_MB_handle_x_event_for_nodejs(void *rt) {
     handle_x_event((X_MB_runtime_t *)rt);
-}
-
-/*! \brief Get X connect for nodejs plugin.
- */
-int _X_MB_get_x_conn_for_nodejs(void *rt) {
-    return XConnectionNumber(((X_MB_runtime_t *)rt)->display);
-}
-
-/*! \brief Flush buffer for the X connection of a runtime object.
- */
-int _X_MB_flush_x_conn_for_nodejs(void *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
-    return XFlush(xmb_rt->display);
-}
-
-/*! \brief Handle single X event.
- */
-void
-_X_MB_handle_single_event(void *rt, void *evt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
-
-    handle_single_x_event(xmb_rt, (XEvent *)evt);
 }
 
 /*! \brief Called at end of an iteration of X event loop.
