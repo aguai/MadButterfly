@@ -38,6 +38,10 @@ if X_BACKEND
 libmbfly_la_SOURCES += X_supp.c
 endif
 
+if DFB_BACKEND
+libmbfly_la_SOURCES += dfb_supp.c
+endif
+
 libmbfly_la_LDFLAGS =
 
 if CAIRO_GRAPH_ENGINE
