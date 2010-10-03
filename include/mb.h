@@ -10,6 +10,9 @@
 #ifdef X_BACKEND
 #include "mb_X_supp.h"
 #endif
+#ifdef DFB_BACKEND
+#include "mb_dfb_supp.h"
+#endif
 #include "mb_animate.h"
 #include "mb_shapes.h"
 
