@@ -3,21 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <cairo-xlib.h>
+#include <cairo-directfb.h>
 #include "mb_graph_engine.h"
 #include "mb_redraw_man.h"
 #include "mb_timer.h"
 #include "mb_X_supp.h"
 #include "config.h"
-
-#ifdef XSHM
-/* \sa http://www.xfree86.org/current/mit-shm.html */
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <X11/extensions/XShm.h>
-#endif
 
 #define ERR -1
 #define OK 0
@@ -65,11 +56,6 @@ struct _X_MB_runtime {
     shape_t *last;
 #endif
 
-#ifdef XSHM
-    XImage *ximage;
-    XShmSegmentInfo shminfo;
-#endif
-
     /*
      * Following variables are used by handle_single_x_event()
      */
@@ -80,23 +66,6 @@ struct _X_MB_runtime {
     int mx, my;		       /* Position of last motion event */
     int mbut_state;	       /* Button state of last motion event */
 };
-
-#ifdef XSHM
-static void
-XSHM_update(X_MB_runtime_t *xmb_rt) {
-    GC gc;
-
-    gc = DefaultGC(xmb_rt->display, DefaultScreen(xmb_rt->display));
-    if(xmb_rt->ximage) {	/* support XSHM */
-	XShmPutImage(xmb_rt->display,
-		     xmb_rt->win,
-		     gc,
-		     xmb_rt->ximage,
-		     0, 0, 0, 0,
-		     xmb_rt->w, xmb_rt->h, 0);
-    }
-}
-#endif
 
 /*! \defgroup xkb X Keyboard Handling
  *
@@ -234,11 +203,11 @@ handle_motion_event(X_MB_runtime_t *rt) {
     shape_t *shape;
     coord_t *root;
     int in_stroke;
-    
+
     x = rt->mx;
     y = rt->my;
     state = rt->mbut_state;
-    
+
     shape = find_shape_at_pos(rdman, x, y,
 			      &in_stroke);
 #ifdef ONLY_MOUSE_MOVE_RAW
@@ -270,7 +239,7 @@ handle_motion_event(X_MB_runtime_t *rt) {
 	}
     }
 #endif
-    
+
     rt->mflag = 0;
 }
 
@@ -285,9 +254,9 @@ handle_expose_event(X_MB_runtime_t *rt) {
     ey1 = rt->ey1;
     ex2 = rt->ex2;
     ey2 = rt->ey2;
-    
+
     rdman_redraw_area(rdman, ex1, ey1, (ex2 - ex1), (ey2 - ey1));
-    
+
     rt->eflag = 0;
 }
 
@@ -416,10 +385,7 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 	handle_single_x_event(rt, &evt);
     }
     no_more_event(rt);
-    
-#ifdef XSHM
-    XSHM_update(rt);
-#endif
+
     XFlush(display);
 }
 
@@ -478,9 +444,6 @@ void X_MB_handle_connection(void *be) {
 	    get_now(&now);
 	    mb_tman_handle_timeout(tman, &now);
 	    rdman_redraw_changed(rdman);
-#ifdef XSHM
-	    XSHM_update(rt);
-#endif
 	    XFlush(display);
 	} else if(FD_ISSET(fd, &rfds)){
 	    handle_x_event(rt);
@@ -571,94 +534,6 @@ static int X_init_connection(const char *display_name,
     return OK;
 }
 
-#ifdef XSHM
-static void
-xshm_destroy(X_MB_runtime_t *xmb_rt) {
-    XShmSegmentInfo *shminfo;
-
-    shminfo = &xmb_rt->shminfo;
-
-    if(xmb_rt->shminfo.shmaddr) {
-	XShmDetach(xmb_rt->display, shminfo);
-    }
-
-    if(xmb_rt->ximage) {
-	XDestroyImage(xmb_rt->ximage);
-	xmb_rt->ximage = NULL;
-    }
-
-    if(shminfo->shmaddr) {
-	shmdt(shminfo->shmaddr);
-	shminfo->shmaddr = NULL;
-    }
-
-    if(shminfo->shmid) {
-	shmctl(shminfo->shmid, IPC_RMID, 0);
-	shminfo->shmid = 0;
-    }
-}
-
-static void
-xshm_init(X_MB_runtime_t *xmb_rt) {
-    Display *display;
-    Visual *visual;
-    XImage *ximage;
-    int screen;
-    int depth;
-    int support_shm;
-    int mem_sz;
-    XShmSegmentInfo *shminfo;
-    int surf_fmt;
-
-    display = xmb_rt->display;
-    visual = xmb_rt->visual;
-    shminfo = &xmb_rt->shminfo;
-
-    support_shm = XShmQueryExtension(display);
-    if(!support_shm)
-	return;
-
-    screen = DefaultScreen(display);
-    depth = DefaultDepth(display, screen);
-
-    if(depth != 24 && depth != 32)
-	return;
-
-    xmb_rt->ximage = XShmCreateImage(display, visual, depth,
-				     ZPixmap, NULL, shminfo,
-				     xmb_rt->w, xmb_rt->h);
-    ximage = xmb_rt->ximage;
-
-    mem_sz = ximage->bytes_per_line * ximage->height;
-    shminfo->shmid = shmget(IPC_PRIVATE, mem_sz, IPC_CREAT | 0777);
-    if(shminfo->shmid == -1) {
-	xshm_destroy(xmb_rt);
-	return;
-    }
-
-    shminfo->shmaddr = shmat(shminfo->shmid, 0, 0);
-    ximage->data = shminfo->shmaddr;
-
-    shminfo->readOnly = 0;
-
-    XShmAttach(display, shminfo);
-
-    switch(depth) {
-    case 24: surf_fmt = CAIRO_FORMAT_RGB24; break;
-    case 32: surf_fmt = CAIRO_FORMAT_ARGB32; break;
-    }
-
-    xmb_rt->backend_surface =
-	mbe_image_surface_create_for_data((unsigned char *)ximage->data,
-					  surf_fmt,
-					  xmb_rt->w,
-					  xmb_rt->h,
-					  ximage->bytes_per_line);
-    if(xmb_rt->backend_surface == NULL)
-	xshm_destroy(xmb_rt);
-}
-#endif /* XSHM */
-
 /*! \brief Initialize a MadButterfy runtime for Xlib.
  *
  * This one is very like X_MB_init(), except it accepts a
@@ -678,10 +553,6 @@ X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
 
     w = xmb_rt->w;
     h = xmb_rt->h;
-
-#ifdef XSHM
-    xshm_init(xmb_rt);
-#endif
 
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
@@ -761,7 +632,7 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt,
     r = XGetWindowAttributes(display, win, &attrs);
     if(r == 0)
 	return ERR;
-    
+
     memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
 
     xmb_rt->display = display;
@@ -822,7 +693,7 @@ X_MB_destroy_keep_win(X_MB_runtime_t *xmb_rt) {
     xmb_rt->win = 0;
 
     X_MB_destroy(xmb_rt);
-    
+
     xmb_rt->display = display;
     xmb_rt->win = win;
 }
@@ -984,9 +855,6 @@ int _X_MB_get_x_conn_for_nodejs(void *rt) {
  */
 int _X_MB_flush_x_conn_for_nodejs(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
-#ifdef XSHM
-    XSHM_update(xmb_rt);
-#endif
     return XFlush(xmb_rt->display);
 }
 
@@ -995,7 +863,7 @@ int _X_MB_flush_x_conn_for_nodejs(void *rt) {
 void
 _X_MB_handle_single_event(void *rt, void *evt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
-    
+
     handle_single_x_event(xmb_rt, (XEvent *)evt);
 }
 
@@ -1004,7 +872,7 @@ _X_MB_handle_single_event(void *rt, void *evt) {
 void
 _X_MB_no_more_event(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
-    
+
     no_more_event(xmb_rt);
 }
 
