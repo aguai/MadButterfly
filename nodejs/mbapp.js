@@ -97,9 +97,9 @@ app=function(display, w, h) {
     paint.fill(background);
     mb_rt.root.add_shape(background);
 
-	this.mb_rt.kbevents.add_event_observer(exports.EVT_KB_PRESS, function(evt) { self.KeyPress(evt);});
-	this.keymap={};
-	this.onKeyPress = null;
+    this.mb_rt.kbevents.add_event_observer(exports.EVT_KB_PRESS, function(evt) { self.KeyPress(evt);});
+    this.keymap={};
+    this.onKeyPress = null;
 }
 app.prototype.loadSVG=function(fname) {
     svg.loadSVG(this.mb_rt,this.mb_rt.root,fname);
