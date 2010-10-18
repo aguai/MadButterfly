@@ -107,7 +107,9 @@ app.prototype.loadSVG=function(fname) {
 
 app.prototype.KeyPress = function(evt) {
     if (this.onKeyPress) this.onKeyPress(evt.sym);
-	if (evt.sym in this.keymap) this.keymap[evt.sym]();
+	if (evt.sym in this.keymap) {
+	    this.keymap[evt.sym]();
+	}
 }
 
 app.prototype.loop=function() {
@@ -135,11 +137,11 @@ app.prototype.dump=function() {
 app.prototype.addKeyListener=function(key,f) {
     if (typeof(key) == 'number')
         this.keymap[key] = f;
-	else {
-	    for(k in key) {
-		    this.keymap[k] = f;
-		}
+    else {
+        for(k in key) {
+	    this.keymap[k] = f;
 	}
+    }
 }
 
 var app_with_win = function(display, win) {
