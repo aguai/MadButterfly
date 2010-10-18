@@ -52,7 +52,6 @@ function rotate_draw(percent) {
     sv = Math.sin(ang);
     cv = Math.cos(ang);
     mtx = [cv, -sv, 0, sv, cv, 0];
-    sys.puts('x='+obj.center.x+',y='+obj.center.y);
     shift = [1, 0, -obj.center.x, 0, 1, -obj.center.y];
     mtx = multiply(mtx, shift);
     shift = [1, 0, obj.center.x, 0, 1, obj.center.y];
@@ -209,14 +208,11 @@ function linear_update()
     var now = Date.now();
     var i;
     
-    sys.puts("real time is "+now);
-    sys.puts("end is "+this.end);
     if (now >= this.end) {
         this.timer.stop();
 	now = this.end;
     }
     if (now < this.startmove) return;
-    sys.puts("now is "+now+" offset is "+(now-this.startmove));
     var per = (now-this.startmove)/this.duration/1000;
     if (per > 1) per = 1;
     this.action.draw(per);
@@ -331,7 +327,6 @@ program.prototype.finish=function() {
 exports.run = function(actions,start,duration) {
     for(a in actions) {
         var li = new linear(actions[a],start,duration);
-	sys.puts(li);
 	li.start();
     }
 }
