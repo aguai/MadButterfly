@@ -112,8 +112,9 @@ MainMenu.prototype.key_enter=function()
     var target = this.items[this.item];
     var sx = 500 - target.center.x;
     var sy = 220 - target.center.y;
-    var an = new animate.shift(this.app,target,sx,sy,1);
-    an.start();
+    var an = new animate.shift(this.app,target,sx,sy);
+    var self = this;
+    animate.run([an],0,1,function() {self.changePage();});
     for(i=0;i<this.items.length;i++) {
 	if (i == this.item) continue;
 	var x = Math.random();
@@ -129,6 +130,10 @@ MainMenu.prototype.key_enter=function()
 	alpha = new animate.alpha(this.app,this.items[i], 0);
 	animate.run([an], 0, 1);
     }
+}
+
+MainMenu.prototype.changePage=function() {
+    this.app.loadSVG("browser.svg");    
 }
 
 exports.MainMenu=MainMenu;
