@@ -211,6 +211,10 @@ function linear_update()
     if (now >= this.end) {
         this.timer.stop();
 	now = this.end;
+        if (this.callback_end) {
+            this.callback_end();
+    	    this.callback_end=null;
+        }
     }
     if (now < this.startmove) return;
     var per = (now-this.startmove)/this.duration/1000;
@@ -238,18 +242,30 @@ function linear_stop()
 function linear_finish()
 {
     this.action.draw(1);
+    if (this.callback_end) {
+        this.callback_end();
+	this.callback_end=null;
+    }
 }
 function linear(action,start, duration) 
 {
     this.action = action;
     this.duration = duration;
     this.starttime = start;
+    this.callback_end = null;
     this.timer=null;
 }
+
+function linear_callback(cb)
+{
+    this.callback_end = cb;
+}
+
 linear.prototype.update = linear_update;
 linear.prototype.start = linear_start;
 linear.prototype.stop = linear_stop;
 linear.prototype.finish = linear_finish;
+linear.prototype.callbackAtEnd = linear_callback;
 exports.linear = linear;
 
 
@@ -324,11 +340,13 @@ program.prototype.finish=function() {
     }
 }
 
-exports.run = function(actions,start,duration) {
+exports.run = function(actions,start,duration,cb) {
+    var li;
     for(a in actions) {
-        var li = new linear(actions[a],start,duration);
+        li = new linear(actions[a],start,duration);
 	li.start();
     }
+    li.callbackAtEnd(cb);
 }
 exports.runexp=function(actions,start,exp) {
     sys.puts("This function is not implemented yet");
