@@ -32,12 +32,15 @@ function parse_color(color) {
     return [r, g, b];
 }
 
-exports.loadSVG=function(mb_rt,root,filename) {
-    return new loadSVG(mb_rt, root, filename);
-};
-
+exports.loadSVG=loadSVG;
 
 function loadSVG(mb_rt, root, filename) {
+    this.pgstack=[];
+    if (filename)
+        this.load(mb_rt,root,filename);
+}
+
+loadSVG.prototype.load=function(mb_rt, root, filename) {
     var doc = libxml.parseXmlFile(filename);
     var _root = doc.root();
     var nodes = _root.childNodes();
@@ -48,9 +51,13 @@ function loadSVG(mb_rt, root, filename) {
     this.stop_ref={};
     this.gradients={};
     this.radials = {};
-    root.center=new Object();
-    root.center.x = 10000;
-    root.center.y = 10000;
+    coord.center=new Object();
+    coord.center.x = 10000;
+    coord.center.y = 10000;
+    if (this.pgstack.length > 0)
+        this.pgstack[this.pgstack.length-1].hide();
+    this.pgstack.push(coord);
+
     
     if(_root.attr("width")) {
 	k = _root.attr("width").value();
@@ -64,11 +71,19 @@ function loadSVG(mb_rt, root, filename) {
     for(k in nodes) {
 	var n = nodes[k].name();
         if (n == "defs") {
-            this.parseDefs(root,nodes[k]);
+            this.parseDefs(coord,nodes[k]);
         } else if (n == "g") {
-            this.parseGroup(accu,root,'root_coord',nodes[k]);
+            this.parseGroup(accu,coord,'root_coord',nodes[k]);
         } 
     }
+}
+
+loadSVG.prototype.leaveSVG=function()
+{
+    var p = this.pgstack.pop();
+    p.hide();
+    if (this.pgstack.length > 0)
+	this.pgstack[this.pgstack.length-1].show();
 }
 
 function make_mbnames(mb_rt, n, obj) {

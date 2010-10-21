@@ -100,9 +100,10 @@ app=function(display, w, h) {
     this.mb_rt.kbevents.add_event_observer(exports.EVT_KB_PRESS, function(evt) { self.KeyPress(evt);});
     this.keymap={};
     this.onKeyPress = null;
+    this.svg = new svg.loadSVG(this.mb_rt,this.mb_rt.root,null);
 }
 app.prototype.loadSVG=function(fname) {
-    svg.loadSVG(this.mb_rt,this.mb_rt.root,fname);
+    this.svg.load(this.mb_rt,this.mb_rt.root,fname)
 }
 
 app.prototype.KeyPress = function(evt) {
