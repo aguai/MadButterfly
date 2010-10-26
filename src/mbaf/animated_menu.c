@@ -14,9 +14,11 @@ static void set_text(coord_t *g, char *text)
 
     FOR_COORD_MEMBERS(g, geo) {
         shape = geo_get_shape(geo);
+#ifdef SH_TEXT
         if(shape->obj.obj_type == MBO_TEXT) {
 		sh_text_set_text(shape, text);
         }
+#endif
     }
 }
 
