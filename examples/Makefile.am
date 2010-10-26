@@ -1,6 +1,6 @@
 if X_BACKEND
-SUBDIRS = calculator tank dynamic drag menu
+SUBDIRS = calculator tank drag
 if SH_TEXT
-SUBDIRS += svg2code_ex
+SUBDIRS += svg2code_ex dynamic menu
 endif
 endif
