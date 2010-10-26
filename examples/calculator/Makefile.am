@@ -5,8 +5,8 @@ EXTRA_DIST = calculator_scr.svg
 
 calc_SOURCES = main.c
 nodist_calc_SOURCES = calculator_scr.c calculator_scr.h
-calc_CPPFLAGS = @pangocairo_CFLAGS@ $(INCLUDES)
-calc_LDFLAGS = @pangocairo_LIBS@ 
+calc_CPPFLAGS = @cairo_CFLAGS@ $(INCLUDES)
+calc_LDFLAGS = @cairo_LIBS@ 
 calc_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = calculator_scr.c calculator_scr.h calculator_scr.mb
 CLEANFILES = calculator_scr.c calculator_scr.h calculator_scr.mb
