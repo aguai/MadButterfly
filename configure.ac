@@ -149,7 +149,7 @@ AM_CONDITIONAL([XSHM], [test x"${xshm}" = xtrue -a x"${cairo}" = xtrue -a x$back
     PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
     #PKG_CHECK_MODULES([cairo2], [cairo2 >= 2.0], , AC_MSG_ERROR([cairo2 >= 2.0 not found]))
     [if [ x"${sh_text}" = xtrue ]; then]
-        PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found, use --disable_sh_text to configure without pangocairo.]))
+        PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found: use --disable-sh_text to configure without pangocairo.]))
     [fi]
 [fi]
 
