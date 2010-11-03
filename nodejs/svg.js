@@ -97,6 +97,12 @@ function make_mbnames(mb_rt, n, obj) {
     if(mbname) {
 	name = mbname.value();
 	mb_rt.mbnames[name] = obj;
+	return;
+    }
+    mbname = n.attr("label");
+    if(mbname&&(mbname.value()!="")) {
+	name = mbname.value();
+	mb_rt.mbnames[name] = obj;
     }
 }
 
