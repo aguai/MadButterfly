@@ -5,16 +5,25 @@ var mbapp = require("mbapp");
 var sys=require("sys");
 var animate=require("animate");
 var fs = require("fs");
+var EPG = require('./epg');
 
 function MainMenu(app) 
 {
     var self = this;
-    app.loadSVG("desktop.svg");
+    //var epg = new EPG.EPG();
+    //epg.registerInitDone(function() { self.init();});
+    self.init();
+}
+MainMenu.prototype.init=function()
+{
+    app.loadSVG("main.svg");
 
-    this.video = app.get("video");
-    this.audio = app.get("audio");
-    this.picture = app.get("picture");
-    this.setting = app.get("setting");
+    var i;
+    var self = this;
+    this.items=[];
+    for(i=0;i<4;i++) {
+	this.items.push(app.get("cat"+i));
+    }
     this.app = app;
 
     this.lightbar = app.get("lightbar");
@@ -24,8 +33,6 @@ function MainMenu(app)
         this.lines.push(line);
     }
     this.line=0;
-
-    this.items=[this.video, this.audio, this.picture, this.setting];
     this.item = 0;
 
     animate.run([new animate.scale(app,this.items[this.item], 1, 1.5)], 0, 0.1);
@@ -56,6 +63,9 @@ MainMenu.prototype.key_left=function ()
     animate.run([an], 0, 0.1);
     an = new animate.scale(this.app, target, 1, 1.5);
     animate.run([an], 0, 0.3);
+    var sx = target.center.x - this.lightbar.center.x;
+    var an = new animate.shift(this.app, this.lightbar, sx, 0);
+    animate.run([an], 0, 0.3);
 }
 
 MainMenu.prototype.key_right=function() 
@@ -75,6 +85,9 @@ MainMenu.prototype.key_right=function()
     var an = new animate.scale(this.app, old, 1, 1);
     animate.run([an], 0, 0.1);
     an = new animate.scale(this.app, target, 1, 1.5);
+    animate.run([an], 0, 0.3);
+    var sx = target.center.x - this.lightbar.center.x;
+    var an = new animate.shift(this.app, this.lightbar, sx, 0);
     animate.run([an], 0, 0.3);
 }
 
