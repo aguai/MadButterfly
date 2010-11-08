@@ -6,13 +6,17 @@ var sys=require("sys");
 var animate=require("animate");
 var fs = require("fs");
 var EPG = require('./epg');
-
+/**
+ *   We will fetch the EPG file from the server and fetch all images required for the main category from it.
+ *   If these files are cached, we will not fetch it again. Otherwise, we will fetch them. The EPG class is
+ *   responsible for the cache management.
+ */
 function MainMenu(app) 
 {
     var self = this;
-    //var epg = new EPG.EPG();
-    //epg.registerInitDone(function() { self.init();});
-    self.init();
+    var epg = new EPG.EPG();
+    epg.registerInitDone(function() { self.init();});
+    //self.init();
 }
 MainMenu.prototype.init=function()
 {
