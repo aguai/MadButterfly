@@ -25,7 +25,7 @@ MainMenu.prototype.init=function()
     var i;
     var self = this;
     this.items=[];
-    for(i=0;i<4;i++) {
+    for(i=0;i<8;i++) {
 	this.items.push(app.get("cat"+i));
     }
     this.app = app;
@@ -150,7 +150,7 @@ MainMenu.prototype.key_enter=function()
 }
 
 MainMenu.prototype.changePage=function() {
-    this.app.loadSVG("browser.svg");    
+    this.app.loadSVG("preview.svg");    
 }
 
 exports.MainMenu=MainMenu;
