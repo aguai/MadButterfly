@@ -15,12 +15,12 @@ function shift_draw(percent) {
     x = (this.targetx - this.startposx) * percent + this.startposx;
     y = (this.targety - this.startposy) * percent + this.startposy;
     this.obj.center.move(x, y);
-    this.app.refresh();
+    this._app.refresh();
 }
 
 function shift(app,obj,shiftx,shifty) {
     obj.animated_shift = this;
-    this.app = app;
+    this._app = app;
     this.obj = obj;
     this.end = 0;
     this.targetx = shiftx + obj.center.x;
