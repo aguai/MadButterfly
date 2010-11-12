@@ -1,9 +1,9 @@
 // -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
 // vim: sw=4:ts=8:sts=4
-var svg = require("./svg");
-var mbapp = require("./mbapp");
+var svg = require("svg");
+var mbapp = require("mbapp");
 var sys=require("sys");
-var animate=require("./animate");
+var animate=require("animate");
 var fs = require("fs");
 
 app = new mbapp.app();
@@ -11,10 +11,7 @@ app.loadSVG("test.svg");
 lightbar = app.get("item_lightbar");
 item=1;
 var target = app.get("item" + item);
-sys.puts(lightbar.center.x);
-sys.puts(lightbar.center.y);
 lightbar.center.move_pnt(target.center);
-// lightbar[5] = app.get("item"+item)[5];
 
 app.files=fs.readdirSync("/tmp/");
 for(i=1;i<10;i++) {
@@ -49,8 +46,6 @@ app.addKeyListener(mbapp.KEY_DOWN, function() {
 	var shy = target.center.y - lightbar.center.y;
 	var action = new animate.shift(app, lightbar, shx, shy);
 	var an = new animate.linear(action, 0, 0.3);
-	sys.puts(target.center.y);
-	sys.puts(lightbar.center.y);
 	an.start();
     }
 });
