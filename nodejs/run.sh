@@ -2,7 +2,7 @@
 
 ABS=`realpath $0`
 BASE=`dirname $ABS`
-NODE_PATH=$BASE:$NODE_PATH
+NODE_PATH=$BASE:$BASE/objs/default:$NODE_PATH
 export NODE_PATH
 
 DIR=`dirname $1`
