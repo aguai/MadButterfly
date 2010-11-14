@@ -20,5 +20,5 @@ defined by the NODE_PATH environment variable.
  ~user/MadButterfly/nodejs$ export NODE_PATH=objs/default
 
 (5) Execute testsvg.js
- ~user/MadButterfly/nodejs$ node testsvg.js
+ ~user/MadButterfly/nodejs$ ./run examples/testsvg/testsvg.js
 
