@@ -453,8 +453,7 @@ var _bbox_proto = {
 	var c = this.owner;
 	var mtx;
 	
-	if(c.type != "coord")
-	    c = c.parent;	// is a shape!
+	c = c.parent;
 	
 	mtx = c._mbapp_saved_rev_mtx;
 	while(c.parent && typeof c.parent != "undefined") {
@@ -469,8 +468,7 @@ var _bbox_proto = {
 	var c = this.owner;
 	var mtx;
 	
-	if(c.type != "coord")
-	    c = c.parent;	// is a shape!
+	c = c.parent;
 
 	mtx = [c[0], c[1], c[2], c[3], c[4], c[5]];
 	while(c.parent) {
@@ -509,8 +507,7 @@ var _center_proto = {
 	var c = this.owner;
 	var mtx;
 	
-	if(c.type != "coord")
-	    c = c.parent;	// is a shape!
+	c = c.parent;
 	
 	mtx = c._mbapp_saved_rev_mtx;
 	while(c.parent && typeof c.parent != "undefined") {
@@ -525,8 +522,7 @@ var _center_proto = {
 	var c = this.owner;
 	var mtx;
 	
-	if(c.type != "coord")
-	    c = c.parent;	// is a shape!
+	c = c.parent;
 
 	mtx = [c[0], c[1], c[2], c[3], c[4], c[5]];
 	while(c.parent) {
@@ -611,6 +607,8 @@ var _center_proto = {
      */
     get y() { return this._y; },
 
+    /*! \brief Center position in the relative space defined by parent.
+     */
     get rel() {
 	var rev;
 	var xy;

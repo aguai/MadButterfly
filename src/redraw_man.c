@@ -1828,8 +1828,22 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 
     n_areas = _coord_get_dirty_areas(coord)->num;
     areas = _coord_get_dirty_areas(coord)->ds;
-    if(n_areas == 0)
-	abort();		/* should not happen! */
+    if(n_areas == 0) {
+	/* Go here for cached one that is descendant of another zeroed
+	 * one, but itself is not zeroed.  It is here for recomputing
+	 * pcache areas.
+	 */
+	if(coord_get_flags(coord, COF_JUST_CLEAN | COF_JUST_ZERO))
+	    abort();		/* should not happen! */
+	
+	parent = coord_get_parent(coord);
+	pcached_coord = coord_get_cached(parent);
+	area = coord_get_pcache_area(coord);
+	add_dirty_area(rdman, pcached_coord, area);
+	area = coord_get_pcache_last_area(coord);
+	add_dirty_area(rdman, pcached_coord, area);
+	return;
+    }
 
     area0 = _coord_get_aggr_dirty_areas(coord);
     area1 = area0 + 1;

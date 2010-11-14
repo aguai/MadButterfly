@@ -1,8 +1,8 @@
 // -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
 // vim: sw=4:ts=8:sts=4
-var mbapp = require("./mbapp");
+var mbapp = require("mbapp");
 var sys=require("sys");
-var canvas=require("./canvas");
+var canvas=require("canvas");
 
 app = new mbapp.app();
 
