@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libmbfly
+Description: MadButterfly (http://www.assembla.com/spaces/MadButterfly) is a toolkit for GUI environment. It is designed for embedded system. It make GUI designers and programmers work seperately. Designer export their artifacts to files with SVG format. MadButterfly provides a tool to translate graphics in SVG into C code and a framework that programmer can manipulate graphics. It works like a Javascript programmer to manipulate DOM object. Programmers using MadButterfly manipulate objects corresponding to SVG tags to interact with users of application.
+Version: @PACKAGE_VERSION@
+Requires: cairo >= 1.6.0
+Libs: -L${libdir} -lmbfly
+Cflags: -I${includedir}
