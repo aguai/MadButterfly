@@ -411,6 +411,7 @@ class MBScene():
 		self.scrollwin = gtk.ScrolledWindow()
 		self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 		self.scrollwin.add_with_viewport(self.grid)
+		self.scrollwin.set_size_request(-1,150)
 		for i in range(1,max):
 			self.grid.attach(gtk.Label('%d'% i), i,i+1,0,1,0,0,0,0)
 		for i in range(1,len(self.layer)+1):
@@ -468,16 +469,16 @@ class MBScene():
 	def addButtons(self,hbox):
 		btn = gtk.Button('Edit')
 		btn.connect('clicked', self.doEditScene)
-		hbox.pack_start(btn)
+		hbox.pack_start(btn,expand=False,fill=False)
 		btn = gtk.Button('Insert Key')
 		btn.connect('clicked',self.doInsertKeyScene)
-		hbox.pack_start(btn)
+		hbox.pack_start(btn,expand=False,fill=False)
 		btn=gtk.Button('Remove Key')
 		btn.connect('clicked', self.doRemoveScene)
-		hbox.pack_start(btn)
+		hbox.pack_start(btn,expand=False,fill=False)
 		btn=gtk.Button('Extend scene')
 		btn.connect('clicked', self.doExtendScene)
-		hbox.pack_start(btn)
+		hbox.pack_start(btn,expand=False,fill=False)
 	def onQuit(self, event):
 		self.OK = False
 		gtk.main_quit()
@@ -487,16 +488,16 @@ class MBScene():
 
 	def onConfirmDelete(self):
 		if self.scenemap == None:
-			vbox = gtk.VBox()
+			vbox = gtk.VBox(False,0)
 			vbox.pack_start(gtk.Label('Convert the SVG into a MadButterfly SVG file. All current element will be delted'))
-			hbox = gtk.HBox()
+			hbox = gtk.HBox(False,0)
 			self.button = gtk.Button('OK')
-			hbox.pack_start(self.button)
+			hbox.pack_start(self.button,expand=False,fill=False)
 			self.button.connect('clicked', self.onOK)
 			self.button = gtk.Button('Cancel')
-			hbox.pack_start(self.button)
+			hbox.pack_start(self.button,expand=False,fill=False)
 			self.button.connect("clicked", self.onQuit)
-			vbox.pack_start(hbox)
+			vbox.pack_start(hbox,expand=False,fill=False)
 			self.window.add(vbox)
 			self.window.show_all()
 			gtk.main()
@@ -507,23 +508,26 @@ class MBScene():
 		self.OK = True
 		self.parseScene()
 		self.showGrid()
+		vbox = gtk.VBox(False,0)
+		self.desktop.getToplevel().child.child.pack_end(vbox,expand=False)
+		self.window = vbox
 		#self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		#self.window.connect("destroy", gtk.main_quit)
 		#self.window.set_position(gtk.WIN_POS_MOUSE)
 		if self.scenemap == None:
 			self.onConfirmDelete()
 		if self.OK:
-			vbox = gtk.VBox()
-			self.window.add(vbox)
-			vbox.add(self.scrollwin)
+			vbox = gtk.VBox(False,0)
+			self.window.pack_start(vbox,expand=False)
+			vbox.pack_start(self.scrollwin,expand=False)
 			self.vbox = vbox
-			hbox=gtk.HBox()
+			hbox=gtk.HBox(False,0)
 			self.addButtons(hbox)
-			vbox.add(hbox)
+			vbox.pack_start(hbox,expand=False)
 		else:
 			return
 
-		self.window.set_size_request(600,200)
+		#self.window.set_size_request(600,200)
 
 		self.window.show_all()
 
