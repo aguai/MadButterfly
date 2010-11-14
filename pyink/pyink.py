@@ -7,16 +7,16 @@ ink_inited=0
 def start_desktop(inkscape,ptr):
     global ink_inited
     if ink_inited == 1:
+    	desktop = pybInkscape.GPointer_2_PYSPDesktop(ptr)
+	top = desktop.getToplevel()
+    	#dock = desktop.getDock()
+    	#item = dock.new_item("scene", "scene", "feBlend-icon", dock.ITEM_ST_DOCKED_STATE)
+    	scene = MBScene(desktop,top)
+    	scene.show()
         return
         
-    desktop = pybInkscape.GPointer_2_PYSPDesktop(ptr)
-    top = desktop.getToplevel()
-    dock = desktop.getDock()
-    item = dock.new_item("scene", "scene", "feBlend-icon", dock.ITEM_ST_DOCKED_STATE)
 
     ink_inited = 1
-    scene = MBScene(desktop,item.get_vbox())
-    scene.show()
 
 
 def pyink_start():
