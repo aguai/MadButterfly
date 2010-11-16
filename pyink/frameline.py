@@ -2,6 +2,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk
 import gtk.gdk
+import pango
 import gobject
 
 def color_to_rgb(v):
@@ -23,7 +24,7 @@ class frameruler(gtk.DrawingArea):
     _frame_width = 10           # Width for each frame is 10 pixels
     _mark_color = 0x808080      # color of mark lines
     _number_color = 0x000000    # color of frame number
-    _number_sz = 10             # font size of frame number
+    _number_sz = 8             # font size of frame number
     
     def __new__(clz, *args):
         if not frameruler._type_id:
@@ -56,10 +57,16 @@ class frameruler(gtk.DrawingArea):
 
         gc = gtk.gdk.GC(win)
 
+        #
+        # Set color of mark lines
+        #
         color_rgb = color_to_rgb(self._mark_color)
         color = gtk.gdk.Color(*color_rgb)
         gc.set_rgb_fg_color(color)
         
+        #
+        # Mark mark lines
+        #
         mark_h = w_h / 10
         for i in range(self._num_frames):
             mark_x = (i + 1) * self._frame_width
@@ -69,16 +76,28 @@ class frameruler(gtk.DrawingArea):
                 pass
             pass
 
+        #
+        # Set color of frame number
+        #
         color_rgb = color_to_rgb(self._number_color)
         color = gtk.gdk.Color(*color_rgb)
         gc.set_rgb_fg_color(color)
         
+        font_desc = pango.FontDescription()
+        font_desc.set_size(self._number_sz * pango.SCALE)
+
+        number_y = (w_h - self._number_sz) / 2
+        
+        #
+        # Draw frame number
+        #
         layout = self.create_pango_layout('1')
-        win.draw_layout(gc, 0, mark_h, layout)
+        layout.set_font_description(font_desc)
+        win.draw_layout(gc, 0, number_y, layout)
         for i in range(4, self._num_frames, 5):
             mark_x = i * self._frame_width
-            layout = self.create_pango_layout(str(i + 1))
-            win.draw_layout(gc, mark_x, mark_h, layout)
+            layout.set_text(str(i + 1))
+            win.draw_layout(gc, mark_x, number_y, layout)
             pass
         pass
     pass
