@@ -72,9 +72,9 @@ class frameruler(gtk.DrawingArea):
             mark_x = (i + 1) * self._frame_width
             win.draw_line(gc, mark_x, 0, mark_x, mark_h)
             win.draw_line(gc, mark_x, w_h - mark_h - 1, mark_x, w_h - 1)
-            if (i % 5) == 4:
-                pass
             pass
+
+        win.draw_line(gc, 0, w_h - 1, w_w, w_h -1)
 
         #
         # Set color of frame number
@@ -200,6 +200,7 @@ class frameline(gtk.DrawingArea):
     
     def _draw_frames(self):
         win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
         gc = gtk.gdk.GC(win)
         self._gc = gc
         
@@ -237,6 +238,12 @@ class frameline(gtk.DrawingArea):
                 i = i + 1
                 pass
             pass
+
+        border_rgb = color_to_rgb(self._normal_border)
+        border_color = gtk.gdk.Color(*border_rgb)
+        gc.set_rgb_fg_color(border_color)
+        stop_x = num_frames * self._frame_width
+        win.draw_line(gc, 0, w_h - 1, stop_x, w_h - 1)
         pass
 
     def _draw_keyframes(self):
@@ -276,6 +283,8 @@ class frameline(gtk.DrawingArea):
 
         win.draw_line(gc, line_x1, 0, line_x1, w_h)
         win.draw_line(gc, line_x2, 0, line_x2, w_h)
+        win.draw_line(gc, line_x1, w_h - 1, line_x2, w_h - 1)
+        win.draw_line(gc, line_x1, 0, line_x2, 0)
         pass
     
     def update(self):
