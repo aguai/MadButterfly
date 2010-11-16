@@ -125,17 +125,30 @@ class frameline(gtk.DrawingArea):
         return fl_obj
     
     def __init__(self, num_frames=20):
-        self.connect('expose_event', self._fl_expose)
+        self.connect('button-press-event', self._press_hdl)
+        self.connect('expose-event', self._fl_expose)
         self._num_frames = num_frames
         self._keys = []
         self._active_frame = -1
         pass
 
+    def _press_hdl(self, widget, event):
+        button = event.x / self._frame_width
+        print 'button %d - %d,%d' % (button, event.x, event.y)
+        pass
+
     def _fl_expose(self, widget, event):
-        print 'Expose %s' % (repr(event))
         win = self.window
         x, y, w, h, depth = win.get_geometry()
-        print '  Geometry of window: %dx%d+%d+%d' % (w, h, x, y)
+        if not hasattr(self, '_gc'):
+            self._gc = gtk.gdk.GC(win)
+            #
+            # register for button press event
+            #
+            emask = win.get_events()
+            emask = emask | gtk.gdk.BUTTON_PRESS_MASK
+            win.set_events(emask)
+            pass
         self.update()
         pass
 
@@ -170,9 +183,9 @@ class frameline(gtk.DrawingArea):
         #
         # Draw tween line
         #
-        line_x1 = (first_key.idx + 0.5) * self._frame_width
+        line_x1 = int(first_key.idx + 0.5) * self._frame_width
         line_x2 = line_x1 + (last_key.idx - first_key.idx) * self._frame_width
-        line_y = w_h * 2 / 3
+        line_y = int(w_h * 2 / 3)
         win.draw_line(gc, line_x1, line_y, line_x2, line_y)
         pass
 
@@ -201,8 +214,7 @@ class frameline(gtk.DrawingArea):
     def _draw_frames(self):
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
-        gc = gtk.gdk.GC(win)
-        self._gc = gc
+        gc = self._gc
         
         i = 0
         key_i = 0
