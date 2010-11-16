@@ -225,7 +225,7 @@ class frameline(gtk.DrawingArea):
             pass
         pass
 
-    ## Tween the key frame specified by an index and the frame at right.
+    ## Tween the key frame specified by an index and the key frame at right.
     #
     # \see http://www.entheosweb.com/Flash/shape_tween.asp
     def tween(self, idx, _type=0):
