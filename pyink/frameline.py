@@ -26,7 +26,7 @@ class frameline(gtk.DrawingArea):
     _select_color = 0xee2222    # color of border of selected frame
     _key_mark_color = 0x000000  # color of marks for key frames.
     _key_mark_sz = 4            # width and height of a key frame mark
-    _tween_color = 0x000000     # color of tween line
+    _tween_color = 0x808080     # color of tween line
     _tween_bgcolors = [0x80ff80, 0xff8080] # bg colors of tween frames
     # Colors for normal frames
     _normal_bgcolors = [0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xcccccc]
@@ -74,6 +74,22 @@ class frameline(gtk.DrawingArea):
         draw_w = (last_key.idx -  first_key.idx + 1) * self._frame_width - 1
 
         win.draw_rectangle(gc, True, draw_x, 0, draw_w, w_h)
+
+        #
+        # Set color of tween line
+        #
+        line_v = self._tween_color
+        line_rgb = color_to_rgb(line_v)
+        line_color = gtk.gdk.Color(*line_rgb)
+        gc.set_rgb_fg_color(line_color)
+        
+        #
+        # Draw tween line
+        #
+        line_x1 = (first_key.idx + 0.5) * self._frame_width
+        line_x2 = line_x1 + (last_key.idx - first_key.idx) * self._frame_width
+        line_y = w_h * 2 / 3
+        win.draw_line(gc, line_x1, line_y, line_x2, line_y)
         pass
 
     def _draw_frame(self, idx):
