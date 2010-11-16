@@ -18,6 +18,71 @@ class keyframe(object):
         pass
     pass
 
+class frameruler(gtk.DrawingArea):
+    _type_id = 0
+    _frame_width = 10           # Width for each frame is 10 pixels
+    _mark_color = 0x808080      # color of mark lines
+    _number_color = 0x000000    # color of frame number
+    _number_sz = 10             # font size of frame number
+    
+    def __new__(clz, *args):
+        if not frameruler._type_id:
+            frameruler._type_id = gobject.type_register(frameruler)
+            pass
+        fr = gobject.new(frameruler._type_id)
+        return fr
+
+    def __init__(self, num_frames=20):
+        self.connect('expose_event', self._fr_expose)
+        self._num_frames = num_frames
+        pass
+
+    def _fr_expose(self, widget, event):
+        self.update()
+        pass
+
+    def queue_draw(self):
+        print 'queue_draw'
+        self.update()
+        pass
+
+    def queue_draw_area(self, x, y, w, h):
+        print 'queue_draw_area'
+        pass
+
+    def update(self):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+
+        gc = gtk.gdk.GC(win)
+
+        color_rgb = color_to_rgb(self._mark_color)
+        color = gtk.gdk.Color(*color_rgb)
+        gc.set_rgb_fg_color(color)
+        
+        mark_h = w_h / 10
+        for i in range(self._num_frames):
+            mark_x = (i + 1) * self._frame_width
+            win.draw_line(gc, mark_x, 0, mark_x, mark_h)
+            win.draw_line(gc, mark_x, w_h - mark_h - 1, mark_x, w_h - 1)
+            if (i % 5) == 4:
+                pass
+            pass
+
+        color_rgb = color_to_rgb(self._number_color)
+        color = gtk.gdk.Color(*color_rgb)
+        gc.set_rgb_fg_color(color)
+        
+        layout = self.create_pango_layout('1')
+        win.draw_layout(gc, 0, mark_h, layout)
+        for i in range(4, self._num_frames, 5):
+            mark_x = i * self._frame_width
+            layout = self.create_pango_layout(str(i + 1))
+            win.draw_layout(gc, mark_x, mark_h, layout)
+            pass
+        pass
+    pass
+
 ## Show frame status of a layer
 #
 class frameline(gtk.DrawingArea):
@@ -272,8 +337,11 @@ class frameline(gtk.DrawingArea):
 
 if __name__ == '__main__':
     window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    fr = frameruler(40)
+    fr.set_size_request(300, 20)
+    
     fl = frameline(40)
-    fl.set_size_request(300, 30)
+    fl.set_size_request(300, 20)
     fl.add_keyframe(3)
     fl.add_keyframe(9)
     fl.add_keyframe(15)
@@ -282,9 +350,16 @@ if __name__ == '__main__':
     fl.tween(15, 1)
     fl.active_frame(15)
     print 'num of frames: %d' % (len(fl))
+
+    box = gtk.VBox()
+
+    box.pack_start(fr, False)
+    box.pack_start(fl, False)
+    window.add(box)
     
-    window.add(fl)
+    fr.show()
     fl.show()
+    box.show()
     window.show()
     gtk.main()
     pass
