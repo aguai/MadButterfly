@@ -205,6 +205,10 @@ class frameline(gtk.DrawingArea):
             pass
         pass
 
+    ## Add a key frame
+    #
+    # A key frame is the frame that user specify actions.  For
+    # example, move a object or add new objects at the frame.
     def add_keyframe(self, idx):
         key_indic = [key.idx for key in self._keys]
         if idx in key_indic:
