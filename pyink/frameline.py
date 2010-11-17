@@ -120,6 +120,7 @@ class frameline(gtk.DrawingArea):
     _normal_bgcolors = [0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xcccccc]
     _normal_border = 0xaaaaaa   # border color of normal frames.
     _active_border = 0xff3030   # border color of an active frame
+    _hover_border_color = 0xa0a0a0 # border when the pointer over a frame
 
     FRAME_BUT_PRESS = 'frame-button-press'
     
@@ -140,15 +141,22 @@ class frameline(gtk.DrawingArea):
     def __init__(self, num_frames=20):
         self.connect('button-press-event', self._press_hdl)
         self.connect('expose-event', self._fl_expose)
+        self.connect('motion-notify-event', self._motion_hdl)
         self._num_frames = num_frames
         self._keys = []
         self._active_frame = -1
+        self._last_hover = -1   # frame index of last hover
         pass
 
     def _press_hdl(self, widget, event):
         frame = event.x / self._frame_width
         but = event.button
         self.emit(frameline.FRAME_BUT_PRESS, frame, but)
+        pass
+    
+    def _motion_hdl(self, widget, event):
+        frame = int(event.x / self._frame_width)
+        self._draw_hover(frame)
         pass
 
     def _fl_expose(self, widget, event):
@@ -160,7 +168,8 @@ class frameline(gtk.DrawingArea):
             # register for button press event
             #
             emask = win.get_events()
-            emask = emask | gtk.gdk.BUTTON_PRESS_MASK
+            emask = emask | gtk.gdk.BUTTON_PRESS_MASK | \
+                gtk.gdk.POINTER_MOTION_MASK
             win.set_events(emask)
             pass
         self.update()
@@ -197,13 +206,13 @@ class frameline(gtk.DrawingArea):
         #
         # Draw tween line
         #
-        line_x1 = int(first_key.idx + 0.5) * self._frame_width
+        line_x1 = int((first_key.idx + 0.5) * self._frame_width)
         line_x2 = line_x1 + (last_key.idx - first_key.idx) * self._frame_width
         line_y = int(w_h * 2 / 3)
         win.draw_line(gc, line_x1, line_y, line_x2, line_y)
         pass
 
-    def _draw_frame(self, idx):
+    def _draw_normal_frame(self, idx):
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         
@@ -214,7 +223,7 @@ class frameline(gtk.DrawingArea):
         gc.set_rgb_fg_color(color)
         
         f_x = self._frame_width * idx
-        win.draw_rectangle(gc, True, f_x + 1, 0, self._frame_width, w_h)
+        win.draw_rectangle(gc, True, f_x + 1, 0, self._frame_width - 1, w_h)
         next_f_x = f_x + self._frame_width
         
         border_rgb = color_to_rgb(self._normal_border)
@@ -225,7 +234,7 @@ class frameline(gtk.DrawingArea):
         win.draw_line(gc, next_f_x, 0, next_f_x, w_h)
         pass
     
-    def _draw_frames(self):
+    def _draw_all_frames(self):
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         gc = self._gc
@@ -260,7 +269,7 @@ class frameline(gtk.DrawingArea):
                 i = last_tween_key.idx + 1
                 pass
             else:
-                self._draw_frame(i)
+                self._draw_normal_frame(i)
                 i = i + 1
                 pass
             pass
@@ -270,6 +279,24 @@ class frameline(gtk.DrawingArea):
         gc.set_rgb_fg_color(border_color)
         stop_x = num_frames * self._frame_width
         win.draw_line(gc, 0, w_h - 1, stop_x, w_h - 1)
+        pass
+
+    def _draw_keyframe(self, frame_idx):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        
+        color_v = self._key_mark_color
+        color_rgb = color_to_rgb(color_v)
+        color = gtk.gdk.Color(*color_rgb)
+        
+        gc = self._gc
+        gc.set_rgb_fg_color(color)
+        
+        mark_sz = self._key_mark_sz
+        mark_x = int((frame_idx + 0.5) * self._frame_width - mark_sz / 2)
+        mark_y = w_h * 2 / 3 - mark_sz / 2
+        
+        win.draw_rectangle(gc, True, mark_x, mark_y, mark_sz, mark_sz)
         pass
 
     def _draw_keyframes(self):
@@ -312,12 +339,81 @@ class frameline(gtk.DrawingArea):
         win.draw_line(gc, line_x1, w_h - 1, line_x2, w_h - 1)
         win.draw_line(gc, line_x1, 0, line_x2, 0)
         pass
+
+    ## \brief Redraw a frame specified by an index.
+    #
+    def _redraw_frame(self, frame_idx):
+        keys = [key.idx for key in self._keys]
+        try:
+            pos = keys.index(frame_idx)
+        except ValueError:
+            keys.append(frame_idx)
+            keys.sort()
+            pos = keys.index(frame_idx) - 1
+            pass
+        key = self._keys[pos]
+        
+        if key.right_tween or (key.left_tween and key.idx == frame_idx):
+            first_key = last_key = key
+            first_pos = last_pos = pos
+            while first_pos > 0 and first_key.left_tween:
+                first_pos = first_pos - 1
+                first_key = self._keys[first_pos]
+                pass
+            max_pos = len(self._keys) - 1
+            while last_pos < max_pos and last_key.right_tween:
+                last_pos = last_pos + 1
+                last_key = self._keys[last_pos]
+                pass
+
+            self._draw_tween(first_key, last_key)
+
+            for i in range(first_pos, last_pos + 1):
+                key = self._keys[i]
+                self._draw_keyframe(key.idx)
+                pass
+            pass
+        else:
+            self._draw_normal_frame(frame_idx)
+            if key.idx == frame_idx:
+                self._draw_keyframe(frame_idx)
+                pass
+            pass
+        pass
+
+    ## \brief Show a mark for the pointer for a frame.
+    #
+    def _draw_hover(self, frame_idx):
+        if self._last_hover != -1:
+            self._redraw_frame(self._last_hover)
+            pass
+
+        self._draw_active()
+        
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        gc = self._gc
+        
+        color_rgb = color_to_rgb(self._hover_border_color)
+        color = gtk.gdk.Color(*color_rgb)
+        gc.set_rgb_fg_color(color)
+
+        line_x1 = frame_idx * self._frame_width + 1
+        line_x2 = line_x1 + self._frame_width - 2
+        
+        win.draw_line(gc, line_x1, 1, line_x1, w_h - 2)
+        win.draw_line(gc, line_x2, 1, line_x2, w_h - 2)
+        win.draw_line(gc, line_x1, 1, line_x2, 1)
+        win.draw_line(gc, line_x1, w_h - 2, line_x2, w_h - 2)
+
+        self._last_hover = frame_idx
+        pass
     
     def update(self):
         win = self.window
         x, y, w, h, depth = win.get_geometry()
         
-        self._draw_frames()
+        self._draw_all_frames()
         self._draw_keyframes()
         if self._active_frame != -1:
             self._draw_active()
