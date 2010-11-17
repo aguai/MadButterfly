@@ -331,6 +331,9 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_active(self):
+        if self._active_frame == -1:
+            return
+        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
 
