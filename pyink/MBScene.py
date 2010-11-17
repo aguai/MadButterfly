@@ -401,17 +401,16 @@ class MBScene():
 	    for s in layer.scene:
 		if nth >= s.start and nth <= s.end:
 		    s.node.repr.setAttribute("style","",True)
-			# print "Put the elemenets out"
-			layer.nodes = []
-			
-			# for o in s.node:
-			#        print "    ",o.tag
-			#	layer.nodes.append(o)
-			# for o in s.node:
-			#	s.node.remove(o)
-		    else:
-			s.node.repr.setAttribute("style","display:none",True)
-			pass
+		    # print "Put the elemenets out"
+		    layer.nodes = []
+		    
+		    # for o in s.node:
+		    #        print "    ",o.tag
+		    #	layer.nodes.append(o)
+		    # for o in s.node:
+		    #	s.node.remove(o)
+		else:
+		    s.node.repr.setAttribute("style","display:none",True)
 		    pass
 		pass
 	    pass
@@ -506,6 +505,28 @@ class MBScene():
 	btn.modify_bg(gtk.STATE_NORMAL, btn.get_colormap().alloc_color("gray"))
 	return btn
     
+    def create_framelines(self):
+	import frameline
+	self.scrollwin = gtk.ScrolledWindow()
+	self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+	self.scrollwin.set_size_request(-1,150)
+	
+	nframes = 100
+	
+	vbox = gtk.VBox()
+	vbox.show()
+	self.scrollwin.add_with_viewport(vbox)
+	
+	ruler = frameline.frameruler(nframes)
+	ruler.set_size_request(nframes * 10, 20)
+	ruler.show()
+	vbox.pack_start(ruler, False)
+
+	line = frameline.frameline(nframes)
+	line.set_size_request(nframes * 10, 20)
+	vbox.pack_start(line, False)
+	pass
+
     def showGrid(self):
 	max = 0
 	for layer in self.layer:
@@ -645,7 +666,8 @@ class MBScene():
     def show(self):
 	self.OK = True
 	self.parseScene()
-	self.showGrid()
+	# self.showGrid()
+	self.create_framelines()
 	vbox = gtk.VBox(False,0)
 	self.desktop.getToplevel().child.child.pack_end(vbox,expand=False)
 	self.window = vbox
