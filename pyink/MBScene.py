@@ -547,64 +547,6 @@ class MBScene():
 	    pass
 	pass
 
-    def showGrid(self):
-	max = 0
-	for layer in self.layers:
-	    for s in layer.scenes:
-		if s.end > max:
-		    max = s.end
-		    pass
-		pass
-	    pass
-	max = 50
-
-	self.grid = gtk.Table(len(self.layers)+1, 50)
-	self.scrollwin = gtk.ScrolledWindow()
-	self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-	self.scrollwin.add_with_viewport(self.grid)
-	self.scrollwin.set_size_request(-1,150)
-	for i in range(1,max):
-	    self.grid.attach(gtk.Label('%d'% i), i,i+1,0,1,0,0,0,0)
-	    pass
-	for i in range(1,len(self.layers)+1):
-	    print "Layer", i
-	    l = self.layers[i-1]
-	    for s in l.scenes:
-		btn = self.newCell('start.png')
-		btn.nScene = s.start
-		btn.layer = l.node.getId()
-		btn.nLayer = i
-
-		self.grid.attach(btn, s.start, s.start+1, i, i+1,0,0,0,0)
-		for j in range(s.start+1,s.end+1):
-		    btn = self.newCell('fill.png')
-		    self.grid.attach(btn, j, j+1, i , i+1,0,0,0,0)
-		    color = btn.get_colormap().alloc_color("gray")
-		    btn.modify_bg(gtk.STATE_NORMAL, color)
-		    btn.nScene = j
-		    btn.layer = l.node.getId()
-		    btn.nLayer = i
-		    pass
-		pass
-	    if len(l.scenes) == 0:
-		start = 0
-	    else:
-		start = l.scenes[len(l.scenes)-1].end
-		pass
-	    
-	    for j in range(start,max):
-		btn = self.newCell('empty.png')
-		self.grid.attach(btn, j+1, j+2,i,i+1,0,0,0,0)
-		color = btn.get_colormap().alloc_color("gray")
-		btn.modify_bg(gtk.STATE_NORMAL, color)
-		btn.nScene = j+1
-		btn.layer = l.node.getId()
-		btn.nLayer = i
-		pass
-	    pass
-	self.last_cell = None
-	pass
-    
     def cellSelect(self, cell, data):
 	if self.last_cell:
 	    color = self.last_cell.get_colormap().alloc_color("gray")
