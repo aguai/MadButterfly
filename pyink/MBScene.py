@@ -59,8 +59,8 @@ class MBScene():
     def __init__(self,desktop,win):
 	self.desktop = desktop
 	self.window = win
-	self.layer = []
-	self.layer.append(Layer(None))
+	self.layers = []
+	self.layers.append(Layer(None))
 	self.scenemap = None
 	pass
 
@@ -132,7 +132,7 @@ class MBScene():
 	scene and then relocate them back to the appropriate scene
 	object.
 	"""
-	self.layer = []
+	self.layers = []
 	self.scenemap = None
 	doc = self.desktop.doc().root()
 
@@ -144,7 +144,7 @@ class MBScene():
 		oldscene = None
 				#print layer.attrib.get("id")
 		lyobj = Layer(node)
-		self.layer.append(lyobj)
+		self.layers.append(lyobj)
 		lyobj.current_scene = []
 		for scene in node.childList():
 		    if scene.repr.name() == 'svg:g':
@@ -212,7 +212,7 @@ class MBScene():
 	pass
     
     def getLayer(self, layer):
-	for l in self.layer:
+	for l in self.layers:
 	    if l.node.getId() == layer:
 		return l
 	    pass
@@ -397,7 +397,7 @@ class MBScene():
     
     def setCurrentScene(self,nth):
 	self.current = nth
-	for layer in self.layer:
+	for layer in self.layers:
 	    for s in layer.scene:
 		if nth >= s.start and nth <= s.end:
 		    s.node.repr.setAttribute("style","",True)
@@ -427,7 +427,7 @@ class MBScene():
 			nn.clear()
 			nn.set("current", "%d" % self.current)
 			scenes = []
-			for l in self.layer:
+			for l in self.layers:
 			    for s in l.scene:
 				id = s.node.get("id")
 				scene = etree.Element(_scene)
@@ -451,7 +451,7 @@ class MBScene():
 		if has_scene == False:
 		    scenes = etree.Element(_scenes)
 		    scenes.set("current","%d" % self.current)
-		    for l in self.layer:
+		    for l in self.layers:
 			for s in l.scene:
 			    scene = etree.Element(_scene)
 			    scene.set("ref", s.node.get("id"))
@@ -472,7 +472,7 @@ class MBScene():
 		pass
 	    pass
 	
-	for l in self.layer:
+	for l in self.layers:
 	    # Duplicate all attribute of the layer
 	    lnode = etree.Element("{http://www.w3.org/2000/svg}g")
 	    for a,v in l.node.attrib.items():
@@ -526,7 +526,7 @@ class MBScene():
 	# Add a frameline for each layer
 	#
 	self._framelines = []
-	for i in range(len(self.layer)):
+	for i in range(len(self.layers)):
 	    line = frameline.frameline(nframes)
 	    line.set_size_request(nframes * 10, 20)
 	    vbox.pack_start(line, False)
@@ -539,7 +539,7 @@ class MBScene():
 
     def showGrid(self):
 	max = 0
-	for layer in self.layer:
+	for layer in self.layers:
 	    for s in layer.scene:
 		if s.end > max:
 		    max = s.end
@@ -548,7 +548,7 @@ class MBScene():
 	    pass
 	max = 50
 
-	self.grid = gtk.Table(len(self.layer)+1, 50)
+	self.grid = gtk.Table(len(self.layers)+1, 50)
 	self.scrollwin = gtk.ScrolledWindow()
 	self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	self.scrollwin.add_with_viewport(self.grid)
@@ -556,9 +556,9 @@ class MBScene():
 	for i in range(1,max):
 	    self.grid.attach(gtk.Label('%d'% i), i,i+1,0,1,0,0,0,0)
 	    pass
-	for i in range(1,len(self.layer)+1):
+	for i in range(1,len(self.layers)+1):
 	    print "Layer", i
-	    l = self.layer[i-1]
+	    l = self.layers[i-1]
 	    for s in l.scene:
 		btn = self.newCell('start.png')
 		btn.nScene = s.start
