@@ -8,7 +8,9 @@ from lxml import etree
 import random
 import traceback
 
-# Please refer to http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention for the designed document.
+# Please refer to
+# http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
+# for the designed document.
 
 
 # Algorithm:
@@ -50,6 +52,8 @@ class Scene:
 	pass
     pass
 
+_scenes = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes'
+_scene = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene'
 
 class MBScene():
     def __init__(self,desktop,win):
@@ -110,7 +114,8 @@ class MBScene():
 			    pass
 			link = s.repr.attribute("ref")
 			self.scenemap[link] = [int(start),int(end)]
-			print "scene %d to %d" % (self.scenemap[link][0],self.scenemap[link][1])
+			print "scene %d to %d" % (self.scenemap[link][0],
+						  self.scenemap[link][1])
 			if cur >= start and cur <= end:
 			    self.currentscene = link
 			    pass
@@ -123,7 +128,9 @@ class MBScene():
     
     def parseScene(self):
 	"""
-	In this function, we will collect all items for the current scene and then relocate them back to the appropriate scene object.
+	In this function, we will collect all items for the current
+	scene and then relocate them back to the appropriate scene
+	object.
 	"""
 	self.layer = []
 	self.scenemap = None
@@ -146,7 +153,8 @@ class MBScene():
 			    if scmap == None:
 				lyobj.current_scene.append(scene)
 				continue
-			    if self.current <= scmap[1] and self.current >= scmap[0]:
+			    if self.current <= scmap[1] and \
+				    self.current >= scmap[0]:
 				oldscene = scene
 				pass
 			except:
@@ -213,9 +221,11 @@ class MBScene():
     
     def insertKeyScene(self):
 	"""
-	Insert a new key scene into the stage. If the nth is always a key scene, we will return without changing anything. 
-	If the nth is a filled scene, we will break the original scene into two parts. If the nth is out of any scene, we will
-	append a new scene.
+	Insert a new key scene into the stage. If the nth is always a
+	key scene, we will return without changing anything.  If the
+	nth is a filled scene, we will break the original scene into
+	two parts. If the nth is out of any scene, we will append a
+	new scene.
 
 	"""
 	nth = self.last_cell.nScene
@@ -259,7 +269,7 @@ class MBScene():
 		pass
 	    
 	    if lastscene == None:
-		node = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+		node = etree.Element(_scene)
 		node.setId(self.newID())
 		newscene = Scene(node,nth,nth)
 	    else:
@@ -278,7 +288,7 @@ class MBScene():
 	    self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
 	else:
 	    # This is the first scene in the layer
-	    node = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+	    node = etree.Element(_scene)
 	    node.repr.setId(self.newID())
 	    newscene = Scene(node,nth,nth)
 	    layer.scene.append(newscene)
@@ -313,8 +323,10 @@ class MBScene():
 		    layer.scene.remove(s)
 		else:
 		    if s.start == layer.scene[i-1].end+1:
-			# If the start of the delete scene segment is the end of the last scene segmenet, convert all scenes in the deleted
-			# scene segmenet to the last one
+			# If the start of the delete scene segment is
+			# the end of the last scene segmenet, convert
+			# all scenes in the deleted scene segmenet to
+			# the last one
 			layer.scene[i-1].end = s.end
 			layer.scene.remove(s)
 			btn = self.newCell('fill.png')
@@ -369,7 +381,8 @@ class MBScene():
 		    layer.scene[i].end = nth
 		    return
 		pass
-	    if len(layer.scene) > 0 and nth > layer.scene[len(layer.scene)-1].end:
+	    if len(layer.scene) > 0 and \
+		    nth > layer.scene[len(layer.scene)-1].end:
 		for j in range(layer.scene[len(layer.scene)-1].end+1, nth+1):
 		    btn = self.newCell('fill.png')
 		    btn.nScene = nth
@@ -411,14 +424,14 @@ class MBScene():
 	for n in root:
 	    if n.tag == '{http://www.w3.org/2000/svg}metadata':
 		for nn in n:
-		    if nn.tag == '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes':
+		    if nn.tag == _scenes:
 			nn.clear()
 			nn.set("current", "%d" % self.current)
 			scenes = []
 			for l in self.layer:
 			    for s in l.scene:
 				id = s.node.get("id")
-				scene = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+				scene = etree.Element(_scene)
 				scene.set("ref", id)
 				if s.start == s.end:
 				    scene.set("start", "%d" % s.start)
@@ -437,11 +450,11 @@ class MBScene():
 			pass
 		    pass
 		if has_scene == False:
-		    scenes = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes')
+		    scenes = etree.Element(_scenes)
 		    scenes.set("current","%d" % self.current)
 		    for l in self.layer:
 			for s in l.scene:
-			    scene = etree.Element('{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene')
+			    scene = etree.Element(_scene)
 			    scene.set("ref", s.node.get("id"))
 			    if s.start == s.end:
 				scene.set("start", "%d" % s.start)
@@ -515,7 +528,6 @@ class MBScene():
 	for i in range(1,len(self.layer)+1):
 	    print "Layer", i
 	    l = self.layer[i-1]
-			#self.grid.attach(gtk.Label(l.node.get('{http://www.inkscape.org/namespaces/inkscape}label')), 0, 1, i, i+1,0,0,10,0)
 	    for s in l.scene:
 		btn = self.newCell('start.png')
 		btn.nScene = s.start
@@ -526,7 +538,8 @@ class MBScene():
 		for j in range(s.start+1,s.end+1):
 		    btn = self.newCell('fill.png')
 		    self.grid.attach(btn, j, j+1, i , i+1,0,0,0,0)
-		    btn.modify_bg(gtk.STATE_NORMAL, btn.get_colormap().alloc_color("gray"))
+		    color = btn.get_colormap().alloc_color("gray")
+		    btn.modify_bg(gtk.STATE_NORMAL, color)
 		    btn.nScene = j
 		    btn.layer = l.node.getId()
 		    btn.nLayer = i
@@ -541,7 +554,8 @@ class MBScene():
 	    for j in range(start,max):
 		btn = self.newCell('empty.png')
 		self.grid.attach(btn, j+1, j+2,i,i+1,0,0,0,0)
-		btn.modify_bg(gtk.STATE_NORMAL, btn.get_colormap().alloc_color("gray"))
+		color = btn.get_colormap().alloc_color("gray")
+		btn.modify_bg(gtk.STATE_NORMAL, color)
 		btn.nScene = j+1
 		btn.layer = l.node.getId()
 		btn.nLayer = i
@@ -552,11 +566,13 @@ class MBScene():
     
     def cellSelect(self, cell, data):
 	if self.last_cell:
-	    self.last_cell.modify_bg(gtk.STATE_NORMAL, self.last_cell.get_colormap().alloc_color("gray"))
+	    color = self.last_cell.get_colormap().alloc_color("gray")
+	    self.last_cell.modify_bg(gtk.STATE_NORMAL, color)
 	    pass
 	
 	self.last_cell = cell
-	cell.modify_bg(gtk.STATE_NORMAL, cell.get_colormap().alloc_color("green"))
+	color = cell.get_colormap().alloc_color("green")
+	cell.modify_bg(gtk.STATE_NORMAL, color)
 	pass
     
     def doEditScene(self,w):
@@ -608,7 +624,9 @@ class MBScene():
     def onConfirmDelete(self):
 	if self.scenemap == None:
 	    vbox = gtk.VBox(False,0)
-	    vbox.pack_start(gtk.Label('Convert the SVG into a MadButterfly SVG file. All current element will be delted'))
+	    vbox.pack_start(gtk.Label('Convert the SVG into a MadButterfly'
+				      ' SVG file. All current element will'
+				      ' be delted'))
 	    hbox = gtk.HBox(False,0)
 	    self.button = gtk.Button('OK')
 	    hbox.pack_start(self.button,expand=False,fill=False)
