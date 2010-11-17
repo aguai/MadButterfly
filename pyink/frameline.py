@@ -104,6 +104,10 @@ class frameruler(gtk.DrawingArea):
 
 ## Show frame status of a layer
 #
+# \section frameline_sigs Signals
+# - 'frame-button-pree' for user press on a frame.
+#   - callback(widget, frame_idx, button)
+#
 class frameline(gtk.DrawingArea):
     _type = 0
     _frame_width = 10           # Width for each frame is 10 pixels
@@ -116,10 +120,19 @@ class frameline(gtk.DrawingArea):
     _normal_bgcolors = [0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xcccccc]
     _normal_border = 0xaaaaaa   # border color of normal frames.
     _active_border = 0xff3030   # border color of an active frame
+
+    FRAME_BUT_PRESS = 'frame-button-press'
     
     def __new__(clz, *args):
         if not frameline._type:
             frameline._type = gobject.type_register(frameline)
+            but_press = gobject.signal_new(frameline.FRAME_BUT_PRESS,
+                                           frameline._type,
+                                           gobject.SIGNAL_RUN_FIRST,
+                                           gobject.TYPE_NONE,
+                                           (gobject.TYPE_INT,
+                                            gobject.TYPE_INT))
+            frameline._sig_frame_but_press = but_press
             pass
         fl_obj = gobject.new(frameline._type)
         return fl_obj
@@ -133,8 +146,9 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _press_hdl(self, widget, event):
-        button = event.x / self._frame_width
-        print 'button %d - %d,%d' % (button, event.x, event.y)
+        frame = event.x / self._frame_width
+        but = event.button
+        self.emit(frameline.FRAME_BUT_PRESS, frame, but)
         pass
 
     def _fl_expose(self, widget, event):
@@ -390,6 +404,11 @@ if __name__ == '__main__':
     fl.tween(15, 1)
     fl.active_frame(15)
     print 'num of frames: %d' % (len(fl))
+
+    def press_sig(fl, frame, but):
+        print 'press_sig button %d for frame %d' % (but, frame)
+        pass
+    fl.connect(frameline.FRAME_BUT_PRESS, press_sig)
 
     box = gtk.VBox()
 
