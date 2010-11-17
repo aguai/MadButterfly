@@ -20,17 +20,17 @@ class keyframe(object):
     pass
 
 class frameruler(gtk.DrawingArea):
-    _type_id = 0
+    _type = 0
     _frame_width = 10           # Width for each frame is 10 pixels
     _mark_color = 0x808080      # color of mark lines
     _number_color = 0x000000    # color of frame number
     _number_sz = 8             # font size of frame number
     
     def __new__(clz, *args):
-        if not frameruler._type_id:
-            frameruler._type_id = gobject.type_register(frameruler)
+        if not frameruler._type:
+            frameruler._type = gobject.type_register(frameruler)
             pass
-        fr = gobject.new(frameruler._type_id)
+        fr = gobject.new(frameruler._type)
         return fr
 
     def __init__(self, num_frames=20):
@@ -105,7 +105,7 @@ class frameruler(gtk.DrawingArea):
 ## Show frame status of a layer
 #
 class frameline(gtk.DrawingArea):
-    _type_id = 0
+    _type = 0
     _frame_width = 10           # Width for each frame is 10 pixels
     _select_color = 0xee2222    # color of border of selected frame
     _key_mark_color = 0x000000  # color of marks for key frames.
@@ -118,10 +118,10 @@ class frameline(gtk.DrawingArea):
     _active_border = 0xff3030   # border color of an active frame
     
     def __new__(clz, *args):
-        if not frameline._type_id:
-            frameline._type_id = gobject.type_register(frameline)
+        if not frameline._type:
+            frameline._type = gobject.type_register(frameline)
             pass
-        fl_obj = gobject.new(frameline._type_id)
+        fl_obj = gobject.new(frameline._type)
         return fl_obj
     
     def __init__(self, num_frames=20):
