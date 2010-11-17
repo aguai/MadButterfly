@@ -233,6 +233,21 @@ class frameline(gtk.DrawingArea):
                                gtk.gdk.CAP_BUTT, gtk.gdk.JOIN_MITER)
         win.draw_line(gc, next_f_x, 0, next_f_x, w_h)
         pass
+
+    ## \brief Draw a bottom line from start to the point before stop frame.
+    #
+    def _draw_bottom_line(self, start, stop):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        gc = self._gc
+        
+        border_rgb = color_to_rgb(self._normal_border)
+        border_color = gtk.gdk.Color(*border_rgb)
+        gc.set_rgb_fg_color(border_color)
+        start_x = start * self._frame_width
+        stop_x = stop * self._frame_width
+        win.draw_line(gc, start_x, w_h - 1, stop_x, w_h - 1)
+        pass
     
     def _draw_all_frames(self):
         win = self.window
@@ -274,11 +289,7 @@ class frameline(gtk.DrawingArea):
                 pass
             pass
 
-        border_rgb = color_to_rgb(self._normal_border)
-        border_color = gtk.gdk.Color(*border_rgb)
-        gc.set_rgb_fg_color(border_color)
-        stop_x = num_frames * self._frame_width
-        win.draw_line(gc, 0, w_h - 1, stop_x, w_h - 1)
+        self._draw_bottom_line(0, num_frames)
         pass
 
     def _draw_keyframe(self, frame_idx):
@@ -344,16 +355,24 @@ class frameline(gtk.DrawingArea):
     #
     def _redraw_frame(self, frame_idx):
         keys = [key.idx for key in self._keys]
-        try:
-            pos = keys.index(frame_idx)
-        except ValueError:
-            keys.append(frame_idx)
-            keys.sort()
-            pos = keys.index(frame_idx) - 1
+        if len(keys):
+            try:
+                pos = keys.index(frame_idx)
+            except ValueError:
+                keys.append(frame_idx)
+                keys.sort()
+                pos = keys.index(frame_idx) - 1
+                pass
+            if pos < 0:
+                pos = 0
+                pass
+            key = self._keys[pos]
+        else:
+            key = None
             pass
-        key = self._keys[pos]
         
-        if key.right_tween or (key.left_tween and key.idx == frame_idx):
+        if key and (key.right_tween or \
+                (key.left_tween and key.idx == frame_idx)):
             first_key = last_key = key
             first_pos = last_pos = pos
             while first_pos > 0 and first_key.left_tween:
@@ -367,6 +386,7 @@ class frameline(gtk.DrawingArea):
                 pass
 
             self._draw_tween(first_key, last_key)
+            self._draw_bottom_line(first_key.idx, last_key.idx + 1)
 
             for i in range(first_pos, last_pos + 1):
                 key = self._keys[i]
@@ -375,7 +395,8 @@ class frameline(gtk.DrawingArea):
             pass
         else:
             self._draw_normal_frame(frame_idx)
-            if key.idx == frame_idx:
+            self._draw_bottom_line(frame_idx, frame_idx + 1)
+            if key and (key.idx == frame_idx):
                 self._draw_keyframe(frame_idx)
                 pass
             pass
