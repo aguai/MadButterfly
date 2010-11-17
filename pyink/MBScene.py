@@ -505,7 +505,7 @@ class MBScene():
 	btn.modify_bg(gtk.STATE_NORMAL, btn.get_colormap().alloc_color("gray"))
 	return btn
     
-    def create_framelines(self):
+    def _create_framelines(self):
 	import frameline
 	self.scrollwin = gtk.ScrolledWindow()
 	self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -534,9 +534,15 @@ class MBScene():
 	    pass
 	pass
 
-    def update_all_framelines(self):
-	for layer in self.layers:
+    ## \brief Update conetent of frameliens according layers.
+    #
+    def _update_framelines(self):
+	for layer_i, layer in enumerate(self.layers):
 	    for scene in layer.scenes:
+		frameline = self._framelines[layer_i]
+		for scene_i in range(scene.start, scene.stop + 1):
+		    frameline.add_keyframe(scene_i)
+		    pass
 		pass
 	    pass
 	pass
@@ -680,8 +686,8 @@ class MBScene():
     def show(self):
 	self.OK = True
 	self.parseScene()
-	# self.showGrid()
-	self.create_framelines()
+	self._create_framelines()
+	self._update_framelines()
 	vbox = gtk.VBox(False,0)
 	self.desktop.getToplevel().child.child.pack_end(vbox,expand=False)
 	self.window = vbox
