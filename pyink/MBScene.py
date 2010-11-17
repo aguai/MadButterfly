@@ -38,7 +38,7 @@ import traceback
 
 class Layer:
     def __init__(self,node):
-	self.scene = []
+	self.scenes = []
 	self.node = node
 	self.nodes=[]
 	pass
@@ -161,7 +161,7 @@ class MBScene():
 			    lyobj.current_scene.append(scene)
 			    continue
 
-			lyobj.scene.append(Scene(scene,scmap[0],scmap[1]))
+			lyobj.scenes.append(Scene(scene,scmap[0],scmap[1]))
 			pass
 		    else:
 			lyobj.current_scene.append(scene)
@@ -233,14 +233,14 @@ class MBScene():
 	x = self.last_cell.nScene
 	y = self.last_cell.nLayer
 	if layer == None: return
-	for i in range(0,len(layer.scene)):
-	    s = layer.scene[i]
+	for i in range(0,len(layer.scenes)):
+	    s = layer.scenes[i]
 	    if nth >= s.start and nth <= s.end:
 		if nth == s.start: return
 		newscene = Scene(DuplicateNode(s.node),nth,s.end)
 		newscene.node.setId(self.newID())
-		layer.scene.insert(i+1,newscene)
-		layer.scene[i].end = nth-1
+		layer.scenes.insert(i+1,newscene)
+		layer.scenes[i].end = nth-1
 		btn = self.newCell('start.png')
 		btn.nScene = nth
 		btn.layer = layer
@@ -250,10 +250,10 @@ class MBScene():
 		return
 	    pass
 	
-	if len(layer.scene) > 0:
+	if len(layer.scenes) > 0:
 	    last = nth
 	    lastscene = None
-	    for s in layer.scene:
+	    for s in layer.scenes:
 		if s.end < nth and last < s.end:
 		    last = s.end
 		    lastscene = s
@@ -278,7 +278,7 @@ class MBScene():
 		newscene.node.setId(self.newID())
 		pass
 	    
-	    layer.scene.append(newscene)
+	    layer.scenes.append(newscene)
 	    btn = self.newCell('start.png')
 	    x = self.last_cell.nScene
 	    y = self.last_cell.nLayer
@@ -291,7 +291,7 @@ class MBScene():
 	    node = etree.Element(_scene)
 	    node.repr.setId(self.newID())
 	    newscene = Scene(node,nth,nth)
-	    layer.scene.append(newscene)
+	    layer.scenes.append(newscene)
 	    btn = self.newCell('start.png')
 	    btn.nScene = nth
 	    btn.layer = layer.node.getId()
@@ -309,8 +309,8 @@ class MBScene():
 	    return
 	x = self.last_cell.nScene
 	y = self.last_cell.nLayer
-	for i in range(0,len(layer.scene)):
-	    s = layer.scene[i]
+	for i in range(0,len(layer.scenes)):
+	    s = layer.scenes[i]
 	    if nth == s.start:
 		if i == 0:
 		    for j in range(s.start,s.end+1):
@@ -320,15 +320,15 @@ class MBScene():
 			btn.nLayer = y
 			self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
 			pass
-		    layer.scene.remove(s)
+		    layer.scenes.remove(s)
 		else:
-		    if s.start == layer.scene[i-1].end+1:
+		    if s.start == layer.scenes[i-1].end+1:
 			# If the start of the delete scene segment is
 			# the end of the last scene segmenet, convert
 			# all scenes in the deleted scene segmenet to
 			# the last one
-			layer.scene[i-1].end = s.end
-			layer.scene.remove(s)
+			layer.scenes[i-1].end = s.end
+			layer.scenes.remove(s)
 			btn = self.newCell('fill.png')
 
 			btn.nScene = nth
@@ -337,7 +337,7 @@ class MBScene():
 			self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
 		    else:
 			# Convert all scenes into empty cell
-			layer.scene.remove(s)
+			layer.scenes.remove(s)
 			for j in range(s.start,s.end+1):
 			    btn = self.newCell('empty.png')
 			    btn.nScene = nth
@@ -363,34 +363,34 @@ class MBScene():
 	if layer == None:
 	    return
 
-	for i in range(0,len(layer.scene)-1):
-	    s = layer.scene[i]
-	    if nth >= layer.scene[i].start and nth <= layer.scene[i].end:
+	for i in range(0,len(layer.scenes)-1):
+	    s = layer.scenes[i]
+	    if nth >= layer.scenes[i].start and nth <= layer.scenes[i].end:
 		return
 	    pass
 
-	for i in range(0,len(layer.scene)-1):
-	    s = layer.scene[i]
-	    if nth >= layer.scene[i].start and nth < layer.scene[i+1].start:
-		for j in range(layer.scene[i].end+1, nth+1):
+	for i in range(0,len(layer.scenes)-1):
+	    s = layer.scenes[i]
+	    if nth >= layer.scenes[i].start and nth < layer.scenes[i+1].start:
+		for j in range(layer.scenes[i].end+1, nth+1):
 		    btn = self.newCell('fill.png')
 		    btn.nScene = nth
 		    btn.nLayer = y
 		    btn.layer = self.last_cell.layer
 		    self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
-		    layer.scene[i].end = nth
+		    layer.scenes[i].end = nth
 		    return
 		pass
-	    if len(layer.scene) > 0 and \
-		    nth > layer.scene[len(layer.scene)-1].end:
-		for j in range(layer.scene[len(layer.scene)-1].end+1, nth+1):
+	    if len(layer.scenes) > 0 and \
+		    nth > layer.scenes[len(layer.scenes)-1].end:
+		for j in range(layer.scenes[len(layer.scenes)-1].end+1, nth+1):
 		    btn = self.newCell('fill.png')
 		    btn.nScene = nth
 		    btn.nLayer = y
 		    btn.layer = self.last_cell.layer
 		    self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
 		    pass
-		layer.scene[len(layer.scene)-1].end = nth
+		layer.scenes[len(layer.scenes)-1].end = nth
 		pass
 	    pass
 	pass
@@ -398,7 +398,7 @@ class MBScene():
     def setCurrentScene(self,nth):
 	self.current = nth
 	for layer in self.layers:
-	    for s in layer.scene:
+	    for s in layer.scenes:
 		if nth >= s.start and nth <= s.end:
 		    s.node.repr.setAttribute("style","",True)
 		    # print "Put the elemenets out"
@@ -428,7 +428,7 @@ class MBScene():
 			nn.set("current", "%d" % self.current)
 			scenes = []
 			for l in self.layers:
-			    for s in l.scene:
+			    for s in l.scenes:
 				id = s.node.get("id")
 				scene = etree.Element(_scene)
 				scene.set("ref", id)
@@ -452,7 +452,7 @@ class MBScene():
 		    scenes = etree.Element(_scenes)
 		    scenes.set("current","%d" % self.current)
 		    for l in self.layers:
-			for s in l.scene:
+			for s in l.scenes:
 			    scene = etree.Element(_scene)
 			    scene.set("ref", s.node.get("id"))
 			    if s.start == s.end:
@@ -482,7 +482,7 @@ class MBScene():
 		lnode.append(n)
 		pass
 	    root.append(lnode)
-	    for s in l.scene:
+	    for s in l.scenes:
 		snode = etree.Element("{http://www.w3.org/2000/svg}g")
 		for a,v in s.node.attrib.items():
 		    snode.set(a,v)
@@ -534,13 +534,17 @@ class MBScene():
 	    pass
 	pass
 
-    def update_framelines(self):
+    def update_all_framelines(self):
+	for layer in self.layers:
+	    for scene in layer.scenes:
+		pass
+	    pass
 	pass
 
     def showGrid(self):
 	max = 0
 	for layer in self.layers:
-	    for s in layer.scene:
+	    for s in layer.scenes:
 		if s.end > max:
 		    max = s.end
 		    pass
@@ -559,7 +563,7 @@ class MBScene():
 	for i in range(1,len(self.layers)+1):
 	    print "Layer", i
 	    l = self.layers[i-1]
-	    for s in l.scene:
+	    for s in l.scenes:
 		btn = self.newCell('start.png')
 		btn.nScene = s.start
 		btn.layer = l.node.getId()
@@ -576,10 +580,10 @@ class MBScene():
 		    btn.nLayer = i
 		    pass
 		pass
-	    if len(l.scene) == 0:
+	    if len(l.scenes) == 0:
 		start = 0
 	    else:
-		start = l.scene[len(l.scene)-1].end
+		start = l.scenes[len(l.scenes)-1].end
 		pass
 	    
 	    for j in range(start,max):
