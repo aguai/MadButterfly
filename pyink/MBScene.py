@@ -522,9 +522,19 @@ class MBScene():
 	ruler.show()
 	vbox.pack_start(ruler, False)
 
-	line = frameline.frameline(nframes)
-	line.set_size_request(nframes * 10, 20)
-	vbox.pack_start(line, False)
+	#
+	# Add a frameline for each layer
+	#
+	self._framelines = []
+	for i in range(len(self.layer)):
+	    line = frameline.frameline(nframes)
+	    line.set_size_request(nframes * 10, 20)
+	    vbox.pack_start(line, False)
+	    self._framelines.append(line)
+	    pass
+	pass
+
+    def update_framelines(self):
 	pass
 
     def showGrid(self):
