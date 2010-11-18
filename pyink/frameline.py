@@ -146,7 +146,7 @@ class frameline(gtk.DrawingArea):
         self._keys = []
         self._active_frame = -1
         self._last_hover = -1   # frame index of last hover
-        self._drawing = True
+        self._drawing = False
         pass
 
     def _press_hdl(self, widget, event):
@@ -172,6 +172,7 @@ class frameline(gtk.DrawingArea):
             emask = emask | gtk.gdk.BUTTON_PRESS_MASK | \
                 gtk.gdk.POINTER_MOTION_MASK
             win.set_events(emask)
+            self._drawing = True
             pass
         self.update()
         pass
