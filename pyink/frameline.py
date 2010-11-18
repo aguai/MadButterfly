@@ -146,6 +146,7 @@ class frameline(gtk.DrawingArea):
         self._keys = []
         self._active_frame = -1
         self._last_hover = -1   # frame index of last hover
+        self._drawing = True
         pass
 
     def _press_hdl(self, widget, event):
@@ -176,6 +177,9 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_tween(self, first_key, last_key):
+        if not self._drawing:
+            return
+        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         
@@ -213,6 +217,9 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_normal_frame(self, idx):
+        if not self._drawing:
+            return
+        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         
@@ -237,6 +244,9 @@ class frameline(gtk.DrawingArea):
     ## \brief Draw a bottom line from start to the point before stop frame.
     #
     def _draw_bottom_line(self, start, stop):
+        if not self._drawing:
+            return
+        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         gc = self._gc
@@ -250,6 +260,9 @@ class frameline(gtk.DrawingArea):
         pass
     
     def _draw_all_frames(self):
+        if not self._drawing:
+            return
+        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         gc = self._gc
@@ -293,6 +306,9 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_keyframe(self, frame_idx):
+        if not self._drawing:
+            return
+        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         
@@ -311,6 +327,9 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_keyframes(self):
+        if not self._drawing:
+            return
+        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         
@@ -331,6 +350,9 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_active(self):
+        if not self._drawing:
+            return
+        
         if self._active_frame == -1:
             return
         
@@ -374,6 +396,9 @@ class frameline(gtk.DrawingArea):
     ## \brief Redraw a frame specified by an index.
     #
     def _redraw_frame(self, frame_idx):
+        if not self._drawing:
+            return
+        
         keys = [key.idx for key in self._keys]
         if len(keys):
             try:
@@ -420,6 +445,9 @@ class frameline(gtk.DrawingArea):
     ## \brief Show a mark for the pointer for a frame.
     #
     def _draw_hover(self, frame_idx):
+        if not self._drawing:
+            return
+        
         if self._last_hover != -1:
             self._redraw_frame(self._last_hover)
             pass
@@ -446,6 +474,9 @@ class frameline(gtk.DrawingArea):
         pass
     
     def update(self):
+        if not self._drawing:
+            return
+        
         win = self.window
         x, y, w, h, depth = win.get_geometry()
         
@@ -506,6 +537,8 @@ class frameline(gtk.DrawingArea):
         else:
             self._redraw_frame(idx)
             pass
+
+        self._draw_active()
         pass
 
     ## Tween the key frame specified by an index and the key frame at right.
@@ -534,10 +567,15 @@ class frameline(gtk.DrawingArea):
         if idx < 0 or idx >= self._num_frames:
             raise IndexError, 'value of index (%d) is out of range' % (idx)
 
+        if self._active_frame != -1:
+            self._redraw_frame(self._active_frame)
+            pass
         self._active_frame = idx
+        self._draw_active()
         pass
 
     def deactive(self):
+        self._redraw_frame(self._active_frame)
         self._active_frame = -1
         pass
 
@@ -547,6 +585,22 @@ class frameline(gtk.DrawingArea):
 
     def reset(self):
         self._keys = []
+        pass
+
+    ## \brief Start future drawing actions
+    #
+    def start_drawing(self):
+        self._drawing = True
+        pass
+    
+    ## \brief Stop any future drawing actions
+    #
+    # When doing massive udpate, to stop drawing the screen make
+    # application more effecient.  The screen is updated by calling
+    # update() method after massive update and calliing start_drawing().
+    #
+    def stop_drawing(self):
+        self._drawing = False
         pass
 
     def __len__(self):
