@@ -354,6 +354,23 @@ class frameline(gtk.DrawingArea):
         win.draw_line(gc, line_x1, 0, line_x2, 0)
         pass
 
+    ## \brief Find the range a continous tween.
+    #
+    def _find_tween_range(self, key_pos):
+        first_pos = key_pos
+        while first_pos and self._keys[first_pos].left_tween:
+            first_pos = first_pos - 1
+            pass
+        
+        max_pos = len(self._keys) - 1
+        
+        last_pos = key_pos
+        while last_pos < max_pos and self._keys[last_pos].right_tween:
+            last_pos = last_pos + 1
+            pass
+        
+        return first_pox, last_pos
+
     ## \brief Redraw a frame specified by an index.
     #
     def _redraw_frame(self, frame_idx):
@@ -376,18 +393,13 @@ class frameline(gtk.DrawingArea):
         
         if key and (key.right_tween or \
                 (key.left_tween and key.idx == frame_idx)):
-            first_key = last_key = key
-            first_pos = last_pos = pos
-            while first_pos > 0 and first_key.left_tween:
-                first_pos = first_pos - 1
-                first_key = self._keys[first_pos]
-                pass
-            max_pos = len(self._keys) - 1
-            while last_pos < max_pos and last_key.right_tween:
-                last_pos = last_pos + 1
-                last_key = self._keys[last_pos]
-                pass
-
+            #
+            # in tween
+            #
+            first_pos, last_pos = self._find_tween_range(pos)
+            first_key = self._keys[first_pos]
+            last_key = self._keys[last_pos]
+            
             self._draw_tween(first_key, last_key)
             self._draw_bottom_line(first_key.idx, last_key.idx + 1)
 
@@ -396,7 +408,7 @@ class frameline(gtk.DrawingArea):
                 self._draw_keyframe(key.idx)
                 pass
             pass
-        else:
+        else:                   # not in tween
             self._draw_normal_frame(frame_idx)
             self._draw_bottom_line(frame_idx, frame_idx + 1)
             if key and (key.idx == frame_idx):
@@ -466,6 +478,34 @@ class frameline(gtk.DrawingArea):
                 self._keys[insert_pos + 1].left_tween:
             key.right_tween = True
             pass
+
+        self._draw_keyframe(idx)
+        pass
+
+    def rm_keyframe(self, idx):
+        key = self._keys[idx]
+        del self._keys[idx]
+        
+        if key.right_tween ^ key.left_tween:
+            #
+            # tween in one side
+            #
+            if key.right_tween:
+                right_key = self._keys[idx]
+                right_key.left_tween = False
+                rdraw_range = (right_key.idx, idx + 1)
+            else:
+                left_key = self._keys[idx - 1]
+                left_key.right_key = False
+                redraw_range = (idx, left_key.idx + 1)
+                pass
+            
+            for i in range(*redraw_range):
+                self._redraw_frame(i)
+                pass
+        else:
+            self._redraw_frame(idx)
+            pass
         pass
 
     ## Tween the key frame specified by an index and the key frame at right.
@@ -503,6 +543,10 @@ class frameline(gtk.DrawingArea):
 
     def set_num_frames(self, num):
         self._num_frames = num
+        pass
+
+    def reset(self):
+        self._keys = []
         pass
 
     def __len__(self):
