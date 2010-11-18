@@ -278,7 +278,7 @@ class frameline(gtk.DrawingArea):
             pass
         num_frames = self._num_frames
         while i < num_frames:
-            if key.idx == i:
+            if key.idx == i and key.right_tween:
                 #
                 # Skip tween keys
                 #
