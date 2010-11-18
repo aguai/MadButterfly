@@ -157,7 +157,8 @@ class frameline(gtk.DrawingArea):
     
     def _motion_hdl(self, widget, event):
         frame = int(event.x / self._frame_width)
-        self._draw_hover(frame)
+        if frame < self._num_frames and frame >= 0:
+            self._draw_hover(frame)
         pass
 
     def _fl_expose(self, widget, event):
