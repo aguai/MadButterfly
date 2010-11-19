@@ -121,6 +121,10 @@ class frameline(gtk.DrawingArea):
     _normal_border = 0xaaaaaa   # border color of normal frames.
     _active_border = 0xff3030   # border color of an active frame
     _hover_border_color = 0xa0a0a0 # border when the pointer over a frame
+    # tween types
+    _tween_type_none=0
+    _tween_type_shape=3
+    
 
     FRAME_BUT_PRESS = 'frame-button-press'
     
@@ -343,11 +347,15 @@ class frameline(gtk.DrawingArea):
         gc.set_rgb_fg_color(color)
         
         for key in self._keys:
+	    if key.left_tween is True and lastkey.right_tween_type == frameline._tween_type_none:
+	        continue
+	        
             mark_sz = self._key_mark_sz
             mark_x = int((key.idx + 0.5) * self._frame_width - mark_sz / 2)
             mark_y = w_h * 2 / 3 - mark_sz / 2
 
             win.draw_rectangle(gc, True, mark_x, mark_y, mark_sz, mark_sz)
+	    lastkey = key
             pass
         pass
 
@@ -432,7 +440,10 @@ class frameline(gtk.DrawingArea):
 
             for i in range(first_pos, last_pos + 1):
                 key = self._keys[i]
-                self._draw_keyframe(key.idx)
+		print "frame %d type=%d" % (key.idx,key.right_tween_type) 
+		if key.left_tween is False or lastkey.right_tween_type != frameline._tween_type_none:
+                    self._draw_keyframe(key.idx)
+		lasykey = key
                 pass
             pass
         else:                   # not in tween
@@ -516,6 +527,13 @@ class frameline(gtk.DrawingArea):
         pass
 
     def rm_keyframe(self, idx):
+        found=False
+	for i in range(0,len(self._keys)):
+	    if self._keys[i].idx == idx:
+	        idx = i
+		found = True
+		break
+	if not found: return
         key = self._keys[idx]
         del self._keys[idx]
         
@@ -526,13 +544,13 @@ class frameline(gtk.DrawingArea):
             if key.right_tween:
                 right_key = self._keys[idx]
                 right_key.left_tween = False
-                rdraw_range = (right_key.idx, idx + 1)
+                redraw_range = (right_key.idx, idx + 1)
             else:
                 left_key = self._keys[idx - 1]
                 left_key.right_key = False
                 redraw_range = (idx, left_key.idx + 1)
                 pass
-            
+            print redraw_range
             for i in range(*redraw_range):
                 self._redraw_frame(i)
                 pass
@@ -617,12 +635,13 @@ if __name__ == '__main__':
     fl = frameline(40)
     fl.set_size_request(300, 20)
     fl.add_keyframe(3)
-    fl.add_keyframe(9)
     fl.add_keyframe(15)
-    fl.add_keyframe(20)
     fl.tween(3)
-    fl.tween(15, 1)
-    fl.active_frame(15)
+    fl.add_keyframe(9)
+    fl.add_keyframe(20)
+    fl.tween(9)
+    fl.active_frame(1)
+    fl.rm_keyframe(15)
     print 'num of frames: %d' % (len(fl))
 
     def press_sig(fl, frame, but):
