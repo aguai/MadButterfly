@@ -159,9 +159,13 @@ class frameline(gtk.DrawingArea):
         but = event.button
         self.emit(frameline.FRAME_BUT_PRESS, frame, but)
         pass
+    def hide_hover(self):
+        if self._active_frame != self._last_hover:
+            self._draw_normal_frame(self._last_hover)
     
     def _motion_hdl(self, widget, event):
         frame = int(event.x / self._frame_width)
+	    
         if frame < self._num_frames and frame >= 0:
             self._draw_hover(frame)
         pass
@@ -304,6 +308,12 @@ class frameline(gtk.DrawingArea):
                 i = last_tween_key.idx + 1
                 pass
             else:
+	        if key.idx == i:
+		    key_i=key_i+1
+		    try:
+		        key = self._keys[key_i]
+		    except:
+		        key = keyframe(self._num_frames)
                 self._draw_normal_frame(i)
                 i = i + 1
                 pass
@@ -492,7 +502,6 @@ class frameline(gtk.DrawingArea):
         
         win = self.window
         x, y, w, h, depth = win.get_geometry()
-        
         self._draw_all_frames()
         self._draw_keyframes()
         if self._active_frame != -1:
@@ -504,7 +513,7 @@ class frameline(gtk.DrawingArea):
     #
     # A key frame is the frame that user specify actions.  For
     # example, move a object or add new objects at the frame.
-    def add_keyframe(self, idx,ref):
+    def add_keyframe(self, idx,ref=None):
         key_indic = [key.idx for key in self._keys]
         if idx in key_indic:
             return
@@ -550,7 +559,6 @@ class frameline(gtk.DrawingArea):
                 left_key.right_key = False
                 redraw_range = (idx, left_key.idx + 1)
                 pass
-            print redraw_range
             for i in range(*redraw_range):
                 self._redraw_frame(i)
                 pass
@@ -611,11 +619,10 @@ class frameline(gtk.DrawingArea):
     def addScenes(self,rdoc,node):
         for i in range(0,len(self._keys)):
 	    key = self._keys[i]
-	    if key.left_tween is True: return
+	    if key.left_tween is True: continue
 	    if key.right_tween is True:
 	        ss = rdoc.createElement("ns0:scene")
 		node.appendChild(ss)
-		print "[%d:%d]" % (key.idx, self._keys[i+1].idx-1)
 		ss.setAttribute("start", str(key.idx+1),True)
 		ss.setAttribute("ref",key.ref.attribute("id"),True)
 		ss.setAttribute("end", str(self._keys[i+1].idx+1),True)
@@ -653,8 +660,8 @@ if __name__ == '__main__':
     
     fl = frameline(40)
     fl.set_size_request(300, 20)
-    fl.add_keyframe(3)
     fl.add_keyframe(15)
+    fl.add_keyframe(3)
     fl.tween(3)
     fl.add_keyframe(9)
     fl.add_keyframe(20)
