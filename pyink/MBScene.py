@@ -94,7 +94,10 @@ class MBScene():
 	for n in node.childList():
 	    if n.repr.name() == 'ns0:scenes':
 		self.scenemap={}
-		cur = int(n.repr.attribute("current"))
+		try:
+		    cur = int(n.repr.attribute("current"))
+		except:
+		    cur = 1
 		self.current = cur
 
 		for s in n.childList():
@@ -255,8 +258,10 @@ class MBScene():
 	self.ID[gid]=1
 	ns.setAttribute("id",gid,True)
 	self.last_line.node.repr.appendChild(ns)
+	print 'Add key ', x
 	self.last_line.add_keyframe(x,ns)
 	self.update()
+	self.last_line.update()
     
 
     def removeKeyScene(self):
@@ -290,6 +295,7 @@ class MBScene():
 
 		self.update()
 		self.last_line._draw_all_frames()
+	        self.last_line.update()
 		return
 	    i = i + 1
     def extendScene(self):
@@ -308,6 +314,7 @@ class MBScene():
 			    layer.draw_all_frames()
 			    self.update()
 			    self.setCurrentScene(nth)
+			    self.last_line.update()
 			    return
 			else:
 			    # We may in the next scene
@@ -319,6 +326,7 @@ class MBScene():
 			layer._keys[i+1].idx = nth
 			layer._draw_all_frames()
 			self.update()
+			self.last_line.update()
 			self.setCurrentScene(nth)
 			return
 		else:
@@ -340,6 +348,7 @@ class MBScene():
 		        layer._draw_all_frames()
 			self.update()
 			self.setCurrentScene(nth)
+			self.last_line.update()
 			return
 		    else:
 			# We may in the next scene
@@ -354,6 +363,7 @@ class MBScene():
 		    layer._draw_all_frames()
 		    self.update()
 		    self.setCurrentScene(nth)
+		    self.last_line.update()
 		    return
 		pass
 	    pass
@@ -368,7 +378,7 @@ class MBScene():
 	        s = layer._keys[i]
 		print s.ref.attribute("id"),s.idx,s.left_tween,s.right_tween
 		if s.right_tween is False:
-		    if nth == s.idx:
+		    if nth == s.idx+1:
 		        s.ref.setAttribute("style","",True)
 		    else:
 		        s.ref.setAttribute("style","display:none",True)
@@ -397,9 +407,19 @@ class MBScene():
     def onCellClick(self,line,frame,but):
 	self.last_line = line
 	self.last_frame = frame
+	self.last_line.active_frame(frame)
         self.doEditScene(frame)
         
         
+    def _remove_active_frame(self,widget,event):
+        """
+	Hide all hover frames. This is a hack. We should use the lost focus event 
+	instead in the future to reduce the overhead.
+	"""
+        for f in self._framelines:
+	    if f != widget:
+	        f.hide_hover()
+	    
     def _create_framelines(self):
 	import frameline
 	self.scrollwin = gtk.ScrolledWindow()
@@ -429,6 +449,7 @@ class MBScene():
 	    line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
 	    line.nLayer = i
 	    line.node = self.layers[i].node
+	    line.connect('motion-notify-event', self._remove_active_frame)
 	    pass
 	pass
 
@@ -436,8 +457,8 @@ class MBScene():
     #
     def _update_framelines(self):
 	for layer_i, layer in enumerate(self.layers):
+	    frameline = self._framelines[layer_i]
 	    for scene in layer.scenes:
-		frameline = self._framelines[layer_i]
 		frameline.add_keyframe(scene.start-1,scene.node.repr)
 		if scene.start != scene.end:
 		    frameline.add_keyframe(scene.end-1,scene.node.repr)
