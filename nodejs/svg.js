@@ -72,11 +72,15 @@ loadSVG.prototype.load=function(mb_rt, root, filename) {
 	var n = nodes[k].name();
         if (n == "defs") {
             this.parseDefs(coord,nodes[k]);
+	} else if (n == "metadata") {
+	    this.parseMetadata(coord,nodes[k]);
         } else if (n == "g") {
             this.parseGroup(accu,coord,'root_coord',nodes[k]);
         } 
     }
 }
+
+
 
 loadSVG.prototype.leaveSVG=function()
 {
@@ -103,6 +107,12 @@ function make_mbnames(mb_rt, n, obj) {
     if(mbname&&(mbname.value()!="")) {
 	name = mbname.value();
 	mb_rt.mbnames[name] = obj;
+    }
+    try {
+        var gname = n.attr('id').value();
+        sys.puts(gname);
+        mb_rt.mbnames[gname] = obj;
+    } catch(e) {
     }
 }
 
@@ -1117,7 +1127,8 @@ loadSVG.prototype._MB_parseLinearGradient=function(root,n)
 	href = href.value();
 	var hrefid = href.substring(1);
 	pstops = this.stop_ref[hrefid];
-	stops = pstops.concat(stops);
+	if (pstops)
+	    stops = pstops.concat(stops);
 	
 	var hrefgr = this.gradients[hrefid];
 	if(typeof x1 == "undefined")
@@ -1191,6 +1202,44 @@ loadSVG.prototype._MB_parseRadialGradient = function(root,n) {
     this.stop_ref[id] = stops;
 }
 
+loadSVG.prototype.parseScenes=function(coord,node) {
+    var nodes = node.childNodes();
+
+    for(k in nodes) {
+        var name = nodes[k].name();
+	if (name == 'scene') {
+	    var node = nodes[k];
+
+	    scene = new Object();
+	    scene.start = parseInt(node.attr('start').value());
+	    try { 
+	        scene.end = parseInt(node.attr('end').value());
+	    } catch(e) {
+	        scene.end = scene.start;
+	    }
+	    scene.ref = node.attr('ref').value();
+
+	    try {
+	        this.scenenames[node.attr('name').value()] = scene.start;
+	    } catch(e) {
+	    }
+	    this.scenes.push(scene);
+	}
+    }
+}
+
+loadSVG.prototype.parseMetadata=function(coord,node) {
+    var nodes = node.childNodes();
+
+    for(k in nodes) {
+        var name = nodes[k].name();
+	if (name == 'scenes') {
+	    this.scenes=[];
+	    this.scenenames={};
+	    this.parseScenes(coord,nodes[k]);
+	}
+    }
+}
 loadSVG.prototype.parseDefs=function(root,n)
 {
     var k;
