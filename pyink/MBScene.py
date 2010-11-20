@@ -489,8 +489,6 @@ class MBScene():
 
     def doRemoveScene(self,w):
 	self.removeKeyScene()
-	# self.grid.show_all()
-	# self.generate()
 	return
 
     

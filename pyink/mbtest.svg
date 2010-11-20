@@ -102,18 +102,6 @@
        id="linearGradient3544"
        xlink:href="#linearGradient3211"
        inkscape:collect="always" />
-    <filter
-       height="1.34432"
-       y="-0.17216"
-       width="1.0257982"
-       x="-0.012899101"
-       id="filter3854"
-       inkscape:collect="always">
-      <feGaussianBlur
-         id="feGaussianBlur3856"
-         stdDeviation="3.3563945"
-         inkscape:collect="always" />
-    </filter>
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient3211-0"
@@ -135,15 +123,6 @@
          offset="1"
          id="stop3215-9" />
     </linearGradient>
-    <filter
-       color-interpolation-filters="sRGB"
-       inkscape:collect="always"
-       id="filter3295-1">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="0.67110109"
-         id="feGaussianBlur3297-9" />
-    </filter>
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient3211-0"
@@ -212,18 +191,24 @@
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
       </cc:Work>
     </rdf:RDF>
-    <ns0:scenes
-       current="1">
+    <ns0:scenes>
       <ns0:scene
-         end="2"
          start="1"
-         ref="g3189" />
+         ref="g3189"
+         end="15" />
       <ns0:scene
          start="1"
          ref="s4427" />
       <ns0:scene
          start="2"
          ref="s4159" />
+      <ns0:scene
+         start="5"
+         ref="s9524"
+         end="10" />
+      <ns0:scene
+         start="15"
+         ref="s6546" />
     </ns0:scenes>
   </metadata>
   <g
@@ -232,7 +217,8 @@
      inkscape:label="Background"
      style="display:inline">
     <g
-       id="g3189">
+       id="g3189"
+       style="">
       <rect
          style="fill:#00ffff;fill-opacity:1;stroke:#000000;stroke-opacity:1;display:inline"
          id="rect2437"
@@ -307,7 +293,7 @@
      style="display:inline">
     <g
        id="s4427"
-       style="" />
+       style="display:none" />
     <g
        id="s4159"
        transform="translate(170.31517,0.62386544)"
@@ -356,6 +342,28 @@
              y="33.312569"
              style="font-size:16px">AAA</tspan></text>
       </g>
+    </g>
+    <g
+       id="s9524"
+       transform="translate(90.460441,64.258106)"
+       style="display:none">
+      <rect
+         x="0"
+         y="0"
+         width="100"
+         height="100"
+         id="rect3118" />
+    </g>
+    <g
+       id="s6546"
+       style="display:none">
+      <rect
+         x="0"
+         y="0"
+         width="100"
+         height="100"
+         style="fill:#ff00"
+         id="rect3116" />
     </g>
   </g>
   <g
