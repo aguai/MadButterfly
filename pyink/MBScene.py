@@ -252,6 +252,7 @@ class MBScene():
 	txt.setAttribute("style","fill:#ff00",True)
 	ns.appendChild(txt)
 	gid = self.newID()
+	self.ID[gid]=1
 	ns.setAttribute("id",gid,True)
 	self.last_line.node.repr.appendChild(ns)
 	self.last_line.add_keyframe(x,ns)
@@ -383,85 +384,6 @@ class MBScene():
 	    pass
 	pass
 	
-    def generate(self):
-	newdoc = deepcopy(self.document)
-	root = newdoc.getroot()
-	has_scene = False
-	for n in root:
-	    if n.tag == '{http://www.w3.org/2000/svg}metadata':
-		for nn in n:
-		    if nn.tag == _scenes:
-			nn.clear()
-			nn.set("current", "%d" % self.current)
-			scenes = []
-			for l in self.layers:
-			    for s in l.scenes:
-				id = s.node.get("id")
-				scene = etree.Element(_scene)
-				scene.set("ref", id)
-				if s.start == s.end:
-				    scene.set("start", "%d" % s.start)
-				else:
-				    scene.set("start", "%d" % s.start)
-				    scene.set("end", "%d" % s.end)
-				    pass
-
-				scenes.append(scene)
-				pass
-			    pass
-			for s in scenes:
-			    nn.append(s)
-			    pass
-			has_scene = True
-			pass
-		    pass
-		if has_scene == False:
-		    scenes = etree.Element(_scenes)
-		    scenes.set("current","%d" % self.current)
-		    for l in self.layers:
-			for s in l.scenes:
-			    scene = etree.Element(_scene)
-			    scene.set("ref", s.node.get("id"))
-			    if s.start == s.end:
-				scene.set("start", "%d" % s.start)
-			    else:
-				scene.set("start", "%d" % s.start)
-				scene.set("end", "%d" % s.end)
-				pass
-			    scenes.append(scene)
-			    pass
-			pass
-		    n.append(scenes)
-		    pass
-		pass
-	    if n.tag ==  '{http://www.w3.org/2000/svg}g':
-		root.remove(n)
-		pass
-	    pass
-	
-	for l in self.layers:
-	    # Duplicate all attribute of the layer
-	    lnode = etree.Element("{http://www.w3.org/2000/svg}g")
-	    for a,v in l.node.attrib.items():
-		lnode.set(a,v)
-		pass
-	    for n in l.nodes:
-		lnode.append(n)
-		pass
-	    root.append(lnode)
-	    for s in l.scenes:
-		snode = etree.Element("{http://www.w3.org/2000/svg}g")
-		for a,v in s.node.attrib.items():
-		    snode.set(a,v)
-		    pass
-		for n in s.node:
-		    snode.append(deepcopy(n))
-		    pass
-		lnode.append(snode)
-		pass
-	    pass
-	self.document = newdoc
-	pass
 	
     def newCell(self,file):
 	img = gtk.Image()
