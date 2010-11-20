@@ -145,6 +145,34 @@ app.prototype.addKeyListener=function(key,f) {
     }
 }
 
+
+app.prototype.changeScene=function(s) {
+    var nth;
+    if (typeof(s)=='number') {
+        var i;
+	nth = s;
+    } else {
+        nth = this.svg.getFrameNumber(s);
+	if (nth == -1) return;
+    }
+    var scenes = this.svg.scenes;
+    for(i=0;i<scenes.length;i++) {
+        try {
+            if (nth >=scenes[i].start && nth <=scenes[i].end) {
+	        this.get(scenes[i].ref).show();
+	    } else {
+	        this.get(scenes[i].ref).hide();
+	    }
+	} catch(e) {
+	    sys.puts(e);
+	    sys.puts(scenes[i].ref);
+	}
+    }
+}
+app.prototype.addSceneListener=function(n, cb) {
+    sys.puts("This is not implemented yet")
+}
+
 var app_with_win = function(display, win) {
     var self = this;
     var mb_rt;
