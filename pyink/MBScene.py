@@ -127,6 +127,10 @@ class MBScene():
 		pass
 	    pass
 	pass
+	if self.scenemap==None:
+	    self.desktop.doc().root().repr.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd",True)
+	    scenes = self.desktop.doc().rdoc.createElement("ns0:scenes")
+	    node.repr.appendChild(scenes)
     def update(self):
         doc = self.desktop.doc().root()
 	rdoc = self.desktop.doc().rdoc
@@ -192,6 +196,7 @@ class MBScene():
 		    pass
 		pass
 	    pass
+
 
 	self.collectID()
 	self.dumpID()
@@ -522,26 +527,6 @@ class MBScene():
 	gtk.main_quit()
 	pass
 
-    def onConfirmDelete(self):
-	if self.scenemap == None:
-	    vbox = gtk.VBox(False,0)
-	    vbox.pack_start(gtk.Label('Convert the SVG into a MadButterfly'
-				      ' SVG file. All current element will'
-				      ' be delted'))
-	    hbox = gtk.HBox(False,0)
-	    self.button = gtk.Button('OK')
-	    hbox.pack_start(self.button,expand=False,fill=False)
-	    self.button.connect('clicked', self.onOK)
-	    self.button = gtk.Button('Cancel')
-	    hbox.pack_start(self.button,expand=False,fill=False)
-	    self.button.connect("clicked", self.onQuit)
-	    vbox.pack_start(hbox,expand=False,fill=False)
-	    self.window.add(vbox)
-	    self.window.show_all()
-	    gtk.main()
-	    self.window.remove(vbox)
-	    pass
-	pass
 
     def show(self):
 	self.OK = True
@@ -551,24 +536,17 @@ class MBScene():
 	vbox = gtk.VBox(False,0)
 	self.desktop.getToplevel().child.child.pack_end(vbox,expand=False)
 	self.window = vbox
+	vbox = gtk.VBox(False,0)
+	self.window.pack_start(vbox,expand=False)
+	vbox.pack_start(self.scrollwin,expand=False)
+	self.vbox = vbox
+	hbox=gtk.HBox(False,0)
+	self.addButtons(hbox)
+	vbox.pack_start(hbox,expand=False)
+
 	# self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	# self.window.connect("destroy", gtk.main_quit)
 	# self.window.set_position(gtk.WIN_POS_MOUSE)
-	if self.scenemap == None:
-	    self.onConfirmDelete()
-	    pass
-	if self.OK:
-	    vbox = gtk.VBox(False,0)
-	    self.window.pack_start(vbox,expand=False)
-	    vbox.pack_start(self.scrollwin,expand=False)
-	    self.vbox = vbox
-	    hbox=gtk.HBox(False,0)
-	    self.addButtons(hbox)
-	    vbox.pack_start(hbox,expand=False)
-	else:
-	    return
-
-	# self.window.set_size_request(600,200)
 
 	self.window.show_all()
 	pass
