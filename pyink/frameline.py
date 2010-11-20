@@ -16,6 +16,7 @@ class keyframe(object):
         self.left_tween = False
         self.right_tween = False
         self.right_tween_type = 0
+	self.ref=''
         pass
     pass
 
@@ -401,7 +402,7 @@ class frameline(gtk.DrawingArea):
             last_pos = last_pos + 1
             pass
         
-        return first_pox, last_pos
+        return first_pos, last_pos
 
     ## \brief Redraw a frame specified by an index.
     #
@@ -440,10 +441,9 @@ class frameline(gtk.DrawingArea):
 
             for i in range(first_pos, last_pos + 1):
                 key = self._keys[i]
-		print "frame %d type=%d" % (key.idx,key.right_tween_type) 
 		if key.left_tween is False or lastkey.right_tween_type != frameline._tween_type_none:
                     self._draw_keyframe(key.idx)
-		lasykey = key
+		lastkey = key
                 pass
             pass
         else:                   # not in tween
@@ -504,7 +504,7 @@ class frameline(gtk.DrawingArea):
     #
     # A key frame is the frame that user specify actions.  For
     # example, move a object or add new objects at the frame.
-    def add_keyframe(self, idx):
+    def add_keyframe(self, idx,ref):
         key_indic = [key.idx for key in self._keys]
         if idx in key_indic:
             return
@@ -514,6 +514,7 @@ class frameline(gtk.DrawingArea):
         insert_pos = key_indic.index(idx)
         
         key = keyframe(idx)
+	key.ref = ref
         self._keys[insert_pos:insert_pos] = [key]
         if insert_pos > 0 and self._keys[insert_pos - 1].right_tween:
             key.left_tween = True
@@ -535,7 +536,6 @@ class frameline(gtk.DrawingArea):
 		break
 	if not found: return
         key = self._keys[idx]
-        del self._keys[idx]
         
         if key.right_tween ^ key.left_tween:
             #
@@ -558,6 +558,7 @@ class frameline(gtk.DrawingArea):
             self._redraw_frame(idx)
             pass
 
+        del self._keys[idx]
         self._draw_active()
         pass
 
@@ -607,6 +608,24 @@ class frameline(gtk.DrawingArea):
         self._keys = []
         pass
 
+    def addScenes(self,rdoc,node):
+        for i in range(0,len(self._keys)):
+	    key = self._keys[i]
+	    if key.left_tween is True: return
+	    if key.right_tween is True:
+	        ss = rdoc.createElement("ns0:scene")
+		node.appendChild(ss)
+		print "[%d:%d]" % (key.idx, self._keys[i+1].idx-1)
+		ss.setAttribute("start", str(key.idx+1),True)
+		ss.setAttribute("ref",key.ref.attribute("id"),True)
+		ss.setAttribute("end", str(self._keys[i+1].idx+1),True)
+	    else:
+	        ss = rdoc.createElement("ns0:scene")
+		node.appendChild(ss)
+		ss.setAttribute("start", str(key.idx+1),True)
+		ss.setAttribute("ref",key.ref.attribute("id"),True)
+
+	        
     ## \brief Start future drawing actions
     #
     def start_drawing(self):
