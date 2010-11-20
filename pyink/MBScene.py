@@ -7,6 +7,7 @@ from copy import deepcopy
 from lxml import etree
 import random
 import traceback
+import time
 
 # Please refer to
 # http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
@@ -97,7 +98,6 @@ class MBScene():
 		self.current = cur
 
 		for s in n.childList():
-		    print '--->',s.repr.name()
 		    if s.repr.name() == 'ns0:scene':
 			try:
 			    start = int(s.repr.attribute("start"))
@@ -124,6 +124,19 @@ class MBScene():
 		pass
 	    pass
 	pass
+    def update(self):
+        doc = self.desktop.doc().root()
+	rdoc = self.desktop.doc().rdoc
+	for node in doc.childList():
+	    if node.repr.name() == 'svg:metadata':
+	        for t in node.childList():
+		    if t.repr.name() == "ns0:scenes":
+		        node.repr.removeChild(t.repr)
+			ns = rdoc.createElement("ns0:scenes")
+			node.repr.appendChild(ns)
+			for layer in range(0,len(self._framelines)):
+			    lobj = self._framelines[layer]
+			    lobj.addScenes(rdoc,ns)
     
     
     def parseScene(self):
@@ -207,7 +220,6 @@ class MBScene():
     
     def dumpID(self):
 	for a,v in self.ID.items():
-	    print a
 	    pass
 	pass
     
@@ -228,190 +240,145 @@ class MBScene():
 	new scene.
 
 	"""
-	nth = self.last_cell.nScene
-	layer = self.getLayer(self.last_cell.layer)
-	x = self.last_cell.nScene
-	y = self.last_cell.nLayer
-	if layer == None: return
-	for i in range(0,len(layer.scenes)):
-	    s = layer.scenes[i]
-	    if nth >= s.start and nth <= s.end:
-		if nth == s.start: return
-		newscene = Scene(DuplicateNode(s.node),nth,s.end)
-		newscene.node.setId(self.newID())
-		layer.scenes.insert(i+1,newscene)
-		layer.scenes[i].end = nth-1
-		btn = self.newCell('start.png')
-		btn.nScene = nth
-		btn.layer = layer
-		btn.nLayer = y
-		self.grid.remove(self.last_cell)
-		self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
-		return
-	    pass
-	
-	if len(layer.scenes) > 0:
-	    last = nth
-	    lastscene = None
-	    for s in layer.scenes:
-		if s.end < nth and last < s.end:
-		    last = s.end
-		    lastscene = s
-		    pass
-		pass
-	    
-	    for x in range(last+1, nth):
-		btn = self.newCell('fill.png')
-		btn.nScene = x
-		btn.layer = layer.node.getId()
-		btn.nLayer = y
-		self.grid.attach(btn, x, x+1, y , y+1,0,0,0,0)
-		pass
-	    
-	    if lastscene == None:
-		node = etree.Element(_scene)
-		node.setId(self.newID())
-		newscene = Scene(node,nth,nth)
-	    else:
-		lastscene.end = nth-1
-		newscene = Scene(DuplicateNode(lastscene.node),nth,nth)
-		newscene.node.setId(self.newID())
-		pass
-	    
-	    layer.scenes.append(newscene)
-	    btn = self.newCell('start.png')
-	    x = self.last_cell.nScene
-	    y = self.last_cell.nLayer
-	    btn.nScene = nth
-	    btn.layer = layer.node.getId()
-	    btn.nLayer = y
-	    self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
-	else:
-	    # This is the first scene in the layer
-	    node = etree.Element(_scene)
-	    node.repr.setId(self.newID())
-	    newscene = Scene(node,nth,nth)
-	    layer.scenes.append(newscene)
-	    btn = self.newCell('start.png')
-	    btn.nScene = nth
-	    btn.layer = layer.node.getId()
-	    btn.nLayer = y
-	    self.grid.attach(btn, x, x+1, y, y+1,0,0,0,0)
-	    pass
-	pass
+	x = self.last_frame
+	y = self.last_line
+	rdoc = self.desktop.doc().rdoc
+	ns = rdoc.createElement("svg:g")
+	txt = rdoc.createElement("svg:rect")
+	txt.setAttribute("x","0",True)
+	txt.setAttribute("y","0",True)
+	txt.setAttribute("width","100",True)
+	txt.setAttribute("height","100",True)
+	txt.setAttribute("style","fill:#ff00",True)
+	ns.appendChild(txt)
+	gid = self.newID()
+	ns.setAttribute("id",gid,True)
+	self.last_line.node.repr.appendChild(ns)
+	self.last_line.add_keyframe(x,ns)
+	self.update()
     
 
     def removeKeyScene(self):
-	nth = self.last_cell.nScene
-	try:
-	    layer = self.getLayer(self.last_cell.layer)
-	except:
-	    return
-	x = self.last_cell.nScene
-	y = self.last_cell.nLayer
-	for i in range(0,len(layer.scenes)):
-	    s = layer.scenes[i]
-	    if nth == s.start:
-		if i == 0:
-		    for j in range(s.start,s.end+1):
-			btn = self.newCell('empty.png')
-			btn.nScene = nth
-			btn.layer = layer
-			btn.nLayer = y
-			self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
-			pass
-		    layer.scenes.remove(s)
-		else:
-		    if s.start == layer.scenes[i-1].end+1:
-			# If the start of the delete scene segment is
-			# the end of the last scene segmenet, convert
-			# all scenes in the deleted scene segmenet to
-			# the last one
-			layer.scenes[i-1].end = s.end
-			layer.scenes.remove(s)
-			btn = self.newCell('fill.png')
-
-			btn.nScene = nth
-			btn.layer = layer
-			btn.nLayer = y
-			self.grid.attach(btn, x,x+1,y,y+1,0,0,0,0)
+	nth = self.last_frame
+	y = self.last_line
+	rdoc = self.desktop.doc().rdoc
+	i = 0
+	layer = self.last_line
+	while i < len(layer._keys):
+	    s = layer._keys[i]
+	    print "nth:%d idx %d" % (nth,s.idx)
+	    if nth > s.idx:
+	        if i == len(layer._keys)-1:
+	            return
+	    if nth == s.idx:
+	        if s.left_tween:
+		    # This is left tween, we move the keyframe one frame ahead
+		    if s.idx == layer._keys[i-1].idx:
+			layer._keys[i].ref.parent().removeChild(layer._keys[i].ref)
+	                self.last_line.rm_keyframe(nth)
+	                self.last_line.rm_keyframe(nth-1)
 		    else:
-			# Convert all scenes into empty cell
-			layer.scenes.remove(s)
-			for j in range(s.start,s.end+1):
-			    btn = self.newCell('empty.png')
-			    btn.nScene = nth
-			    btn.layer = layer
-			    btn.nLayer = y
-			    self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
+		        s.idx = s.idx-1
+		else:
+		    layer._keys[i].ref.parent().removeChild(layer._keys[i].ref)
+		    if s.right_tween:
+		        self.last_line.rm_keyframe(layer._keys[i+1].idx)
+	                self.last_line.rm_keyframe(nth)
+		    else:
+	                self.last_line.rm_keyframe(nth)
+
+		self.update()
+		self.last_line._draw_all_frames()
+		return
+	    i = i + 1
+    def extendScene(self):
+	nth = self.last_frame
+	layer = self.last_line
+	i = 0
+	while i < len(layer._keys):
+	    s = layer._keys[i]
+	    if s.right_tween:
+	        if nth > s.idx:
+		    if nth <= layer._keys[i+1].idx:
+		        return
+		    try:
+		        if nth <= layer._keys[i+2].idx:
+			    layer._keys[i+1].idx = nth
+			    layer.draw_all_frames()
+			    self.update()
+			    self.setCurrentScene(nth)
+			    return
+			else:
+			    # We may in the next scene
+			    i = i + 2
 			    pass
+		    except:
+		        # This is the last keyframe, extend the keyframe by 
+			# relocate the location of the keyframe
+			layer._keys[i+1].idx = nth
+			layer._draw_all_frames()
+			self.update()
+			self.setCurrentScene(nth)
+			return
+		else:
+		    # We are in the front of all keyframes
+		    return
+	    else:
+		# This is a single keyframe
+		if nth < s.idx:
+		    return
+		if nth == s.idx:
+		    return
+		try:
+		    if nth < layer._keys[i+1].idx:
+			# We are after a single keyframe and no scene is 
+			# available here. Create a new tween here
+			idx = layer._keys[i].idx
+			layer.add_keyframe(nth,layer._keys[i].ref)
+			layer.tween(idx)
+		        layer._draw_all_frames()
+			self.update()
+			self.setCurrentScene(nth)
+			return
+		    else:
+			# We may in the next scene
+			i = i + 1
 			pass
 		    pass
-		return
-	    pass
-	pass
-
-    def extendScene(self):
-	nth = self.last_cell.nScene
-	try:
-	    layer = self.getLayer(self.last_cell.layer)
-	except:
-	    traceback.print_exc()
-	    return
-	x = self.last_cell.nScene
-	y = self.last_cell.nLayer
-	if layer == None:
-	    return
-
-	for i in range(0,len(layer.scenes)-1):
-	    s = layer.scenes[i]
-	    if nth >= layer.scenes[i].start and nth <= layer.scenes[i].end:
-		return
-	    pass
-
-	for i in range(0,len(layer.scenes)-1):
-	    s = layer.scenes[i]
-	    if nth >= layer.scenes[i].start and nth < layer.scenes[i+1].start:
-		for j in range(layer.scenes[i].end+1, nth+1):
-		    btn = self.newCell('fill.png')
-		    btn.nScene = nth
-		    btn.nLayer = y
-		    btn.layer = self.last_cell.layer
-		    self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
-		    layer.scenes[i].end = nth
+		except:
+		    # This is the last scene, create a new one
+		    idx = layer._keys[i].idx
+		    layer.add_keyframe(nth,layer._keys[i].ref)
+		    layer.tween(idx)
+		    layer._draw_all_frames()
+		    self.update()
+		    self.setCurrentScene(nth)
 		    return
 		pass
-	    if len(layer.scenes) > 0 and \
-		    nth > layer.scenes[len(layer.scenes)-1].end:
-		for j in range(layer.scenes[len(layer.scenes)-1].end+1, nth+1):
-		    btn = self.newCell('fill.png')
-		    btn.nScene = nth
-		    btn.nLayer = y
-		    btn.layer = self.last_cell.layer
-		    self.grid.attach(btn, j,j+1,y,y+1,0,0,0,0)
-		    pass
-		layer.scenes[len(layer.scenes)-1].end = nth
-		pass
 	    pass
 	pass
+
     
     def setCurrentScene(self,nth):
 	self.current = nth
-	for layer in self.layers:
-	    for s in layer.scenes:
-		if nth >= s.start and nth <= s.end:
-		    s.node.repr.setAttribute("style","",True)
-		    # print "Put the elemenets out"
-		    layer.nodes = []
-		    
-		    # for o in s.node:
-		    #        print "    ",o.tag
-		    #	layer.nodes.append(o)
-		    # for o in s.node:
-		    #	s.node.remove(o)
+	for layer in self._framelines:
+	    i=0
+	    while i < len(layer._keys):
+	        s = layer._keys[i]
+		print s.ref.attribute("id"),s.idx,s.left_tween,s.right_tween
+		if s.right_tween is False:
+		    if nth == s.idx:
+		        s.ref.setAttribute("style","",True)
+		    else:
+		        s.ref.setAttribute("style","display:none",True)
+		    i = i + 1
+		    continue
+
+		if nth >= (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
+		    s.ref.setAttribute("style","",True)
 		else:
-		    s.node.repr.setAttribute("style","display:none",True)
-		    pass
+		    s.ref.setAttribute("style","display:none",True)
+		i = i + 2
 		pass
 	    pass
 	pass
@@ -505,6 +472,12 @@ class MBScene():
 	btn.modify_bg(gtk.STATE_NORMAL, btn.get_colormap().alloc_color("gray"))
 	return btn
     
+    def onCellClick(self,line,frame,but):
+	self.last_line = line
+	self.last_frame = frame
+        self.doEditScene(frame)
+        
+        
     def _create_framelines(self):
 	import frameline
 	self.scrollwin = gtk.ScrolledWindow()
@@ -531,6 +504,9 @@ class MBScene():
 	    line.set_size_request(nframes * 10, 20)
 	    vbox.pack_start(line, False)
 	    self._framelines.append(line)
+	    line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
+	    line.nLayer = i
+	    line.node = self.layers[i].node
 	    pass
 	pass
 
@@ -540,9 +516,10 @@ class MBScene():
 	for layer_i, layer in enumerate(self.layers):
 	    for scene in layer.scenes:
 		frameline = self._framelines[layer_i]
-		for scene_i in range(scene.start, scene.stop + 1):
-		    frameline.add_keyframe(scene_i)
-		    pass
+		frameline.add_keyframe(scene.start-1,scene.node.repr)
+		if scene.start != scene.end:
+		    frameline.add_keyframe(scene.end-1,scene.node.repr)
+		    frameline.tween(scene.start-1)
 		pass
 	    pass
 	pass
@@ -559,16 +536,16 @@ class MBScene():
 	pass
     
     def doEditScene(self,w):
-	self.setCurrentScene(self.last_cell.nScene)
+	self.setCurrentScene(self.last_frame+1)
 	pass
     
     def doInsertKeyScene(self,w):
-	# self.insertKeyScene()
+	self.insertKeyScene()
 	# self.grid.show_all()
 	return
 
     def doRemoveScene(self,w):
-	# self.removeKeyScene()
+	self.removeKeyScene()
 	# self.grid.show_all()
 	# self.generate()
 	return
@@ -576,13 +553,13 @@ class MBScene():
     
     def doExtendScene(self,w):
 	self.extendScene()
-	self.grid.show_all()
+	#self.grid.show_all()
 	pass
     
     def addButtons(self,hbox):
-	btn = gtk.Button('Edit')
-	btn.connect('clicked', self.doEditScene)
-	hbox.pack_start(btn,expand=False,fill=False)
+	#btn = gtk.Button('Edit')
+	#btn.connect('clicked', self.doEditScene)
+	#hbox.pack_start(btn,expand=False,fill=False)
 	btn = gtk.Button('Insert Key')
 	btn.connect('clicked',self.doInsertKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
