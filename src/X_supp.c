@@ -106,43 +106,43 @@ typedef struct {
     void *data;
 }  monitor_t;
 
-struct _X_MB_IO_man {
+struct _X_supp_IO_man {
     mb_IO_man_t io_man;
     monitor_t monitors[MAX_MONITORS];
     int n_monitor;
 };
 
-int _x_mb_io_man_reg(struct _mb_IO_man *io_man,
-		      int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data);
-void _x_mb_io_man_unreg(struct _mb_IO_Man *io_man, int io_hdl);
-mb_IO_man_t *_x_mb_io_man_new(void);
-void _x_mb_io_man_free(mb_IO_man_t *io_man);
+int _x_supp_io_man_reg(struct _mb_IO_man *io_man,
+		       int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data);
+void _x_supp_io_man_unreg(struct _mb_IO_Man *io_man, int io_hdl);
+mb_IO_man_t *_x_supp_io_man_new(void);
+void _x_supp_io_man_free(mb_IO_man_t *io_man);
 
 static mb_IO_factory_t _X_supp_default_io_factory = {
-    _x_mb_io_man_new,
-    _x_mb_io_man_free
+    _x_supp_io_man_new,
+    _x_supp_io_man_free
 };
 static mb_IO_factory_t *_io_factory = _X_supp_default_io_factory;
 
-static struct _X_MB_IO_man _default_io_man = {
-    {_x_mb_io_man_reg, _x_mb_io_man_unreg},
+static struct _X_supp_IO_man _default_io_man = {
+    {_x_supp_io_man_reg, _x_supp_io_man_unreg},
     {},			/* monitors */
     0			/* n_monitor */
 };
 
 static mb_IO_man_t *
-_x_mb_io_man_new(void) {
+_x_supp_io_man_new(void) {
     return (mb_IO_man_t *)&_default_io_man;
 }
 
 static void
-_x_mb_io_man_free(mb_IO_man_t *io_man) {
+_x_supp_io_man_free(mb_IO_man_t *io_man) {
 }
 
 static int
-_x_mb_io_man_reg(struct _mb_IO_man *io_man,
-		     int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data) {
-    struct _x_mb_io_man *xmb_io_man = (struct _x_mb_io_man *)io_man;
+_x_supp_io_man_reg(struct _mb_IO_man *io_man,
+		   int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data) {
+    struct _x_supp_io_man *xmb_io_man = (struct _x_supp_io_man *)io_man;
     int i;
 
     for(i = 0; i < xmb_io_man->n_monitor; i++) {
@@ -163,8 +163,8 @@ _x_mb_io_man_reg(struct _mb_IO_man *io_man,
 }
 
 static void
-_x_mb_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
-    struct _x_mb_io_man *xmb_io_man = (struct _x_mb_io_man *)io_man;
+_x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
+    struct _x_supp_io_man *xmb_io_man = (struct _x_supp_io_man *)io_man;
     
     ASSERT(io_hdl < xmb_io_man->n_monitor);
     xmb_io_man->monitors[io_hdl].type = MB_IO_DUMMY;
