@@ -1137,9 +1137,9 @@ redraw_man_t *X_MB_rdman(void *rt) {
     return xmb_rt->rdman;
 }
 
-mb_tman_t *X_MB_tman(void *rt) {
+mb_timer_man_t *X_MB_timer_man(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
-    return xmb_rt->tman;
+    return xmb_rt->timer_man;
 }
 
 ob_factory_t *X_MB_ob_factory(void *rt) {
