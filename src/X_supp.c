@@ -84,12 +84,12 @@ struct _X_supp_timer_man {
     mb_tman_t *tman;
 };
 
-int _x_supp_timer_man_timeout(struct _mb_timer_man *tm_man,
-			      mbsec_t sec, mbusec_t usec,
-			      mb_timer_cb_t cb, void *data);
-void _x_supp_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl);
-mb_timer_man_t *_x_supp_timer_fact_new(void);
-void _x_supp_timer_fact_free(mb_timer_man_t *timer_man);
+static int _x_supp_timer_man_timeout(struct _mb_timer_man *tm_man,
+				     mb_timeval_t *tmout,
+				     mb_timer_cb_t cb, void *data);
+static void _x_supp_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl);
+static mb_timer_man_t *_x_supp_timer_fact_new(void);
+static void _x_supp_timer_fact_free(mb_timer_man_t *timer_man);
 
 static struct _X_supp_timer_man _x_supp_default_timer_man = {
     {_x_supp_timer_man_timeout, _x_supp_timer_man_remove},
