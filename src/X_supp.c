@@ -74,6 +74,26 @@ struct _X_MB_runtime {
     int mbut_state;	       /* Button state of last motion event */
 };
 
+/*! \defgroup x_mb_timer Timer manager for X.
+ * @{
+ */
+struct _X_supp_timer_man {
+    mb_timer_man_t timer_man;
+    mb_tman_t *tman;
+};
+
+static struct _X_supp_timer_man _X_supp_default_timer_man = {
+    {_x_supp_timer_man_timeout, _x_supp_timer_man_remove},
+    NULL
+};
+
+static mb_timer_factory_t _X_supp_default_timer_factory = {
+    _X_supp_timer_fact_new,
+    _X_supp_timer_fact_free
+}
+
+/* @} */
+
 /*! \defgroup x_mb_io IO manager for X.
  * @{
  */
@@ -106,7 +126,7 @@ static mb_IO_factory_t *_io_factory = _X_supp_default_io_factory;
 
 static struct _X_MB_IO_man _default_io_man = {
     {_x_mb_io_man_reg, _x_mb_io_man_unreg},
-    ,			/* monitors */
+    {},			/* monitors */
     0			/* n_monitor */
 };
 
