@@ -2,13 +2,14 @@
 // vim: sw=4:ts=8:sts=4
 #include <mb.h>
 #include <mb_af.h>
+#include <mb_backend.h>
 
 mbaf_t *mbaf_init(const char *module, const char *module_dir)
 {
     mbaf_t *app = (mbaf_t *) malloc(sizeof(mbaf_t));
-    void *rt;
+    mb_rt_t *rt;
 
-    rt = backend.init(":0.0", 800, 600);
+    rt = backend.new(":0.0", 800, 600);
     if(rt == NULL)
 	return NULL;
 
