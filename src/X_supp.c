@@ -1179,7 +1179,7 @@ void X_MB_remove_event(void *rt, int hdl)
 }
 
 mb_backend_t backend = { X_MB_new,
-			 X_MB_new_with_window,
+			 X_MB_new_with_win,
 			 
 			 X_MB_free,
 			 X_MB_add_event,
