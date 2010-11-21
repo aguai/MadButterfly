@@ -22,6 +22,7 @@ typedef struct _mb_timer_man mb_timer_man_t;
 typedef struct _mb_timer_factory mb_timer_factory_t;
 typedef struct _mb_IO_man mb_IO_man_t;
 typedef struct _mb_IO_factory mb_IO_factory_t;
+typedef enum _MB_IO_TYPE MB_IO_TYPE;
 
 /*! \brief The backend engine mb_backend_t is used to define the
  *         interface to realize the MB.
@@ -45,12 +46,13 @@ typedef struct {
      *
      * This is used only when the backend is responsible for event loop.
      */
-    void (*add_event)(mb_rt_t *rt,int type, int fd, mb_eventcb_t f,void *arg);
+    int (*add_event)(mb_rt_t *rt, int fd, MB_IO_TYPE type,
+		     mb_eventcb_t f,void *arg);
     /*! \brief Request the backend to stop monitoring a file descriptor.
      *
      * This is used only when the backend is responsible for event loop.
      */
-    void (*remove_event)(mb_rt_t *rt,int type, int fd);
+    void (*remove_event)(mb_rt_t *rt, int hdl);
     /*! \brief Event Loop
      *
      * This is called when main application does not handle event
@@ -78,7 +80,6 @@ extern mb_backend_t backend;
 /*! \brief Type of IO that registered with an IO manager.
  */
 enum _MB_IO_TYPE {MB_IO_DUMMY, MB_IO_R, MB_IO_W, MB_IO_RW};
-typedef enum _MB_IO_TYPE MB_IO_TYPE;
 
 /*! \brief Function signature of callback functions for IO requests.
  */
