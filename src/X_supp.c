@@ -114,7 +114,7 @@ struct _X_supp_timeout_data {
     void *data;			/*!< data for real callback */
 };
 
-static void *
+static void
 _x_supp_tmo_hdlr(const mb_timeval_t *tmo,
 		 const mb_timeval_t *now,
 		 void *arg) {
