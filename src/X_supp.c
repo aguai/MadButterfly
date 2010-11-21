@@ -185,11 +185,12 @@ struct _X_supp_IO_man {
     int n_monitor;
 };
 
-int _x_supp_io_man_reg(struct _mb_IO_man *io_man,
-		       int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data);
-void _x_supp_io_man_unreg(struct _mb_IO_Man *io_man, int io_hdl);
-mb_IO_man_t *_x_supp_io_man_new(void);
-void _x_supp_io_man_free(mb_IO_man_t *io_man);
+static int _x_supp_io_man_reg(struct _mb_IO_man *io_man,
+			      int fd, MB_IO_TYPE type,
+			      mb_IO_cb_t cb, void *data);
+static void _x_supp_io_man_unreg(struct _mb_IO_Man *io_man, int io_hdl);
+static mb_IO_man_t *_x_supp_io_man_new(void);
+static void _x_supp_io_man_free(mb_IO_man_t *io_man);
 
 static mb_IO_factory_t _X_supp_default_io_factory = {
     _x_supp_io_man_new,
