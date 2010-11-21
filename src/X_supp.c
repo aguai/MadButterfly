@@ -269,14 +269,14 @@ _x_mb_handle_connection(struct _mb_IO_man *io_man) {
 	        if(io_man->monitors[i].type == MB_IO_R ||
 		   io_man->monitors[i].type == MB_IO_RW) {
 		    if(FD_ISSET(io_man->monitors[i].fd, &rfds))
-		    	ioman->monitors[i].cb(io_man->monitors[i].fd,
+		    	ioman->monitors[i].cb(i, io_man->monitors[i].fd,
 					      MB_IO_R,
 					      rt->monitors[i].data);
 		}
 		if(io_man->monitors[i].type == MB_IO_W ||
 		   io_man->monitors[i].type == MB_IO_RW) {
 		    if(FD_ISSET(io_man->monitors[i].fd, &wfds))
-			io_man->monitors[i].cb(io_man->monitors[i].fd,
+			io_man->monitors[i].cb(i, io_man->monitors[i].fd,
 					       MB_IO_W,
 					       io_man->monitors[i].data);
 		}

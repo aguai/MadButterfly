@@ -72,7 +72,7 @@ enum MB_IO_TYPE {MB_IO_DUMMY, MB_IO_R, MB_IO_W, MB_IO_RW};
 
 /*! \brief Function signature of callback functions for IO requests.
  */
-typedef void (*mb_IO_cb_t)(int fd, MB_IO_TYPE type, void *data);
+typedef void (*mb_IO_cb_t)(int hdl, int fd, MB_IO_TYPE type, void *data);
 
 /*! \brief IO Manager
  */
@@ -94,7 +94,7 @@ typedef struct _mb_IO_factory mb_IO_factory_t;
 
 /*! \brief Function signature of callback functions for timers.
  */
-typedef void (*mb_timer_cb_t)(mbsec_t sec, mbusec_t usec, void *data);
+typedef void (*mb_timer_cb_t)(int hdl, mbsec_t sec, mbusec_t usec, void *data);
 
 /*! \brief Timer manager
  */
