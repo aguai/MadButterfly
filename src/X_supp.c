@@ -1027,8 +1027,10 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 	free(xmb_rt->rdman);
     }
 
-    if(xmb_rt->tman)
-	mb_tman_free(xmb_rt->tman);
+    if(xmb_rt->io_man)
+	_io_factory->free(xmb_rt->io_man);
+    if(xmb_rt->timer_man)
+	_timer_factory->free(xmb_rt->timer_man);
 
     if(xmb_rt->img_ldr)
 	MB_IMG_LDR_FREE(xmb_rt->img_ldr);
