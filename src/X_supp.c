@@ -216,7 +216,7 @@ _x_supp_io_man_free(mb_IO_man_t *io_man) {
 static int
 _x_supp_io_man_reg(struct _mb_IO_man *io_man,
 		   int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data) {
-    struct _x_supp_io_man *xmb_io_man = (struct _x_supp_io_man *)io_man;
+    struct _X_supp_IO_man *xmb_io_man = (struct _X_supp_IO_man *)io_man;
     int i;
 
     for(i = 0; i < xmb_io_man->n_monitor; i++) {
@@ -238,7 +238,7 @@ _x_supp_io_man_reg(struct _mb_IO_man *io_man,
 
 static void
 _x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
-    struct _x_supp_io_man *xmb_io_man = (struct _x_supp_io_man *)io_man;
+    struct _X_supp_IO_man *xmb_io_man = (struct _X_supp_IO_man *)io_man;
     
     ASSERT(io_hdl < xmb_io_man->n_monitor);
     xmb_io_man->monitors[io_hdl].type = MB_IO_DUMMY;
