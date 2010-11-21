@@ -23,6 +23,8 @@
 #define ERR -1
 #define OK 0
 
+#define ASSERT(x)
+
 #define ONLY_MOUSE_MOVE_RAW 1
 
 /*! \ingroup xkb
@@ -1159,6 +1161,8 @@ mb_backend_t backend = { X_MB_new,
 			 X_MB_ob_factory,
 			 X_MB_img_ldr
 		};
+
+#if 0
 /*! \defgroup x_supp_nodejs_sup Export functions for supporting nodejs plugin.
  *
  * These functions are for internal using.
@@ -1205,3 +1209,4 @@ _X_MB_no_more_event(mb_rt_t *rt) {
 }
 
 /* @} */
+#endif /* 0 */
