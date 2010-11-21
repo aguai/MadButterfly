@@ -257,10 +257,10 @@ _x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
  */
 static void
 _x_mb_event_loop(mb_rt_t *rt) {
-    struct _X_MB_runtime *xmbrt = (struct _X_MB_runtime *)rt;
-    struct _X_supp_IO_man *io_man = (struct _X_supp_IO_man *)xmbrt->io_man;
+    struct _X_MB_runtime *xmb_rt = (struct _X_MB_runtime *)rt;
+    struct _X_supp_IO_man *io_man = (struct _X_supp_IO_man *)xmb_rt->io_man;
     struct _X_supp_timer_man *timer_man =
-	(struct _X_supp_timer_man *)xmbrt->timer_man;
+	(struct _X_supp_timer_man *)xmb_rt->timer_man;
     mb_tman_t *tman = timer_man->tman;
     int fd;
     mb_timeval_t now, tmo;
