@@ -188,7 +188,7 @@ struct _X_supp_IO_man {
 static int _x_supp_io_man_reg(struct _mb_IO_man *io_man,
 			      int fd, MB_IO_TYPE type,
 			      mb_IO_cb_t cb, void *data);
-static void _x_supp_io_man_unreg(struct _mb_IO_Man *io_man, int io_hdl);
+static void _x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl);
 static mb_IO_man_t *_x_supp_io_man_new(void);
 static void _x_supp_io_man_free(mb_IO_man_t *io_man);
 
