@@ -195,7 +195,7 @@ static mb_IO_factory_t _X_supp_default_io_factory = {
     _x_supp_io_man_new,
     _x_supp_io_man_free
 };
-static mb_IO_factory_t *_io_factory = _X_supp_default_io_factory;
+static mb_IO_factory_t *_io_factory = &_X_supp_default_io_factory;
 
 static struct _X_supp_IO_man _default_io_man = {
     {_x_supp_io_man_reg, _x_supp_io_man_unreg},
