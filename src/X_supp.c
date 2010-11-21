@@ -1075,7 +1075,8 @@ X_MB_destroy_keep_win(X_MB_runtime_t *xmb_rt) {
     xmb_rt->win = win;
 }
 
-void *X_MB_new(const char *display_name, int w, int h) {
+static mb_rt_t *
+X_MB_new(const char *display_name, int w, int h) {
     X_MB_runtime_t *rt;
     int r;
 
@@ -1097,7 +1098,8 @@ void *X_MB_new(const char *display_name, int w, int h) {
  * The object returned by this function must be free with
  * X_MB_free_keep_win() to prevent the window from closed.
  */
-void *X_MB_new_with_win(Display *display, Window win) {
+static mb_rt_t *
+X_MB_new_with_win(MB_DISPLAY display, MB_WINDOW win) {
     X_MB_runtime_t *rt;
     int r;
 
@@ -1114,35 +1116,40 @@ void *X_MB_new_with_win(Display *display, Window win) {
     return rt;
 }
 
-void X_MB_free(void *rt) {
+static void
+X_MB_free(void *rt) {
     X_MB_destroy((X_MB_runtime_t *) rt);
     free(rt);
 }
 
 /*! \brief Free runtime created with X_MB_new_with_win().
  */
-void
+static void
 X_MB_free_keep_win(void *rt) {
     X_MB_destroy_keep_win((X_MB_runtime_t *) rt);
     free(rt);
 }
 
-subject_t *X_MB_kbevents(void *rt) {
+static subject_t *
+X_MB_kbevents(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->kbinfo.kbevents;
 }
 
-redraw_man_t *X_MB_rdman(void *rt) {
+static redraw_man_t *
+X_MB_rdman(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->rdman;
 }
 
-mb_timer_man_t *X_MB_timer_man(void *rt) {
+static mb_timer_man_t *
+X_MB_timer_man(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->timer_man;
 }
 
-ob_factory_t *X_MB_ob_factory(void *rt) {
+static ob_factory_t *
+X_MB_ob_factory(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     ob_factory_t *factory;
 
@@ -1150,7 +1157,8 @@ ob_factory_t *X_MB_ob_factory(void *rt) {
     return factory;
 }
 
-mb_img_ldr_t *X_MB_img_ldr(void *rt) {
+static mb_img_ldr_t *
+X_MB_img_ldr(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     mb_img_ldr_t *img_ldr;
 
@@ -1159,8 +1167,9 @@ mb_img_ldr_t *X_MB_img_ldr(void *rt) {
     return img_ldr;
 }
 
-int X_MB_add_event(void *rt, int fd, MB_IO_TYPE type,
-		   mb_IO_cb_t cb, void *data)
+static int
+X_MB_add_event(mb_rt_t *rt, int fd, MB_IO_TYPE type,
+	       mb_IO_cb_t cb, void *data)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     mb_IO_man_t *io_man = xmb_rt->io_man;
@@ -1170,7 +1179,8 @@ int X_MB_add_event(void *rt, int fd, MB_IO_TYPE type,
     return hdl;
 }
 
-void X_MB_remove_event(void *rt, int hdl)
+static void
+X_MB_remove_event(mb_rt_t *rt, int hdl)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     mb_IO_man_t *io_man = xmb_rt->io_man;
@@ -1184,11 +1194,11 @@ mb_backend_t backend = { X_MB_new,
 			 X_MB_free,
 			 X_MB_add_event,
 			 X_MB_remove_event,
-			 X_MB_handle_connection,
+			 _x_mb_event_loop,
 			 
 			 X_MB_kbevents,
 			 X_MB_rdman,
-			 X_MB_tman,
+			 X_MB_timer_man,
 			 X_MB_ob_factory,
 			 X_MB_img_ldr
 		};
