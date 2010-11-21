@@ -82,15 +82,51 @@ struct _X_supp_timer_man {
     mb_tman_t *tman;
 };
 
-static struct _X_supp_timer_man _X_supp_default_timer_man = {
+int _x_supp_timer_man_timeout(struct _mb_timer_man *tm_man,
+			      mbsec_t sec, mbusec_t usec,
+			      mb_timer_cb_t cb, void *data);
+void _x_supp_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl);
+mb_timer_man_t *_x_supp_timer_fact_new(void);
+void _x_supp_timer_fact_free(mb_timer_man_t *timer_man);
+
+static struct _X_supp_timer_man _x_supp_default_timer_man = {
     {_x_supp_timer_man_timeout, _x_supp_timer_man_remove},
     NULL
 };
 
-static mb_timer_factory_t _X_supp_default_timer_factory = {
-    _X_supp_timer_fact_new,
-    _X_supp_timer_fact_free
+static mb_timer_factory_t _x_supp_default_timer_factory = {
+    _x_supp_timer_fact_new,
+    _x_supp_timer_fact_free
+};
+
+static mb_timer_factory_t *_timer_factory = &_x_supp_default_timer_factory;
+
+static int
+_x_supp_timer_man_timeout(struct _mb_timer_man *tm_man,
+			  mbsec_t sec, mbusec_t usec,
+			  mb_timer_cb_t cb, void *data) {
+    struct _X_supp_timer_man *timer_man = (struct _X_supp_timer_man *)tm_man;
+    mb_timer_t *timer;
+    mb_timeval_t tmo;
+
+    timer = mb_tman_timeout(timer_man->tman, &tmo, cb, data);
 }
+
+static void
+_x_supp_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl) {
+}
+
+static mb_timer_man_t *
+_x_supp_timer_fact_new(void) {
+    if(_x_supp_default_timer_man.tman == NULL)
+	_x_supp_default_timer_man.tman = mb_tman_new();
+    return (mb_timer_man_t *)&_x_supp_default_timer_man;
+}
+
+static void
+_x_supp_timer_fact_free(mb_timer_man_t *timer_man) {
+}
+
 
 /* @} */
 
