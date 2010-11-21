@@ -63,6 +63,9 @@ struct _X_MB_runtime {
     XShmSegmentInfo shminfo;
 #endif
 
+    /* For handle connection */
+    int io_hdl;
+
     /*
      * Following variables are used by handle_single_x_event()
      */
@@ -669,82 +672,12 @@ static void handle_x_event(X_MB_runtime_t *rt) {
     XFlush(display);
 }
 
-#if 0
-/*! \brief Handle connection coming data and timeout of timers.
- *
- * \param display is a Display returned by XOpenDisplay().
- * \param rdman is a redraw manager.
- * \param tman is a timer manager.
- *
- * The display is managed by specified rdman and tman.  rdman draws
- * on the display, and tman trigger actions according timers.
- */
-void X_MB_handle_connection(void *be) {
-    X_MB_runtime_t *rt = (X_MB_runtime_t *) be;
-    Display *display = rt->display;
-    redraw_man_t *rdman = rt->rdman;
-    mb_tman_t *tman = rt->tman;
-    int fd;
-    mb_timeval_t now, tmo;
-    struct timeval tv;
-    fd_set rfds,wfds;
-    int nfds;
-    int r, r1,i;
+static void
+_x_mb_handle_connection(int hdl, int fd, MB_IO_TYPE type, void *data) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)data;
 
-    handle_x_event(rt);
-
-    fd = XConnectionNumber(display);
-    nfds = fd + 1;
-    while(1) {
-	FD_ZERO(&rfds);
-	FD_ZERO(&wfds);
-	FD_SET(fd, &rfds);
-        for(i=0;i<rt->n_monitor;i++) {
-	    if (rt->monitors[i].type == MONITOR_READ)
-		FD_SET(rt->monitors[i].fd, &rfds);
-	    else if (rt->monitors[i].type == MONITOR_WRITE)
-		FD_SET(rt->monitors[i].fd, &wfds);
-        }
-
-	get_now(&now);
-	r = mb_tman_next_timeout(tman, &now, &tmo);
-
-	if(r == 0) {
-	    tv.tv_sec = MB_TIMEVAL_SEC(&tmo);
-	    tv.tv_usec = MB_TIMEVAL_USEC(&tmo);
-	    r1 = select(nfds, &rfds, NULL, NULL, &tv);
-	} else
-	    r1 = select(nfds, &rfds, NULL, NULL, NULL);
-
-	if(r1 == -1) {
-	    perror("select");
-	    break;
-	}
-
-	if(r1 == 0) {
-	    get_now(&now);
-	    mb_tman_handle_timeout(tman, &now);
-	    rdman_redraw_changed(rdman);
-#ifdef XSHM
-	    XSHM_update(rt);
-#endif
-	    XFlush(display);
-	} else if(FD_ISSET(fd, &rfds)){
-	    handle_x_event(rt);
-	} else {
-            for(i=0;i<rt->n_monitor;i++) {
-	        if (rt->monitors[i].type == MONITOR_READ) {
-		    if (FD_ISSET(rt->monitors[i].fd, &rfds))
-		    	rt->monitors[i].f(rt->monitors[i].fd,rt->monitors[i].arg);
-		} else if (rt->monitors[i].type == MONITOR_WRITE) {
-		    if (FD_ISSET(rt->monitors[i].fd, &wfds))
-			rt->monitors[i].f(rt->monitors[i].fd,rt->monitors[i].arg);
-		}
-            }
-	}
-    }
+    handle_x_event(xmb_rt);
 }
-#endif /* 0 */
 
 static int X_init_connection(const char *display_name,
 			     int w, int h,
@@ -920,6 +853,7 @@ static int
 X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
     int w, h;
+    int disp_fd;
 
     w = xmb_rt->w;
     h = xmb_rt->h;
@@ -966,6 +900,12 @@ X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
 #endif
 
     X_kb_init(&xmb_rt->kbinfo, xmb_rt->display, xmb_rt->rdman);
+
+    disp_fd = XConnectionNumber(xmb_rt->display);
+    xmb_rt->io_hdl = xmb_rt->io_man->reg(xmb_rt->io_man, disp_fd,
+					 MB_IO_R,
+					 _x_mb_handle_connection,
+					 xmb_rt);
 
     return OK;
 }
@@ -1026,6 +966,9 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 	redraw_man_destroy(xmb_rt->rdman);
 	free(xmb_rt->rdman);
     }
+
+    if(xmb_rt->io_hdl)
+	xmb_rt->io_man->unreg(xmb_rt->io_man, xmb_rt->io_hdl);
 
     if(xmb_rt->io_man)
 	_io_factory->free(xmb_rt->io_man);
@@ -1193,6 +1136,9 @@ _x_mb_flush(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     int r;
 
+#ifdef XSHM
+    XSHM_update(xmb_rt);
+#endif
     r = XFlush(xmb_rt->display);
     return r == 0? ERR: OK;
 }
