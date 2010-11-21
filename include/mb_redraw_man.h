@@ -234,7 +234,7 @@ extern mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman,
 /*! \brief Set the search path of dymanic object loading.
  *
  */
-extern void sprite_set_search_path(char *path);
+extern void sprite_set_search_path(const char *path);
 
 extern paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman,
 					 const char *img_id);
