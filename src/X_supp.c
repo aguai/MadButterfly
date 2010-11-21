@@ -1117,7 +1117,7 @@ X_MB_new_with_win(MB_DISPLAY display, MB_WINDOW win) {
 }
 
 static void
-X_MB_free(void *rt) {
+X_MB_free(mb_rt_t *rt) {
     X_MB_destroy((X_MB_runtime_t *) rt);
     free(rt);
 }
@@ -1125,31 +1125,31 @@ X_MB_free(void *rt) {
 /*! \brief Free runtime created with X_MB_new_with_win().
  */
 static void
-X_MB_free_keep_win(void *rt) {
+X_MB_free_keep_win(mb_rt_t *rt) {
     X_MB_destroy_keep_win((X_MB_runtime_t *) rt);
     free(rt);
 }
 
 static subject_t *
-X_MB_kbevents(void *rt) {
+X_MB_kbevents(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->kbinfo.kbevents;
 }
 
 static redraw_man_t *
-X_MB_rdman(void *rt) {
+X_MB_rdman(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->rdman;
 }
 
 static mb_timer_man_t *
-X_MB_timer_man(void *rt) {
+X_MB_timer_man(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     return xmb_rt->timer_man;
 }
 
 static ob_factory_t *
-X_MB_ob_factory(void *rt) {
+X_MB_ob_factory(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     ob_factory_t *factory;
 
@@ -1158,7 +1158,7 @@ X_MB_ob_factory(void *rt) {
 }
 
 static mb_img_ldr_t *
-X_MB_img_ldr(void *rt) {
+X_MB_img_ldr(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
     mb_img_ldr_t *img_ldr;
 
@@ -1209,19 +1209,19 @@ mb_backend_t backend = { X_MB_new,
  */
 /*! \brief Exported for nodejs plugin to call handle_x_event.
  */
-void _X_MB_handle_x_event_for_nodejs(void *rt) {
+void _X_MB_handle_x_event_for_nodejs(mb_rt_t *rt) {
     handle_x_event((X_MB_runtime_t *)rt);
 }
 
 /*! \brief Get X connect for nodejs plugin.
  */
-int _X_MB_get_x_conn_for_nodejs(void *rt) {
+int _X_MB_get_x_conn_for_nodejs(mb_rt_t *rt) {
     return XConnectionNumber(((X_MB_runtime_t *)rt)->display);
 }
 
 /*! \brief Flush buffer for the X connection of a runtime object.
  */
-int _X_MB_flush_x_conn_for_nodejs(void *rt) {
+int _X_MB_flush_x_conn_for_nodejs(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
 #ifdef XSHM
     XSHM_update(xmb_rt);
@@ -1232,7 +1232,7 @@ int _X_MB_flush_x_conn_for_nodejs(void *rt) {
 /*! \brief Handle single X event.
  */
 void
-_X_MB_handle_single_event(void *rt, void *evt) {
+_X_MB_handle_single_event(mb_rt_t *rt, void *evt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
     
     handle_single_x_event(xmb_rt, (XEvent *)evt);
@@ -1241,7 +1241,7 @@ _X_MB_handle_single_event(void *rt, void *evt) {
 /*! \brief Called at end of an iteration of X event loop.
  */
 void
-_X_MB_no_more_event(void *rt) {
+_X_MB_no_more_event(mb_rt_t *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
     
     no_more_event(xmb_rt);
