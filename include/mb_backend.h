@@ -61,7 +61,7 @@ typedef struct {
     
     subject_t *(*kbevents)(mb_rt_t *rt);
     redraw_man_t *(*rdman)(mb_rt_t *rt);
-    mb_timer_man_t *(*tman)(mb_rt_t *rt);
+    mb_timer_man_t *(*timer_man)(mb_rt_t *rt);
     ob_factory_t *(*ob_factory)(mb_rt_t *rt);
     mb_img_ldr_t *(*loader)(mb_rt_t *rt);
     
