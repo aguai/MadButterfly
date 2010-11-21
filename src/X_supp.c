@@ -276,14 +276,12 @@ _x_mb_event_loop(mb_rt_t *rt) {
 	    if(io_man->monitors[i].type == MB_IO_R ||
 	       io_man->monitors[i].type == MB_IO_RW) {
 		FD_SET(io_man->monitors[i].fd, &rfds);
-		if(nfds <= io_man->monitors[i].fd)
-		    nfds = io_man->monitors[i].fd + 1;
+		nfds = MB_MAX(nfds, io_man->monitors[i].fd + 1);
 	    }
 	    if(io_man->monitors[i].type == MB_IO_W ||
 	       io_man->monitors[i].type == MB_IO_RW) {
 		FD_SET(io_man->monitors[i].fd, &wfds);
-		if(nfds <= io_man->monitors[i].fd)
-		    nfds = io_man->monitors[i].fd + 1;
+		nfds = MB_MAX(nfds, io_man->monitors[i].fd + 1);
 	    }
         }
 
