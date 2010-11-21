@@ -16,7 +16,7 @@ struct _mbapp {
 };
 mbaf_t *mbaf_init(const char *module, const char *module_dir);
 void mbaf_set_data(mbaf_t *app,void *data);
-mb_tman_t *mbaf_get_timer(mbaf_t *app);
+mb_timer_man_t *mbaf_get_timer(mbaf_t *app);
 void mbaf_loop(mbaf_t *app);
 #define MBAF_DATA(app,type) ((type *) ((app)->private))
 #define MBAF_RDMAN(app) (((mbaf_t *) app)->rdman)

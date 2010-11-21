@@ -37,9 +37,9 @@ void mbaf_set_data(mbaf_t *app,void *data)
     app->private = (void *) data;
 }
 
-mb_tman_t *mbaf_get_timer(mbaf_t *app)
+mb_timer_man_t *mbaf_get_timer(mbaf_t *app)
 {
-    return backend.tman(app->rt);
+    return backend.timer_man(app->rt);
 }
 
 void mbaf_loop(mbaf_t *app)
