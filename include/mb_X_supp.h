@@ -37,6 +37,6 @@ extern mb_tman_t *X_MB_tman(void *xmb_rt);
 extern ob_factory_t *X_MB_ob_factory(void *xmb_rt);
 extern mb_img_ldr_t *X_MB_img_ldr(void *xmb_rt);
 
-#define MBB_WINDOW Window
+#define MB_WINDOW Window
 
 #endif

@@ -16,8 +16,12 @@
 #inclde "mb_dfb_supp.h"
 #endif
 
-typedef void *MBB_WINDOW;
 typedef void mb_rt_t;
+
+typedef struct _mb_timer_man mb_timer_man_t;
+typedef struct _mb_timer_factory mb_timer_factory_t;
+typedef struct _mb_IO_man mb_IO_man_t;
+typedef struct _mb_IO_factory mb_IO_factory_t;
 
 /*! \brief The backend engine mb_backend_t is used to define the
  *         interface to realize the MB.
@@ -34,7 +38,7 @@ typedef void mb_rt_t;
  */
 typedef struct {
     mb_rt_t *(*new)(const char *display, int w,int h);
-    mb_rt_t *(*new_with_win)(const char *display, MBB_WINDOW win, int w,int h);
+    mb_rt_t *(*new_with_win)(const char *display, MB_WINDOW win, int w,int h);
     
     void (*free)(mb_rt_t *rt);
     /*! \brief Request the backend to start monitoring a file descriptor.
@@ -73,7 +77,8 @@ extern mb_backend_t backend;
 
 /*! \brief Type of IO that registered with an IO manager.
  */
-enum MB_IO_TYPE {MB_IO_DUMMY, MB_IO_R, MB_IO_W, MB_IO_RW};
+enum _MB_IO_TYPE {MB_IO_DUMMY, MB_IO_R, MB_IO_W, MB_IO_RW};
+typedef enum _MB_IO_TYPE MB_IO_TYPE;
 
 /*! \brief Function signature of callback functions for IO requests.
  */
@@ -84,10 +89,9 @@ typedef void (*mb_IO_cb_t)(int hdl, int fd, MB_IO_TYPE type, void *data);
 struct _mb_IO_man {
     int (*reg)(struct _mb_IO_man *io_man,
 	       int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data);
-    void (*unreg)(struct _mb_IO_Man *io_man,
+    void (*unreg)(struct _mb_IO_man *io_man,
 		  int io_hdl);
 };
-typedef struct _mb_IO_man mb_IO_man_t;
 
 /*! \brief Factory of IO managers.
  */
@@ -95,7 +99,6 @@ struct _mb_IO_factory {
     mb_IO_man_t *(*new)(void);
     void (*free)(mb_IO_man_t *io_man);
 };
-typedef struct _mb_IO_factory mb_IO_factory_t;
 
 /*! \brief Function signature of callback functions for timers.
  */
@@ -113,7 +116,7 @@ struct _mb_timer_man {
      * \param tm_hdl is the handle returned by _mb_timer_man::timeout.
      */
     void (*remove)(struct _mb_timer_man *tm_man, int tm_hdl);
-} mb_timer_man_t;
+};
 
 /*! \brief Factory of timer manager.
  */
@@ -121,6 +124,5 @@ struct _mb_timer_factory {
     mb_timer_man_t *(*new)(void);
     void (*free)(mb_timer_man_t *timer_man);
 };
-typedef struct _mb_timer_factory mb_timer_factory_t;
 
 #endif /* __MB_BACKEND_H_ */

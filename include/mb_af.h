@@ -3,9 +3,11 @@
 #ifndef __APP_H
 #define __APP_H
 
+#include "mb_backend.h"
+
 typedef struct _mbapp mbaf_t;
 struct _mbapp {
-    void *rt;
+    mb_rt_t *rt;
     redraw_man_t *rdman;
     mb_sprite_t *rootsprite;
     mb_obj_t *root;
