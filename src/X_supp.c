@@ -10,6 +10,7 @@
 #include "mb_redraw_man.h"
 #include "mb_timer.h"
 #include "mb_X_supp.h"
+#include "mb_backend.h"
 #include "config.h"
 
 #ifdef XSHM
@@ -36,13 +37,6 @@ struct _X_kb_info {
 };
 
 /* @} */
-#define MAX_MONITORS 200
-typedef struct {
-    int type;
-    int fd;
-    mb_eventcb_t f;
-    void *arg;
-}  monitor_t;
 
 struct _X_MB_runtime {
     Display *display;
@@ -57,8 +51,7 @@ struct _X_MB_runtime {
     int w, h;
 
     X_kb_info_t kbinfo;
-    monitor_t monitors[MAX_MONITORS];
-    int n_monitor;
+    mb_IO_man_t *io_man;
 
 #ifndef ONLY_MOUSE_MOVE_RAW
     /* States */
@@ -80,6 +73,163 @@ struct _X_MB_runtime {
     int mx, my;		       /* Position of last motion event */
     int mbut_state;	       /* Button state of last motion event */
 };
+
+/*! \defgroup x_mb_io IO manager for X.
+ * @{
+ */
+#define MAX_MONITORS 200
+
+typedef struct {
+    int type;
+    int fd;
+    mb_IO_cb_t cb;
+    void *data;
+}  monitor_t;
+
+struct _X_MB_IO_man {
+    mb_IO_man_t io_man;
+    monitor_t monitors[MAX_MONITORS];
+    int n_monitor;
+};
+
+int _x_mb_io_man_reg(struct _mb_IO_man *io_man,
+		      int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data);
+void _x_mb_io_man_unreg(struct _mb_IO_Man *io_man, int io_hdl);
+mb_IO_man_t *_x_mb_io_man_new(void);
+void _x_mb_io_man_free(mb_IO_man_t *io_man);
+
+static mb_IO_factory_t _X_supp_default_io_factory = {
+    _x_mb_io_man_new,
+    _x_mb_io_man_free
+};
+static mb_IO_factory_t *_io_factory = _X_supp_default_io_factory;
+
+static struct _X_MB_IO_man _default_io_man = {
+    {_x_mb_io_man_reg, _x_mb_io_man_unreg},
+    ,			/* monitors */
+    0			/* n_monitor */
+};
+
+static mb_IO_man_t *
+_x_mb_io_man_new(void) {
+    return (mb_IO_man_t *)&_default_io_man;
+}
+
+static void
+_x_mb_io_man_free(mb_IO_man_t *io_man) {
+}
+
+static int
+_x_mb_io_man_reg(struct _mb_IO_man *io_man,
+		     int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data) {
+    struct _x_mb_io_man *xmb_io_man = (struct _x_mb_io_man *)io_man;
+    int i;
+
+    for(i = 0; i < xmb_io_man->n_monitor; i++) {
+        if (xmb_io_man->monitors[i].type == MB_IO_DUMMY)
+	    break;
+    }
+    if (i == MAX_MONITORS)
+	return ERR;
+    
+    xmb_io_man->monitors[i].type = type;
+    xmb_io_man->monitors[i].fd = fd;
+    xmb_io_man->monitors[i].cb = cb;
+    xmb_io_man->monitors[i].data = data;
+    i++;
+    if(i > xmb_io_man->n_monitor)
+	xmb_io_man->n_monitor = i;
+    return i - 1;
+}
+
+static void
+_x_mb_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
+    struct _x_mb_io_man *xmb_io_man = (struct _x_mb_io_man *)io_man;
+    
+    ASSERT(io_hdl < xmb_io_man->n_monitor);
+    xmb_io_man->monitors[io_hdl].type = MB_IO_DUMMY;
+}
+
+/*! \brief Handle connection coming data and timeout of timers.
+ *
+ * \param display is a Display returned by XOpenDisplay().
+ * \param rdman is a redraw manager.
+ * \param tman is a timer manager.
+ *
+ * The display is managed by specified rdman and tman.  rdman draws
+ * on the display, and tman trigger actions according timers.
+ */
+static void
+_x_mb_handle_connection(struct _mb_IO_man *io_man) {
+    X_MB_runtime_t *rt = (X_MB_runtime_t *) be;
+    mb_tman_t *tman = rt->tman;
+    int fd;
+    mb_timeval_t now, tmo;
+    struct timeval tv;
+    fd_set rfds, wfds;
+    int nfds = 0;
+    int r, r1,i;
+
+    handle_x_event(rt);
+
+    while(1) {
+	FD_ZERO(&rfds);
+	FD_ZERO(&wfds);
+        for(i = 0; i < io_man->n_monitor; i++) {
+	    if(io_man->monitors[i].type == MB_IO_R ||
+	       io_man->monitors[i].type == MB_IO_RW) {
+		FD_SET(io_man->monitors[i].fd, &rfds);
+		if(nfds <= io_man->monitors[i].fd)
+		    nfds = io_man->monitors[i].fd + 1;
+	    }
+	    if(io_man->monitors[i].type == MB_IO_W ||
+	       io_man->monitors[i].type == MB_IO_RW) {
+		FD_SET(io_man->monitors[i].fd, &wfds);
+		if(nfds <= io_man->monitors[i].fd)
+		    nfds = io_man->monitors[i].fd + 1;
+	    }
+        }
+
+	get_now(&now);
+	r = mb_tman_next_timeout(tman, &now, &tmo);
+
+	if(r == 0) {
+	    tv.tv_sec = MB_TIMEVAL_SEC(&tmo);
+	    tv.tv_usec = MB_TIMEVAL_USEC(&tmo);
+	    r1 = select(nfds, &rfds, NULL, NULL, &tv);
+	} else
+	    r1 = select(nfds, &rfds, NULL, NULL, NULL);
+
+	if(r1 == -1) {
+	    perror("select");
+	    break;
+	}
+
+	if(r1 == 0) {
+	    get_now(&now);
+	    mb_tman_handle_timeout(tman, &now);
+	} else {
+            for(i = 0; i < io_man->n_monitor; i++) {
+	        if(io_man->monitors[i].type == MB_IO_R ||
+		   io_man->monitors[i].type == MB_IO_RW) {
+		    if(FD_ISSET(io_man->monitors[i].fd, &rfds))
+		    	ioman->monitors[i].cb(io_man->monitors[i].fd,
+					      MB_IO_R,
+					      rt->monitors[i].data);
+		}
+		if(io_man->monitors[i].type == MB_IO_W ||
+		   io_man->monitors[i].type == MB_IO_RW) {
+		    if(FD_ISSET(io_man->monitors[i].fd, &wfds))
+			io_man->monitors[i].cb(io_man->monitors[i].fd,
+					       MB_IO_W,
+					       io_man->monitors[i].data);
+		}
+            }
+	}
+    }
+}
+
+/* @} */
 
 #ifdef XSHM
 static void
@@ -167,7 +317,6 @@ static void X_kb_handle_event(X_kb_info_t *kbinfo, XKeyEvent *xkey) {
 
     subject_notify(kbinfo->kbevents, &event.event);
 }
-
 /* @} */
 
 static unsigned int get_button_state(unsigned int state) {
@@ -497,9 +646,6 @@ void X_MB_handle_connection(void *be) {
 	}
     }
 }
-
-#define ERR -1
-#define OK 0
 
 static int X_init_connection(const char *display_name,
 			     int w, int h,
@@ -954,10 +1100,12 @@ void X_MB_remove_event(void *rt, int type, int fd)
 }
 mb_backend_t backend = { X_MB_new,
 			 X_MB_new_with_window,
+			 
 			 X_MB_free,
 			 X_MB_add_event,
 			 X_MB_remove_event,
 			 X_MB_handle_connection,
+			 
 			 X_MB_kbevents,
 			 X_MB_rdman,
 			 X_MB_tman,

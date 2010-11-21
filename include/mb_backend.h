@@ -68,7 +68,7 @@ extern mb_backend_t backend;
 
 /*! \brief Type of IO that registered with an IO manager.
  */
-enum MB_IO_TYPE {MB_IO_R, MB_IO_W, MB_IO_RW};
+enum MB_IO_TYPE {MB_IO_DUMMY, MB_IO_R, MB_IO_W, MB_IO_RW};
 
 /*! \brief Function signature of callback functions for IO requests.
  */
