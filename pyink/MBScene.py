@@ -173,10 +173,6 @@ class MBScene():
 			    if scmap == None:
 				lyobj.current_scene.append(scene)
 				continue
-			    if self.current <= scmap[1] and \
-				    self.current >= scmap[0]:
-				oldscene = scene
-				pass
 			except:
 			    lyobj.current_scene.append(scene)
 			    continue
@@ -186,13 +182,6 @@ class MBScene():
 		    else:
 			lyobj.current_scene.append(scene)
 			pass
-		    pass
-
-		if oldscene != None:
-		    # Put the objects back to the current scene
-		    # for o in lyobj.current_scene:
-		    #     print o.tag
-		    #     oldscene.append(o)
 		    pass
 		pass
 	    pass
@@ -447,14 +436,21 @@ class MBScene():
 	# Add a frameline for each layer
 	#
 	self._framelines = []
-	for i in range(len(self.layers)):
+	for i in range(len(self.layers)-1,-1,-1):
 	    line = frameline.frameline(nframes)
+	    hbox = gtk.HBox()
+	    label = gtk.Label(self.layers[i].node.label())
+	    label.set_size_request(100,0)
+	    hbox.pack_start(label,expand=False,fill=True)
+	    hbox.pack_start(line)
 	    line.set_size_request(nframes * 10, 20)
-	    vbox.pack_start(line, False)
+	    vbox.pack_start(hbox, False)
+	    line.label = label
 	    self._framelines.append(line)
 	    line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
 	    line.nLayer = i
 	    line.node = self.layers[i].node
+	    line.layer = self.layers[i]
 	    line.connect('motion-notify-event', self._remove_active_frame)
 	    pass
 	pass
@@ -462,8 +458,9 @@ class MBScene():
     ## \brief Update conetent of frameliens according layers.
     #
     def _update_framelines(self):
-	for layer_i, layer in enumerate(self.layers):
-	    frameline = self._framelines[layer_i]
+	for frameline in self._framelines:
+	    layer = frameline.layer
+	    frameline.label.set_text(frameline.node.label())
 	    for scene in layer.scenes:
 		frameline.add_keyframe(scene.start-1,scene.node.repr)
 		if scene.start != scene.end:
