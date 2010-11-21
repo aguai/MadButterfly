@@ -48,7 +48,7 @@ void mbaf_loop(mbaf_t *app)
      * Start handle connections, includes one to X server.
      * User start to interact with the application.
      */
-    backend.loop(app->rt);
+    backend.event_loop(app->rt);
 
     /*
      * Clean
