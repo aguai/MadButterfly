@@ -46,12 +46,12 @@ struct _X_MB_runtime {
     mbe_pattern_t *surface_ptn;
     mbe_t *cr, *backend_cr;
     redraw_man_t *rdman;
-    mb_tman_t *tman;
     mb_img_ldr_t *img_ldr;
     int w, h;
 
     X_kb_info_t kbinfo;
     mb_IO_man_t *io_man;
+    mb_timer_man_t *timer_man;
 
 #ifndef ONLY_MOUSE_MOVE_RAW
     /* States */
@@ -254,9 +254,12 @@ _x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
  * on the display, and tman trigger actions according timers.
  */
 static void
-_x_mb_handle_connection(struct _mb_IO_man *io_man) {
-    X_MB_runtime_t *rt = (X_MB_runtime_t *) be;
-    mb_tman_t *tman = rt->tman;
+_x_mb_event_loop(mb_rt_t *rt) {
+    struct _X_MB_runtime *xmbrt = (struct _X_MB_runtime *)rt;
+    struct _X_supp_IO_man *io_man = (struct _X_supp_IO_man *)xmbrt->io_man;
+    struct _X_supp_timer_man *timer_man =
+	(struct _X_supp_timer_man *)xmbrt->timer_man;
+    mb_tman_t *tman = timer_man->tman;
     int fd;
     mb_timeval_t now, tmo;
     struct timeval tv;
@@ -307,9 +310,9 @@ _x_mb_handle_connection(struct _mb_IO_man *io_man) {
 	        if(io_man->monitors[i].type == MB_IO_R ||
 		   io_man->monitors[i].type == MB_IO_RW) {
 		    if(FD_ISSET(io_man->monitors[i].fd, &rfds))
-		    	ioman->monitors[i].cb(i, io_man->monitors[i].fd,
-					      MB_IO_R,
-					      rt->monitors[i].data);
+		    	io_man->monitors[i].cb(i, io_man->monitors[i].fd,
+					       MB_IO_R,
+					       io_man->monitors[i].data);
 		}
 		if(io_man->monitors[i].type == MB_IO_W ||
 		   io_man->monitors[i].type == MB_IO_RW) {
