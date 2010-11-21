@@ -1159,47 +1159,25 @@ mb_img_ldr_t *X_MB_img_ldr(void *rt) {
     return img_ldr;
 }
 
-void X_MB_add_event(void *rt, int type, int fd, mb_eventcb_t f,void *arg)
+int X_MB_add_event(void *rt, int fd, MB_IO_TYPE type,
+		   mb_IO_cb_t cb, void *data)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
-    int i;
+    mb_IO_man_t *io_man = xmb_rt->io_man;
+    int hdl;
 
-    for(i=0;i<xmb_rt->n_monitor;i++) {
-        if (xmb_rt->monitors[i].type == type && xmb_rt->monitors[i].fd == fd) {
-	    xmb_rt->monitors[i].f = f;
-	    xmb_rt->monitors[i].arg = arg;
-	    return;
-	}
-    }
-    for(i=0;i<xmb_rt->n_monitor;i++) {
-        if (xmb_rt->monitors[i].type == 0) {
-	    xmb_rt->monitors[i].type = type;
-	    xmb_rt->monitors[i].fd = fd;
-	    xmb_rt->monitors[i].f = f;
-	    xmb_rt->monitors[i].arg = arg;
-	    return;
-	}
-    }
-    if (i == MAX_MONITORS) return;
-    xmb_rt->monitors[i].type = type;
-    xmb_rt->monitors[i].fd = fd;
-    xmb_rt->monitors[i].f = f;
-    xmb_rt->monitors[i].arg = arg;
-    i++;
-    xmb_rt->n_monitor=i;
+    hdl = io_man->reg(io_man, fd, type, cb, data);
+    return hdl;
 }
 
-void X_MB_remove_event(void *rt, int type, int fd)
+void X_MB_remove_event(void *rt, int hdl)
 {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
-    int i;
-    for(i=0;i<xmb_rt->n_monitor;i++) {
-        if (xmb_rt->monitors[i].type == type && xmb_rt->monitors[i].fd == fd) {
-	    xmb_rt->monitors[i].type = 0;
-	    return;
-	}
-    }
+    mb_IO_man_t *io_man = xmb_rt->io_man;
+
+    io_man->unreg(io_man, hdl);
 }
+
 mb_backend_t backend = { X_MB_new,
 			 X_MB_new_with_window,
 			 
