@@ -102,7 +102,9 @@ struct _mb_IO_factory {
 
 /*! \brief Function signature of callback functions for timers.
  */
-typedef void (*mb_timer_cb_t)(int hdl, mb_timeval_t *tmo, mb_timeval_t *now,
+typedef void (*mb_timer_cb_t)(int hdl,
+			      const mb_timeval_t *tmo,
+			      const mb_timeval_t *now,
 			      void *data);
 
 /*! \brief Timer manager
