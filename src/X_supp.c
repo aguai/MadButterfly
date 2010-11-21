@@ -167,6 +167,8 @@ _x_supp_timer_fact_free(mb_timer_man_t *timer_man) {
 
 /* @} */
 
+static void handle_x_event(X_MB_runtime_t *rt);
+
 /*! \defgroup x_mb_io IO manager for X.
  * @{
  */
@@ -667,6 +669,7 @@ static void handle_x_event(X_MB_runtime_t *rt) {
     XFlush(display);
 }
 
+#if 0
 /*! \brief Handle connection coming data and timeout of timers.
  *
  * \param display is a Display returned by XOpenDisplay().
@@ -741,6 +744,7 @@ void X_MB_handle_connection(void *be) {
 	}
     }
 }
+#endif /* 0 */
 
 static int X_init_connection(const char *display_name,
 			     int w, int h,
@@ -949,12 +953,13 @@ X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
     //	      to the redraw_man_t instead.
     xmb_rt->rdman->rt = xmb_rt;
 
-    xmb_rt->tman = mb_tman_new();
+    xmb_rt->io_man = _io_factory->new();
+    xmb_rt->timer_man = _timer_factory->new();
 
     img_ldr = simple_mb_img_ldr_new("");
     xmb_rt->img_ldr = img_ldr;
-    rdman_set_img_ldr(xmb_rt->rdman, img_ldr);
-    memset(xmb_rt->monitors,0,sizeof(xmb_rt->monitors));
+    /*! \todo Remove rdman_set_img_ldr() */
+    rdman_set_img_ldr(xmb_rt->rdman, img_ldr); /* this is ncessary? */
 
 #ifndef ONLY_MOUSE_MOVE_RAW
     xmb_rt->last = NULL;
