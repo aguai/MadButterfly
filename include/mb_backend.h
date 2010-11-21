@@ -1,6 +1,8 @@
 #ifndef __MB_BACKEND_H_
 #define __MB_BACKEND_H_
 
+#include "mb_config.h"
+
 #ifdef X_BACKEND
 #include "mb_X_supp.h"
 #endif
@@ -30,9 +32,23 @@ typedef struct {
     mb_rt_t *(*new_with_win)(const char *display, MBB_WINDOW win, int w,int h);
     
     void (*free)(mb_rt_t *rt);
+    /*! \brief Request the backend to start monitoring a file descriptor.
+     *
+     * This is used only when the backend is responsible for event loop.
+     */
     void (*add_event)(mb_rt_t *rt,int type, int fd, mb_eventcb_t f,void *arg);
+    /*! \brief Request the backend to stop monitoring a file descriptor.
+     *
+     * This is used only when the backend is responsible for event loop.
+     */
     void (*remove_event)(mb_rt_t *rt,int type, int fd);
-    void (*loop)(mb_rt_t *rt);
+    /*! \brief Event Loop
+     *
+     * This is called when main application does not handle event
+     * loop.  Or, it should register an IO factory (i.e \ref
+     * mb_IO_factory_t) with the backend.
+     */
+    void (*event_loop)(mb_rt_t *rt);
     
     subject_t *(*kbevents)(mb_rt_t *rt);
     redraw_man_t *(*rdman)(mb_rt_t *rt);
