@@ -1188,13 +1188,24 @@ X_MB_remove_event(mb_rt_t *rt, int hdl)
     io_man->unreg(io_man, hdl);
 }
 
+static int
+_x_mb_flush(mb_rt_t *rt) {
+    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+    int r;
+
+    r = XFlush(xmb_rt->display);
+    return r == 0? ERR: OK;
+}
+
 mb_backend_t backend = { X_MB_new,
 			 X_MB_new_with_win,
 			 
 			 X_MB_free,
+			 X_MB_free_keep_win,
 			 X_MB_add_event,
 			 X_MB_remove_event,
 			 _x_mb_event_loop,
+			 _x_mb_flush,
 			 
 			 X_MB_kbevents,
 			 X_MB_rdman,

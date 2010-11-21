@@ -46,6 +46,7 @@ typedef struct {
     mb_rt_t *(*new_with_win)(MB_DISPLAY display, MB_WINDOW win);
     
     void (*free)(mb_rt_t *rt);
+    void (*free_keep_win)(mb_rt_t *rt);
     /*! \brief Request the backend to start monitoring a file descriptor.
      *
      * This is used only when the backend is responsible for event loop.
@@ -64,6 +65,9 @@ typedef struct {
      * mb_IO_factory_t) with the backend.
      */
     void (*event_loop)(mb_rt_t *rt);
+
+    /*! \brief Flush requests to screen server if existed */
+    int (*flush)(mb_rt_t *rt);
     
     subject_t *(*kbevents)(mb_rt_t *rt);
     redraw_man_t *(*rdman)(mb_rt_t *rt);
