@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export NODE_PATH=${PWD}/../../objs/default:${PWD}/../..
+node mbmce.js

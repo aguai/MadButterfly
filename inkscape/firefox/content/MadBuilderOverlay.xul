@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!DOCTYPE overlay SYSTEM "chrome://chromelist/locale/ChromeListOverlay.dtd" >
+<overlay id="MadBuilderOverlay"
+	 xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+<script type="application/x-javascript"
+	src="chrome://MadBuilder/content/MadBuilderOverlay.js" />
+
+<menupopup id="menu_ToolsPopup">
+	<menuitem insertafter="devToolsSeparator" label="MadBuilder"
+	oncommand="start_madbuilder();" />
+</menupopup>
+
+</overlay>

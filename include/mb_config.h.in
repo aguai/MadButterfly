@@ -1,0 +1,24 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
+#ifndef __MB_CONFIG_H_
+#define __MB_CONFIG_H_
+
+/* Enable Cairo Graphic Engine */
+#undef CAIRO_GRAPH_ENGINE
+
+/* Enable Skia Graphic Engine */
+#undef SKIA_GRAPH_ENGINE
+
+/* Enable sh_text */
+#undef SH_TEXT
+
+/* Enable sh_stext */
+#undef SH_STEXT
+
+/* Enable X backend */
+#undef X_BACKEND
+
+/* Enable DirectFB backend */
+#undef DFB_BACKEND
+
+#endif /* __MB_CONFIG_H_ */
