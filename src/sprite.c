@@ -41,7 +41,7 @@ static char *sprite_search_so(const char *name) {
     return fullname;
 }
 
-void sprite_set_search_path(char *path) {
+void sprite_set_search_path(const char *path) {
     int sz;
 
     if (sprite_search_path)
