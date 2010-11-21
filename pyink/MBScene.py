@@ -259,9 +259,10 @@ class MBScene():
 	txt.setAttribute("height","100",True)
 	txt.setAttribute("style","fill:#ff00",True)
 	ns.appendChild(txt)
-	gid = self.newID()
+	gid = self.last_line.node.label()+self.newID()
 	self.ID[gid]=1
 	ns.setAttribute("id",gid,True)
+	ns.setAttribute("inkscape:groupmode","layer",True)
 	self.last_line.node.repr.appendChild(ns)
 	print 'Add key ', x
 	self.last_line.add_keyframe(x,ns)
