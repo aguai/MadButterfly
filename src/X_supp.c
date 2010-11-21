@@ -75,6 +75,8 @@ struct _X_MB_runtime {
 };
 
 /*! \defgroup x_mb_timer Timer manager for X.
+ *
+ * This implmentation of timer manager is based on mb_tman_t.
  * @{
  */
 struct _X_supp_timer_man {
@@ -101,19 +103,54 @@ static mb_timer_factory_t _x_supp_default_timer_factory = {
 
 static mb_timer_factory_t *_timer_factory = &_x_supp_default_timer_factory;
 
+/*! \brief Content of a timeout request.
+ *
+ * This is only used by internal of X support.  This data structure
+ * carry information to adopt mb_tman_t to mb_timer_man_t.
+ */
+struct _X_supp_timeout_data {
+    mb_timer_t *timer;		/*!< Handle returned by mb_tman_timeout() */
+    mb_timer_cb_t cb;		/*!< Real callback function */
+    void *data;			/*!< data for real callback */
+};
+
+static void *
+_x_supp_tmo_hdlr(const mb_timeval_t *tmo,
+		 const mb_timeval_t *now,
+		 void *arg) {
+    struct _X_supp_timeout_data *data = (struct _X_supp_timeout_data *)arg;
+    
+    data->cb((int)data, tmo, now, data->data);
+}
+
 static int
 _x_supp_timer_man_timeout(struct _mb_timer_man *tm_man,
-			  mbsec_t sec, mbusec_t usec,
+			  mb_timeval_t *tmout, /* timeout (wall time) */
 			  mb_timer_cb_t cb, void *data) {
     struct _X_supp_timer_man *timer_man = (struct _X_supp_timer_man *)tm_man;
     mb_timer_t *timer;
-    mb_timeval_t tmo;
+    struct _X_supp_timeout_data *tmout_data;
 
-    timer = mb_tman_timeout(timer_man->tman, &tmo, cb, data);
+    tmout_data = O_ALLOC(struct _X_supp_timeout_data);
+    tmout_data->cb = cb;
+    tmout_data->data = data;
+    timer = mb_tman_timeout(timer_man->tman, tmout,
+			    _x_supp_tmo_hdlr, tmout_data);
+    if(timer == NULL)
+	return ERR;
+    tmout_data->timer = timer;
+
+    return (int)tmout_data;
 }
 
 static void
 _x_supp_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl) {
+    struct _X_supp_timer_man *timer_man = (struct _X_supp_timer_man *)tm_man;
+    struct _X_supp_timeout_data *tmout_data =
+	(struct _X_supp_timeout_data *)tm_hdl;
+
+    mb_tman_remove(timer_man->tman, tmout_data->timer);
+    free(tmout_data);
 }
 
 static mb_timer_man_t *

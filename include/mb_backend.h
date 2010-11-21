@@ -1,6 +1,11 @@
 #ifndef __MB_BACKEND_H_
 #define __MB_BACKEND_H_
 
+#include "mb_redraw_man.h"
+#include "mb_timer.h"
+#include "mb_observer.h"
+#include "mb_img_ldr.h"
+
 #include "mb_config.h"
 
 #ifdef X_BACKEND
@@ -94,13 +99,15 @@ typedef struct _mb_IO_factory mb_IO_factory_t;
 
 /*! \brief Function signature of callback functions for timers.
  */
-typedef void (*mb_timer_cb_t)(int hdl, mbsec_t sec, mbusec_t usec, void *data);
+typedef void (*mb_timer_cb_t)(int hdl, mb_timeval_t *tmo, mb_timeval_t *now,
+			      void *data);
 
 /*! \brief Timer manager
  */
 struct _mb_timer_man {
     int (*timeout)(struct _mb_timer_man *tm_man,
-		   mbsec_t sec, mbusec_t usec, mb_timer_cb_t cb, void *data);
+		   mb_timeval_t *tmout, /* tiemout (wall time) */
+		   mb_timer_cb_t cb, void *data);
     /*! \brief Remove a timeout request.
      *
      * \param tm_hdl is the handle returned by _mb_timer_man::timeout.
