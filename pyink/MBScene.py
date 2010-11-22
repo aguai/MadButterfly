@@ -430,7 +430,12 @@ class MBScene():
 	ruler = frameline.frameruler(nframes)
 	ruler.set_size_request(nframes * 10, 20)
 	ruler.show()
-	vbox.pack_start(ruler, False)
+	hbox = gtk.HBox()
+	label=gtk.Label('')
+	label.set_size_request(100,0)
+	hbox.pack_start(label,expand=False,fill=True)
+	hbox.pack_start(ruler)
+	vbox.pack_start(hbox, False)
 
 	#
 	# Add a frameline for each layer
