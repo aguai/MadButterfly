@@ -15,6 +15,7 @@
 #include "mb_paint.h"
 #include "mb_timer.h"
 #include "mb_animate.h"
+#include "mb_backend_utils.h"
 
 #define OK 0
 #define ERR -1
@@ -136,6 +137,7 @@ void draw_path(mbe_t *cr, int w, int h) {
     grad_stop_t fill3_stops[3];
     mbe_font_face_t *face;
     struct timeval tv;
+    mb_timer_man_t *timer_man;
     mb_tman_t *tman;
     mb_timeval_t mbtv, start, playing;
     mb_progm_t *progm;
@@ -207,8 +209,10 @@ void draw_path(mbe_t *cr, int w, int h) {
 
     XFlush(display);
 
-    tman = mb_tman_new();
-    if(tman) {
+    timer_man = mb_timer_man_new(&tman_timer_factory);
+    if(timer_man) {
+	tman = mb_tman_new();
+	
 	/* Prepare an animation program. */
 	progm = mb_progm_new(30, &rdman);
 
@@ -400,12 +404,12 @@ void draw_path(mbe_t *cr, int w, int h) {
 	/* Start playing the program. */
 	gettimeofday(&tv, NULL);
 	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
-	mb_progm_start(progm, tman, &mbtv);
+	mb_progm_start(progm, timer_man, &mbtv);
 
 	handle_connection(display, tman, &rdman, w, h);
 
 	mb_progm_free(progm);
-	mb_tman_free(tman);
+	mb_timer_man_free(&tman_timer_factory, timer_man);
     }
 
     rdman_paint_free(&rdman, fill1);
