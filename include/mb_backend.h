@@ -79,11 +79,48 @@ typedef struct {
      * Following two methods are used to integrate a backend to
      * event loop of main application.
      */
-    void (*reg_IO_factory)(mb_IO_factory_t *evman);
-    void (*reg_timer_factory)(mb_timer_factory_t *evman);
+    void (*reg_IO_factory)(mb_IO_factory_t *io_man);
+    void (*reg_timer_factory)(mb_timer_factory_t *tm_man);
 } mb_backend_t;
 
-extern mb_backend_t backend;
+#define mb_runtime_new(disp, w, h)	\
+    mb_dfl_backend.new((disp), (w), (h))
+#define mb_runtime_new_with_win(disp, win)	\
+    mb_dfl_backend.new_with_win((disp), (win))
+#define mb_reg_IO_factory(io_man)	\
+    mb_dfl_backend.reg_IO_factory(io_man)
+#define mb_reg_timer_factory(tm_man)	\
+    mb_dfl_backend.reg_timer_factory(tm_man)
+
+/*
+ * This is defined by backend implementations.  For example, X_supp.c
+ * or dfb_supp.c should defined a backend.
+ */
+extern mb_backend_t mb_dfl_backend;
+
+#define mb_runtime_free(rt)			\
+    mb_dfl_backend.free(rt)
+#define mb_runtime_free_with_win(rt)		\
+    mb_dfl_backend.free_with_win(rt)
+#define mb_runtime_add_event(rt, fd, type, cb, arg)		\
+    mb_dfl_backend.add_event((rt), (fd), (type), (cb), (arg))
+#define mb_runtime_remove_event(hdl)		\
+    mb_dfl_backend.remove_event((rt), (hdl))
+#define mb_runtime_event_loop(rt)		\
+    mb_dfl_backend.event_loop(rt)
+#define mb_runtime_flush(rt)			\
+    mb_dfl_backend.flush(rt)
+#define mb_runtime_kbevents(rt)			\
+    mb_dfl_backend.kbevents(rt)
+#define mb_runtime_rdman(rt)			\
+    mb_dfl_backend.rdman(rt)
+#define mb_runtime_timer_man(rt)		\
+    mb_dfl_backend.timer_man(rt)
+#define mb_runtime_ob_factory(rt)		\
+    mb_dfl_backend.ob_factory(rt)
+#define mb_runtime_loader(rt)			\
+    mb_dfl_backend.loader(rt)
+
 
 /*! \brief Type of IO that registered with an IO manager.
  */
