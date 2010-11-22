@@ -115,6 +115,10 @@ typedef void (*mb_timer_cb_t)(int hdl,
 /*! \brief Timer manager
  */
 struct _mb_timer_man {
+    /*! \brief Setup a timeout callback.
+     *
+     * \return -1 for error.
+     */
     int (*timeout)(struct _mb_timer_man *tm_man,
 		   mb_timeval_t *tmout, /* tiemout (wall time) */
 		   mb_timer_cb_t cb, void *data);
@@ -131,5 +135,10 @@ struct _mb_timer_factory {
     mb_timer_man_t *(*new)(void);
     void (*free)(mb_timer_man_t *timer_man);
 };
+
+#define mb_timer_man_timeout(tm_man, tmout, cb, data)	\
+    (tm_man)->timeout((tm_man), (tmout), (cb), (data))
+#define mb_timer_man_remove(tm_man, tm_hdl)	\
+    (tm_man)->remove((tm_man), (tm_hdl))
 
 #endif /* __MB_BACKEND_H_ */

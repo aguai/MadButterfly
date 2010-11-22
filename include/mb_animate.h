@@ -42,7 +42,7 @@ extern void mb_progm_free(mb_progm_t *progm);
 extern mb_word_t *mb_progm_next_word(mb_progm_t *progm,
 				     const mb_timeval_t *start,
 				     const mb_timeval_t *playing);
-extern void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
+extern void mb_progm_start(mb_progm_t *progm, mb_timer_man_t *timer_man,
 			   mb_timeval_t *now);
 extern void mb_progm_abort(mb_progm_t *progm);
 extern subject_t *mb_progm_get_complete(mb_progm_t *progm);
