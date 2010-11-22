@@ -176,6 +176,7 @@ _x_supp_event_loop(mb_rt_t *rt) {
     struct _X_supp_IO_man *io_man = (struct _X_supp_IO_man *)xmb_rt->io_man;
     struct _X_supp_timer_man *timer_man =
 	(struct _X_supp_timer_man *)xmb_rt->timer_man;
+    redraw_man_t *rdman;
     mb_tman_t *tman = tman_timer_man_get_tman(timer_man);
     int fd;
     mb_timeval_t now, tmo;
@@ -184,6 +185,8 @@ _x_supp_event_loop(mb_rt_t *rt) {
     int nfds = 0;
     int r, r1,i;
 
+    rdman = mb_runtime_rdman(rt);
+    
     _x_supp_handle_x_event(rt);
 
     while(1) {
@@ -220,6 +223,11 @@ _x_supp_event_loop(mb_rt_t *rt) {
 	if(r1 == 0) {
 	    get_now(&now);
 	    mb_tman_handle_timeout(tman, &now);
+	    rdman_redraw_changed(rdman);
+#ifdef XSHM
+	    XSHM_update(xmb_rt);
+#endif
+	    XFlush(xmb_rt->display);
 	} else {
             for(i = 0; i < io_man->n_monitor; i++) {
 	        if(io_man->monitors[i].type == MB_IO_R ||
