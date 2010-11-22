@@ -23,7 +23,7 @@ typedef struct _X_kb_event X_kb_event_t;
 
 /* @} */
 
-typedef struct _X_MB_runtime X_MB_runtime_t;
+typedef struct _X_supp_runtime X_supp_runtime_t;
 
 typedef Window MB_WINDOW;
 typedef Display *MB_DISPLAY;

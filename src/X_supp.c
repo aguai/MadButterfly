@@ -40,7 +40,7 @@ struct _X_kb_info {
 
 /* @} */
 
-struct _X_MB_runtime {
+struct _X_supp_runtime {
     Display *display;
     Window win;
     Visual *visual;
@@ -79,7 +79,7 @@ struct _X_MB_runtime {
     int mbut_state;	       /* Button state of last motion event */
 };
 
-/*! \defgroup x_mb_timer Timer manager for X.
+/*! \defgroup x_supp_timer Timer manager for X.
  *
  * This implmentation of timer manager is based on mb_tman_t.
  * @{
@@ -172,9 +172,9 @@ _x_supp_timer_fact_free(mb_timer_man_t *timer_man) {
 
 /* @} */
 
-static void handle_x_event(X_MB_runtime_t *rt);
+static void _x_supp_handle_x_event(X_supp_runtime_t *rt);
 
-/*! \defgroup x_mb_io IO manager for X.
+/*! \defgroup x_supp_io IO manager for X.
  * @{
  */
 #define MAX_MONITORS 200
@@ -261,8 +261,8 @@ _x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
  * on the display, and tman trigger actions according timers.
  */
 static void
-_x_mb_event_loop(mb_rt_t *rt) {
-    struct _X_MB_runtime *xmb_rt = (struct _X_MB_runtime *)rt;
+_x_supp_event_loop(mb_rt_t *rt) {
+    struct _X_supp_runtime *xmb_rt = (struct _X_supp_runtime *)rt;
     struct _X_supp_IO_man *io_man = (struct _X_supp_IO_man *)xmb_rt->io_man;
     struct _X_supp_timer_man *timer_man =
 	(struct _X_supp_timer_man *)xmb_rt->timer_man;
@@ -274,7 +274,7 @@ _x_mb_event_loop(mb_rt_t *rt) {
     int nfds = 0;
     int r, r1,i;
 
-    handle_x_event(rt);
+    _x_supp_handle_x_event(rt);
 
     while(1) {
 	FD_ZERO(&rfds);
@@ -335,7 +335,7 @@ _x_mb_event_loop(mb_rt_t *rt) {
 
 #ifdef XSHM
 static void
-XSHM_update(X_MB_runtime_t *xmb_rt) {
+XSHM_update(X_supp_runtime_t *xmb_rt) {
     GC gc;
 
     gc = DefaultGC(xmb_rt->display, DefaultScreen(xmb_rt->display));
@@ -400,7 +400,8 @@ static void X_kb_destroy(X_kb_info_t *kbinfo) {
     XFree(kbinfo->syms);
 }
 
-/*! \brief Accept X keyboard events from handle_x_event() and dispatch it.
+/*! \brief Accept X keyboard events from _x_supp_handle_x_event() and
+ *         dispatch it.
  */
 static void X_kb_handle_event(X_kb_info_t *kbinfo, XKeyEvent *xkey) {
     unsigned int code;
@@ -478,7 +479,7 @@ static void notify_coord_or_shape(redraw_man_t *rdman,
 /*! \brief Handle motion event.
  */
 static void
-handle_motion_event(X_MB_runtime_t *rt) {
+handle_motion_event(X_supp_runtime_t *rt) {
     redraw_man_t *rdman = rt->rdman;
     int x, y;
     int state;
@@ -528,7 +529,7 @@ handle_motion_event(X_MB_runtime_t *rt) {
 /*! \brief Redraw exposed area.
  */
 static void
-handle_expose_event(X_MB_runtime_t *rt) {
+handle_expose_event(X_supp_runtime_t *rt) {
     redraw_man_t *rdman = rt->rdman;
     int ex1, ey1, ex2, ey2;
 
@@ -547,7 +548,7 @@ handle_expose_event(X_MB_runtime_t *rt) {
  * It keeps internal state in rt to improve performance.
  */
 static void
-handle_single_x_event(X_MB_runtime_t *rt, XEvent *evt) {
+handle_single_x_event(X_supp_runtime_t *rt, XEvent *evt) {
     redraw_man_t *rdman = rt->rdman;
     XMotionEvent *mevt;
     XButtonEvent *bevt;
@@ -641,7 +642,7 @@ handle_single_x_event(X_MB_runtime_t *rt, XEvent *evt) {
  * perform some actions according current internal state.
  */
 static void
-no_more_event(X_MB_runtime_t *rt) {
+no_more_event(X_supp_runtime_t *rt) {
     if(rt->mflag)
 	handle_motion_event(rt);
     if(rt->eflag)
@@ -650,7 +651,7 @@ no_more_event(X_MB_runtime_t *rt) {
 
 /*! \brief Dispatch all X events in the queue.
  */
-static void handle_x_event(X_MB_runtime_t *rt) {
+static void _x_supp_handle_x_event(X_supp_runtime_t *rt) {
     Display *display = rt->display;
     XEvent evt;
     int r;
@@ -675,10 +676,10 @@ static void handle_x_event(X_MB_runtime_t *rt) {
 }
 
 static void
-_x_mb_handle_connection(int hdl, int fd, MB_IO_TYPE type, void *data) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)data;
+_x_supp_handle_connection(int hdl, int fd, MB_IO_TYPE type, void *data) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *)data;
 
-    handle_x_event(xmb_rt);
+    _x_supp_handle_x_event(xmb_rt);
 }
 
 static int X_init_connection(const char *display_name,
@@ -753,7 +754,7 @@ static int X_init_connection(const char *display_name,
 
 #ifdef XSHM
 static void
-xshm_destroy(X_MB_runtime_t *xmb_rt) {
+xshm_destroy(X_supp_runtime_t *xmb_rt) {
     XShmSegmentInfo *shminfo;
 
     shminfo = &xmb_rt->shminfo;
@@ -779,7 +780,7 @@ xshm_destroy(X_MB_runtime_t *xmb_rt) {
 }
 
 static void
-xshm_init(X_MB_runtime_t *xmb_rt) {
+xshm_init(X_supp_runtime_t *xmb_rt) {
     Display *display;
     Visual *visual;
     XImage *ximage;
@@ -841,18 +842,18 @@ xshm_init(X_MB_runtime_t *xmb_rt) {
 
 /*! \brief Initialize a MadButterfy runtime for Xlib.
  *
- * This one is very like X_MB_init(), except it accepts a
- * X_MB_runtime_t object initialized with a display connected to a X
+ * This one is very like _x_supp_init(), except it accepts a
+ * X_supp_runtime_t object initialized with a display connected to a X
  * server and an opened window.
  *
- * Following field of the X_MB_runtime_t object should be initialized.
+ * Following field of the X_supp_runtime_t object should be initialized.
  *   - w, h
  *   - win
  *   - display
  *   - visual
  */
 static int
-X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
+_x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
     int w, h;
     int disp_fd;
@@ -906,7 +907,7 @@ X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
     disp_fd = XConnectionNumber(xmb_rt->display);
     xmb_rt->io_hdl = xmb_rt->io_man->reg(xmb_rt->io_man, disp_fd,
 					 MB_IO_R,
-					 _x_mb_handle_connection,
+					 _x_supp_handle_connection,
 					 xmb_rt);
 
     return OK;
@@ -917,11 +918,11 @@ X_MB_init_with_win_internal(X_MB_runtime_t *xmb_rt) {
  * It setups a runtime environment to run MadButterfly with Xlib.
  * Users should specify width and height of the opening window.
  */
-static int X_MB_init(X_MB_runtime_t *xmb_rt, const char *display_name,
-		     int w, int h) {
+static int _x_supp_init(X_supp_runtime_t *xmb_rt, const char *display_name,
+			int w, int h) {
     int r;
 
-    memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
+    memset(xmb_rt, 0, sizeof(X_supp_runtime_t));
 
     xmb_rt->w = w;
     xmb_rt->h = h;
@@ -930,7 +931,7 @@ static int X_MB_init(X_MB_runtime_t *xmb_rt, const char *display_name,
     if(r != OK)
 	return ERR;
 
-    r = X_MB_init_with_win_internal(xmb_rt);
+    r = _x_supp_init_with_win_internal(xmb_rt);
 
     return r;
 }
@@ -938,11 +939,11 @@ static int X_MB_init(X_MB_runtime_t *xmb_rt, const char *display_name,
 /*! \brief Initialize a MadButterfly runtime for a window of X.
  *
  * Runtimes initialized with this function should be destroyed with
- * X_MB_destroy_keep_win().
+ * x_supp_destroy_keep_win().
  */
 static int
-X_MB_init_with_win(X_MB_runtime_t *xmb_rt,
-		   Display *display, Window win) {
+_x_supp_init_with_win(X_supp_runtime_t *xmb_rt,
+		      Display *display, Window win) {
     XWindowAttributes attrs;
     int r;
 
@@ -950,7 +951,7 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt,
     if(r == 0)
 	return ERR;
     
-    memset(xmb_rt, 0, sizeof(X_MB_runtime_t));
+    memset(xmb_rt, 0, sizeof(X_supp_runtime_t));
 
     xmb_rt->display = display;
     xmb_rt->win = win;
@@ -958,12 +959,12 @@ X_MB_init_with_win(X_MB_runtime_t *xmb_rt,
     xmb_rt->w = attrs.width;
     xmb_rt->h = attrs.height;
 
-    r = X_MB_init_with_win_internal(xmb_rt);
+    r = _x_supp_init_with_win_internal(xmb_rt);
 
     return r;
 }
 
-static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
+static void x_supp_destroy(X_supp_runtime_t *xmb_rt) {
     if(xmb_rt->rdman) {
 	redraw_man_destroy(xmb_rt->rdman);
 	free(xmb_rt->rdman);
@@ -999,13 +1000,13 @@ static void X_MB_destroy(X_MB_runtime_t *xmb_rt) {
 }
 
 /*! \brief Destroy a MadButterfly runtime initialized with
- *	X_MB_init_with_win().
+ *	_x_supp_init_with_win().
  *
  * Destroying a runtime with this function prevent the window and
  * display associated with the runtime being closed.
  */
 static void
-X_MB_destroy_keep_win(X_MB_runtime_t *xmb_rt) {
+x_supp_destroy_keep_win(X_supp_runtime_t *xmb_rt) {
     Display *display;
     Window win;
 
@@ -1014,22 +1015,22 @@ X_MB_destroy_keep_win(X_MB_runtime_t *xmb_rt) {
     win = xmb_rt->win;
     xmb_rt->win = 0;
 
-    X_MB_destroy(xmb_rt);
+    x_supp_destroy(xmb_rt);
     
     xmb_rt->display = display;
     xmb_rt->win = win;
 }
 
 static mb_rt_t *
-X_MB_new(const char *display_name, int w, int h) {
-    X_MB_runtime_t *rt;
+_x_supp_new(const char *display_name, int w, int h) {
+    X_supp_runtime_t *rt;
     int r;
 
-    rt = O_ALLOC(X_MB_runtime_t);
+    rt = O_ALLOC(X_supp_runtime_t);
     if(rt == NULL)
 	return NULL;
 
-    r = X_MB_init(rt, display_name, w, h);
+    r = _x_supp_init(rt, display_name, w, h);
     if(r != OK) {
 	free(rt);
 	return NULL;
@@ -1041,18 +1042,18 @@ X_MB_new(const char *display_name, int w, int h) {
 /*! \brief Create a new runtime for existed window for X.
  *
  * The object returned by this function must be free with
- * X_MB_free_keep_win() to prevent the window from closed.
+ * _x_supp_free_keep_win() to prevent the window from closed.
  */
 static mb_rt_t *
-X_MB_new_with_win(MB_DISPLAY display, MB_WINDOW win) {
-    X_MB_runtime_t *rt;
+_x_supp_new_with_win(MB_DISPLAY display, MB_WINDOW win) {
+    X_supp_runtime_t *rt;
     int r;
 
-    rt = O_ALLOC(X_MB_runtime_t);
+    rt = O_ALLOC(X_supp_runtime_t);
     if(rt == NULL)
 	return NULL;
 
-    r = X_MB_init_with_win(rt, display, win);
+    r = _x_supp_init_with_win(rt, display, win);
     if(r != OK) {
 	free(rt);
 	return NULL;
@@ -1062,40 +1063,40 @@ X_MB_new_with_win(MB_DISPLAY display, MB_WINDOW win) {
 }
 
 static void
-X_MB_free(mb_rt_t *rt) {
-    X_MB_destroy((X_MB_runtime_t *) rt);
+_x_supp_free(mb_rt_t *rt) {
+    x_supp_destroy((X_supp_runtime_t *) rt);
     free(rt);
 }
 
-/*! \brief Free runtime created with X_MB_new_with_win().
+/*! \brief Free runtime created with _x_supp_new_with_win().
  */
 static void
-X_MB_free_keep_win(mb_rt_t *rt) {
-    X_MB_destroy_keep_win((X_MB_runtime_t *) rt);
+_x_supp_free_keep_win(mb_rt_t *rt) {
+    x_supp_destroy_keep_win((X_supp_runtime_t *) rt);
     free(rt);
 }
 
 static subject_t *
-X_MB_kbevents(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+_x_supp_kbevents(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     return xmb_rt->kbinfo.kbevents;
 }
 
 static redraw_man_t *
-X_MB_rdman(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+_x_supp_rdman(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     return xmb_rt->rdman;
 }
 
 static mb_timer_man_t *
-X_MB_timer_man(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+_x_supp_timer_man(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     return xmb_rt->timer_man;
 }
 
 static ob_factory_t *
-X_MB_ob_factory(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+_x_supp_ob_factory(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     ob_factory_t *factory;
 
     factory = rdman_get_ob_factory(xmb_rt->rdman);
@@ -1103,8 +1104,8 @@ X_MB_ob_factory(mb_rt_t *rt) {
 }
 
 static mb_img_ldr_t *
-X_MB_img_ldr(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+_x_supp_img_ldr(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     mb_img_ldr_t *img_ldr;
 
     img_ldr = xmb_rt->img_ldr;
@@ -1113,10 +1114,10 @@ X_MB_img_ldr(mb_rt_t *rt) {
 }
 
 static int
-X_MB_add_event(mb_rt_t *rt, int fd, MB_IO_TYPE type,
+_x_supp_add_event(mb_rt_t *rt, int fd, MB_IO_TYPE type,
 	       mb_IO_cb_t cb, void *data)
 {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     mb_IO_man_t *io_man = xmb_rt->io_man;
     int hdl;
 
@@ -1125,17 +1126,17 @@ X_MB_add_event(mb_rt_t *rt, int fd, MB_IO_TYPE type,
 }
 
 static void
-X_MB_remove_event(mb_rt_t *rt, int hdl)
+_x_supp_remove_event(mb_rt_t *rt, int hdl)
 {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     mb_IO_man_t *io_man = xmb_rt->io_man;
 
     io_man->unreg(io_man, hdl);
 }
 
 static int
-_x_mb_flush(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
+_x_supp_flush(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     int r;
 
 #ifdef XSHM
@@ -1145,21 +1146,21 @@ _x_mb_flush(mb_rt_t *rt) {
     return r == 0? ERR: OK;
 }
 
-mb_backend_t backend = { X_MB_new,
-			 X_MB_new_with_win,
+mb_backend_t backend = { _x_supp_new,
+			 _x_supp_new_with_win,
 			 
-			 X_MB_free,
-			 X_MB_free_keep_win,
-			 X_MB_add_event,
-			 X_MB_remove_event,
-			 _x_mb_event_loop,
-			 _x_mb_flush,
+			 _x_supp_free,
+			 _x_supp_free_keep_win,
+			 _x_supp_add_event,
+			 _x_supp_remove_event,
+			 _x_supp_event_loop,
+			 _x_supp_flush,
 			 
-			 X_MB_kbevents,
-			 X_MB_rdman,
-			 X_MB_timer_man,
-			 X_MB_ob_factory,
-			 X_MB_img_ldr
+			 _x_supp_kbevents,
+			 _x_supp_rdman,
+			 _x_supp_timer_man,
+			 _x_supp_ob_factory,
+			 _x_supp_img_ldr
 		};
 
 #if 0
@@ -1168,22 +1169,22 @@ mb_backend_t backend = { X_MB_new,
  * These functions are for internal using.
  * @{
  */
-/*! \brief Exported for nodejs plugin to call handle_x_event.
+/*! \brief Exported for nodejs plugin to call _x_supp_handle_x_event.
  */
-void _X_MB_handle_x_event_for_nodejs(mb_rt_t *rt) {
-    handle_x_event((X_MB_runtime_t *)rt);
+void _x_supp_handle_x_event_for_nodejs(mb_rt_t *rt) {
+    _x_supp_handle_x_event((X_supp_runtime_t *)rt);
 }
 
 /*! \brief Get X connect for nodejs plugin.
  */
-int _X_MB_get_x_conn_for_nodejs(mb_rt_t *rt) {
-    return XConnectionNumber(((X_MB_runtime_t *)rt)->display);
+int _x_supp_get_x_conn_for_nodejs(mb_rt_t *rt) {
+    return XConnectionNumber(((X_supp_runtime_t *)rt)->display);
 }
 
 /*! \brief Flush buffer for the X connection of a runtime object.
  */
-int _X_MB_flush_x_conn_for_nodejs(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
+int _x_supp_flush_x_conn_for_nodejs(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *)rt;
 #ifdef XSHM
     XSHM_update(xmb_rt);
 #endif
@@ -1193,8 +1194,8 @@ int _X_MB_flush_x_conn_for_nodejs(mb_rt_t *rt) {
 /*! \brief Handle single X event.
  */
 void
-_X_MB_handle_single_event(mb_rt_t *rt, void *evt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
+_x_supp_handle_single_event(mb_rt_t *rt, void *evt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *)rt;
     
     handle_single_x_event(xmb_rt, (XEvent *)evt);
 }
@@ -1202,8 +1203,8 @@ _X_MB_handle_single_event(mb_rt_t *rt, void *evt) {
 /*! \brief Called at end of an iteration of X event loop.
  */
 void
-_X_MB_no_more_event(mb_rt_t *rt) {
-    X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *)rt;
+_x_supp_no_more_event(mb_rt_t *rt) {
+    X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *)rt;
     
     no_more_event(xmb_rt);
 }
