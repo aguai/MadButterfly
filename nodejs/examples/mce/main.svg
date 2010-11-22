@@ -14,8 +14,9 @@
    height="1052.3622047"
    id="svg2"
    version="1.1"
-   inkscape:version="0.47 r22583"
-   sodipodi:docname="main.svg">
+   inkscape:version="0.48+devel r9764 custom"
+   sodipodi:docname="main.svg"
+   xmlns:ns0="http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd">
   <defs
      id="defs4">
     <inkscape:perspective
@@ -55,16 +56,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.35"
-     inkscape:cx="941.26757"
+     inkscape:cx="574.12471"
      inkscape:cy="483.73232"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="Layer 1s235"
      showgrid="false"
-     inkscape:window-width="1274"
-     inkscape:window-height="705"
-     inkscape:window-x="225"
-     inkscape:window-y="167"
-     inkscape:window-maximized="0" />
+     inkscape:window-width="1680"
+     inkscape:window-height="976"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -76,11 +77,19 @@
         <dc:title />
       </cc:Work>
     </rdf:RDF>
+    <ns0:scenes>
+      <ns0:scene
+         start="1"
+         ref="Layer 1s1841" />
+      <ns0:scene
+         start="2"
+         ref="Layer 1s235" />
+    </ns0:scenes>
   </metadata>
   <g
-     inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer2"
+     inkscape:label="Background">
     <image
        y="-27.637817"
        x="0"
@@ -88,258 +97,257 @@
        inkscape:bbox-width="1920"
        inkscape:bbox-y="0"
        inkscape:bbox-x="0"
-       inkscape:transform-center-y="0"
-       inkscape:transform-center-x="0"
        id="image2977"
        height="1080"
        width="1920"
        xlink:href="file:///home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/background.png" />
+  </g>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
     <g
-       id="g2999"
-       inkscape:label="lightbar"
-       inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
-       inkscape:bbox-x="107.14287"
-       inkscape:bbox-y="49.999969"
-       inkscape:bbox-width="228.57144"
-       inkscape:bbox-height="865.71429">
-      <image
-         xlink:href="file:///home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/vod1-select.png"
-         width="228.57144"
-         height="865.71429"
-         id="image2995"
-         inkscape:transform-center-x="0"
-         inkscape:transform-center-y="0"
+       id="Layer 1s1841"
+       inkscape:groupmode="layer"
+       style="display:none">
+      <g
+         transform="translate(7.14163,8.5714057)"
+         id="g2999"
+         inkscape:label="lightbar"
          inkscape:bbox-x="107.14287"
          inkscape:bbox-y="49.999969"
          inkscape:bbox-width="228.57144"
-         inkscape:bbox-height="865.71429"
-         x="107.14287"
-         y="136.64792" />
-    </g>
-    <g
-       id="g2922"
-       inkscape:label="cat0"
-       inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
-       inkscape:bbox-x="117.64285"
-       inkscape:bbox-y="462.7648"
-       inkscape:bbox-width="200"
-       inkscape:bbox-height="286.7168">
-      <image
-         sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat0.png"
-         xlink:href="./cat0.png"
-         y="302.88058"
-         x="117.64285"
-         id="image3058"
-         height="286.7168"
-         width="200"
-         inkscape:label=""
-         inkscape:transform-center-x="0"
-         inkscape:transform-center-y="0"
+         inkscape:bbox-height="865.71429">
+        <image
+           xlink:href="file:///home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/vod1-select.png"
+           width="228.57144"
+           height="865.71429"
+           id="image2995"
+           inkscape:bbox-x="107.14287"
+           inkscape:bbox-y="49.999969"
+           inkscape:bbox-width="228.57144"
+           inkscape:bbox-height="865.71429"
+           x="107.14287"
+           y="136.64792" />
+      </g>
+      <g
+         transform="translate(7.14163,8.5714057)"
+         id="g2922"
+         inkscape:label="cat0"
          inkscape:bbox-x="117.64285"
          inkscape:bbox-y="462.7648"
          inkscape:bbox-width="200"
-         inkscape:bbox-height="286.7168" />
-    </g>
-    <g
-       id="g2923"
-       inkscape:label="cat1"
-       inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
-       inkscape:bbox-x="359.21432"
-       inkscape:bbox-y="455.42856"
-       inkscape:bbox-width="200"
-       inkscape:bbox-height="291.09415">
-      <image
-         sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat1.png"
-         xlink:href="./cat1.png"
-         y="305.83948"
-         x="359.21432"
-         id="image3116"
-         height="291.09415"
-         width="200"
-         inkscape:label=""
-         inkscape:transform-center-x="0"
-         inkscape:transform-center-y="0"
+         inkscape:bbox-height="286.7168">
+        <image
+           inkscape:bbox-height="286.7168"
+           inkscape:bbox-width="200"
+           inkscape:bbox-y="462.7648"
+           inkscape:bbox-x="117.64285"
+           inkscape:label=""
+           width="200"
+           height="286.7168"
+           id="image3058"
+           x="117.64285"
+           y="302.88058"
+           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat0.png"
+           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat0.png" />
+      </g>
+      <g
+         transform="translate(7.14163,8.5714057)"
+         id="g2923"
+         inkscape:label="cat1"
          inkscape:bbox-x="359.21432"
          inkscape:bbox-y="455.42856"
          inkscape:bbox-width="200"
-         inkscape:bbox-height="291.09415" />
-    </g>
-    <g
-       id="g2926"
-       inkscape:label="cat2"
-       inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
-       inkscape:bbox-x="599.07141"
-       inkscape:bbox-y="458.28571"
-       inkscape:bbox-width="200"
-       inkscape:bbox-height="286.7168">
-      <image
-         sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat2.png"
-         xlink:href="./cat2.png"
-         y="307.35968"
-         x="599.07141"
-         id="image3174"
-         height="286.7168"
-         width="200"
-         inkscape:label=""
-         inkscape:transform-center-x="0"
-         inkscape:transform-center-y="0"
+         inkscape:bbox-height="291.09415">
+        <image
+           inkscape:bbox-height="291.09415"
+           inkscape:bbox-width="200"
+           inkscape:bbox-y="455.42856"
+           inkscape:bbox-x="359.21432"
+           inkscape:label=""
+           width="200"
+           height="291.09415"
+           id="image3116"
+           x="359.21432"
+           y="305.83948"
+           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat1.png"
+           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat1.png" />
+      </g>
+      <g
+         transform="translate(7.14163,8.5714057)"
+         id="g2926"
+         inkscape:label="cat2"
          inkscape:bbox-x="599.07141"
          inkscape:bbox-y="458.28571"
          inkscape:bbox-width="200"
-         inkscape:bbox-height="286.7168" />
-    </g>
-    <g
-       id="g2929"
-       inkscape:label="cat3"
-       inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
-       inkscape:bbox-x="821.35712"
-       inkscape:bbox-y="456.71426"
-       inkscape:bbox-width="200"
-       inkscape:bbox-height="289.10892">
-      <image
-         sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat3.png"
-         xlink:href="./cat3.png"
-         y="306.539"
-         x="821.35712"
-         id="image3232"
-         height="289.10892"
-         width="200"
-         inkscape:label=""
-         inkscape:transform-center-x="0"
-         inkscape:transform-center-y="0"
+         inkscape:bbox-height="286.7168">
+        <image
+           inkscape:bbox-height="286.7168"
+           inkscape:bbox-width="200"
+           inkscape:bbox-y="458.28571"
+           inkscape:bbox-x="599.07141"
+           inkscape:label=""
+           width="200"
+           height="286.7168"
+           id="image3174"
+           x="599.07141"
+           y="307.35968"
+           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat2.png"
+           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat2.png" />
+      </g>
+      <g
+         transform="translate(7.14163,8.5714057)"
+         id="g2929"
+         inkscape:label="cat3"
          inkscape:bbox-x="821.35712"
          inkscape:bbox-y="456.71426"
          inkscape:bbox-width="200"
-         inkscape:bbox-height="289.10892" />
-    </g>
-    <path
-       sodipodi:type="star"
-       style="fill:#00c280;fill-opacity:1"
-       id="path3235"
-       sodipodi:sides="3"
-       sodipodi:cx="-171.42857"
-       sodipodi:cy="186.6479"
-       sodipodi:r1="48.760139"
-       sodipodi:r2="24.38007"
-       sodipodi:arg1="1.0153026"
-       sodipodi:arg2="2.0625001"
-       inkscape:flatsided="false"
-       inkscape:rounded="0"
-       inkscape:randomized="0"
-       d="m -145.71429,228.07648 -37.22481,-19.93682 -37.22481,-19.93682 35.87819,-22.26922 35.8782,-22.26923 1.34662,42.20604 1.34661,42.20605 z"
-       inkscape:transform-center-x="11.746635"
-       inkscape:transform-center-y="-0.50892793"
-       transform="matrix(0.9999393,0.01101845,-0.01101845,0.9999393,239.18902,264.75735)"
-       inkscape:label="leftarrow"
-       inkscape:bbox-x="16.964767"
-       inkscape:bbox-y="561.14775"
-       inkscape:bbox-width="74.005762"
-       inkscape:bbox-height="84.436636" />
-    <path
-       transform="matrix(-0.99874276,-0.05012887,0.05012887,-0.99874276,1659.4305,613.03905)"
-       inkscape:transform-center-y="-0.445031"
-       inkscape:transform-center-x="-11.802598"
-       d="m -145.71429,228.07648 -37.22481,-19.93682 -37.22481,-19.93682 35.87819,-22.26922 35.8782,-22.26923 1.34662,42.20604 1.34661,42.20605 z"
-       inkscape:randomized="0"
-       inkscape:rounded="0"
-       inkscape:flatsided="false"
-       sodipodi:arg2="2.0625001"
-       sodipodi:arg1="1.0153026"
-       sodipodi:r2="24.38007"
-       sodipodi:r1="48.760139"
-       sodipodi:cy="186.6479"
-       sodipodi:cx="-171.42857"
-       sodipodi:sides="3"
-       id="path4005"
-       style="fill:#00c280;fill-opacity:1"
-       sodipodi:type="star"
-       inkscape:label="rightarrow"
-       inkscape:bbox-x="1814.8532"
-       inkscape:bbox-y="575.3674"
-       inkscape:bbox-width="73.898841"
-       inkscape:bbox-height="84.440967" />
-    <g
-       inkscape:bbox-height="289.10892"
-       inkscape:bbox-width="200"
-       inkscape:bbox-y="456.71426"
-       inkscape:bbox-x="1035.3571"
-       inkscape:transform-center-y="0"
-       inkscape:transform-center-x="0"
-       inkscape:label="cat4"
-       id="g2931"
-       transform="translate(214,0)">
-      <image
-         sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat4.png"
-         xlink:href="./cat4.png"
+         inkscape:bbox-height="289.10892">
+        <image
+           inkscape:bbox-height="289.10892"
+           inkscape:bbox-width="200"
+           inkscape:bbox-y="456.71426"
+           inkscape:bbox-x="821.35712"
+           inkscape:label=""
+           width="200"
+           height="289.10892"
+           id="image3232"
+           x="821.35712"
+           y="306.539"
+           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat3.png"
+           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat3.png" />
+      </g>
+      <path
+         sodipodi:type="star"
+         style="fill:#00c280;fill-opacity:1"
+         id="path3235"
+         sodipodi:sides="3"
+         sodipodi:cx="-171.42857"
+         sodipodi:cy="186.6479"
+         sodipodi:r1="48.760139"
+         sodipodi:r2="24.38007"
+         sodipodi:arg1="1.0153026"
+         sodipodi:arg2="2.0625001"
+         inkscape:flatsided="false"
+         inkscape:rounded="0"
+         inkscape:randomized="0"
+         d="m -145.71429,228.07648 -37.22481,-19.93682 -37.22481,-19.93682 35.87819,-22.26922 35.8782,-22.26923 1.34662,42.20604 z"
+         inkscape:transform-center-x="11.746635"
+         inkscape:transform-center-y="-0.50892793"
+         transform="matrix(0.9999393,0.01101845,-0.01101845,0.9999393,246.33065,273.32876)"
+         inkscape:label="leftarrow"
+         inkscape:bbox-x="16.964767"
+         inkscape:bbox-y="561.14775"
+         inkscape:bbox-width="74.005762"
+         inkscape:bbox-height="84.436636" />
+      <path
+         transform="matrix(-0.99874276,-0.05012887,0.05012887,-0.99874276,1666.5721,621.61046)"
+         inkscape:transform-center-y="-0.445031"
+         inkscape:transform-center-x="-11.802598"
+         d="m -145.71429,228.07648 -37.22481,-19.93682 -37.22481,-19.93682 35.87819,-22.26922 35.8782,-22.26923 1.34662,42.20604 z"
+         inkscape:randomized="0"
+         inkscape:rounded="0"
+         inkscape:flatsided="false"
+         sodipodi:arg2="2.0625001"
+         sodipodi:arg1="1.0153026"
+         sodipodi:r2="24.38007"
+         sodipodi:r1="48.760139"
+         sodipodi:cy="186.6479"
+         sodipodi:cx="-171.42857"
+         sodipodi:sides="3"
+         id="path4005"
+         style="fill:#00c280;fill-opacity:1"
+         sodipodi:type="star"
+         inkscape:label="rightarrow"
+         inkscape:bbox-x="1814.8532"
+         inkscape:bbox-y="575.3674"
+         inkscape:bbox-width="73.898841"
+         inkscape:bbox-height="84.440967" />
+      <g
          inkscape:bbox-height="289.10892"
          inkscape:bbox-width="200"
          inkscape:bbox-y="456.71426"
          inkscape:bbox-x="1035.3571"
-         inkscape:transform-center-y="0"
-         inkscape:transform-center-x="0"
-         inkscape:label=""
-         width="200"
-         height="289.10892"
-         id="image2933"
-         x="821.35712"
-         y="306.539" />
-    </g>
-    <g
-       transform="translate(438,0)"
-       id="g2935"
-       inkscape:label="cat5"
-       inkscape:transform-center-x="0"
-       inkscape:transform-center-y="0"
-       inkscape:bbox-x="1259.3571"
-       inkscape:bbox-y="456.71426"
-       inkscape:bbox-width="200"
-       inkscape:bbox-height="289.10892">
-      <image
-         sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat5.png"
-         xlink:href="./cat5.png"
-         y="306.539"
-         x="821.35712"
-         id="image2937"
-         height="289.10892"
-         width="200"
-         inkscape:label=""
-         inkscape:transform-center-x="0"
-         inkscape:transform-center-y="0"
+         inkscape:label="cat4"
+         id="g2931"
+         transform="translate(221.14163,8.5714057)">
+        <image
+           y="306.539"
+           x="821.35712"
+           id="image2933"
+           height="289.10892"
+           width="200"
+           inkscape:label=""
+           inkscape:bbox-x="1035.3571"
+           inkscape:bbox-y="456.71426"
+           inkscape:bbox-width="200"
+           inkscape:bbox-height="289.10892"
+           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat4.png"
+           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat4.png" />
+      </g>
+      <g
+         transform="translate(445.14163,8.5714057)"
+         id="g2935"
+         inkscape:label="cat5"
          inkscape:bbox-x="1259.3571"
          inkscape:bbox-y="456.71426"
          inkscape:bbox-width="200"
-         inkscape:bbox-height="289.10892" />
-    </g>
-    <g
-       inkscape:bbox-height="289.10892"
-       inkscape:bbox-width="200"
-       inkscape:bbox-y="456.71426"
-       inkscape:bbox-x="1475.3571"
-       inkscape:transform-center-y="0"
-       inkscape:transform-center-x="0"
-       inkscape:label="cat6"
-       id="g2939"
-       transform="translate(654,0)">
-      <image
-         sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat6.png"
-         xlink:href="./cat6.png"
+         inkscape:bbox-height="289.10892">
+        <image
+           inkscape:bbox-height="289.10892"
+           inkscape:bbox-width="200"
+           inkscape:bbox-y="456.71426"
+           inkscape:bbox-x="1259.3571"
+           inkscape:label=""
+           width="200"
+           height="289.10892"
+           id="image2937"
+           x="821.35712"
+           y="306.539"
+           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat5.png"
+           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat5.png" />
+      </g>
+      <g
          inkscape:bbox-height="289.10892"
          inkscape:bbox-width="200"
          inkscape:bbox-y="456.71426"
          inkscape:bbox-x="1475.3571"
-         inkscape:transform-center-y="0"
-         inkscape:transform-center-x="0"
-         inkscape:label=""
-         width="200"
-         height="289.10892"
-         id="image2941"
-         x="821.35712"
-         y="306.539" />
+         inkscape:label="cat6"
+         id="g2939"
+         transform="translate(661.14163,8.5714057)">
+        <image
+           y="306.539"
+           x="821.35712"
+           id="image2941"
+           height="289.10892"
+           width="200"
+           inkscape:label=""
+           inkscape:bbox-x="1475.3571"
+           inkscape:bbox-y="456.71426"
+           inkscape:bbox-width="200"
+           inkscape:bbox-height="289.10892"
+           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat6.png"
+           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat6.png" />
+      </g>
+    </g>
+    <g
+       id="Layer 1s235"
+       inkscape:groupmode="layer"
+       style="display:inline">
+      <rect
+         x="0"
+         y="0"
+         width="100"
+         height="100"
+         id="rect3181" />
+      <image
+         y="-27.637817"
+         x="0"
+         id="image3245"
+         xlink:href="./background2.png"
+         height="1080"
+         width="1920" />
     </g>
   </g>
 </svg>

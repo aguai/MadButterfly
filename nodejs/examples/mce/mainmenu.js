@@ -21,6 +21,7 @@ function MainMenu(app)
 MainMenu.prototype.init=function()
 {
     app.loadSVG("main.svg");
+    app.changeScene(1);
 
     var i;
     var self = this;
@@ -150,7 +151,7 @@ MainMenu.prototype.key_enter=function()
 }
 
 MainMenu.prototype.changePage=function() {
-    this.app.loadSVG("preview.svg");    
+    this.app.changeScene(2);
 }
 
 exports.MainMenu=MainMenu;
