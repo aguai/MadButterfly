@@ -334,7 +334,7 @@ void mb_progm_start(mb_progm_t *progm, mb_timer_man_t *timer_man,
 
     timer = mb_timer_man_timeout(timer_man, &progm->words[0].abs_start,
 				 mb_progm_step, progm);
-    ASSERT(timer != NULL);
+    ASSERT(timer != -1);
 
     /* We need timer to abort it. */
     progm->cur_timer = timer;
