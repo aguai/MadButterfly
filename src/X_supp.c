@@ -174,11 +174,9 @@ static void
 _x_supp_event_loop(mb_rt_t *rt) {
     struct _X_supp_runtime *xmb_rt = (struct _X_supp_runtime *)rt;
     struct _X_supp_IO_man *io_man = (struct _X_supp_IO_man *)xmb_rt->io_man;
-    struct _X_supp_timer_man *timer_man =
-	(struct _X_supp_timer_man *)xmb_rt->timer_man;
+    mb_timer_man_t *timer_man = (mb_timer_man_t *)xmb_rt->timer_man;
     redraw_man_t *rdman;
     mb_tman_t *tman = tman_timer_man_get_tman(timer_man);
-    int fd;
     mb_timeval_t now, tmo;
     struct timeval tv;
     fd_set rfds, wfds;
@@ -187,7 +185,7 @@ _x_supp_event_loop(mb_rt_t *rt) {
 
     rdman = mb_runtime_rdman(rt);
     
-    _x_supp_handle_x_event(rt);
+    _x_supp_handle_x_event(xmb_rt);
 
     while(1) {
 	FD_ZERO(&rfds);
@@ -808,8 +806,8 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     //	      to the redraw_man_t instead.
     xmb_rt->rdman->rt = xmb_rt;
 
-    xmb_rt->io_man = _io_factory->new();
-    xmb_rt->timer_man = _timer_factory->new();
+    xmb_rt->io_man = mb_io_man_new(_io_factory);
+    xmb_rt->timer_man = mb_timer_man_new(_timer_factory);
 
     img_ldr = simple_mb_img_ldr_new("");
     xmb_rt->img_ldr = img_ldr;
@@ -823,10 +821,10 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     X_kb_init(&xmb_rt->kbinfo, xmb_rt->display, xmb_rt->rdman);
 
     disp_fd = XConnectionNumber(xmb_rt->display);
-    xmb_rt->io_hdl = xmb_rt->io_man->reg(xmb_rt->io_man, disp_fd,
-					 MB_IO_R,
-					 _x_supp_handle_connection,
-					 xmb_rt);
+    xmb_rt->io_hdl = mb_io_man_reg(xmb_rt->io_man, disp_fd,
+				   MB_IO_R,
+				   _x_supp_handle_connection,
+				   xmb_rt);
 
     return OK;
 }
@@ -889,12 +887,12 @@ static void x_supp_destroy(X_supp_runtime_t *xmb_rt) {
     }
 
     if(xmb_rt->io_hdl)
-	xmb_rt->io_man->unreg(xmb_rt->io_man, xmb_rt->io_hdl);
+	mb_io_man_unreg(xmb_rt->io_man, xmb_rt->io_hdl);
 
     if(xmb_rt->io_man)
-	_io_factory->free(xmb_rt->io_man);
+	mb_io_man_free(_io_factory, xmb_rt->io_man);
     if(xmb_rt->timer_man)
-	_timer_factory->free(xmb_rt->timer_man);
+	mb_timer_man_free(_timer_factory, xmb_rt->timer_man);
 
     if(xmb_rt->img_ldr)
 	MB_IMG_LDR_FREE(xmb_rt->img_ldr);
@@ -954,7 +952,7 @@ _x_supp_new(const char *display_name, int w, int h) {
 	return NULL;
     }
 
-    return rt;
+    return (mb_rt_t *)rt;
 }
 
 /*! \brief Create a new runtime for existed window for X.
@@ -977,7 +975,7 @@ _x_supp_new_with_win(MB_DISPLAY display, MB_WINDOW win) {
 	return NULL;
     }
 
-    return rt;
+    return (mb_rt_t *)rt;
 }
 
 static void
@@ -1039,7 +1037,7 @@ _x_supp_add_event(mb_rt_t *rt, int fd, MB_IO_TYPE type,
     mb_IO_man_t *io_man = xmb_rt->io_man;
     int hdl;
 
-    hdl = io_man->reg(io_man, fd, type, cb, data);
+    hdl = mb_io_man_reg(io_man, fd, type, cb, data);
     return hdl;
 }
 
@@ -1049,7 +1047,7 @@ _x_supp_remove_event(mb_rt_t *rt, int hdl)
     X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
     mb_IO_man_t *io_man = xmb_rt->io_man;
 
-    io_man->unreg(io_man, hdl);
+    mb_io_man_unreg(io_man, hdl);
 }
 
 static int
