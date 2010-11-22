@@ -108,7 +108,7 @@ static void mb_animated_menu_fillMenuContentUp(mb_animated_menu_t *m)
     mb_progm_free_completed(progm);
     m->ready--;
     subject_add_observer(mb_progm_get_complete(progm), mb_animated_menu_complete,m);
-    mb_progm_start(progm, X_MB_tman(MBAF_RDMAN(m->app)->rt), &now);
+    mb_progm_start(progm, mb_runtime_timer_man(MBAF_RDMAN(m->app)->rt), &now);
     rdman_redraw_changed(MBAF_RDMAN(m->app));
     tmp = m->items[8];
     for(i=8;i>0;i--) {
@@ -158,7 +158,7 @@ static void mb_animated_menu_fillMenuContentDown(mb_animated_menu_t *m)
     mb_progm_free_completed(progm);
     m->ready--;
     subject_add_observer(mb_progm_get_complete(progm), mb_animated_menu_complete,m);
-    mb_progm_start(progm, X_MB_tman(MBAF_RDMAN(m->app)->rt), &now);
+    mb_progm_start(progm, mb_runtime_timer_man(MBAF_RDMAN(m->app)->rt), &now);
     rdman_redraw_changed(MBAF_RDMAN(m->app));
     tmp = m->items[0];
     for(i=0;i<8;i++) {
@@ -185,7 +185,7 @@ void mb_animated_menu_moveLightBar(mb_animated_menu_t *m)
     mb_progm_free_completed(progm);
     m->ready--;
     subject_add_observer(mb_progm_get_complete(progm), mb_animated_menu_complete,m);
-    mb_progm_start(progm, X_MB_tman(MBAF_RDMAN(m->app)->rt), &now);
+    mb_progm_start(progm, mb_runtime_timer_man(MBAF_RDMAN(m->app)->rt), &now);
     rdman_redraw_changed(MBAF_RDMAN(m->app));
 }
 

@@ -93,7 +93,7 @@ static void mb_button_pressed(event_t *evt, void *arg)
     subject_add_observer(mb_progm_get_complete(btn->progm), mb_button_end_animated_cb,btn);
     get_now(&now);
     printf("rt = %x\n", btn->rdman->rt);
-    mb_progm_start(progm, X_MB_tman(btn->rdman->rt), &now);
+    mb_progm_start(progm, mb_runtime_timer_man(btn->rdman->rt), &now);
     if (btn->press)
     	btn->press(btn->arg);
 }
