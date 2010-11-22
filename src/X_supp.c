@@ -1056,22 +1056,22 @@ _x_supp_flush(mb_rt_t *rt) {
     return r == 0? ERR: OK;
 }
 
-mb_backend_t backend = { _x_supp_new,
-			 _x_supp_new_with_win,
-			 
-			 _x_supp_free,
-			 _x_supp_free_keep_win,
-			 _x_supp_add_event,
-			 _x_supp_remove_event,
-			 _x_supp_event_loop,
-			 _x_supp_flush,
-			 
-			 _x_supp_kbevents,
-			 _x_supp_rdman,
-			 _x_supp_timer_man,
-			 _x_supp_ob_factory,
-			 _x_supp_img_ldr
-		};
+mb_backend_t mb_dfl_backend = { _x_supp_new,
+				_x_supp_new_with_win,
+				
+				_x_supp_free,
+				_x_supp_free_keep_win,
+				_x_supp_add_event,
+				_x_supp_remove_event,
+				_x_supp_event_loop,
+				_x_supp_flush,
+				
+				_x_supp_kbevents,
+				_x_supp_rdman,
+				_x_supp_timer_man,
+				_x_supp_ob_factory,
+				_x_supp_img_ldr
+};
 
 #if 0
 /*! \defgroup x_supp_nodejs_sup Export functions for supporting nodejs plugin.
