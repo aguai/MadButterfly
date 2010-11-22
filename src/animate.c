@@ -26,7 +26,7 @@
  * a word, it call stop of actions in the word.
  *
  * A program is driven by a timer.  Once a program is started, it registers
- * with timer for periodic running.  \ref mb_tman_t is timer of
+ * with timer for periodic running.  \ref mb_timer_man_t is timer of
  * MadButterfly.  The update frequence is 10fps by default, now.
  *
  * \section use_progm How to Use Animation Program?
@@ -61,7 +61,7 @@
  *
  *	gettimeofday(&tv, NULL);
  *	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
- *	mb_progm_start(progm, tman, &mbtv);
+ *	mb_progm_start(progm, timer_man, &mbtv);
  * \endcode
  *
  *
@@ -98,9 +98,9 @@ struct _mb_progm {
 
     mb_timeval_t start_time;
     int first_playing;		/*!< first playing word. */
-    mb_tman_t *tman;
+    mb_timer_man_t *timer_man;
     subject_t *complete;	/*!< notify when a program is completed. */
-    mb_timer_t *cur_timer;
+    int cur_timer;
 
     int n_words;
     int max_words;
@@ -139,6 +139,7 @@ mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
     progm->max_words = max_words;
     for(i = 0; i < max_words; i++)
 	STAILQ_INIT(progm->words[i].actions);
+    progm->cur_timer = -1;
     return progm;
 }
 
@@ -233,7 +234,8 @@ static void mb_word_stop(mb_word_t *word, const mb_timeval_t *tmo,
  *	between now and next_tmo.  It is not obviously if time stepping
  *	small.
  */
-static void mb_progm_step(const mb_timeval_t *tmo,
+static void mb_progm_step(int timer_hdl,
+			  const mb_timeval_t *tmo,
 			  const mb_timeval_t *now,
 			  void *arg) {
     mb_progm_t *progm = (mb_progm_t *)arg;
@@ -289,8 +291,8 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	word = progm->words + progm->first_playing;
 	if(MB_TIMEVAL_LATER(&word->abs_start, &next_tmo))
 	    MB_TIMEVAL_CP(&next_tmo, &word->abs_start);
-	timer = mb_tman_timeout(progm->tman, &next_tmo,
-				mb_progm_step, progm);
+	timer = mb_timer_man_timeout(progm->timer_man, &next_tmo,
+				     mb_progm_step, progm);
 	progm->cur_timer = timer;
     } else {
 	/* Make program to complete. */
@@ -300,20 +302,20 @@ static void mb_progm_step(const mb_timeval_t *tmo,
 	comp_evt.progm = progm;
 	subject_notify(progm->complete, &comp_evt.event);
 #endif /* UNITTEST */
-	progm->cur_timer = NULL;
+	progm->cur_timer = -1;
     }
 }
 
-void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
+void mb_progm_start(mb_progm_t *progm, mb_timer_man_t *timer_man,
 		    mb_timeval_t *now) {
-    mb_timer_t *timer;
+    int timer;
     mb_word_t *word;
     int i;
 
     if(progm->n_words == 0)
 	return;
 
-    progm->tman = tman;
+    progm->timer_man = timer_man;
     MB_TIMEVAL_CP(&progm->start_time, now);
     progm->first_playing = 0;
 
@@ -326,12 +328,12 @@ void mb_progm_start(mb_progm_t *progm, mb_tman_t *tman,
     }
 
     if(MB_TIMEVAL_EQ(&progm->words[0].abs_start, now)) {
-	mb_progm_step(now, now, progm);
+	mb_progm_step(-1, now, now, progm);
 	return;
     }
 
-    timer = mb_tman_timeout(tman, &progm->words[0].abs_start,
-			    mb_progm_step, progm);
+    timer = mb_timer_man_timeout(timer_man, &progm->words[0].abs_start,
+				 mb_progm_step, progm);
     ASSERT(timer != NULL);
 
     /* We need timer to abort it. */
@@ -343,13 +345,13 @@ void mb_progm_finish(mb_progm_t *progm) {
 
     mb_progm_abort(progm);
     MB_TIMEVAL_SET(&infi, 0x7fffffff,0);
-    mb_progm_step(&progm->start_time, &infi,progm);
+    mb_progm_step(-1, &progm->start_time, &infi,progm);
 }
 void mb_progm_abort(mb_progm_t *progm) {
     /*! \todo Make sure abort release resources. */
-    if(progm->cur_timer) {
-	mb_tman_remove(progm->tman, progm->cur_timer);
-	progm->cur_timer = NULL;
+    if(progm->cur_timer != -1) {
+	mb_timer_man_remove(progm->timer_man, progm->cur_timer);
+	progm->cur_timer = -1;
     }
 }
 
@@ -441,13 +443,13 @@ void test_animate_words(void) {
     mb_progm_t *progm;
     mb_word_t *word;
     mb_action_t *acts[4];
-    mb_tman_t *tman;
+    mb_timer_man_t *timer_man;
     mb_timeval_t tv1, tv2, now, tmo_after;
     int logcnt = 0;
     int logs[256];
     int r;
 
-    tman = mb_tman_new();
+    timer_man = mb_tman_new();
     CU_ASSERT(tman != NULL);
 
     progm = mb_progm_new(3, NULL);
