@@ -70,14 +70,17 @@ void event_interaction(Display *display,
     XFlush(display);
 }
 
-void handle_connection(Display *display, mb_tman_t *tman,
+void handle_connection(Display *display, mb_timer_man_t *timer_man,
 		       redraw_man_t *rdman, int w, int h) {
     int xcon;
     fd_set rds;
     int nfds;
     struct timeval tmo;
     mb_timeval_t mb_tmo, next_mb_tmo;
+    mb_tman_t *tman;
     int r;
+
+    tman = tman_timer_man_get_tman(timer_man);
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask);
     XFlush(display);
@@ -138,7 +141,6 @@ void draw_path(mbe_t *cr, int w, int h) {
     mbe_font_face_t *face;
     struct timeval tv;
     mb_timer_man_t *timer_man;
-    mb_tman_t *tman;
     mb_timeval_t mbtv, start, playing;
     mb_progm_t *progm;
     mb_word_t *word;
@@ -211,8 +213,6 @@ void draw_path(mbe_t *cr, int w, int h) {
 
     timer_man = mb_timer_man_new(&tman_timer_factory);
     if(timer_man) {
-	tman = mb_tman_new();
-	
 	/* Prepare an animation program. */
 	progm = mb_progm_new(30, &rdman);
 
@@ -406,7 +406,7 @@ void draw_path(mbe_t *cr, int w, int h) {
 	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
 	mb_progm_start(progm, timer_man, &mbtv);
 
-	handle_connection(display, tman, &rdman, w, h);
+	handle_connection(display, timer_man, &rdman, w, h);
 
 	mb_progm_free(progm);
 	mb_timer_man_free(&tman_timer_factory, timer_man);
