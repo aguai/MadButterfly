@@ -377,6 +377,7 @@ void mb_progm_free_completed(mb_progm_t *progm) {
 
 #ifdef UNITTEST
 
+#include "mb_backend_utils.h"
 #include <CUnit/Basic.h>
 
 typedef struct _mb_dummy mb_dummy_t;
@@ -444,13 +445,16 @@ void test_animate_words(void) {
     mb_word_t *word;
     mb_action_t *acts[4];
     mb_timer_man_t *timer_man;
+    mb_tman_t *tman;
     mb_timeval_t tv1, tv2, now, tmo_after;
     int logcnt = 0;
     int logs[256];
     int r;
 
-    timer_man = mb_tman_new();
-    CU_ASSERT(tman != NULL);
+    timer_man = mb_timer_man_new(&tman_timer_factory);
+    CU_ASSERT(timer_man != NULL);
+
+    tman = tman_timer_man_get_tman(timer_man);
 
     progm = mb_progm_new(3, NULL);
     CU_ASSERT(progm != NULL);
@@ -477,7 +481,7 @@ void test_animate_words(void) {
     CU_ASSERT(acts[2] != NULL);
 
     MB_TIMEVAL_SET(&now, 0, 0);
-    mb_progm_start(progm, tman, &now);
+    mb_progm_start(progm, timer_man, &now);
 
     r = mb_tman_next_timeout(tman, &now, &tmo_after);
     CU_ASSERT(r == 0);
@@ -543,7 +547,7 @@ void test_animate_words(void) {
     CU_ASSERT(r == -1);
 
     mb_progm_free(progm);
-    mb_tman_free(tman);
+    mb_timer_man_free(&tman_timer_factory, timer_man);
 }
 
 CU_pSuite get_animate_suite(void) {

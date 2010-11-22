@@ -140,5 +140,7 @@ struct _mb_timer_factory {
     (tm_man)->timeout((tm_man), (tmout), (cb), (data))
 #define mb_timer_man_remove(tm_man, tm_hdl)	\
     (tm_man)->remove((tm_man), (tm_hdl))
+#define mb_timer_man_new(tm_fact) (tm_fact)->new()
+#define mb_timer_man_free(tm_fact, tm_man) (tm_fact)->free(tm_man)
 
 #endif /* __MB_BACKEND_H_ */
