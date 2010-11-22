@@ -8,7 +8,6 @@
 #include "mb_types.h"
 #include "mb_observer.h"
 #include "mb_img_ldr.h"
-#include "mb_timer.h"
 
 typedef struct _redraw_man redraw_man_t;
 
