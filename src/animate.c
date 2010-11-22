@@ -452,7 +452,7 @@ void test_animate_words(void) {
     int r;
 
     timer_man = mb_timer_man_new(&tman_timer_factory);
-    CU_ASSERT(timer_man != NULL);
+    CU_ASSERT(timer_man != -1);
 
     tman = tman_timer_man_get_tman(timer_man);
 
