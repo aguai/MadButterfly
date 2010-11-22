@@ -109,7 +109,7 @@ void switch_scene(const mb_timeval_t *tmo, const mb_timeval_t *now,void *arg)
     get_now(&timer);
     MB_TIMEVAL_SET(&interval, 1 ,0);
     MB_TIMEVAL_ADD(&timer, &interval);
-    mb_tman_timeout( mbaf_get_timer(app), &timer, switch_scene, app);
+    mb_timer_man_timeout( mbaf_get_timer(app), &timer, switch_scene, app);
 
     en->currentscene = (en->currentscene + 1) % 2;
     printf("switch to scene %d\n", en->currentscene + 1);
@@ -147,7 +147,7 @@ int main(int argc, char * const argv[]) {
     MyApp_InitContent();
     get_now(&tmo);
     MB_TIMEVAL_SET(&interval, 1 ,0);
-    mb_tman_timeout( mbaf_get_timer(app), &tmo, switch_scene, app);
+    mb_timer_man_timeout( mbaf_get_timer(app), &tmo, switch_scene, app);
     
 
     mbaf_loop(app);
