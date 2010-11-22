@@ -4,8 +4,8 @@
 #define __ANIMATE_H_
 
 #include "mb_types.h"
-#include "mb_timer.h"
 #include "mb_paint.h"
+#include "mb_backend.h"
 
 /*! \page def_action How to Define An Action?
  *

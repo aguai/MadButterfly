@@ -6,6 +6,7 @@
 #include <string.h>
 #include "mb_timer.h"
 #include "mb_tools.h"
+#include "mb_backend.h"
 
 
 #define OK 0
@@ -122,3 +123,101 @@ int mb_tman_handle_timeout(mb_tman_t *tman, mb_timeval_t *now) {
 
     return OK;
 }
+
+/*! \defgroup tman_timer_man Timer manager based on mb_tman_t.
+ *
+ * This implmentation of timer manager is based on mb_tman_t.
+ * @{
+ */
+struct _tman_timer_man {
+    mb_timer_man_t timer_man;
+    mb_tman_t *tman;
+};
+
+static int _tman_timer_man_timeout(struct _mb_timer_man *tm_man,
+				   mb_timeval_t *tmout,
+				   mb_timer_cb_t cb, void *data);
+static void _tman_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl);
+static mb_timer_man_t *_tman_timer_fact_new(void);
+static void _tman_timer_fact_free(mb_timer_man_t *timer_man);
+
+static struct _tman_timer_man _tman_default_timer_man = {
+    {_tman_timer_man_timeout, _tman_timer_man_remove},
+    NULL
+};
+
+mb_timer_factory_t tman_timer_factory = {
+    _tman_timer_fact_new,
+    _tman_timer_fact_free
+};
+
+/*! \brief Content of a timeout request.
+ *
+ * This is only used by internal of X support.  This data structure
+ * carry information to adopt mb_tman_t to mb_timer_man_t.
+ */
+struct _tman_timeout_data {
+    mb_timer_t *timer;		/*!< Handle returned by mb_tman_timeout() */
+    mb_timer_cb_t cb;		/*!< Real callback function */
+    void *data;			/*!< data for real callback */
+};
+
+static void
+_tman_tmo_hdlr(const mb_timeval_t *tmo,
+		 const mb_timeval_t *now,
+		 void *arg) {
+    struct _tman_timeout_data *data = (struct _tman_timeout_data *)arg;
+    
+    data->cb((int)data, tmo, now, data->data);
+}
+
+static int
+_tman_timer_man_timeout(struct _mb_timer_man *tm_man,
+			  mb_timeval_t *tmout, /* timeout (wall time) */
+			  mb_timer_cb_t cb, void *data) {
+    struct _tman_timer_man *timer_man = (struct _tman_timer_man *)tm_man;
+    mb_timer_t *timer;
+    struct _tman_timeout_data *tmout_data;
+
+    tmout_data = O_ALLOC(struct _tman_timeout_data);
+    tmout_data->cb = cb;
+    tmout_data->data = data;
+    timer = mb_tman_timeout(timer_man->tman, tmout,
+			    _tman_tmo_hdlr, tmout_data);
+    if(timer == NULL)
+	return ERR;
+    tmout_data->timer = timer;
+
+    return (int)tmout_data;
+}
+
+static void
+_tman_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl) {
+    struct _tman_timer_man *timer_man = (struct _tman_timer_man *)tm_man;
+    struct _tman_timeout_data *tmout_data =
+	(struct _tman_timeout_data *)tm_hdl;
+
+    mb_tman_remove(timer_man->tman, tmout_data->timer);
+    free(tmout_data);
+}
+
+static mb_timer_man_t *
+_tman_timer_fact_new(void) {
+    if(_tman_default_timer_man.tman == NULL)
+	_tman_default_timer_man.tman = mb_tman_new();
+    return (mb_timer_man_t *)&_tman_default_timer_man;
+}
+
+static void
+_tman_timer_fact_free(mb_timer_man_t *timer_man) {
+}
+
+mb_tman_t *
+tman_timer_man_get_tman(mb_timer_man_t *tm_man) {
+    struct _tman_timer_man *timer_man = (struct _tman_timer_man *)tm_man;
+
+    return timer_man->tman;
+}
+
+
+/* @} */

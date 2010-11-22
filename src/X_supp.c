@@ -11,6 +11,7 @@
 #include "mb_timer.h"
 #include "mb_X_supp.h"
 #include "mb_backend.h"
+#include "mb_backend_utils.h"
 #include "config.h"
 
 #ifdef XSHM
@@ -26,6 +27,8 @@
 #define ASSERT(x)
 
 #define ONLY_MOUSE_MOVE_RAW 1
+
+static mb_timer_factory_t *_timer_factory = &tman_timer_factory;
 
 /*! \ingroup xkb
  * @{
@@ -78,99 +81,6 @@ struct _X_supp_runtime {
     int mx, my;		       /* Position of last motion event */
     int mbut_state;	       /* Button state of last motion event */
 };
-
-/*! \defgroup x_supp_timer Timer manager for X.
- *
- * This implmentation of timer manager is based on mb_tman_t.
- * @{
- */
-struct _X_supp_timer_man {
-    mb_timer_man_t timer_man;
-    mb_tman_t *tman;
-};
-
-static int _x_supp_timer_man_timeout(struct _mb_timer_man *tm_man,
-				     mb_timeval_t *tmout,
-				     mb_timer_cb_t cb, void *data);
-static void _x_supp_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl);
-static mb_timer_man_t *_x_supp_timer_fact_new(void);
-static void _x_supp_timer_fact_free(mb_timer_man_t *timer_man);
-
-static struct _X_supp_timer_man _x_supp_default_timer_man = {
-    {_x_supp_timer_man_timeout, _x_supp_timer_man_remove},
-    NULL
-};
-
-static mb_timer_factory_t _x_supp_default_timer_factory = {
-    _x_supp_timer_fact_new,
-    _x_supp_timer_fact_free
-};
-
-static mb_timer_factory_t *_timer_factory = &_x_supp_default_timer_factory;
-
-/*! \brief Content of a timeout request.
- *
- * This is only used by internal of X support.  This data structure
- * carry information to adopt mb_tman_t to mb_timer_man_t.
- */
-struct _X_supp_timeout_data {
-    mb_timer_t *timer;		/*!< Handle returned by mb_tman_timeout() */
-    mb_timer_cb_t cb;		/*!< Real callback function */
-    void *data;			/*!< data for real callback */
-};
-
-static void
-_x_supp_tmo_hdlr(const mb_timeval_t *tmo,
-		 const mb_timeval_t *now,
-		 void *arg) {
-    struct _X_supp_timeout_data *data = (struct _X_supp_timeout_data *)arg;
-    
-    data->cb((int)data, tmo, now, data->data);
-}
-
-static int
-_x_supp_timer_man_timeout(struct _mb_timer_man *tm_man,
-			  mb_timeval_t *tmout, /* timeout (wall time) */
-			  mb_timer_cb_t cb, void *data) {
-    struct _X_supp_timer_man *timer_man = (struct _X_supp_timer_man *)tm_man;
-    mb_timer_t *timer;
-    struct _X_supp_timeout_data *tmout_data;
-
-    tmout_data = O_ALLOC(struct _X_supp_timeout_data);
-    tmout_data->cb = cb;
-    tmout_data->data = data;
-    timer = mb_tman_timeout(timer_man->tman, tmout,
-			    _x_supp_tmo_hdlr, tmout_data);
-    if(timer == NULL)
-	return ERR;
-    tmout_data->timer = timer;
-
-    return (int)tmout_data;
-}
-
-static void
-_x_supp_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl) {
-    struct _X_supp_timer_man *timer_man = (struct _X_supp_timer_man *)tm_man;
-    struct _X_supp_timeout_data *tmout_data =
-	(struct _X_supp_timeout_data *)tm_hdl;
-
-    mb_tman_remove(timer_man->tman, tmout_data->timer);
-    free(tmout_data);
-}
-
-static mb_timer_man_t *
-_x_supp_timer_fact_new(void) {
-    if(_x_supp_default_timer_man.tman == NULL)
-	_x_supp_default_timer_man.tman = mb_tman_new();
-    return (mb_timer_man_t *)&_x_supp_default_timer_man;
-}
-
-static void
-_x_supp_timer_fact_free(mb_timer_man_t *timer_man) {
-}
-
-
-/* @} */
 
 static void _x_supp_handle_x_event(X_supp_runtime_t *rt);
 
@@ -266,7 +176,7 @@ _x_supp_event_loop(mb_rt_t *rt) {
     struct _X_supp_IO_man *io_man = (struct _X_supp_IO_man *)xmb_rt->io_man;
     struct _X_supp_timer_man *timer_man =
 	(struct _X_supp_timer_man *)xmb_rt->timer_man;
-    mb_tman_t *tman = timer_man->tman;
+    mb_tman_t *tman = tman_timer_man_get_tman(timer_man);
     int fd;
     mb_timeval_t now, tmo;
     struct timeval tv;
