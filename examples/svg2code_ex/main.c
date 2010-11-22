@@ -10,31 +10,41 @@
 
 typedef struct _ex_rt ex_rt_t;
 struct _ex_rt {
-    X_MB_runtime_t *rt;
+    mb_rt_t *rt;
     svg2code_ex_t *code;
 };
 
-#define COORD_SHOW(group) coord_show(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)
-#define COORD_HIDE(group) coord_hide(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)
+#define COORD_SHOW(group) do {						\
+	coord_show(group);						\
+	rdman_coord_changed(mb_runtime_rdman(ex_rt->rt), group);	\
+    } while(0)
+#define COORD_HIDE(group) do {						\
+	coord_hide(group);						\
+	rdman_coord_changed(mb_runtime_rdman(ex_rt->rt), group);	\
+    } while(0)
 
 static void file_button_handler(event_t *evt, void *arg) {
     ex_rt_t *ex_rt = (ex_rt_t *)arg;
+    redraw_man_t *rdman;
 
     COORD_SHOW(ex_rt->code->file_menu);
+    rdman = mb_runtime_rdman(ex_rt->rt);
     /* Update changed part to UI. */
-    rdman_redraw_changed(X_MB_rdman(ex_rt->rt));
+    rdman_redraw_changed(rdman);
 }
 
 static void file_menu_handler(event_t *evt, void *arg) {
     ex_rt_t *ex_rt = (ex_rt_t *)arg;
+    redraw_man_t *rdman;
 
     COORD_HIDE(ex_rt->code->file_menu);
+    rdman = mb_runtime_rdman(ex_rt->rt);
     /* Update changed part to UI. */
-    rdman_redraw_changed(X_MB_rdman(ex_rt->rt));
+    rdman_redraw_changed(rdman);
 }
 
 int main(int argc, char * const argv[]) {
-    X_MB_runtime_t *rt;
+    mb_rt_t *rt;
     redraw_man_t *rdman;
     svg2code_ex_t *svg2code;
     subject_t *subject;
@@ -43,12 +53,12 @@ int main(int argc, char * const argv[]) {
     /*
      * Initialize a runtime with XLib as backend.
      */
-    rt = X_MB_new(":0.0", 800, 600);
+    rt = mb_runtime_new(":0.0", 800, 600);
 
     /*
      * Instantiate objects from a SVG file.
      */
-    rdman = X_MB_rdman(rt);
+    rdman = mb_runtime_rdman(rt);
     svg2code = svg2code_ex_new(rdman, rdman->root_coord);
 
     /*
@@ -65,13 +75,13 @@ int main(int argc, char * const argv[]) {
      * Start handle connections, includes one to X server.
      * User start to interact with the application.
      */
-    X_MB_handle_connection(rt);
+    mb_runtime_event_loop(rt);
 
     /*
      * Clean
      */
     svg2code_ex_free(svg2code);
-    X_MB_free(rt);
+    mb_runtime_free(rt);
 
     return 0;
 }
