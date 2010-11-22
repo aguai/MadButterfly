@@ -16,7 +16,17 @@
 #inclde "mb_dfb_supp.h"
 #endif
 
-typedef void mb_rt_t;
+struct _mb_rt;
+typedef struct _mb_rt mb_rt_t;
+
+struct _mb_timer_man;
+struct _mb_timer_factory;
+struct _mb_IO_man;
+struct _mb_IO_factory;
+
+/*! \brief Type of IO that registered with an IO manager.
+ */
+enum _MB_IO_TYPE {MB_IO_DUMMY, MB_IO_R, MB_IO_W, MB_IO_RW};
 
 typedef struct _mb_timer_man mb_timer_man_t;
 typedef struct _mb_timer_factory mb_timer_factory_t;
@@ -42,11 +52,11 @@ typedef void (*mb_IO_cb_t)(int hdl, int fd, MB_IO_TYPE type, void *data);
  * - render manager(?)
  */
 typedef struct {
-    mb_rt_t *(*new)(const char *display, int w,int h);
-    mb_rt_t *(*new_with_win)(MB_DISPLAY display, MB_WINDOW win);
+    mb_rt_t *(*rt_new)(const char *display, int w,int h);
+    mb_rt_t *(*rt_new_with_win)(MB_DISPLAY display, MB_WINDOW win);
     
-    void (*free)(mb_rt_t *rt);
-    void (*free_keep_win)(mb_rt_t *rt);
+    void (*rt_free)(mb_rt_t *rt);
+    void (*rt_free_keep_win)(mb_rt_t *rt);
     /*! \brief Request the backend to start monitoring a file descriptor.
      *
      * This is used only when the backend is responsible for event loop.
@@ -84,9 +94,9 @@ typedef struct {
 } mb_backend_t;
 
 #define mb_runtime_new(disp, w, h)	\
-    mb_dfl_backend.new((disp), (w), (h))
+    mb_dfl_backend.rt_new((disp), (w), (h))
 #define mb_runtime_new_with_win(disp, win)	\
-    mb_dfl_backend.new_with_win((disp), (win))
+    mb_dfl_backend.rt_new_with_win((disp), (win))
 #define mb_reg_IO_factory(io_man)	\
     mb_dfl_backend.reg_IO_factory(io_man)
 #define mb_reg_timer_factory(tm_man)	\
@@ -99,9 +109,9 @@ typedef struct {
 extern mb_backend_t mb_dfl_backend;
 
 #define mb_runtime_free(rt)			\
-    mb_dfl_backend.free(rt)
+    mb_dfl_backend.rt_free(rt)
 #define mb_runtime_free_with_win(rt)		\
-    mb_dfl_backend.free_with_win(rt)
+    mb_dfl_backend.rt_free_with_win(rt)
 #define mb_runtime_add_event(rt, fd, type, cb, arg)		\
     mb_dfl_backend.add_event((rt), (fd), (type), (cb), (arg))
 #define mb_runtime_remove_event(hdl)		\
@@ -122,10 +132,6 @@ extern mb_backend_t mb_dfl_backend;
     mb_dfl_backend.loader(rt)
 
 
-/*! \brief Type of IO that registered with an IO manager.
- */
-enum _MB_IO_TYPE {MB_IO_DUMMY, MB_IO_R, MB_IO_W, MB_IO_RW};
-
 /*! \brief IO Manager
  */
 struct _mb_IO_man {
@@ -138,9 +144,16 @@ struct _mb_IO_man {
 /*! \brief Factory of IO managers.
  */
 struct _mb_IO_factory {
-    mb_IO_man_t *(*new)(void);
-    void (*free)(mb_IO_man_t *io_man);
+    mb_IO_man_t *(*io_man_new)(void);
+    void (*io_man_free)(mb_IO_man_t *io_man);
 };
+
+#define mb_io_man_reg(io_man, fd, type, cb, data)	\
+    (io_man)->reg(io_man, fd, type, cb, data)
+#define mb_io_man_unreg(io_man, io_hdl)		\
+    (io_man)->unreg(io_man, io_hdl)
+#define mb_io_man_new(io_fact) (io_fact)->io_man_new()
+#define mb_io_man_free(io_fact, io_man) (io_fact)->io_man_free(io_man)
 
 /*! \brief Function signature of callback functions for timers.
  */
@@ -169,15 +182,15 @@ struct _mb_timer_man {
 /*! \brief Factory of timer manager.
  */
 struct _mb_timer_factory {
-    mb_timer_man_t *(*new)(void);
-    void (*free)(mb_timer_man_t *timer_man);
+    mb_timer_man_t *(*timer_man_new)(void);
+    void (*timer_man_free)(mb_timer_man_t *timer_man);
 };
 
 #define mb_timer_man_timeout(tm_man, tmout, cb, data)	\
     (tm_man)->timeout((tm_man), (tmout), (cb), (data))
 #define mb_timer_man_remove(tm_man, tm_hdl)	\
     (tm_man)->remove((tm_man), (tm_hdl))
-#define mb_timer_man_new(tm_fact) (tm_fact)->new()
-#define mb_timer_man_free(tm_fact, tm_man) (tm_fact)->free(tm_man)
+#define mb_timer_man_new(tm_fact) (tm_fact)->timer_man_new()
+#define mb_timer_man_free(tm_fact, tm_man) (tm_fact)->timer_man_free(tm_man)
 
 #endif /* __MB_BACKEND_H_ */
