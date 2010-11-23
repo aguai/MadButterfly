@@ -84,11 +84,14 @@ function multiply(s,d) {
 
 
 function scale_draw(percent) {
-    if (this.end==1) return;
+    if (this.end==1) {
+        percent = 1;
+    }
     var sx = 1 + (this.totalsx - 1) * percent;
     var sy = 1 + (this.totalsy - 1) * percent;
     var sh1 = [1, 0, -this.center_x, 0, 1, -this.center_y];
     var sh2 = [1, 0, this.center_x, 0, 1, this.center_y];
+    sys.puts("sc="+sx+" sy="+sy);
     var scale = [sx, 0, 0, 0, sy, 0];
     var obj = this.obj;
     var mtx;
