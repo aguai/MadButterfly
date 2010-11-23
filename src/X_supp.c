@@ -1062,6 +1062,16 @@ _x_supp_flush(mb_rt_t *rt) {
     return r == 0? ERR: OK;
 }
 
+static void
+_x_supp_reg_IO_factory(mb_IO_factory_t *io_factory) {
+    _io_factory = io_factory;
+}
+
+static void
+_x_supp_reg_timer_factory(mb_timer_factory_t *timer_factory) {
+    _timer_factory = timer_factory;
+}
+
 mb_backend_t mb_dfl_backend = { _x_supp_new,
 				_x_supp_new_with_win,
 				
@@ -1076,7 +1086,10 @@ mb_backend_t mb_dfl_backend = { _x_supp_new,
 				_x_supp_rdman,
 				_x_supp_timer_man,
 				_x_supp_ob_factory,
-				_x_supp_img_ldr
+				_x_supp_img_ldr,
+
+				_x_supp_reg_IO_factory,
+				_x_supp_reg_timer_factory,
 };
 
 #if 0
