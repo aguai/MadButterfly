@@ -5,6 +5,7 @@
  * - \b cb stands for CallBack.
  * - \b coord stands for COORDinate.
  * - \b elm stands for ELMent.
+ * - \b fact stands for FACTory.
  * - \b geo stands for GEOmetry.
  * - \b ldr stands for LoaDeR.
  * - \b man stands for MANager.
