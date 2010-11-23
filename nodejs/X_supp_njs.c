@@ -21,6 +21,98 @@
 #define OK 0
 #define ERR -1
 
+
+/*! \defgroup njs_timer_man Timer manager for nodejs.
+ * @{
+ */
+struct _njs_timer_tiemout {
+    ev_timer tmwatcher;
+    mb_timer_cb_t cb;
+    mb_timeval_t *timeout;
+    void *data;
+};
+
+static int njs_timer_man_timeout(struct _mb_timer_man *tm_man,
+				 mb_timeval_t *tm_out,
+				 mb_timer_cb_t cb, void *data);
+static void njs_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl);
+static mb_timer_man_t *njs_timer_man_new(void);
+static void njs_timer_man_free(mb_timer_man_t *timer_man);
+
+static mb_timer_man_t *njs_timer_man = {
+    njs_timer_man_timeout,
+    njs_timer_man_remove
+};
+
+static mb_timer_factory_t njs_timer_factory = {
+    njs_timer_man_new,
+    njs_timer_man_free
+};
+
+static void
+njs_timer_man_cb(EV_P_ ev_timer *tmwatcher, int revent) {
+    struct _njs_timer_timeout *timer_timeout =
+	MEM2OBJ(tmwatcher, struct _njs_timer_timeout, tmwatcher);
+    mb_timeval_t now;
+
+    get_now(&now);
+    timer_timeout->cb((int)timer_timeout, timer_timeout->timeout, &now,
+		      timer_timeout->data);
+}
+
+static int
+njs_timer_man_timeout(struct _mb_timer_man *tm_man,
+		      mb_timeval_t *timeout,
+		      mb_timer_cb_t cb, void *data) {
+    struct _njs_timer_timeout *timer_timeout;
+    mb_timeval_t now, timeout_diff;
+    ev_tstamp timeout_stamp;
+
+    timer_timeout = O_ALLOC(struct _njs_timer_timeout);
+    if(timer_timeout == NULL)
+	return ERR;
+    
+    timer_timeout->cb = cb;
+    timer_timeout->timeout = timeout;
+    
+    get_now(&now);
+    
+    memcpy(&timeout_diff, timeout, sizeof(mb_timeval_t));
+    MB_TIMEVAL_DIFF(&timeout_diff, &now);
+    timeout_stamp = (ev_tstamp)MB_TIMEVAL_SEC(&timeout_diff) +
+	(ev_tstamp)MB_TIMEVAL_USEC(&timeout_diff) / 1000000;
+    ev_timer_init(&timer_timeout->tmwatcher, njs_timer_man_cb,
+		  timeout_stamp, 0);
+    ev_timer_start(&timer_timeout->tmwatcher);
+
+    return (int)timer_timeout;
+}
+
+static void
+njs_timer_man_remove(struct _mb_timer_man *tm_man, int tm_hdl) {
+    struct _njs_timer_timeout *timer_timeout =
+	MEM2OBJ(tmwatcher, struct _njs_timer_timeout, tmwatcher);
+
+    ev_timer_stop(&timer_timeout->tmwatcher);
+    free(timer_timeout);
+}
+
+static mb_timer_man_t *
+njs_timer_man_new(void) {
+    return &njs_timr_man;
+}
+
+static void
+njs_timer_man_free(mb_timer_man_t *timer_man) {
+}
+
+void
+X_njs_MB_reg_timer_man(void) {
+    mb_reg_timer_factory(&njs_timer_factory);
+}
+
+/* @} */
+
 static void timer_cb(EV_P_ ev_timer *tmwatcher, int revent);
 
 /*! \brief Register next timeout with libev.
