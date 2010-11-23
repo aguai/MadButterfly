@@ -18,6 +18,9 @@
 #define ASSERT(x)
 #endif
 
+#define OK 0
+#define ERR -1
+
 static void timer_cb(EV_P_ ev_timer *tmwatcher, int revent);
 
 /*! \brief Register next timeout with libev.
@@ -75,6 +78,112 @@ timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
 
     set_next_timeout(rt);
 }
+
+/*! \defgroup njs_io_man IO manager for nodejs.
+ * @{
+ */
+struct _njs_io_reg {
+    ev_io iowatcher;
+    int fd;
+    mb_IO_cb_t cb;
+    void *data;
+};
+
+static int njs_io_man_reg(struct _mb_IO_man *io_man,
+			  int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data);
+static void njs_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl);
+static mb_IO_man_t *njs_io_man_new(void);
+static void njs_io_man_free(mb_IO_man_t *io_man);
+
+static mb_IO_man_t njs_io_man = {
+    njs_io_man_reg,
+    njs_io_man_unreg
+};
+
+/*! \brief IO factory to integrate MadButterfly to event loop of nodejs.
+ */
+static mb_IO_factory_t njs_io_factory = {
+    njs_io_man_new,
+    njs_io_man_free
+};
+
+/*! \brief Bridge libev callback to IO manager callback.
+ */
+static void
+njs_io_man_cb(EV_P_ ev_io *iowatcher, int revent) {
+    struct _njs_io_reg *io_reg =
+	MEM2OBJ(iowatcher, struct _njs_io_reg, iowatcher);
+    MB_IO_TYPE type;
+
+    switch(revent & (EV_READ | EV_WRITE)) {
+    case EV_READ:
+	type = MB_IO_R;
+	break;
+    case EV_WRITE:
+	type = MB_IO_W;
+	break;
+    case EV_READ | EV_WRITE:
+	type = MB_IO_RW;
+	break;
+    }
+    
+    io_reg->cb((int)io_reg, io_reg->fd, type, io_reg->data);
+}
+
+static int
+njs_io_man_reg(struct _mb_IO_man *io_man,
+	       int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data) {
+    int _type;
+    struct _njs_io_reg *io_reg;
+
+    if(type == MB_IO_R)
+	_type = EV_READ;
+    else if(type == MB_IO_W)
+	_type == EV_WRITE;
+    else if(type == MB_IO_RW)
+	_type == EV_READ | EV_WRITE;
+    else
+	return ERR;
+    
+    io_reg = O_ALLOC(struct _njs_io_reg);
+    if(io_reg == NULL)
+	return ERR;
+    
+    io_reg->fd = fd;
+    io_reg->cb = cb;
+    io_reg->data = data;
+
+    ev_io_init(&io_reg->iowatcher, njs_io_man_cb, fd, _type);
+    ev_io_start(&io_reg->iowatcher);
+    
+    return (int)io_reg;
+}
+
+static void
+njs_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
+    struct _njs_io_reg *io_reg = (struct _njs_io_reg *)io_hdl;
+
+    ev_io_stop(&io_reg->iowatcher);
+    free(io_reg);
+}
+
+static mb_IO_man_t *
+njs_io_man_new(void) {
+    return &njs_io_man;
+}
+
+static void
+njs_io_man_free(mb_IO_man_t *io_man) {
+}
+
+/*! \brief Register an IO factory with MadButterfly backend.
+ */
+void
+X_njs_MB_reg_IO_man(void) {
+    mb_reg_IO_facotry(&njs_io_factory);
+}
+
+/* @} */
 
 /*! \brief Handle connection coming data and timeout of timers.
  *
@@ -193,15 +302,15 @@ X_njs_MB_handle_single_event(njs_runtime_t *rt, void *evt) {
  */
 void
 X_njs_MB_no_more_event(njs_runtime_t *rt) {
-    void *xrt = rt->xrt;
-    extern void _X_MB_no_more_event(void *rt);
+    mb_rt_t *xrt = rt->xrt;
+    extern void _X_MB_no_more_event(mb_rt_t *rt);
 
     _X_MB_no_more_event(xrt);
 }
 
 /*! \brief Get X runtime that is backend of this njs runtime.
  */
-void *
+mb_rt_t *
 _X_njs_MB_get_X_runtime(njs_runtime_t *rt) {
     return rt->xrt;
 }
