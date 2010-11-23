@@ -80,7 +80,6 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
 				 * it is wrapped after returning of
 				 * this function.  So, we wrap it
 				 * here. */
-    X_njs_MB_init_handle_connection(obj);
     xnjsmb_coord_mkroot(self);
 
     subject = X_njs_MB_kbevents(obj);
