@@ -64,9 +64,9 @@ MainMenu.prototype.key_left=function ()
     old.bbox.update();
     target.bbox.update();
     
-    var an = new animate.scale(this.app, old, 1, 1);
+    var an = new animate.scale(this.app, old, 1/1.1, 1/1.5);
     animate.run([an], 0, 0.1);
-    an = new animate.scale(this.app, target, 1, 1.5);
+    an = new animate.scale(this.app, target, 1.1, 1.5);
     animate.run([an], 0, 0.3);
     var sx = target.center.x - this.lightbar.center.x;
     var an = new animate.shift(this.app, this.lightbar, sx, 0);
@@ -87,9 +87,9 @@ MainMenu.prototype.key_right=function()
     old.bbox.update();
     target.bbox.update();
     
-    var an = new animate.scale(this.app, old, 1, 1);
+    var an = new animate.scale(this.app, old, 1/1.1, 1/1.5);
     animate.run([an], 0, 0.1);
-    an = new animate.scale(this.app, target, 1, 1.5);
+    an = new animate.scale(this.app, target, 1.1, 1.5);
     animate.run([an], 0, 0.3);
     var sx = target.center.x - this.lightbar.center.x;
     var an = new animate.shift(this.app, this.lightbar, sx, 0);
@@ -132,21 +132,20 @@ MainMenu.prototype.key_enter=function()
     var sy = 220 - target.center.y;
     var an = new animate.shift(this.app,target,sx,sy);
     var self = this;
-    animate.run([an],0,1,function() {self.changePage();});
+    animate.run([an],0,2.5,function() {self.changePage();});
     for(i=0;i<this.items.length;i++) {
 	if (i == this.item) continue;
-	var x = Math.random();
-	var y = Math.random();
-	if (x > 0.5) x = 900;
-	else x = -500;
-	if (y > 0.5) y = 900;
-	else y = -500;
-	sx = x - this.items[i].center.x;
-	sy = y - this.items[i].center.y;
+	if (i > this.item) {
+	    sx = 1920*2 - this.items[i].center.x;
+	    sy = 0;
+	} else {
+	    sx =  -this.items[i].center.x*2;
+	    sy = 0;
+	}
 	an = new animate.shift(this.app,this.items[i], sx, sy);
 	animate.run([an], 0, 2);
 	alpha = new animate.alpha(this.app,this.items[i], 0);
-	animate.run([an], 0, 1);
+	animate.run([an], 0, 2);
     }
 }
 
