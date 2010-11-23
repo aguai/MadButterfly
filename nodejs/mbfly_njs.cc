@@ -185,6 +185,7 @@ init(Handle<Object> target) {
 		xnjsmb_auto_mb_rt_temp->GetFunction());
     target->Set(String::New("mb_rt_with_win"),
 		xnjsmb_auto_mb_rt_with_win_temp->GetFunction());
+    X_njs_MB_reg_IO_man();
 }
 
 /* @} */
