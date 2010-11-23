@@ -149,8 +149,8 @@
            id="image3058"
            x="117.64285"
            y="302.88058"
-           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat0.png"
-           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat0.png" />
+           xlink:href="./cat0.png"
+           sodipodi:absref="./cat0.png" />
       </g>
       <g
          transform="translate(7.14163,8.5714057)"
@@ -171,8 +171,8 @@
            id="image3116"
            x="359.21432"
            y="305.83948"
-           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat1.png"
-           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat1.png" />
+           xlink:href="./cat1.png"
+           sodipodi:absref="./cat1.png" />
       </g>
       <g
          transform="translate(7.14163,8.5714057)"
@@ -193,8 +193,8 @@
            id="image3174"
            x="599.07141"
            y="307.35968"
-           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat2.png"
-           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat2.png" />
+           xlink:href="./cat2.png"
+           sodipodi:absref="./cat2.png" />
       </g>
       <g
          transform="translate(7.14163,8.5714057)"
@@ -215,8 +215,8 @@
            id="image3232"
            x="821.35712"
            y="306.539"
-           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat3.png"
-           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat3.png" />
+           xlink:href="./cat3.png"
+           sodipodi:absref="./cat3.png" />
       </g>
       <path
          sodipodi:type="star"
@@ -283,8 +283,8 @@
            inkscape:bbox-y="456.71426"
            inkscape:bbox-width="200"
            inkscape:bbox-height="289.10892"
-           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat4.png"
-           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat4.png" />
+           xlink:href="./cat4.png"
+           sodipodi:absref="./cat4.png" />
       </g>
       <g
          transform="translate(445.14163,8.5714057)"
@@ -305,8 +305,8 @@
            id="image2937"
            x="821.35712"
            y="306.539"
-           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat5.png"
-           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat5.png" />
+           xlink:href="./cat5.png"
+           sodipodi:absref="./cat5.png" />
       </g>
       <g
          inkscape:bbox-height="289.10892"
@@ -327,8 +327,8 @@
            inkscape:bbox-y="456.71426"
            inkscape:bbox-width="200"
            inkscape:bbox-height="289.10892"
-           xlink:href="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat6.png"
-           sodipodi:absref="/home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/./cat6.png" />
+           xlink:href="./cat6.png"
+           sodipodi:absref="./cat6.png" />
       </g>
     </g>
     <g
