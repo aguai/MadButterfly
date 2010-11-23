@@ -122,7 +122,8 @@ function httpGetFile(url,file,obj)
 	    if (ext != "png") {
 	        fields.push("png");
 	        newf = fields.join(".");
-	        os.spawn("convert",[file,newf]);
+		sys.puts("cachepath="+cachepath+" newf="+newf);
+	        os.spawn("convert",[cachepath,newf]);
 	    } else {
 	        newf = cachepath;
 	    }
