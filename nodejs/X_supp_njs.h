@@ -7,14 +7,12 @@
 #include <mb_backend.h>
 
 typedef struct _njs_runtime {
-    int enable_io;
-    int enable_timer;
     mb_rt_t *xrt;
 } njs_runtime_t;
 
 extern void X_njs_MB_reg_timer_man(void);
 extern void X_njs_MB_reg_IO_man(void);
-extern void X_njs_MB_init_handle_connection(njs_runtime_t *rt);
+/* extern void X_njs_MB_init_handle_connection(njs_runtime_t *rt); */
 extern void X_njs_MB_free(njs_runtime_t *rt);
 extern njs_runtime_t *X_njs_MB_new(char *display_name, int w, int h);
 extern void X_njs_MB_free_keep_win(njs_runtime_t *rt);
