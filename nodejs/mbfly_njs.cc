@@ -171,6 +171,8 @@ init(Handle<Object> target) {
     xnjsmb_auto_mb_rt_init();
     xnjsmb_auto_mb_rt_display_init();
     xnjsmb_auto_mb_rt_with_win_init();
+    X_njs_MB_reg_timer_man();
+    X_njs_MB_reg_IO_man();
 
     /*
      * Add properties to mb_rt templates for other modules.
@@ -185,7 +187,6 @@ init(Handle<Object> target) {
 		xnjsmb_auto_mb_rt_temp->GetFunction());
     target->Set(String::New("mb_rt_with_win"),
 		xnjsmb_auto_mb_rt_with_win_temp->GetFunction());
-    X_njs_MB_reg_IO_man();
 }
 
 /* @} */
