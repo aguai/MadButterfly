@@ -16,6 +16,7 @@ class keyframe(object):
         self.left_tween = False
         self.right_tween = False
         self.right_tween_type = 0
+	self.ref=''
         pass
     pass
 
@@ -121,6 +122,10 @@ class frameline(gtk.DrawingArea):
     _normal_border = 0xaaaaaa   # border color of normal frames.
     _active_border = 0xff3030   # border color of an active frame
     _hover_border_color = 0xa0a0a0 # border when the pointer over a frame
+    # tween types
+    _tween_type_none=0
+    _tween_type_shape=3
+    
 
     FRAME_BUT_PRESS = 'frame-button-press'
     
@@ -154,9 +159,13 @@ class frameline(gtk.DrawingArea):
         but = event.button
         self.emit(frameline.FRAME_BUT_PRESS, frame, but)
         pass
+    def hide_hover(self):
+        if self._active_frame != self._last_hover:
+            self._draw_normal_frame(self._last_hover)
     
     def _motion_hdl(self, widget, event):
         frame = int(event.x / self._frame_width)
+	    
         if frame < self._num_frames and frame >= 0:
             self._draw_hover(frame)
         pass
@@ -299,6 +308,12 @@ class frameline(gtk.DrawingArea):
                 i = last_tween_key.idx + 1
                 pass
             else:
+	        if key.idx == i:
+		    key_i=key_i+1
+		    try:
+		        key = self._keys[key_i]
+		    except:
+		        key = keyframe(self._num_frames)
                 self._draw_normal_frame(i)
                 i = i + 1
                 pass
@@ -343,11 +358,15 @@ class frameline(gtk.DrawingArea):
         gc.set_rgb_fg_color(color)
         
         for key in self._keys:
+	    if key.left_tween is True and lastkey.right_tween_type == frameline._tween_type_none:
+	        continue
+	        
             mark_sz = self._key_mark_sz
             mark_x = int((key.idx + 0.5) * self._frame_width - mark_sz / 2)
             mark_y = w_h * 2 / 3 - mark_sz / 2
 
             win.draw_rectangle(gc, True, mark_x, mark_y, mark_sz, mark_sz)
+	    lastkey = key
             pass
         pass
 
@@ -393,7 +412,7 @@ class frameline(gtk.DrawingArea):
             last_pos = last_pos + 1
             pass
         
-        return first_pox, last_pos
+        return first_pos, last_pos
 
     ## \brief Redraw a frame specified by an index.
     #
@@ -432,7 +451,9 @@ class frameline(gtk.DrawingArea):
 
             for i in range(first_pos, last_pos + 1):
                 key = self._keys[i]
-                self._draw_keyframe(key.idx)
+		if key.left_tween is False or lastkey.right_tween_type != frameline._tween_type_none:
+                    self._draw_keyframe(key.idx)
+		lastkey = key
                 pass
             pass
         else:                   # not in tween
@@ -481,7 +502,6 @@ class frameline(gtk.DrawingArea):
         
         win = self.window
         x, y, w, h, depth = win.get_geometry()
-        
         self._draw_all_frames()
         self._draw_keyframes()
         if self._active_frame != -1:
@@ -493,7 +513,7 @@ class frameline(gtk.DrawingArea):
     #
     # A key frame is the frame that user specify actions.  For
     # example, move a object or add new objects at the frame.
-    def add_keyframe(self, idx):
+    def add_keyframe(self, idx,ref=None):
         key_indic = [key.idx for key in self._keys]
         if idx in key_indic:
             return
@@ -503,6 +523,7 @@ class frameline(gtk.DrawingArea):
         insert_pos = key_indic.index(idx)
         
         key = keyframe(idx)
+	key.ref = ref
         self._keys[insert_pos:insert_pos] = [key]
         if insert_pos > 0 and self._keys[insert_pos - 1].right_tween:
             key.left_tween = True
@@ -516,8 +537,14 @@ class frameline(gtk.DrawingArea):
         pass
 
     def rm_keyframe(self, idx):
+        found=False
+	for i in range(0,len(self._keys)):
+	    if self._keys[i].idx == idx:
+	        idx = i
+		found = True
+		break
+	if not found: return
         key = self._keys[idx]
-        del self._keys[idx]
         
         if key.right_tween ^ key.left_tween:
             #
@@ -526,13 +553,12 @@ class frameline(gtk.DrawingArea):
             if key.right_tween:
                 right_key = self._keys[idx]
                 right_key.left_tween = False
-                rdraw_range = (right_key.idx, idx + 1)
+                redraw_range = (right_key.idx, idx + 1)
             else:
                 left_key = self._keys[idx - 1]
                 left_key.right_key = False
                 redraw_range = (idx, left_key.idx + 1)
                 pass
-            
             for i in range(*redraw_range):
                 self._redraw_frame(i)
                 pass
@@ -540,6 +566,7 @@ class frameline(gtk.DrawingArea):
             self._redraw_frame(idx)
             pass
 
+        del self._keys[idx]
         self._draw_active()
         pass
 
@@ -589,6 +616,23 @@ class frameline(gtk.DrawingArea):
         self._keys = []
         pass
 
+    def addScenes(self,rdoc,node):
+        for i in range(0,len(self._keys)):
+	    key = self._keys[i]
+	    if key.left_tween is True: continue
+	    if key.right_tween is True:
+	        ss = rdoc.createElement("ns0:scene")
+		node.appendChild(ss)
+		ss.setAttribute("start", str(key.idx+1),True)
+		ss.setAttribute("ref",key.ref.attribute("id"),True)
+		ss.setAttribute("end", str(self._keys[i+1].idx+1),True)
+	    else:
+	        ss = rdoc.createElement("ns0:scene")
+		node.appendChild(ss)
+		ss.setAttribute("start", str(key.idx+1),True)
+		ss.setAttribute("ref",key.ref.attribute("id"),True)
+
+	        
     ## \brief Start future drawing actions
     #
     def start_drawing(self):
@@ -616,13 +660,14 @@ if __name__ == '__main__':
     
     fl = frameline(40)
     fl.set_size_request(300, 20)
-    fl.add_keyframe(3)
-    fl.add_keyframe(9)
     fl.add_keyframe(15)
-    fl.add_keyframe(20)
+    fl.add_keyframe(3)
     fl.tween(3)
-    fl.tween(15, 1)
-    fl.active_frame(15)
+    fl.add_keyframe(9)
+    fl.add_keyframe(20)
+    fl.tween(9)
+    fl.active_frame(1)
+    fl.rm_keyframe(15)
     print 'num of frames: %d' % (len(fl))
 
     def press_sig(fl, frame, but):
