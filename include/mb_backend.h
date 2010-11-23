@@ -97,10 +97,10 @@ typedef struct {
     mb_dfl_backend.rt_new((disp), (w), (h))
 #define mb_runtime_new_with_win(disp, win)	\
     mb_dfl_backend.rt_new_with_win((disp), (win))
-#define mb_reg_IO_factory(io_man)	\
-    mb_dfl_backend.reg_IO_factory(io_man)
-#define mb_reg_timer_factory(tm_man)	\
-    mb_dfl_backend.reg_timer_factory(tm_man)
+#define mb_reg_IO_factory(io_fact)	\
+    mb_dfl_backend.reg_IO_factory(io_fact)
+#define mb_reg_timer_factory(tm_fact)	\
+    mb_dfl_backend.reg_timer_factory(tm_fact)
 
 /*
  * This is defined by backend implementations.  For example, X_supp.c
