@@ -19,6 +19,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
+static void XSHM_update(X_supp_runtime_t *xmb_rt);
 #endif
 
 #define ERR -1
