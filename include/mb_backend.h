@@ -110,8 +110,8 @@ extern mb_backend_t mb_dfl_backend;
 
 #define mb_runtime_free(rt)			\
     mb_dfl_backend.rt_free(rt)
-#define mb_runtime_free_with_win(rt)		\
-    mb_dfl_backend.rt_free_with_win(rt)
+#define mb_runtime_free_keep_win(rt)		\
+    mb_dfl_backend.rt_free_keep_win(rt)
 #define mb_runtime_add_event(rt, fd, type, cb, arg)		\
     mb_dfl_backend.add_event((rt), (fd), (type), (cb), (arg))
 #define mb_runtime_remove_event(hdl)		\
