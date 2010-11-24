@@ -7,7 +7,7 @@
 #include <mb_backend.h>
 
 typedef struct _njs_runtime {
-    mb_rt_t *xrt;
+    mb_rt_t *mb_rt;
 } njs_runtime_t;
 
 extern void njs_mb_reg_timer_man(void);

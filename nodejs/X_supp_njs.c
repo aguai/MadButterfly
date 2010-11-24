@@ -226,7 +226,7 @@ njs_mb_free(njs_runtime_t *rt) {
     /*!
      * TODO: Release all IO and timer request.
      */
-    mb_runtime_free(rt->xrt);
+    mb_runtime_free(rt->mb_rt);
     free(rt);
 }
 
@@ -237,13 +237,13 @@ njs_mb_free_keep_win(njs_runtime_t *rt) {
     /*
      * TODO: Release all IO and timer request.
      */
-    mb_runtime_free_keep_win(rt->xrt);
+    mb_runtime_free_keep_win(rt->mb_rt);
     free(rt);
 }
 
 int
 njs_mb_flush(njs_runtime_t *rt) {
-    mb_rt_t *mb_rt = rt->xrt;
+    mb_rt_t *mb_rt = rt->mb_rt;
     int r;
 
     r = mb_runtime_flush(mb_rt);
@@ -260,7 +260,7 @@ njs_mb_new(char *display_name, int w, int h) {
 
     mb_rt = mb_runtime_new(display_name, w, h);
 
-    rt->xrt = mb_rt;
+    rt->mb_rt = mb_rt;
 
     return rt;
 }
@@ -280,7 +280,7 @@ njs_mb_new_with_win(void *display, long win) {
 
     mb_rt = mb_runtime_new_with_win((Display *)display, win);
 
-    rt->xrt = mb_rt;
+    rt->mb_rt = mb_rt;
 
     return rt;
 }
@@ -290,10 +290,10 @@ njs_mb_new_with_win(void *display, long win) {
 void
 njs_mb_handle_single_event(njs_runtime_t *rt, void *evt) {
 #if 0
-    void *xrt = rt->xrt;
+    void *mb_rt = rt->mb_rt;
     extern void _X_MB_handle_single_event(void *rt, void *evt);
 
-    _X_MB_handle_single_event(xrt, evt);
+    _X_MB_handle_single_event(mb_rt, evt);
 #endif
 }
 
@@ -302,10 +302,10 @@ njs_mb_handle_single_event(njs_runtime_t *rt, void *evt) {
 void
 njs_mb_no_more_event(njs_runtime_t *rt) {
 #if 0
-    mb_rt_t *xrt = rt->xrt;
+    mb_rt_t *mb_rt = rt->mb_rt;
     extern void _X_MB_no_more_event(mb_rt_t *rt);
 
-    _X_MB_no_more_event(xrt);
+    _X_MB_no_more_event(mb_rt);
 #endif
 }
 
@@ -313,5 +313,5 @@ njs_mb_no_more_event(njs_runtime_t *rt) {
  */
 mb_rt_t *
 _njs_mb_get_runtime(njs_runtime_t *rt) {
-    return rt->xrt;
+    return rt->mb_rt;
 }
