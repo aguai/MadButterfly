@@ -220,23 +220,8 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
  *
  */
 #define rdman_attach_backend(rdman,backend) (((rdman)->rt)=(backend))
-/*! \brief Load sprite dymanicly from the shared object module.
- *
- * The search path can be changed by sprite_set_search_path. The name
- * can have a relative path in the front of it.
- * This function will search the object in the current working directory
- * and then search the system search path.
- */
-extern mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman,
-				coord_t *root);
-
-/*! \brief Set the search path of dymanic object loading.
- *
- */
-extern void sprite_set_search_path(const char *path);
 
 extern paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman,
 					 const char *img_id);
-
 
 #endif /* __REDRAW_MAN_H_ */
