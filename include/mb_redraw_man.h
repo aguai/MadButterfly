@@ -238,9 +238,5 @@ extern void sprite_set_search_path(const char *path);
 extern paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman,
 					 const char *img_id);
 
-typedef void (*mb_eventcb_t )(int fd,void *arg);
-#define MONITOR_READ   1
-#define MONITOR_WRITE  2
-
 
 #endif /* __REDRAW_MAN_H_ */
