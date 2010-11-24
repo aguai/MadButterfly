@@ -8,7 +8,7 @@ STRUCT([mb_rt], [njs_runtime_t], [],
 		 (([MOD], [xnjsmb_mb_rt_objs_mod]))),
         METHOD([redraw_changed], [xnjsmb_redraw_changed], (), 0, []),
 	METHOD([redraw_all], [xnjsmb_redraw_all], (), 0, []),
-	METHOD([flush], [X_njs_MB_flush], (), 0, []),
+	METHOD([flush], [njs_mb_flush], (), 0, []),
 	METHOD([path_new], [xnjsmb_path_new], (STR(txt)), 1,
 	       [OBJ([path], [shape_t])], (([MOD], [xnjsmb_mb_rt_objs_mod]))),
 	METHOD([stext_new], [xnjsmb_stext_new],
@@ -44,7 +44,7 @@ STRUCT([mb_rt], [njs_runtime_t], [],
 	       (OBJ([evt], [event], [void])), 1, []),
 	METHOD([no_more_event], [xnjsmb_no_more_event],
 	       (), 0, [])],
-	((CTOR, ([_X_njs_MB_new], (SELF, STR(display_name), INT(width), INT(height)), 3)))dnl
+	((CTOR, ([_njs_mb_new], (SELF, STR(display_name), INT(width), INT(height)), 3)))dnl
 )
 dnl
 dnl
@@ -57,7 +57,7 @@ dnl Function to create mb_rt for an existed window.
 dnl
 STRUCT([mb_rt_with_win], [njs_runtime_t], [],
        [],
-       ((CTOR, ([_X_njs_MB_new_with_win],dnl
+       ((CTOR, ([_njs_mb_new_with_win],dnl
        	        (SELF, OBJ([display], [mb_rt_display], [void]),dnl
 		 INT([window])),dnl
 		 2)),dnl
