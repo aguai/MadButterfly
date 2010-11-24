@@ -282,7 +282,7 @@ xnjsmb_path_new(njs_runtime_t *rt, const char *d) {
     redraw_man_t *rdman;
     shape_t *sh;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     sh = rdman_shape_path_new(rdman, d);
     /* Code generator supposes that callee should free the memory */
     free((void *)d);
@@ -295,7 +295,7 @@ xnjsmb_stext_new(njs_runtime_t *rt, const char *txt, float x, float y) {
     redraw_man_t *rdman;
     shape_t *sh;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     sh = rdman_shape_stext_new(rdman, txt, x, y);
     /* Code generator supposes that callee should free the memory */
     free((void *)txt);
@@ -308,7 +308,7 @@ xnjsmb_image_new(njs_runtime_t *rt, float x, float y, float w, float h) {
     redraw_man_t *rdman;
     shape_t *sh;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     sh = rdman_shape_image_new(rdman, x, y, w, h);
 
     return sh;
@@ -320,7 +320,7 @@ xnjsmb_rect_new(njs_runtime_t *rt, float x, float y, float w, float h,
     redraw_man_t *rdman;
     shape_t *sh;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     sh = rdman_shape_rect_new(rdman, x, y, w, h, rx, ry);
     if(sh == NULL) {
 	*err = "Can not create a sh_rect_t";

@@ -109,7 +109,7 @@ njs_timer_man_free(mb_timer_man_t *timer_man) {
 }
 
 void
-X_njs_MB_reg_timer_man(void) {
+njs_mb_reg_timer_man(void) {
     mb_reg_timer_factory(&njs_timer_factory);
 }
 
@@ -276,7 +276,7 @@ njs_io_man_free(mb_IO_man_t *io_man) {
 /*! \brief Register an IO factory with MadButterfly backend.
  */
 void
-X_njs_MB_reg_IO_man(void) {
+njs_mb_reg_IO_man(void) {
     mb_reg_IO_factory(&njs_io_factory);
 }
 
@@ -288,7 +288,7 @@ X_njs_MB_reg_IO_man(void) {
  * \param rt is a runtime object for X.
  */
 void
-X_njs_MB_init_handle_connection(njs_runtime_t *rt) {
+njs_mb_init_handle_connection(njs_runtime_t *rt) {
     void *xrt = rt->xrt;
     int fd;
     extern int _X_MB_get_x_conn_for_nodejs(void *rt);
@@ -308,7 +308,7 @@ X_njs_MB_init_handle_connection(njs_runtime_t *rt) {
 /*! \brief Free njs_runtime_t.
  */
 void
-X_njs_MB_free(njs_runtime_t *rt) {
+njs_mb_free(njs_runtime_t *rt) {
     /*!
      * TODO: Release all IO and timer request.
      */
@@ -319,7 +319,7 @@ X_njs_MB_free(njs_runtime_t *rt) {
 /*! \brief Free njs_runtime_t.
  */
 void
-X_njs_MB_free_keep_win(njs_runtime_t *rt) {
+njs_mb_free_keep_win(njs_runtime_t *rt) {
     /*
      * TODO: Release all IO and timer request.
      */
@@ -328,7 +328,7 @@ X_njs_MB_free_keep_win(njs_runtime_t *rt) {
 }
 
 int
-X_njs_MB_flush(njs_runtime_t *rt) {
+njs_mb_flush(njs_runtime_t *rt) {
     mb_rt_t *mb_rt = rt->xrt;
     int r;
 
@@ -337,7 +337,7 @@ X_njs_MB_flush(njs_runtime_t *rt) {
 }
 
 njs_runtime_t *
-X_njs_MB_new(char *display_name, int w, int h) {
+njs_mb_new(char *display_name, int w, int h) {
     njs_runtime_t *rt;
     mb_rt_t *mb_rt;
 
@@ -354,10 +354,10 @@ X_njs_MB_new(char *display_name, int w, int h) {
 /*! \brief Create a njs_runtime_t for an existed window.
  *
  * The njs_runtime_t created by this function must be free by
- * X_njs_MB_free_keep_win().
+ * njs_mb_free_keep_win().
  */
 njs_runtime_t *
-X_njs_MB_new_with_win(void *display, long win) {
+njs_mb_new_with_win(void *display, long win) {
     njs_runtime_t *rt;
     mb_rt_t *mb_rt;
 
@@ -374,7 +374,7 @@ X_njs_MB_new_with_win(void *display, long win) {
 /*! \brief Pass a X event to X runtime.
  */
 void
-X_njs_MB_handle_single_event(njs_runtime_t *rt, void *evt) {
+njs_mb_handle_single_event(njs_runtime_t *rt, void *evt) {
 #if 0
     void *xrt = rt->xrt;
     extern void _X_MB_handle_single_event(void *rt, void *evt);
@@ -386,7 +386,7 @@ X_njs_MB_handle_single_event(njs_runtime_t *rt, void *evt) {
 /*! \brief Called at end of an iteration of event loop.
  */
 void
-X_njs_MB_no_more_event(njs_runtime_t *rt) {
+njs_mb_no_more_event(njs_runtime_t *rt) {
 #if 0
     mb_rt_t *xrt = rt->xrt;
     extern void _X_MB_no_more_event(mb_rt_t *rt);
@@ -398,6 +398,6 @@ X_njs_MB_no_more_event(njs_runtime_t *rt) {
 /*! \brief Get X runtime that is backend of this njs runtime.
  */
 mb_rt_t *
-_X_njs_MB_get_X_runtime(njs_runtime_t *rt) {
+_njs_mb_get_runtime(njs_runtime_t *rt) {
     return rt->xrt;
 }

@@ -195,7 +195,7 @@ xnjsmb_paint_color_new(njs_runtime_t *rt,
     paint_t *paint;
     redraw_man_t *rdman;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     paint = rdman_paint_color_new(rdman, r, g, b, a);
     if(paint == NULL) {
 	*err = "can not allocate a paint_color_t";
@@ -211,7 +211,7 @@ xnjsmb_paint_image_new(njs_runtime_t *rt, mb_img_data_t *img,
     paint_t *paint;
     redraw_man_t *rdman;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     paint = rdman_paint_image_new(rdman, img);
     if(paint == NULL) {
 	*err = "can not allocate a paint_image_t";
@@ -228,7 +228,7 @@ xnjsmb_paint_linear_new(njs_runtime_t *rt,
     paint_t *paint;
     redraw_man_t *rdman;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     paint = rdman_paint_linear_new(rdman, x1, y1, x2, y2);
     if(paint == NULL) {
 	*err = "can not allocate a paint_linear_t";
@@ -245,7 +245,7 @@ xnjsmb_paint_radial_new(njs_runtime_t *rt,
     paint_t *paint;
     redraw_man_t *rdman;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     paint = rdman_paint_radial_new(rdman, cx, cy, r);
     if(paint == NULL) {
 	*err = "can not allocate a paint_radial_t";
