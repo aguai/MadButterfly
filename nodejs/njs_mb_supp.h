@@ -22,10 +22,10 @@ extern void njs_mb_handle_single_event(njs_runtime_t *rt, void *evt);
 extern void njs_mb_no_more_event(njs_runtime_t *rt);
 extern mb_rt_t *_njs_mb_get_runtime(njs_runtime_t *rt);
 
-#define njs_mb_kbevents(rt) mb_runtime_kbevents((rt)->xrt)
-#define njs_mb_rdman(rt) mb_runtime_rdman((rt)->xrt)
-#define njs_mb_timer_man(rt) mb_runtime_timer_man((rt)->xrt)
-#define njs_mb_ob_factory(rt) mb_runtime_ob_factory((rt)->xrt)
-#define njs_mb_img_ldr(rt) mb_runtime_img_ldr((rt)->xrt)
+#define njs_mb_kbevents(rt) mb_runtime_kbevents((rt)->mb_rt)
+#define njs_mb_rdman(rt) mb_runtime_rdman((rt)->mb_rt)
+#define njs_mb_timer_man(rt) mb_runtime_timer_man((rt)->mb_rt)
+#define njs_mb_ob_factory(rt) mb_runtime_ob_factory((rt)->mb_rt)
+#define njs_mb_img_ldr(rt) mb_runtime_img_ldr((rt)->mb_rt)
 
 #endif /* __NJS_MB_SUPP_H_ */
