@@ -7,7 +7,7 @@ extern "C" {
 #include "mb.h"
 #include "mb_X_supp.h"
 #include "mb_tools.h"
-#include "X_supp_njs.h"
+#include "njs_mb_supp.h"
 }
 
 #include "mbfly_njs.h"
