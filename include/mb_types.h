@@ -428,48 +428,4 @@ struct _shape {
 #define sh_set_stroke_width(sh, v) do { (sh)->stroke_width = (v); } while(0)
 #define sh_get_stroke_width(sh) (sh)->stroke_width
 
-
-/*! \brief A sprite is a set of graphics that being an object in animation.
- *
- * A sprite include graphics comprise an object.  For example, a tank, in
- * example tank, is comprised a set of graphics that is represented as a
- * sprite.
- */
-struct _mb_sprite {
-    void (*free)(mb_sprite_t *);
-    mb_obj_t *(*get_obj_with_name)(mb_sprite_t *sprite, const char *id);
-    /*! Return non-zero for error. */
-    int (*goto_scene)(mb_sprite_t *sprite, int scene_no);
-};
-
-#define MB_SPRITE_FREE(sprite) ((mb_sprite_t *)(sprite))->free(sprite)
-#define MB_SPRITE_GET_OBJ(sprite, name)					\
-    ((mb_sprite_t *)(sprite))->get_obj_with_name((mb_sprite_t *)(sprite), \
-						 (name))
-#define MB_SPRITE_GOTO_SCENE(sprite, scene_no)				\
-    ((mb_sprite_t *)(sprite))->goto_scene((mb_sprite_t *)(sprite), scene_no)
-
-
-/*! \defgroup mb_sprite_lsym Sprite with linear symbol table.
- * @{
- */
-struct _mb_sprite_lsym_entry {
-    const char *sym;
-    const int offset;
-};
-typedef struct _mb_sprite_lsym_entry mb_sprite_lsym_entry_t;
-
-/*! \brief A sub-type of mb_sprite_t with linear symbol table.
- *
- * This type of sprite search symbols with linear/or binary searching.
- */
-struct _mb_sprite_lsym {
-    mb_sprite_t sprite;
-    int num_entries;
-    mb_sprite_lsym_entry_t *entries;
-};
-typedef struct _mb_sprite_lsym mb_sprite_lsym_t;
-
-/* @} */
-
 #endif /* __MB_TYPES_H_ */

@@ -475,6 +475,7 @@ define([MADBUTTERFLY],[dnl
 #include <mb_redraw_man.h>
 #include <mb_shapes.h>
 #include <mb_paint.h>
+#include <mb_sprite.h>
 #include "$1.h"
 
 #ifdef MB_SPRITE_OFFSET

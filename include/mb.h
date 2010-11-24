@@ -16,5 +16,6 @@
 #include "mb_animate.h"
 #include "mb_shapes.h"
 #include "mb_backend.h"
+#include "mb_sprite.h"
 
 #endif /* __MB_H_ */
