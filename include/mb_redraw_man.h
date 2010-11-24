@@ -9,8 +9,14 @@
 #include "mb_observer.h"
 #include "mb_img_ldr.h"
 
+/*! \defgroup rdman Redraw Manager
+ * @{
+ */
 typedef struct _redraw_man redraw_man_t;
 
+/*! \defgroup rdman_private Private Types of Redraw Manager
+ * @{
+ */
 typedef void (*free_func_t)(redraw_man_t *rdman, void *obj);
 struct _free_obj {
     void *obj;
@@ -25,6 +31,7 @@ typedef struct _free_objs free_objs_t;
 
 DARRAY(coords, coord_t *);
 DARRAY(geos, geo_t *);
+/* @} */
 
 /*! \brief Manage redrawing of shapes (graphic elements).
  *
@@ -147,6 +154,10 @@ extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 	}							\
 	shnode_free(rdman, __last);				\
     } while(0)
+
+/*! \defgroup rdman_paints Paints Supporting of Redraw Manger
+ * @{
+ */
 #define _rdman_paint_child(rdman, paint, shape)		\
     do {						\
 	shnode_t *__node;				\
@@ -190,13 +201,22 @@ extern void _rdman_paint_real_remove_child(redraw_man_t *rdman,
 	(shape)->stroke = paint;				\
     } while(0)
 extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
+/* @} */
 
+/*! \defgroup rdman_pos Position/Overlay Detection for Managed Objects
+ * @{
+ */
 extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
 				  co_aix x, co_aix y, int *in_stroke);
 extern int mb_obj_pos_is_in(redraw_man_t *rdman, mb_obj_t *obj,
 			    co_aix x, co_aix y, int *in_stroke);
 extern int mb_objs_are_overlay(redraw_man_t *rdman,
 			       mb_obj_t *obj1, mb_obj_t *obj2);
+/* @} */
+
+/*! \defgroup rdman_accessors Accessors of Redraw Manager
+ * @{
+ */
 #define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
 #define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
 #define rdman_get_root(rdman) ((rdman)->root_coord)
@@ -215,6 +235,7 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
 #define rdman_img_ldr(rdman) ((rdman)->img_ldr)
 #define rdman_set_img_ldr(rdman, ldr)		\
     do { (rdman)->img_ldr = ldr; } while(0)
+/* @} */
 
 /*! \brief Attach backend to the redraw manager so that we can hide the backend from the users.
  *
@@ -223,5 +244,6 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
 
 extern paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman,
 					 const char *img_id);
+/* @} */
 
 #endif /* __REDRAW_MAN_H_ */
