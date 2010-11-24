@@ -11,7 +11,7 @@
 #include <ev.h>
 #include "mb_tools.h"
 #include <mb_backend.h>
-#include "X_supp_njs.h"
+#include "njs_mb_supp.h"
 
 #ifndef ASSERT
 #define ASSERT(x)

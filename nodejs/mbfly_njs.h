@@ -6,7 +6,7 @@
 #include <v8.h>
 extern "C" {
 #include <mb.h>
-#include "X_supp_njs.h"
+#include "njs_mb_supp.h"
 }
 
 #define THROW(x)						\

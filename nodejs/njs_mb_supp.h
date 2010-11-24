@@ -1,7 +1,7 @@
 // -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
 // vim: sw=4:ts=8:sts=4
-#ifndef __SUPP_NJS_H_
-#define __SUPP_NJS_H_
+#ifndef __NJS_MB_SUPP_H_
+#define __NJS_MB_SUPP_H_
 
 #include <ev.h>
 #include <mb_backend.h>
@@ -28,4 +28,4 @@ extern mb_rt_t *_njs_mb_get_runtime(njs_runtime_t *rt);
 #define njs_mb_ob_factory(rt) mb_runtime_ob_factory((rt)->xrt)
 #define njs_mb_img_ldr(rt) mb_runtime_img_ldr((rt)->xrt)
 
-#endif /* __SUPP_NJS_H_ */
+#endif /* __NJS_MB_SUPP_H_ */
