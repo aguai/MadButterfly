@@ -39,7 +39,7 @@ struct _X_kb_info {
     int ksym_per_code;
     KeySym *syms;
     subject_t *kbevents;
-    ob_factory_t *ob_factory;
+    observer_factory_t *observer_factory;
 };
 
 /* @} */
@@ -286,7 +286,7 @@ static int keycode2sym(X_kb_info_t *kbinfo, unsigned int keycode) {
 static int X_kb_init(X_kb_info_t *kbinfo, Display *display,
 		     redraw_man_t *rdman) {
     int n_syms;
-    ob_factory_t *factory;
+    observer_factory_t *factory;
     int r;
 
     r = XDisplayKeycodes(display,
@@ -302,12 +302,12 @@ static int X_kb_init(X_kb_info_t *kbinfo, Display *display,
     if(kbinfo->syms == NULL)
 	return ERR;
 
-    factory = rdman_get_ob_factory(rdman);
+    factory = rdman_get_observer_factory(rdman);
     kbinfo->kbevents = subject_new(factory, kbinfo, OBJT_KB);
     if(kbinfo->kbevents == NULL)
 	return ERR;
-    /*! \todo Make sure ob_factory is still need. */
-    kbinfo->ob_factory = factory;
+    /*! \todo Make sure observer_factory is still need. */
+    kbinfo->observer_factory = factory;
 
     return OK;
 }
@@ -1011,12 +1011,12 @@ _x_supp_timer_man(mb_rt_t *rt) {
     return xmb_rt->timer_man;
 }
 
-static ob_factory_t *
-_x_supp_ob_factory(mb_rt_t *rt) {
+static observer_factory_t *
+_x_supp_observer_factory(mb_rt_t *rt) {
     X_supp_runtime_t *xmb_rt = (X_supp_runtime_t *) rt;
-    ob_factory_t *factory;
+    observer_factory_t *factory;
 
-    factory = rdman_get_ob_factory(xmb_rt->rdman);
+    factory = rdman_get_observer_factory(xmb_rt->rdman);
     return factory;
 }
 
@@ -1086,7 +1086,7 @@ mb_backend_t mb_dfl_backend = { _x_supp_new,
 				_x_supp_kbevents,
 				_x_supp_rdman,
 				_x_supp_timer_man,
-				_x_supp_ob_factory,
+				_x_supp_observer_factory,
 				_x_supp_img_ldr,
 
 				_x_supp_reg_IO_factory,

@@ -115,7 +115,7 @@ struct _mb_progm {
 mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
     mb_progm_t *progm;
 #ifndef UNITTEST
-    ob_factory_t *factory;
+    observer_factory_t *factory;
 #endif /* UNITTEST */
     int i;
 
@@ -127,7 +127,7 @@ mb_progm_t *mb_progm_new(int max_words, redraw_man_t *rdman) {
     progm->rdman = rdman;
 
 #ifndef UNITTEST
-    factory = rdman_get_ob_factory(rdman);
+    factory = rdman_get_observer_factory(rdman);
     progm->complete = subject_new(factory, progm, OBJT_PROGM);
     if(progm->complete == NULL) {
 	free(progm);

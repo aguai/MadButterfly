@@ -58,7 +58,7 @@ struct _tank_bullet {
     int direction;
     mb_progm_t *progm;
     mb_timeval_t start_time;
-    observer_t *ob_redraw;
+    observer_t *observer_redraw;
     int hit_tmr;
     mb_timer_man_t *timer_man;
 };
@@ -170,7 +170,7 @@ static void tank_move(tank_t *tank, int direction,
     mb_rt_t *mb_rt = tank_rt->mb_rt;
     redraw_man_t *rdman;
     mb_timer_man_t *timer_man;
-    ob_factory_t *factory;
+    observer_factory_t *factory;
     /* for the program */
     mb_progm_t *progm;
     subject_t *comp_sub;
@@ -238,7 +238,7 @@ static void tank_move(tank_t *tank, int direction,
 
     rdman = mb_runtime_rdman(mb_rt);
     timer_man = mb_runtime_timer_man(mb_rt);
-    factory = mb_runtime_ob_factory(mb_rt);
+    factory = mb_runtime_observer_factory(mb_rt);
 
     progm = mb_progm_new(1, rdman);
     tank->progm = progm;

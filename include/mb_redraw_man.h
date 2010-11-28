@@ -82,7 +82,7 @@ struct _redraw_man {
     mbe_t *cr;
     mbe_t *backend;
 
-    ob_factory_t ob_factory;
+    observer_factory_t observer_factory;
 
     subject_t *redraw;		/*!< \brief Notified after redrawing. */
     subject_t *addrm_monitor;	/*!< \brief Monitor adding/removing observers
@@ -217,7 +217,7 @@ extern int mb_objs_are_overlay(redraw_man_t *rdman,
 /*! \defgroup rdman_accessors Accessors of Redraw Manager
  * @{
  */
-#define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
+#define rdman_get_observer_factory(rdman) (&(rdman)->observer_factory)
 #define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
 #define rdman_get_root(rdman) ((rdman)->root_coord)
 #define rdman_get_cr(rdman) ((rdman)->cr)
