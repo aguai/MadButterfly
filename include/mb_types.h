@@ -309,21 +309,6 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	(co)->flags &= ~COF_CACHE_MASK;				\
     } while(0)
 #define coord_is_root(co) ((co)->parent == NULL)
-#define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
-#define coord_is_always_cached(co) ((co)->flags & COF_ALWAYS_CACHE)
-#define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
-#define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
-#define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
-#define coord_set_zeroing(co) \
-    do { (co)->flags |= COF_MUST_ZEROING; } while(0)
-#define coord_clear_zeroing(co) \
-    do { (co)->flags &= ~COF_MUST_ZEROING; } while(0)
-#define coord_set_flags(co, _flags)		\
-    do { (co)->flags |= (_flags); } while(0)
-#define coord_get_parent(co) ((co)->parent)
-#define coord_get_flags(co, _flags) ((co)->flags & (_flags))
-#define coord_clear_flags(co, _flags)		\
-    do { (co)->flags &= ~(_flags); } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
 #define coord_get_opacity(coord) ((coord)->opacity)
 #define coord_set_opacity(coord, v) do { (coord)->opacity = v; } while(0)
@@ -361,22 +346,6 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 					       sh_get_geo(shape))))
 #define coord_get_area(coord) ((coord)->cur_area)
 #define coord_get_last_area(coord) ((coord)->last_area)
-#define coord_get_pcache_area(coord) ((coord)->canvas_info->pcache_cur_area)
-#define coord_get_pcache_last_area(coord)	\
-    ((coord)->canvas_info->pcache_last_area)
-#define coord_get_cached(coord) ((coord)->canvas_info->owner)
-#define _coord_get_canvas(coord) ((coord)->canvas_info->canvas)
-#define _coord_set_canvas(coord, _canvas)		\
-    do {						\
-	(coord)->canvas_info->canvas = _canvas;		\
-    } while(0)
-#define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
-#define _coord_get_aggr_dirty_areas(coord)	\
-    ((coord)->canvas_info->aggr_dirty_areas)
-#define coord_get_2pdev(coord) ((coord)->canvas_info->cache_2_pdev)
-#define coord_get_2pdev_rev(coord) ((coord)->canvas_info->cache_2_pdev_rev)
-#define coord_get_aggr2pdev(coord) ((coord)->canvas_info->aggr_2_pdev)
-#define coord_get_aggr2pdev_rev(coord) ((coord)->canvas_info->aggr_2_pdev_rev)
 
 /* @} */
 
