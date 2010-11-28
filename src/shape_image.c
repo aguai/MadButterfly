@@ -87,7 +87,7 @@ shape_t *rdman_shape_image_new(redraw_man_t *rdman,
     img->w = w;
     img->h = h;
 
-    rdman_shape_man(rdman, (shape_t *)img);
+    rdman_man_shape(rdman, (shape_t *)img);
 
     return (shape_t *)img;
 }

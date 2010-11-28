@@ -49,8 +49,8 @@ int _sh_path_size = sizeof(sh_path_t);
 #define PI 3.1415926535897931
 
 #ifdef UNITTEST
-#undef rdman_shape_man
-#define rdman_shape_man(x, y)
+#undef rdman_man_shape
+#define rdman_man_shape(x, y)
 
 #undef elmpool_elm_alloc
 #define elmpool_elm_alloc(pool) _elmpool_elm_alloc(pool)
@@ -847,7 +847,7 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
     path->shape.free = sh_path_free;
     path->rdman = rdman;
 
-    rdman_shape_man(rdman, (shape_t *)path);
+    rdman_man_shape(rdman, (shape_t *)path);
 
     return (shape_t *)path;
 }
@@ -888,7 +888,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     path->shape.free = sh_path_free;
     path->rdman = rdman;
 
-    rdman_shape_man(rdman, (shape_t *)path);
+    rdman_man_shape(rdman, (shape_t *)path);
 
     return (shape_t *)path;
 }

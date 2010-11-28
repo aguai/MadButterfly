@@ -112,7 +112,7 @@ extern int rdman_find_overlaid_shapes(redraw_man_t *rdman,
 extern int rdman_add_shape(redraw_man_t *rdman,
 			   shape_t *shape, coord_t *coord);
 /*! \brief Make a shape been managed by a redraw manager. */
-#define rdman_shape_man(rdman, shape)					\
+#define rdman_man_shape(rdman, shape)					\
     do {								\
 	mb_prop_store_init(&((mb_obj_t *)(shape))->props,		\
 			   (rdman)->pent_pool);				\
