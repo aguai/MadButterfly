@@ -33,9 +33,11 @@ struct _redraw_man;
  * mb_obj_t should be initialized with mb_obj_init() and destroied with
  * mb_obj_destroy().
  *
- * We have defined a set of convienent API which will wrap the coord_t or shape_t API accoridng to its type.
- * Please refer to http://www.assembla.com/wiki/show/dFrSMOtDer3BZUab7jnrAJ/MBAF_Object for the details. This
- * API is designed for regular programmers which can be used to change some common properties of objects without
+ * We have defined a set of convienent API which will wrap the coord_t
+ * or shape_t API accoridng to its type.  Please refer to
+ * http://www.assembla.com/wiki/show/dFrSMOtDer3BZUab7jnrAJ/MBAF_Object
+ * for the details. This API is designed for regular programmers which
+ * can be used to change some common properties of objects without
  * checking its type.
  */
 struct _mb_obj {
