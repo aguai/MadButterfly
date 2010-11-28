@@ -36,8 +36,8 @@ typedef struct _ut_shape {
 
 #undef mb_obj_init
 #define mb_obj_init(o, t)
-#undef rdman_shape_man
-#define rdman_shape_man(rdman, sh)
+#undef rdman_man_shape
+#define rdman_man_shape(rdman, sh)
 
 #define rdman_shape_stext_new ut_rdman_shape_stext_new
 #define sh_stext_transform ut_sh_stext_transform
@@ -306,7 +306,7 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, const char *txt,
 
     txt_o->shape.free = _rdman_shape_stext_free;
 
-    rdman_shape_man(rdman, (shape_t *)txt_o);
+    rdman_man_shape(rdman, (shape_t *)txt_o);
 
     return (shape_t *)txt_o;
 }

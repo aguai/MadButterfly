@@ -68,7 +68,7 @@ shape_t *rdman_shape_text_new(redraw_man_t *rdman,
     text->align = TEXTALIGN_START;
     text->w = text->h = 0;
 
-    rdman_shape_man(rdman, (shape_t *)text);
+    rdman_man_shape(rdman, (shape_t *)text);
 
     return (shape_t *)text;
 }

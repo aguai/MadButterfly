@@ -45,7 +45,7 @@ shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
     rect->shape.free = sh_rect_free;
     rect->rdman = rdman;
 
-    rdman_shape_man(rdman, (shape_t *)rect);
+    rdman_man_shape(rdman, (shape_t *)rect);
 
     return (shape_t *)rect;
 }

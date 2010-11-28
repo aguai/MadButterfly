@@ -2745,7 +2745,7 @@ shape_t *sh_dummy_new(redraw_man_t *rdman,
     dummy->draw_cnt = 0;
     dummy->shape.free = sh_dummy_free;
 
-    rdman_shape_man(rdman, (shape_t *)dummy);
+    rdman_man_shape(rdman, (shape_t *)dummy);
 
     return (shape_t *)dummy;
 }
