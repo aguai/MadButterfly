@@ -231,6 +231,11 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
     rdman_get_gen_geos(rdman)->num
 #define rdman_clear_shape_gl(rdman)		\
     DARRAY_CLEAN(rdman_get_gen_geos(rdman))
+#define _coord_get_canvas(coord) ((coord)->canvas_info->canvas)
+#define _coord_set_canvas(coord, _canvas)		\
+    do {						\
+	(coord)->canvas_info->canvas = _canvas;		\
+    } while(0)
 #define rdman_prop_store(rdman) ((rdman)->props)
 #define rdman_img_ldr(rdman) ((rdman)->img_ldr)
 #define rdman_set_img_ldr(rdman, ldr)		\
