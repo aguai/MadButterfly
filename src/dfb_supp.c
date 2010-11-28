@@ -24,7 +24,7 @@ struct _X_kb_info {
     int keycode_min, keycode_max;
     int ksym_per_code;
     subject_t *kbevents;
-    ob_factory_t *ob_factory;
+    observer_factory_t *observer_factory;
 };
 
 /* @} */
@@ -458,11 +458,11 @@ mb_tman_t *X_MB_tman(void *rt) {
     return xmb_rt->tman;
 }
 
-ob_factory_t *X_MB_ob_factory(void *rt) {
+observer_factory_t *X_MB_observer_factory(void *rt) {
     X_MB_runtime_t *xmb_rt = (X_MB_runtime_t *) rt;
-    ob_factory_t *factory;
+    observer_factory_t *factory;
 
-    factory = rdman_get_ob_factory(xmb_rt->rdman);
+    factory = rdman_get_observer_factory(xmb_rt->rdman);
     return factory;
 }
 
@@ -525,7 +525,7 @@ mb_backend_t backend = { X_MB_new,
 			 X_MB_kbevents,
 			 X_MB_rdman,
 			 X_MB_tman,
-			 X_MB_ob_factory,
+			 X_MB_observer_factory,
 			 X_MB_img_ldr
 		};
 

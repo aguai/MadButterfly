@@ -32,7 +32,7 @@ extern void X_MB_free_keep_win(void *rt);
 extern subject_t *X_MB_kbevents(void *xmb_rt);
 extern redraw_man_t *X_MB_rdman(void *xmb_rt);
 extern mb_tman_t *X_MB_tman(void *xmb_rt);
-extern ob_factory_t *X_MB_ob_factory(void *xmb_rt);
+extern observer_factory_t *X_MB_observer_factory(void *xmb_rt);
 extern mb_img_ldr_t *X_MB_img_ldr(void *xmb_rt);
 
 #endif
