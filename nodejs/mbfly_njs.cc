@@ -5,7 +5,7 @@
 #include <v8.h>
 
 extern "C" {
-#include "X_supp_njs.h"
+#include "njs_mb_supp.h"
 }
 
 #include "mbfly_njs.h"
@@ -22,7 +22,7 @@ xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
     coord_t *coord;
     redraw_man_t *rdman;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     coord = rdman_coord_new(rdman, parent);
     if(coord == NULL) {
         *err = "Can not allocate a redraw_man_t";
@@ -46,7 +46,7 @@ static void
 xnjsmb_redraw_changed(njs_runtime_t *rt) {
     redraw_man_t *rdman;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     rdman_redraw_changed(rdman);
 }
 
@@ -54,35 +54,35 @@ static void
 xnjsmb_redraw_all(njs_runtime_t *rt) {
     redraw_man_t *rdman;
 
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
     rdman_redraw_all(rdman);
 }
 
 static void
 xnjsmb_handle_single_event(njs_runtime_t *rt, void *evt) {
-    X_njs_MB_handle_single_event(rt, evt);
+    njs_mb_handle_single_event(rt, evt);
 }
 
 static void
 xnjsmb_no_more_event(njs_runtime_t *rt) {
-    X_njs_MB_no_more_event(rt);
+    njs_mb_no_more_event(rt);
 }
 
 static njs_runtime_t *
-_X_njs_MB_new(Handle<Object> self, char *display_name,
+_njs_mb_new(Handle<Object> self, char *display_name,
 	      int width, int height) {
     njs_runtime_t *obj;
     subject_t *subject;
     Handle<Value> subject_o;
 
-    obj = X_njs_MB_new(display_name, width, height);
+    obj = njs_mb_new(display_name, width, height);
     WRAP(self, obj);		/* mkroot need a wrapped object, but
 				 * it is wrapped after returning of
 				 * this function.  So, we wrap it
 				 * here. */
     xnjsmb_coord_mkroot(self);
 
-    subject = X_njs_MB_kbevents(obj);
+    subject = njs_mb_kbevents(obj);
     subject_o = export_xnjsmb_auto_subject_new(subject);
     SET(self, "kbevents", subject_o);
 
@@ -90,20 +90,20 @@ _X_njs_MB_new(Handle<Object> self, char *display_name,
 }
 
 static njs_runtime_t *
-_X_njs_MB_new_with_win(Handle<Object> self, void *display,
+_njs_mb_new_with_win(Handle<Object> self, void *display,
 		       long win) {
     njs_runtime_t *obj;
     subject_t *subject;
     Handle<Value> subject_o;
 
-    obj = X_njs_MB_new_with_win(display, win);
+    obj = njs_mb_new_with_win(display, win);
     WRAP(self, obj);		/* mkroot need a wrapped object, but
 				 * it is wrapped after returning of
 				 * this function.  So, we wrap it
 				 * here. */
     xnjsmb_coord_mkroot(self);
 
-    subject = X_njs_MB_kbevents(obj);
+    subject = njs_mb_kbevents(obj);
     subject_o = export_xnjsmb_auto_subject_new(subject);
     SET(self, "kbevents", subject_o);
 
@@ -143,7 +143,7 @@ xnjsmb_rt_rdman(Handle<Object> mbrt) {
     redraw_man_t *rdman;
 
     rt = (njs_runtime_t *)UNWRAP(mbrt);
-    rdman = X_njs_MB_rdman(rt);
+    rdman = njs_mb_rdman(rt);
 
     return rdman;
 }
@@ -170,8 +170,8 @@ init(Handle<Object> target) {
     xnjsmb_auto_mb_rt_init();
     xnjsmb_auto_mb_rt_display_init();
     xnjsmb_auto_mb_rt_with_win_init();
-    X_njs_MB_reg_timer_man();
-    X_njs_MB_reg_IO_man();
+    njs_mb_reg_timer_man();
+    njs_mb_reg_IO_man();
 
     /*
      * Add properties to mb_rt templates for other modules.

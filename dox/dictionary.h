@@ -11,7 +11,6 @@
  * - \b man stands for MANager.
  * - \b mb stands for MadButterfly.
  * - \b mbe stands for MadButterfly graphic Engine.
- * - \b ob stands for OBserver.
  * - \b obj stands for OBJect.
  * - \b prop stands for PROPerty.
  * - \b rdman stands for ReDraw MANager.

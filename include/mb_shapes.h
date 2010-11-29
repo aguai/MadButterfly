@@ -28,7 +28,7 @@
  *     - mb_obj_init() to initialize shape_t::obj.
  *   - assign *_free() to \ref shape_t::free.
  *   - make new object been managed by a redraw manager.
- *     - call rdman_shape_man()
+ *     - call rdman_man_shape()
  * - *_free()
  *   - assigned to \ref shape_t::free.
  * - *_transform()

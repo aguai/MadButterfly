@@ -82,7 +82,7 @@ typedef struct {
     subject_t *(*kbevents)(mb_rt_t *rt);
     redraw_man_t *(*rdman)(mb_rt_t *rt);
     mb_timer_man_t *(*timer_man)(mb_rt_t *rt);
-    ob_factory_t *(*ob_factory)(mb_rt_t *rt);
+    observer_factory_t *(*observer_factory)(mb_rt_t *rt);
     mb_img_ldr_t *(*loader)(mb_rt_t *rt);
     
     /*
@@ -126,8 +126,8 @@ extern mb_backend_t mb_dfl_backend;
     mb_dfl_backend.rdman(rt)
 #define mb_runtime_timer_man(rt)		\
     mb_dfl_backend.timer_man(rt)
-#define mb_runtime_ob_factory(rt)		\
-    mb_dfl_backend.ob_factory(rt)
+#define mb_runtime_observer_factory(rt)		\
+    mb_dfl_backend.observer_factory(rt)
 #define mb_runtime_loader(rt)			\
     mb_dfl_backend.loader(rt)
 

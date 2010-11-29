@@ -33,9 +33,11 @@ struct _redraw_man;
  * mb_obj_t should be initialized with mb_obj_init() and destroied with
  * mb_obj_destroy().
  *
- * We have defined a set of convienent API which will wrap the coord_t or shape_t API accoridng to its type.
- * Please refer to http://www.assembla.com/wiki/show/dFrSMOtDer3BZUab7jnrAJ/MBAF_Object for the details. This
- * API is designed for regular programmers which can be used to change some common properties of objects without
+ * We have defined a set of convienent API which will wrap the coord_t
+ * or shape_t API accoridng to its type.  Please refer to
+ * http://www.assembla.com/wiki/show/dFrSMOtDer3BZUab7jnrAJ/MBAF_Object
+ * for the details. This API is designed for regular programmers which
+ * can be used to change some common properties of objects without
  * checking its type.
  */
 struct _mb_obj {
@@ -309,21 +311,6 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	(co)->flags &= ~COF_CACHE_MASK;				\
     } while(0)
 #define coord_is_root(co) ((co)->parent == NULL)
-#define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
-#define coord_is_always_cached(co) ((co)->flags & COF_ALWAYS_CACHE)
-#define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
-#define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
-#define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
-#define coord_set_zeroing(co) \
-    do { (co)->flags |= COF_MUST_ZEROING; } while(0)
-#define coord_clear_zeroing(co) \
-    do { (co)->flags &= ~COF_MUST_ZEROING; } while(0)
-#define coord_set_flags(co, _flags)		\
-    do { (co)->flags |= (_flags); } while(0)
-#define coord_get_parent(co) ((co)->parent)
-#define coord_get_flags(co, _flags) ((co)->flags & (_flags))
-#define coord_clear_flags(co, _flags)		\
-    do { (co)->flags &= ~(_flags); } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
 #define coord_get_opacity(coord) ((coord)->opacity)
 #define coord_set_opacity(coord, v) do { (coord)->opacity = v; } while(0)
@@ -361,22 +348,6 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 					       sh_get_geo(shape))))
 #define coord_get_area(coord) ((coord)->cur_area)
 #define coord_get_last_area(coord) ((coord)->last_area)
-#define coord_get_pcache_area(coord) ((coord)->canvas_info->pcache_cur_area)
-#define coord_get_pcache_last_area(coord)	\
-    ((coord)->canvas_info->pcache_last_area)
-#define coord_get_cached(coord) ((coord)->canvas_info->owner)
-#define _coord_get_canvas(coord) ((coord)->canvas_info->canvas)
-#define _coord_set_canvas(coord, _canvas)		\
-    do {						\
-	(coord)->canvas_info->canvas = _canvas;		\
-    } while(0)
-#define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
-#define _coord_get_aggr_dirty_areas(coord)	\
-    ((coord)->canvas_info->aggr_dirty_areas)
-#define coord_get_2pdev(coord) ((coord)->canvas_info->cache_2_pdev)
-#define coord_get_2pdev_rev(coord) ((coord)->canvas_info->cache_2_pdev_rev)
-#define coord_get_aggr2pdev(coord) ((coord)->canvas_info->aggr_2_pdev)
-#define coord_get_aggr2pdev_rev(coord) ((coord)->canvas_info->aggr_2_pdev_rev)
 
 /* @} */
 
@@ -427,49 +398,5 @@ struct _shape {
 #define sh_get_stroke(sh) ((sh)->stroke)
 #define sh_set_stroke_width(sh, v) do { (sh)->stroke_width = (v); } while(0)
 #define sh_get_stroke_width(sh) (sh)->stroke_width
-
-
-/*! \brief A sprite is a set of graphics that being an object in animation.
- *
- * A sprite include graphics comprise an object.  For example, a tank, in
- * example tank, is comprised a set of graphics that is represented as a
- * sprite.
- */
-struct _mb_sprite {
-    void (*free)(mb_sprite_t *);
-    mb_obj_t *(*get_obj_with_name)(mb_sprite_t *sprite, const char *id);
-    /*! Return non-zero for error. */
-    int (*goto_scene)(mb_sprite_t *sprite, int scene_no);
-};
-
-#define MB_SPRITE_FREE(sprite) ((mb_sprite_t *)(sprite))->free(sprite)
-#define MB_SPRITE_GET_OBJ(sprite, name)					\
-    ((mb_sprite_t *)(sprite))->get_obj_with_name((mb_sprite_t *)(sprite), \
-						 (name))
-#define MB_SPRITE_GOTO_SCENE(sprite, scene_no)				\
-    ((mb_sprite_t *)(sprite))->goto_scene((mb_sprite_t *)(sprite), scene_no)
-
-
-/*! \defgroup mb_sprite_lsym Sprite with linear symbol table.
- * @{
- */
-struct _mb_sprite_lsym_entry {
-    const char *sym;
-    const int offset;
-};
-typedef struct _mb_sprite_lsym_entry mb_sprite_lsym_entry_t;
-
-/*! \brief A sub-type of mb_sprite_t with linear symbol table.
- *
- * This type of sprite search symbols with linear/or binary searching.
- */
-struct _mb_sprite_lsym {
-    mb_sprite_t sprite;
-    int num_entries;
-    mb_sprite_lsym_entry_t *entries;
-};
-typedef struct _mb_sprite_lsym mb_sprite_lsym_t;
-
-/* @} */
 
 #endif /* __MB_TYPES_H_ */

@@ -304,6 +304,38 @@
 #define ASSERT(x)
 #endif
 
+/*
+ * Conitions for coords.
+ */
+#define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
+#define coord_is_always_cached(co) ((co)->flags & COF_ALWAYS_CACHE)
+#define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
+#define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
+#define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
+#define coord_set_zeroing(co) \
+    do { (co)->flags |= COF_MUST_ZEROING; } while(0)
+#define coord_clear_zeroing(co) \
+    do { (co)->flags &= ~COF_MUST_ZEROING; } while(0)
+#define coord_set_flags(co, _flags)		\
+    do { (co)->flags |= (_flags); } while(0)
+#define coord_get_parent(co) ((co)->parent)
+#define coord_get_flags(co, _flags) ((co)->flags & (_flags))
+#define coord_clear_flags(co, _flags)		\
+    do { (co)->flags &= ~(_flags); } while(0)
+
+#define coord_get_pcache_area(coord) ((coord)->canvas_info->pcache_cur_area)
+#define coord_get_pcache_last_area(coord)	\
+    ((coord)->canvas_info->pcache_last_area)
+#define coord_get_cached(coord) ((coord)->canvas_info->owner)
+#define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
+#define _coord_get_aggr_dirty_areas(coord)	\
+    ((coord)->canvas_info->aggr_dirty_areas)
+#define coord_get_2pdev(coord) ((coord)->canvas_info->cache_2_pdev)
+#define coord_get_2pdev_rev(coord) ((coord)->canvas_info->cache_2_pdev_rev)
+#define coord_get_aggr2pdev(coord) ((coord)->canvas_info->aggr_2_pdev)
+#define coord_get_aggr2pdev_rev(coord) ((coord)->canvas_info->aggr_2_pdev_rev)
+
+
 /* NOTE: bounding box should also consider width of stroke.
  */
 
@@ -338,12 +370,14 @@ extern void sh_dummy_transform(shape_t *shape);
 extern void sh_dummy_fill(shape_t *, mbe_t *);
 #endif /* UNITTEST */
 
-static subject_t *ob_subject_alloc(ob_factory_t *factory);
-static void ob_subject_free(ob_factory_t *factory, subject_t *subject);
-static observer_t *ob_observer_alloc(ob_factory_t *factory);
-static void ob_observer_free(ob_factory_t *factory, observer_t *observer);
-static subject_t *ob_get_parent_subject(ob_factory_t *factory,
-					subject_t *cur_subject);
+static subject_t *observer_subject_alloc(observer_factory_t *factory);
+static void observer_subject_free(observer_factory_t *factory,
+				  subject_t *subject);
+static observer_t *observer_observer_alloc(observer_factory_t *factory);
+static void observer_observer_free(observer_factory_t *factory,
+				   observer_t *observer);
+static subject_t *observer_get_parent_subject(observer_factory_t *factory,
+					      subject_t *cur_subject);
 /* Functions for children. */
 #define FORCHILDREN(coord, child)				\
     for((child) = STAILQ_HEAD((coord)->children);		\
@@ -678,16 +712,16 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 	 rdman->paint_color_pool && rdman->coord_canvas_pool))
 	goto err;
 
-    rdman->ob_factory.subject_alloc = ob_subject_alloc;
-    rdman->ob_factory.subject_free = ob_subject_free;
-    rdman->ob_factory.observer_alloc = ob_observer_alloc;
-    rdman->ob_factory.observer_free = ob_observer_free;
-    rdman->ob_factory.get_parent_subject = ob_get_parent_subject;
+    rdman->observer_factory.subject_alloc = observer_subject_alloc;
+    rdman->observer_factory.subject_free = observer_subject_free;
+    rdman->observer_factory.observer_alloc = observer_observer_alloc;
+    rdman->observer_factory.observer_free = observer_observer_free;
+    rdman->observer_factory.get_parent_subject = observer_get_parent_subject;
 
     rdman->redraw =
-	subject_new(&rdman->ob_factory, rdman, OBJT_RDMAN);
+	subject_new(&rdman->observer_factory, rdman, OBJT_RDMAN);
     rdman->addrm_monitor =
-	subject_new(&rdman->ob_factory, rdman, OBJT_RDMAN);
+	subject_new(&rdman->observer_factory, rdman, OBJT_RDMAN);
     if(!(rdman->redraw && rdman->addrm_monitor))
 	goto err;
 
@@ -704,7 +738,7 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     rdman->n_coords = 1;
     coord_init(rdman->root_coord, NULL);
     mb_prop_store_init(&rdman->root_coord->obj.props, rdman->pent_pool);
-    rdman->root_coord->mouse_event = subject_new(&rdman->ob_factory,
+    rdman->root_coord->mouse_event = subject_new(&rdman->observer_factory,
 						 rdman->root_coord,
 						 OBJT_COORD);
     coord_set_flags(rdman->root_coord, COF_OWN_CANVAS);
@@ -854,7 +888,7 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
 	return ERR;
 
     geo_init(geo);
-    geo->mouse_event = subject_new(&rdman->ob_factory, geo, OBJT_GEO);
+    geo->mouse_event = subject_new(&rdman->observer_factory, geo, OBJT_GEO);
     subject_set_monitor(geo->mouse_event, rdman->addrm_monitor);
 
     geo_attach_coord(geo, coord);
@@ -1002,7 +1036,7 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
 
     coord_init(coord, parent);
     mb_prop_store_init(&coord->obj.props, rdman->pent_pool);
-    coord->mouse_event = subject_new(&rdman->ob_factory,
+    coord->mouse_event = subject_new(&rdman->observer_factory,
 				     coord,
 				     OBJT_COORD);
     subject_set_monitor(coord->mouse_event, rdman->addrm_monitor);
@@ -2587,48 +2621,51 @@ int rdman_force_clean(redraw_man_t *rdman) {
  * Implment factory and strategy functions for observers and subjects.
  * @{
  */
-static subject_t *ob_subject_alloc(ob_factory_t *factory) {
+static subject_t *observer_subject_alloc(observer_factory_t *factory) {
     redraw_man_t *rdman;
     subject_t *subject;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     subject = elmpool_elm_alloc(rdman->subject_pool);
 
     return subject;
 }
 
-static void ob_subject_free(ob_factory_t *factory, subject_t *subject) {
+static void
+observer_subject_free(observer_factory_t *factory, subject_t *subject) {
     redraw_man_t *rdman;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     elmpool_elm_free(rdman->subject_pool, subject);
 }
 
-static observer_t *ob_observer_alloc(ob_factory_t *factory) {
+static observer_t *observer_observer_alloc(observer_factory_t *factory) {
     redraw_man_t *rdman;
     observer_t *observer;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     observer = elmpool_elm_alloc(rdman->observer_pool);
 
     return observer;
 }
 
-static void ob_observer_free(ob_factory_t *factory, observer_t *observer) {
+static void
+observer_observer_free(observer_factory_t *factory, observer_t *observer) {
     redraw_man_t *rdman;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     elmpool_elm_free(rdman->observer_pool, observer);
 }
 
-static subject_t *ob_get_parent_subject(ob_factory_t *factory,
-					subject_t *cur_subject) {
+static subject_t *
+observer_get_parent_subject(observer_factory_t *factory,
+			    subject_t *cur_subject) {
     redraw_man_t *rdman;
     coord_t *coord, *parent_coord;
     geo_t *geo;
     subject_t *parent;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     switch(cur_subject->obj_type) {
     case OBJT_GEO:
 	geo = (geo_t *)cur_subject->obj;
@@ -2708,7 +2745,7 @@ shape_t *sh_dummy_new(redraw_man_t *rdman,
     dummy->draw_cnt = 0;
     dummy->shape.free = sh_dummy_free;
 
-    rdman_shape_man(rdman, (shape_t *)dummy);
+    rdman_man_shape(rdman, (shape_t *)dummy);
 
     return (shape_t *)dummy;
 }
