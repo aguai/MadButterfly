@@ -56,10 +56,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.35"
-     inkscape:cx="574.12471"
+     inkscape:cx="206.98185"
      inkscape:cy="483.73232"
      inkscape:document-units="px"
-     inkscape:current-layer="Layer 1s1841"
+     inkscape:current-layer="Layer 1s235"
      showgrid="false"
      inkscape:window-width="1680"
      inkscape:window-height="976"
@@ -109,7 +109,7 @@
     <g
        id="Layer 1s1841"
        inkscape:groupmode="layer"
-       style="display:inline">
+       style="display:none">
       <g
          transform="translate(7.14163,8.5714057)"
          id="g2999"
@@ -175,7 +175,7 @@
            inkscape:bbox-height="291.09415" />
       </g>
       <g
-         transform="translate(7.14163,8.5714057)"
+         transform="translate(7.14163,8.571406)"
          id="g2926"
          inkscape:label="cat2"
          inkscape:bbox-x="599.07141"
@@ -334,7 +334,7 @@
     <g
        id="Layer 1s235"
        inkscape:groupmode="layer"
-       style="display:none">
+       style="display:inline">
       <rect
          x="0"
          y="0"
@@ -349,6 +349,28 @@
          id="image3245"
          x="0"
          y="-27.637817" />
+      <g
+         transform="matrix(1.1857143,0,0,1.2748252,-274.497,-403.36247)"
+         id="g29230"
+         inkscape:label="current"
+         inkscape:bbox-x="359.21432"
+         inkscape:bbox-y="455.42856"
+         inkscape:bbox-width="200"
+         inkscape:bbox-height="291.09415">
+        <image
+           sodipodi:absref="/home/wycc/devel/md7/MadButterfly/nodejs/examples/mce/./cat1.png"
+           xlink:href="./cat1.png"
+           inkscape:bbox-height="291.09415"
+           inkscape:bbox-width="200"
+           inkscape:bbox-y="455.42856"
+           inkscape:bbox-x="359.21432"
+           inkscape:label=""
+           width="200"
+           height="291.09415"
+           id="image3116-4"
+           x="330.29868"
+           y="458.24133" />
+      </g>
     </g>
   </g>
 </svg>
