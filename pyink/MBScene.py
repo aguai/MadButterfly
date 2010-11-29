@@ -3,11 +3,13 @@
 # vim: sw=4:ts=8:sts=4
 import pygtk
 import gtk
+import glib
 from copy import deepcopy
 from lxml import etree
 import random
 import traceback
 import time
+import pybInkscape
 
 # Please refer to
 # http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
@@ -55,7 +57,32 @@ class Scene:
 
 _scenes = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes'
 _scene = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene'
-
+class LayerAttributeWatcher(pybInkscape.PYNodeObserver):
+    def __init__(self,ui):
+        self.ui = ui
+    def notifyChildAdded(self,node,child,prev):
+        pass
+    def notifyChildRemoved(self,node,child,prev):
+        pass
+    def notifyChildOrderChanged(self,node,child,prev):
+        pass
+    def notifyContentChanged(self,node,old_content,new_content):
+        pass
+    def notifyAttributeChanged(self,node, name, old_value, new_value):
+        self.ui.updateUI()
+class LayerAddRemoveWatcher(pybInkscape.PYNodeObserver):
+    def __init__(self,ui):
+        self.ui = ui
+    def notifyChildAdded(self,node,child,prev):
+        self.ui.updateUI()
+    def notifyChildRemoved(self,node,child,prev):
+        self.ui.updateUI()
+    def notifyChildOrderChanged(self,node,child,prev):
+        self.ui.updateUI()
+    def notifyContentChanged(self,node,old_content,new_content):
+        self.ui.updateUI()
+    def notifyAttributeChanged(self,node, name, old_value, new_value):
+        self.ui.updateUI()
 class MBScene():
     def __init__(self,desktop,win):
 	self.desktop = desktop
@@ -63,6 +90,8 @@ class MBScene():
 	self.layers = []
 	self.layers.append(Layer(None))
 	self.scenemap = None
+	self.top = None
+	self.last_update = None
 	pass
 
     def confirm(self,msg):
@@ -156,13 +185,17 @@ class MBScene():
 	self.scenemap = None
 	doc = self.desktop.doc().root()
 
+        #obs = pybInkscape.PYNodeObserver()
+        obs = LayerAddRemoveWatcher(self)
+        doc.repr.addObserver(obs)
 	for node in doc.childList():
 	    if node.repr.name() == 'svg:metadata':
 		self.parseMetadata(node)
 		pass
 	    elif node.repr.name() == 'svg:g':
 		oldscene = None
-				#print layer.attrib.get("id")
+	        obs = LayerAttributeWatcher(self)
+	        node.repr.addObserver(obs)
 		lyobj = Layer(node)
 		self.layers.append(lyobj)
 		lyobj.current_scene = []
@@ -465,7 +498,10 @@ class MBScene():
     def _update_framelines(self):
 	for frameline in self._framelines:
 	    layer = frameline.layer
-	    frameline.label.set_text(frameline.node.label())
+	    if frameline.node.label()==None:
+	        frameline.label.set_text('???')
+	    else:
+	        frameline.label.set_text(frameline.node.label())
 	    for scene in layer.scenes:
 		frameline.add_keyframe(scene.start-1,scene.node.repr)
 		if scene.start != scene.end:
@@ -530,19 +566,24 @@ class MBScene():
 	gtk.main_quit()
 	pass
 
-
+    def updateUI(self):
+        if self.last_update!= None:
+            glib.source_remove(self.last_update)
+        self.last_update = glib.timeout_add(300,self.show)
     def show(self):
 	self.OK = True
 	self.parseScene()
 	self._create_framelines()
 	self._update_framelines()
+	if self.top == None:
+	    self.top = gtk.VBox(False,0)
+	    self.desktop.getToplevel().child.child.pack_end(self.top,expand=False)
+	else:
+	    self.top.remove(self.startWindow)
 	vbox = gtk.VBox(False,0)
-	self.desktop.getToplevel().child.child.pack_end(vbox,expand=False)
-	self.window = vbox
-	vbox = gtk.VBox(False,0)
-	self.window.pack_start(vbox,expand=False)
+	self.startWindow = vbox
+	self.top.pack_start(vbox,expand=False)
 	vbox.pack_start(self.scrollwin,expand=False)
-	self.vbox = vbox
 	hbox=gtk.HBox(False,0)
 	self.addButtons(hbox)
 	vbox.pack_start(hbox,expand=False)
@@ -551,6 +592,7 @@ class MBScene():
 	# self.window.connect("destroy", gtk.main_quit)
 	# self.window.set_position(gtk.WIN_POS_MOUSE)
 
-	self.window.show_all()
-	pass
+	self.top.show_all()
+	self.last_update = None
+	return False
     pass
