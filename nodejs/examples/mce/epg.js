@@ -146,13 +146,42 @@ function httpGetFile(url,file,obj)
 EPG.prototype.onLoad = function(res) {
     cats = res['ProgramCat'];
     this.pend = cats.length;
+    this.maincat = cats;
     for (i in cats) {
 	c = cats[i];
 	httpGetFile(c['ProgramPIC'],'cat'+i+'.png',this);
     }
 }
 
+EPG.prototype.getList=function(item,func) {
+    var epgsrv = http.createClient(8080, '211.23.50.144');
+    var cmd = '{"Protocol":"EPG-CSP","Command":"SearchRequest","ProgramSub":"'+item.Category+'"}';
+    var headers={
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Host':'211.23.50.144:8080',
+        'User-Agent':'MadButterfly',
+        'Content-Type':'application/x-www-form-urlencoded'
+    };
+    headers['Content-Length'] = cmd.length;
+    var request = epgsrv.request('POST', '/IPTV_EPG/EPGService.do?timestamp='+new Date().getTime(),headers);
+    var self = this;
+    sys.puts("aaaa");
+    var js = '';
+    request.write(cmd);
+    request.end();
+    request.on('response', function(res) {
+        sys.puts("connected");
+ 	res.on('data',function (data) {
+		js = js + data;
+	});
+	res.on('end', function () {
+		res = JSON.parse(js);
+		sys.puts("parsed");
+		func();
 
+	});
+    });
+}
 EPG.prototype.onInitDone=function() {
     if (this.loadCallback)
         this.loadCallback();

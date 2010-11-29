@@ -16,6 +16,7 @@ function MainMenu(app)
     var self = this;
     var epg = new EPG.EPG();
     epg.registerInitDone(function() { self.init();});
+    app.epg = epg;
     //self.init();
 }
 MainMenu.prototype.init=function()
@@ -127,12 +128,15 @@ MainMenu.prototype.key_down=function ()
 
 MainMenu.prototype.key_enter=function() 
 {
-    var target = this.items[this.item];
-    var sx = 500 - target.center.x;
-    var sy = 220 - target.center.y;
-    var an = new animate.shift(this.app,target,sx,sy);
     var self = this;
-    animate.run([an],0,2.5,function() {self.changePage();});
+    var target = this.items[this.item];
+    var an = new animate.scale(this.app, target, 1/1.1, 1/1.5);
+    animate.run([an], 0, 0.3,function() {
+        var sx = 259 - target.center.x;
+        var sy = 355 - target.center.y;
+	var an1 = new animate.shift(self.app,target,sx,sy);
+	animate.run([an1],0,1,function() {self.changePage(self.item);});
+    });
     for(i=0;i<this.items.length;i++) {
 	if (i == this.item) continue;
 	if (i > this.item) {
@@ -149,8 +153,11 @@ MainMenu.prototype.key_enter=function()
     }
 }
 
-MainMenu.prototype.changePage=function() {
+MainMenu.prototype.onNextPage=function() {
     this.app.changeScene(2);
+}
+MainMenu.prototype.changePage=function(item) {
+    this.epg.getList(item,self.onNextPage());
 }
 
 exports.MainMenu=MainMenu;
