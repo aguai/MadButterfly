@@ -3,15 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mb_graph_engine.h"
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include "mb_types.h"
-#include "mb_shapes.h"
-#include "mb_tools.h"
 #include "mb_redraw_man.h"
-#include "mb_observer.h"
-#include "mb_prop.h"
+#include "mb_sprite.h"
 
 #define ASSERT(x)
 #define OK 0

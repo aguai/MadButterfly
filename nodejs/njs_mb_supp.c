@@ -8,13 +8,10 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <ev.h>
-#include "mb_X_supp.h"
 #include "mb_tools.h"
 #include <mb_backend.h>
-#include "X_supp_njs.h"
+#include "njs_mb_supp.h"
 
 #ifndef ASSERT
 #define ASSERT(x)
@@ -109,72 +106,12 @@ njs_timer_man_free(mb_timer_man_t *timer_man) {
 }
 
 void
-X_njs_MB_reg_timer_man(void) {
+njs_mb_reg_timer_man(void) {
     mb_reg_timer_factory(&njs_timer_factory);
 }
 
 /* @} */
 
-#ifdef USE_MB_TMAN
-static void timer_cb(EV_P_ ev_timer *tmwatcher, int revent);
-
-/*! \brief Register next timeout with libev.
- */
-static void
-set_next_timeout(njs_runtime_t *rt) {
-    mb_tman_t *tman;
-    mb_timeval_t now, tmo;
-    ev_tstamp tout;
-    int r;
-
-    tman = X_MB_tman(rt->xrt);
-    get_now(&now);
-    r = mb_tman_next_timeout(tman, &now, &tmo);
-    if(r == 0) {
-	MB_TIMEVAL_DIFF(&tmo, &now);
-	tout = (ev_tstamp)MB_TIMEVAL_SEC(&tmo) +
-	    (ev_tstamp)MB_TIMEVAL_USEC(&tmo) / 1000000;
-	ev_timer_init(&rt->tmwatcher, timer_cb, tout, 0);
-	ev_timer_start(&rt->tmwatcher);
-	rt->enable_timer = 1;
-    } else
-	rt->enable_timer = 0;
-}
-
-static void
-x_conn_cb(EV_P_ ev_io *iowatcher, int revent) {
-    njs_runtime_t *rt = MEM2OBJ(iowatcher, njs_runtime_t, iowatcher);
-    redraw_man_t *rdman;
-    extern void _X_MB_handle_x_event_for_nodejs(void *rt);
-
-    rdman = X_MB_rdman(rt->xrt);
-    _X_MB_handle_x_event_for_nodejs(rt->xrt);
-    rdman_redraw_changed(rdman);
-
-    if(rt->enable_timer == 0) /* no installed timeout */
-	set_next_timeout(rt);
-}
-
-static void
-timer_cb(EV_P_ ev_timer *tmwatcher, int revent) {
-    njs_runtime_t *rt = MEM2OBJ(tmwatcher, njs_runtime_t, tmwatcher);
-    mb_tman_t *tman;
-    redraw_man_t *rdman;
-    mb_timeval_t now;
-    extern int _X_MB_flush_x_conn_for_nodejs(void *rt);
-
-    tman = X_MB_tman(rt->xrt);
-    get_now(&now);
-    mb_tman_handle_timeout(tman, &now);
-
-    rdman = X_MB_rdman(rt->xrt);
-    rdman_redraw_changed(rdman);
-    _X_MB_flush_x_conn_for_nodejs(rt->xrt);
-
-    set_next_timeout(rt);
-}
-
-#endif /* USE_MB_TMAN */
 
 /*! \defgroup njs_io_man IO manager for nodejs.
  * @{
@@ -276,60 +213,37 @@ njs_io_man_free(mb_IO_man_t *io_man) {
 /*! \brief Register an IO factory with MadButterfly backend.
  */
 void
-X_njs_MB_reg_IO_man(void) {
+njs_mb_reg_IO_man(void) {
     mb_reg_IO_factory(&njs_io_factory);
 }
 
 /* @} */
 
-#if 0
-/*! \brief Handle connection coming data and timeout of timers.
- *
- * \param rt is a runtime object for X.
- */
-void
-X_njs_MB_init_handle_connection(njs_runtime_t *rt) {
-    void *xrt = rt->xrt;
-    int fd;
-    extern int _X_MB_get_x_conn_for_nodejs(void *rt);
-
-    /*
-     * Setup watcher for X connection.
-     */
-    fd = _X_MB_get_x_conn_for_nodejs(xrt);
-    ev_io_init(&rt->iowatcher, x_conn_cb, fd, EV_READ);
-    ev_io_start(&rt->iowatcher);
-    rt->enable_io = 1;
-
-    set_next_timeout(rt);
-}
-#endif
-
 /*! \brief Free njs_runtime_t.
  */
 void
-X_njs_MB_free(njs_runtime_t *rt) {
+njs_mb_free(njs_runtime_t *rt) {
     /*!
      * TODO: Release all IO and timer request.
      */
-    mb_runtime_free(rt->xrt);
+    mb_runtime_free(rt->mb_rt);
     free(rt);
 }
 
 /*! \brief Free njs_runtime_t.
  */
 void
-X_njs_MB_free_keep_win(njs_runtime_t *rt) {
+njs_mb_free_keep_win(njs_runtime_t *rt) {
     /*
      * TODO: Release all IO and timer request.
      */
-    mb_runtime_free_keep_win(rt->xrt);
+    mb_runtime_free_keep_win(rt->mb_rt);
     free(rt);
 }
 
 int
-X_njs_MB_flush(njs_runtime_t *rt) {
-    mb_rt_t *mb_rt = rt->xrt;
+njs_mb_flush(njs_runtime_t *rt) {
+    mb_rt_t *mb_rt = rt->mb_rt;
     int r;
 
     r = mb_runtime_flush(mb_rt);
@@ -337,7 +251,7 @@ X_njs_MB_flush(njs_runtime_t *rt) {
 }
 
 njs_runtime_t *
-X_njs_MB_new(char *display_name, int w, int h) {
+njs_mb_new(char *display_name, int w, int h) {
     njs_runtime_t *rt;
     mb_rt_t *mb_rt;
 
@@ -346,7 +260,7 @@ X_njs_MB_new(char *display_name, int w, int h) {
 
     mb_rt = mb_runtime_new(display_name, w, h);
 
-    rt->xrt = mb_rt;
+    rt->mb_rt = mb_rt;
 
     return rt;
 }
@@ -354,10 +268,10 @@ X_njs_MB_new(char *display_name, int w, int h) {
 /*! \brief Create a njs_runtime_t for an existed window.
  *
  * The njs_runtime_t created by this function must be free by
- * X_njs_MB_free_keep_win().
+ * njs_mb_free_keep_win().
  */
 njs_runtime_t *
-X_njs_MB_new_with_win(void *display, long win) {
+njs_mb_new_with_win(void *display, long win) {
     njs_runtime_t *rt;
     mb_rt_t *mb_rt;
 
@@ -366,7 +280,7 @@ X_njs_MB_new_with_win(void *display, long win) {
 
     mb_rt = mb_runtime_new_with_win((Display *)display, win);
 
-    rt->xrt = mb_rt;
+    rt->mb_rt = mb_rt;
 
     return rt;
 }
@@ -374,30 +288,30 @@ X_njs_MB_new_with_win(void *display, long win) {
 /*! \brief Pass a X event to X runtime.
  */
 void
-X_njs_MB_handle_single_event(njs_runtime_t *rt, void *evt) {
+njs_mb_handle_single_event(njs_runtime_t *rt, void *evt) {
 #if 0
-    void *xrt = rt->xrt;
+    void *mb_rt = rt->mb_rt;
     extern void _X_MB_handle_single_event(void *rt, void *evt);
 
-    _X_MB_handle_single_event(xrt, evt);
+    _X_MB_handle_single_event(mb_rt, evt);
 #endif
 }
 
 /*! \brief Called at end of an iteration of event loop.
  */
 void
-X_njs_MB_no_more_event(njs_runtime_t *rt) {
+njs_mb_no_more_event(njs_runtime_t *rt) {
 #if 0
-    mb_rt_t *xrt = rt->xrt;
+    mb_rt_t *mb_rt = rt->mb_rt;
     extern void _X_MB_no_more_event(mb_rt_t *rt);
 
-    _X_MB_no_more_event(xrt);
+    _X_MB_no_more_event(mb_rt);
 #endif
 }
 
 /*! \brief Get X runtime that is backend of this njs runtime.
  */
 mb_rt_t *
-_X_njs_MB_get_X_runtime(njs_runtime_t *rt) {
-    return rt->xrt;
+_njs_mb_get_runtime(njs_runtime_t *rt) {
+    return rt->mb_rt;
 }

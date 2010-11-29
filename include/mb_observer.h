@@ -10,7 +10,7 @@ typedef struct _observer observer_t;
 typedef struct _subject subject_t;
 typedef struct _mouse_event mouse_event_t;
 typedef struct _monitor_event monitor_event_t;
-typedef struct _ob_factory ob_factory_t;
+typedef struct _observer_factory observer_factory_t;
 typedef void (*evt_handler)(event_t *event, void *arg);
 
 struct _event {
@@ -55,7 +55,7 @@ struct _subject {
     int flags;
     subject_t *monitor_sub;	/*!< \brief Monitor adding/removing
 				 *          obervers on this subject. */
-    ob_factory_t *factory;
+    observer_factory_t *factory;
     STAILQ(observer_t) observers;
 };
 /*! \brief Flag that make a subject to stop propagate events to parents. */
@@ -87,13 +87,13 @@ struct _monitor_event {
  * It provides functions for allocation of subject and observer objects,
  * and strategy function for getting the subject of parent coord object.
  */
-struct _ob_factory {
-    subject_t *(*subject_alloc)(ob_factory_t *factory);
-    void (*subject_free)(ob_factory_t *factory, subject_t *subject);
-    observer_t *(*observer_alloc)(ob_factory_t *factory);
-    void (*observer_free)(ob_factory_t *factory, observer_t *observer);
+struct _observer_factory {
+    subject_t *(*subject_alloc)(observer_factory_t *factory);
+    void (*subject_free)(observer_factory_t *factory, subject_t *subject);
+    observer_t *(*observer_alloc)(observer_factory_t *factory);
+    void (*observer_free)(observer_factory_t *factory, observer_t *observer);
     /*! This is a strategy function to get subjects of parents. */
-    subject_t *(*get_parent_subject)(ob_factory_t *factory,
+    subject_t *(*get_parent_subject)(observer_factory_t *factory,
 				     subject_t *cur_subject);
 };
 
@@ -105,7 +105,7 @@ enum {EVT_ANY,EVT_MOUSE_OVER, EVT_MOUSE_OUT, EVT_MOUSE_MOVE,
       EVT_MOUSE_MOVE_RAW
 };
 
-extern subject_t *subject_new(ob_factory_t *factory,
+extern subject_t *subject_new(observer_factory_t *factory,
 			      void *obj, int obj_type);
 extern void subject_free(subject_t *subject);
 extern void subject_notify(subject_t *subject, event_t *evt);
