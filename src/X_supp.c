@@ -781,7 +781,9 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
 #ifdef XSHM
     xshm_init(xmb_rt);
 #endif
-
+    
+    mbe_init();
+    
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
 
@@ -790,21 +792,27 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
 
     if(xmb_rt->backend_surface == NULL) /* xshm_init() may create one */
 	xmb_rt->backend_surface =
-	    mbe_xlib_surface_create(xmb_rt->display,
-				    xmb_rt->win,
-				    xmb_rt->visual,
-				    w, h);
+	    mbe_win_surface_create(xmb_rt->display,
+				   xmb_rt->win,
+				   xmb_rt->visual,
+				   w, h);
 
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
 
+    /* TODO: Remove this line.  Since we use mbe_copy_source(), it
+     * will set source for the backend.  So, this line is redundants.
+     * It can be removed.  sourface_ptn can be removed, too.
+     */
     mbe_set_source(xmb_rt->backend_cr, xmb_rt->surface_ptn);
 
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
-    // FIXME: This is a wired loopback reference. This is inly required when we need
-    //        to get the xmb_rt->tman for the animation. We should relocate the tman
-    //	      to the redraw_man_t instead.
+    /* FIXME: This is a wired loopback reference. This is inly
+     *        required when we need to get the xmb_rt->tman for the
+     *        animation. We should relocate the tman to the
+     *        redraw_man_t instead.
+     */
     xmb_rt->rdman->rt = xmb_rt;
 
     xmb_rt->io_man = mb_io_man_new(_io_factory);
