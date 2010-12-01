@@ -123,11 +123,10 @@ AC_ARG_ENABLE([xshm],
 
 # Validate options
 [case "${backend}-${graphic_engine}-${image_loader}" in
-    (X-cairo-*|X-openvg-imlib2)
-    (dfb-cairo-*)
-    (none-*-*)
-	;;
-    (*)] AC_MSG_ERROR([The combination of --with-backend=${backend}, --with-graphic-engine=${graphic_engine} and --with-image-loader=${image_loader} is invalid]) [;;
+    X-cairo-*|X-openvg-imlib2) ;;
+    dfb-cairo-*) ;;
+    none-*-*) ;;
+    *)] AC_MSG_ERROR([The combination of --with-backend=${backend}, --with-graphic-engine=${graphic_engine} and --with-image-loader=${image_loader} is invalid]) [;;
 esac]
 
 [if [ x"${graphic_engine}" = x"skia" ]; then ]
