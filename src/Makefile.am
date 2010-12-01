@@ -1,3 +1,5 @@
+# -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+# vim: sw=4:ts=8:sts=4
 include $(top_srcdir)/config.mk
 
 lib_LTLIBRARIES = libmbfly.la
@@ -22,7 +24,7 @@ libmbfly_la_SOURCES= animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
 	shape_rect.c shift.c subtree_free.c timer.c 			\
 	timertool.c tools.c visibility.c prop.c sprite.c	\
-	mouse.c shape_image.c img_ldr.c $(MBAF_SOURCES)
+	mouse.c shape_image.c $(MBAF_SOURCES)
 libmbfly_la_CPPFLAGS = @imlib2_CFLAGS@
 libmbfly_la_LDFLAGS = @imlib2_LIBS@
 
@@ -34,9 +36,23 @@ if SH_STEXT
 libmbfly_la_SOURCES += shape_stext.c
 endif
 
-if X_SUPP
+if X_BACKEND
 libmbfly_la_SOURCES += X_supp.c
 endif
+
+if DFB_BACKEND
+libmbfly_la_SOURCES += dfb_supp.c
+endif
+
+if CAIRO_IMG_LOADER
+libmbfly_la_SOURCES += img_ldr.c
+endif
+
+if IMLIB2_IMG_LOADER
+libmbfly_la_SOURCES += img_ldr_imlib2.c
+endif
+
+libmbfly_la_LDFLAGS =
 
 if CAIRO_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_cairo.c
@@ -45,8 +61,16 @@ libmbfly_la_CPPFLAGS += @cairo_CFLAGS@ @pangocairo_CFLAGS@
 libmbfly_la_LDFLAGS += @cairo_LIBS@ @pangocairo_LIBS@
 endif
 
+if XSHM
+libmbfly_la_LDFLAGS += -lXext
+endif
+
 if SKIA_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_skia.cpp
+endif
+
+if DFB_GRAPH_ENGINE
+libmbfly_la_SOURCES += graph_engine_dfb.c
 endif
 
 if OPENVG_GRAPH_ENGINE

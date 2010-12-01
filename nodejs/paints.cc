@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <v8.h>
 
 extern "C" {
@@ -12,197 +14,311 @@ using namespace v8;
 #define ASSERT(x)
 #endif
 
-
-/*! \brief Fill a shape with the paint.
- */
-static Handle<Value>
-xnjsmb_paint_fill(const Arguments &args) {
-    int argc = args.Length();
-    Handle<Object> self = args.This();
-    Handle<Object> sh_obj;
-    Handle<Object> rt;
-    Handle<Value> rt_val;
-    paint_t *paint;
-    shape_t *sh;
-    redraw_man_t *rdman;
-
-    if(argc != 1)
-	THROW("Invalid number of arguments (!= 1)");
-    if(!args[0]->IsObject())
-	THROW("Invalid argument type (shape)");
-
-    paint = (paint_t *)UNWRAP(self);
-    
-    sh_obj = args[0]->ToObject();
-    sh = (shape_t *)UNWRAP(sh_obj);
-
-    rt_val = GET(self, "mbrt");
-    rt = rt_val->ToObject();
-    rdman = xnjsmb_rt_rdman(rt);
-    
-    rdman_paint_fill(rdman, paint, sh);
-    
-    if(sh_get_coord(sh))
-	rdman_shape_changed(rdman, sh);
-    
-    return Null();
-}
-
-/*! \brief Stroke a shape with the paint.
- */
-static Handle<Value>
-xnjsmb_paint_stroke(const Arguments &args) {
-    int argc = args.Length();
-    Handle<Object> self = args.This();
-    Handle<Object> sh_obj;
-    Handle<Object> rt;
-    Handle<Value> rt_val, sh_val;
-    paint_t *paint;
-    shape_t *sh;
-    redraw_man_t *rdman;
-
-    if(argc != 1)
-	THROW("Invalid number of arguments (!= 1)");
-    if(!args[0]->IsObject())
-	THROW("Invalid argument type (shape)");
-
-    paint = (paint_t *)UNWRAP(self);
-    
-    sh_val = args[0];
-    sh_obj = sh_val->ToObject();
-    sh = (shape_t *)UNWRAP(sh_obj);
-
-    rt_val = GET(self, "mbrt");
-    rt = rt_val->ToObject();
-    rdman = xnjsmb_rt_rdman(rt);
-    
-    rdman_paint_stroke(rdman, paint, sh);
-    
-    if(sh_get_coord(sh))
-	rdman_shape_changed(rdman, sh);
-    
-    return Null();
-}
-
-/*! \brief Constructor of color paint_color_t object for Javascript.
- */
-static Handle<Value>
-xnjsmb_paint_color(const Arguments &args) {
-    int argc = args.Length();
-    Handle<Object> self = args.This();
-    Handle<Object> rt;
-    redraw_man_t *rdman;
-    paint_t *paint;
-    float r, g, b, a;
-
-    if(argc != 5)
-	THROW("Invalid number of arguments (!= 5)");
-    if(!args[0]->IsObject() || !args[1]->IsNumber() ||
-       !args[2]->IsNumber() || !args[3]->IsNumber() ||
-       !args[4]->IsNumber())
-	THROW("Invalid argument type");
-
-    rt = args[0]->ToObject();
-    r = args[1]->ToNumber()->Value();
-    g = args[2]->ToNumber()->Value();
-    b = args[3]->ToNumber()->Value();
-    a = args[4]->ToNumber()->Value();
-
-    rdman = xnjsmb_rt_rdman(rt);
-    paint = rdman_paint_color_new(rdman, r, g, b, a);
-    ASSERT(sh != NULL);
-
-    WRAP(self, paint);
-    SET(self, "mbrt", rt);
-
-    return Null();
-}
-
-static Persistent<FunctionTemplate> xnjsmb_paint_temp;
-static Persistent<FunctionTemplate> xnjsmb_paint_color_temp;
-
-/*! \brief Create and return a paint_color object.
- */
-static Handle<Value>
-xnjsmb_paint_color_new(const Arguments &args) {
-    HandleScope scope;
-    Handle<Object> rt = args.This();
-    Handle<Object> paint_color_obj;
-    Handle<Function> paint_color_func;
-    Handle<Value> pc_args[5];
-    int argc;
-    int i;
-
-    argc = args.Length();
-    if(argc != 4)
-	THROW("Invalid number of arguments (r, g, b, a)");
-    for(i = 0; i < 4; i++)
-	if(!args[i]->IsNumber())
-	    THROW("Invalid argument type");
-    
-    pc_args[0] = rt;
-    pc_args[1] = args[0];	// r
-    pc_args[2] = args[1];	// g
-    pc_args[3] = args[2];	// b
-    pc_args[4] = args[3];	// a
-    paint_color_func = xnjsmb_paint_color_temp->GetFunction();
-    paint_color_obj = paint_color_func->NewInstance(5, pc_args);
-
-    scope.Close(paint_color_obj);
-    return paint_color_obj;
-}
-
-static Persistent<FunctionTemplate> xnjsmb_paint_color_new_temp;
-
-/*! \brief Create templates for paint types.
+/*! \defgroup xnjsmb_paints JS binding for paints
+ * \ingroup xnjsmb
  *
- * This function is only called one time for every execution.
+ * @{
+ */
+
+/*! \page paint_gc How to manage life-cycle of paints?
+ *
+ * A paint is used to fill and stroke shapes.  It should keep live
+ * before all shapes being stroked/or filled by it are dead or
+ * filled/stroked by other paints.  So, every shape that uses a paint
+ * should keep a reference to the paint.  The reference are removed
+ * when a shape is filled/or stroked by other paints.
+ *
+ * A paint should keep a weak reference to itself.  It is used to free
+ * resource before it being collected.
  */
 static void
-xnjsmb_init_paints(void) {
-    Handle<FunctionTemplate> temp, meth;
-    Handle<ObjectTemplate> inst_temp;
-    Handle<ObjectTemplate> proto_temp;
-    
-    /*
-     * Base type of paint types.
-     */
-    temp = FunctionTemplate::New();
-    xnjsmb_paint_temp = Persistent<FunctionTemplate>::New(temp);
-    xnjsmb_paint_temp->SetClassName(String::New("paint"));
-    
-    meth = FunctionTemplate::New(xnjsmb_paint_fill);
-    proto_temp = xnjsmb_paint_temp->PrototypeTemplate();
-    SET(proto_temp, "fill", meth);
+xnjsmb_paint_recycle(Persistent<Value> obj, void *parameter) {
+    Persistent<Object> *paint_hdl = (Persistent<Object> *)parameter;
+    paint_t *paint;
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+    int r;
 
-    meth = FunctionTemplate::New(xnjsmb_paint_stroke);
-    proto_temp = xnjsmb_paint_temp->PrototypeTemplate();
-    SET(proto_temp, "stroke", meth);
+    paint = (paint_t *)UNWRAP(*paint_hdl);
+    rt = GET(*paint_hdl, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(rt);
 
-    /*
-     * Paint color
-     */
-    temp = FunctionTemplate::New(xnjsmb_paint_color);
-    xnjsmb_paint_color_temp = Persistent<FunctionTemplate>::New(temp);
-    xnjsmb_paint_color_temp->SetClassName(String::New("paint_color"));
-    xnjsmb_paint_color_temp->Inherit(xnjsmb_paint_temp);
-    
-    inst_temp = xnjsmb_paint_color_temp->InstanceTemplate();
-    inst_temp->SetInternalFieldCount(1);
+    r = rdman_paint_free(rdman, paint);
+    ASSERT(r == 0);
 
-    temp = FunctionTemplate::New(xnjsmb_paint_color_new);
-    xnjsmb_paint_color_new_temp = Persistent<FunctionTemplate>::New(temp);
+    paint_hdl->Dispose();
+    delete paint_hdl;
 }
 
+static void
+xnjsmb_paint_mod(Handle<Object> self, void *paint) {
+    Persistent<Object> *paint_hdl;
+
+    paint_hdl = new Persistent<Object>();
+    *paint_hdl = Persistent<Object>::New(self);
+
+    paint_hdl->MakeWeak(paint_hdl, xnjsmb_paint_recycle);
+}
+
+static void
+xnjsmb_paint_fill(paint_t *paint, Handle<Object> self, shape_t *sh) {
+    Handle<Value> rt_v;
+    Handle<Object> rt_o;
+    Handle<Object> sh_o;
+    redraw_man_t *rdman;
+
+    rt_v = GET(self, "mbrt");
+    rt_o = rt_v->ToObject();
+    rdman = xnjsmb_rt_rdman(rt_o);
+
+    rdman_paint_fill(rdman, paint, sh);
+
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+
+    sh_o = *(Persistent<Object> *)mb_prop_get(&sh->obj.props, PROP_JSOBJ);
+    SET(sh_o, "_fill_by", self);
+}
+
+static void
+xnjsmb_paint_stroke(paint_t *paint, Handle<Object> self, shape_t *sh) {
+    Handle<Value> rt_v;
+    Handle<Object> rt_o;
+    Handle<Object> sh_o;
+    redraw_man_t *rdman;
+
+    rt_v = GET(self, "mbrt");
+    rt_o = rt_v->ToObject();
+    rdman = xnjsmb_rt_rdman(rt_o);
+
+    rdman_paint_stroke(rdman, paint, sh);
+
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+
+    sh_o = *(Persistent<Object> *)mb_prop_get(&sh->obj.props, PROP_JSOBJ);
+    SET(sh_o, "_stroke_by", self);
+}
+
+static void
+xnjsmb_paint_color_set_color(paint_t *paint, Handle<Object> self,
+			     float r, float g, float b, float a) {
+    Handle<Value> rt_v;
+    Handle<Object> rt_o;
+    redraw_man_t *rdman;
+
+    rt_v = GET(self, "mbrt");
+    rt_o = rt_v->ToObject();
+    rdman = xnjsmb_rt_rdman(rt_o);
+
+    paint_color_set(paint, r, g, b, a);
+
+    rdman_paint_changed(rdman, paint);
+}
+
+/*! \brief Set stops for linear paint for Javascript code.
+ */
+static void
+xnjsmb_paint_linear_set_stops(paint_t *paint, Handle<Value> stops) {
+    Array *stops_o;
+    Array *stop_o;
+    int nstops;
+    grad_stop_t *grad_stops, *old_grad_stops;
+    int i;
+
+    stops_o = Array::Cast(*stops);
+    nstops = stops_o->Length();
+    grad_stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * nstops);
+    ASSERT(grad_stops != NULL);
+
+    for(i = 0; i < nstops; i++) {
+	stop_o = Array::Cast(*stops_o->Get(i));
+	ASSERT(stop_o->Length() == 5);
+	grad_stop_init(grad_stops + i,
+		       stop_o->Get(0)->ToNumber()->Value(),  /* off */
+		       stop_o->Get(1)->ToNumber()->Value(),  /* r */
+		       stop_o->Get(2)->ToNumber()->Value(),  /* g */
+		       stop_o->Get(3)->ToNumber()->Value(),  /* b */
+		       stop_o->Get(4)->ToNumber()->Value()); /* a */
+    }
+
+    old_grad_stops = paint_linear_stops(paint, nstops, grad_stops);
+    if(old_grad_stops)
+	free(old_grad_stops);	/* The stops, here, were allocated for
+				 * previous calling of this
+				 * function. */
+}
+
+/*! \brief Set stops for radial paint for Javascript code.
+ */
+static void
+xnjsmb_paint_radial_set_stops(paint_t *paint, Handle<Value> stops) {
+    Array *stops_o;
+    Array *stop_o;
+    int nstops;
+    grad_stop_t *grad_stops, *old_grad_stops;
+    int i;
+
+    stops_o = Array::Cast(*stops);
+    nstops = stops_o->Length();
+    grad_stops = (grad_stop_t *)malloc(sizeof(grad_stop_t) * nstops);
+    ASSERT(grad_stops != NULL);
+
+    for(i = 0; i < nstops; i++) {
+	stop_o = Array::Cast(*stops_o->Get(i));
+	ASSERT(stop_o->Length() == 5);
+	grad_stop_init(grad_stops + i,
+		       stop_o->Get(0)->ToNumber()->Value(),  /* off */
+		       stop_o->Get(1)->ToNumber()->Value(),  /* r */
+		       stop_o->Get(2)->ToNumber()->Value(),  /* g */
+		       stop_o->Get(3)->ToNumber()->Value(),  /* b */
+		       stop_o->Get(4)->ToNumber()->Value()); /* a */
+    }
+
+    old_grad_stops = paint_radial_stops(paint, nstops, grad_stops);
+    if(old_grad_stops)
+	free(old_grad_stops);	/* The stops, here, were allocated for
+				 * previous calling of this
+				 * function. */
+}
+
+#include "paints-inc.h"
+
+/*! \defgroup xnjsmb_paints_cons Constructor of paints
+ *
+ * @{
+ */
+paint_t *
+xnjsmb_paint_color_new(njs_runtime_t *rt,
+		       float r, float g, float b, float a,
+		       const char **err) {
+    paint_t *paint;
+    redraw_man_t *rdman;
+
+    rdman = njs_mb_rdman(rt);
+    paint = rdman_paint_color_new(rdman, r, g, b, a);
+    if(paint == NULL) {
+	*err = "can not allocate a paint_color_t";
+	return NULL;
+    }
+
+    return paint;
+}
+
+paint_t *
+xnjsmb_paint_image_new(njs_runtime_t *rt, mb_img_data_t *img,
+		       const char **err) {
+    paint_t *paint;
+    redraw_man_t *rdman;
+
+    rdman = njs_mb_rdman(rt);
+    paint = rdman_paint_image_new(rdman, img);
+    if(paint == NULL) {
+	*err = "can not allocate a paint_image_t";
+	return NULL;
+    }
+
+    return paint;
+}
+
+paint_t *
+xnjsmb_paint_linear_new(njs_runtime_t *rt,
+			float x1, float y1, float x2, float y2,
+			const char **err) {
+    paint_t *paint;
+    redraw_man_t *rdman;
+
+    rdman = njs_mb_rdman(rt);
+    paint = rdman_paint_linear_new(rdman, x1, y1, x2, y2);
+    if(paint == NULL) {
+	*err = "can not allocate a paint_linear_t";
+	return NULL;
+    }
+
+    return paint;
+}
+
+paint_t *
+xnjsmb_paint_radial_new(njs_runtime_t *rt,
+			float cx, float cy, float r,
+			const char **err) {
+    paint_t *paint;
+    redraw_man_t *rdman;
+
+    rdman = njs_mb_rdman(rt);
+    paint = rdman_paint_radial_new(rdman, cx, cy, r);
+    if(paint == NULL) {
+	*err = "can not allocate a paint_radial_t";
+	return NULL;
+    }
+
+    return paint;
+}
+
+/* @} */
+
+/*! \defgroup xnjsmb_paints_export Exported wrapper maker for paints
+ *
+ * These functions are used by MB runtime to wrap C paints to JS
+ * objects.
+ *
+ * @{
+ */
+Handle<Value>
+export_xnjsmb_auto_paint_color_new(paint_t *paint) {
+    Handle<Value> ret;
+
+    ret = xnjsmb_auto_paint_color_new(paint);
+
+    return ret;
+}
+
+Handle<Value>
+export_xnjsmb_auto_paint_image_new(paint_t *paint) {
+    Handle<Value> ret;
+
+    ret = xnjsmb_auto_paint_image_new(paint);
+
+    return ret;
+}
+
+Handle<Value>
+export_xnjsmb_auto_paint_linear_new(paint_t *paint) {
+    Handle<Value> ret;
+
+    ret = xnjsmb_auto_paint_linear_new(paint);
+
+    return ret;
+}
+
+Handle<Value>
+export_xnjsmb_auto_paint_radial_new(paint_t *paint) {
+    Handle<Value> ret;
+
+    ret = xnjsmb_auto_paint_radial_new(paint);
+
+    return ret;
+}
+/* @} */
+
+/*! \brief Initialize paints for mbfly.
+ *
+ * This function is called by init() in mbfly_njs.cc when the module
+ * being loaded.
+ */
 void xnjsmb_paints_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
     static int init_flag = 0;
     Handle<ObjectTemplate> rt_proto_temp;
 
     if(!init_flag) {
-	xnjsmb_init_paints();
+	xnjsmb_auto_paint_init();
+	xnjsmb_auto_paint_color_init();
+	xnjsmb_auto_paint_image_init();
+	xnjsmb_auto_paint_linear_init();
+	xnjsmb_auto_paint_radial_init();
+
 	init_flag = 1;
     }
-
-    rt_proto_temp = rt_temp->PrototypeTemplate();
-    SET(rt_proto_temp, "paint_color_new", xnjsmb_paint_color_new_temp);
 }
+
+/* @} */

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include "mb_graph_engine.h"
@@ -15,7 +17,7 @@ typedef struct _paint_color {
 int _paint_color_size = sizeof(paint_color_t);
 
 
-static void paint_color_prepare(paint_t *paint, mbe_t *cr) {
+static void paint_color_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_color_t *color = (paint_color_t *)paint;
 
     mbe_set_source_rgba(cr, color->r, color->g, color->b, color->a);
@@ -80,19 +82,29 @@ typedef struct _paint_linear {
 
 #define LIF_DIRTY 0x1
 
-static void paint_linear_prepare(paint_t *paint, mbe_t *cr) {
+int _paint_linear_size = sizeof(paint_linear_t);
+
+static void paint_linear_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_linear_t *linear = (paint_linear_t *)paint;
     mbe_pattern_t *ptn;
-    grad_stop_t *stop;
-    int i;
+    co_aix x1, y1;
+    co_aix x2, y2;
+    co_aix *mtx;
 
     ptn = linear->ptn;
     if(linear->flags & LIF_DIRTY) {
+	mtx = sh_get_aggr_matrix(sh);
+	x1 = linear->x1;
+	y1 = linear->y1;
+	matrix_trans_pos(mtx, &x1, &y1);
+	x2 = linear->x2;
+	y2 = linear->y2;
+	matrix_trans_pos(mtx, &x2, &y2);
+
 	if(ptn)
 	    mbe_pattern_destroy(ptn);
 	linear->flags &= ~LIF_DIRTY;
-	ptn = mbe_pattern_create_linear(linear->x1, linear->y1,
-					linear->x2, linear->y2,
+	ptn = mbe_pattern_create_linear(x1, y1, x2, y2,
 					linear->stops, linear->n_stops);
 	ASSERT(ptn != NULL);
 	linear->ptn = ptn;
@@ -107,7 +119,7 @@ static void paint_linear_free(redraw_man_t *rdman, paint_t *paint) {
     if(linear->ptn)
 	mbe_pattern_destroy(linear->ptn);
     paint_destroy(paint);
-    free(paint);
+    elmpool_elm_free(rdman->paint_linear_pool, linear);
 }
 
 paint_t *rdman_paint_linear_new(redraw_man_t *rdman,
@@ -115,7 +127,7 @@ paint_t *rdman_paint_linear_new(redraw_man_t *rdman,
 				co_aix x2, co_aix y2) {
     paint_linear_t *linear;
 
-    linear = (paint_linear_t *)malloc(sizeof(paint_linear_t));
+    linear = (paint_linear_t *)elmpool_elm_alloc(rdman->paint_linear_pool);
     if(linear == NULL)
 	return NULL;
 
@@ -145,7 +157,7 @@ grad_stop_t *paint_linear_stops(paint_t *paint,
 				grad_stop_t *stops) {
     paint_linear_t *linear = (paint_linear_t *)paint;
     grad_stop_t *old_stops;
-    
+
     old_stops = linear->stops;
     linear->n_stops = n_stops;
     linear->stops = stops;
@@ -170,14 +182,22 @@ typedef struct _paint_radial {
 
 #define RDF_DIRTY 0x1
 
-static void paint_radial_prepare(paint_t *paint, mbe_t *cr) {
+int _paint_radial_size = sizeof(paint_radial_t);
+
+static void paint_radial_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_radial_t *radial = (paint_radial_t *)paint;
     mbe_pattern_t *ptn;
-    int i;
+    co_aix cx, cy;
+    co_aix *mtx;
 
     if(radial->flags & RDF_DIRTY) {
-	ptn = mbe_pattern_create_radial(radial->cx, radial->cy, 0,
-					  radial->cx, radial->cy,
+	mtx = sh_get_aggr_matrix(sh);
+	cx = radial->cx;
+	cy = radial->cy;
+	matrix_trans_pos(mtx, &cx, &cy);
+	
+	ptn = mbe_pattern_create_radial(cx, cy, 0,
+					cx, cy,
 					radial->r,
 					radial->stops,
 					radial->n_stops);
@@ -194,14 +214,14 @@ static void paint_radial_free(redraw_man_t *rdman, paint_t *paint) {
     if(radial->ptn)
 	mbe_pattern_destroy(radial->ptn);
     paint_destroy(paint);
-    free(paint);
+    elmpool_elm_free(rdman->paint_radial_pool, radial);
 }
 
 paint_t *rdman_paint_radial_new(redraw_man_t *rdman,
 				co_aix cx, co_aix cy, co_aix r) {
     paint_radial_t *radial;
 
-    radial = O_ALLOC(paint_radial_t);
+    radial = elmpool_elm_alloc(rdman->paint_radial_pool);
     if(radial == NULL)
 	return NULL;
 
@@ -229,7 +249,7 @@ grad_stop_t *paint_radial_stops(paint_t *paint,
 				grad_stop_t *stops) {
     paint_radial_t *radial = (paint_radial_t *)paint;
     grad_stop_t *old_stops;
-    
+
     old_stops = radial->stops;
     radial->n_stops = n_stops;
     radial->stops = stops;
@@ -246,11 +266,14 @@ grad_stop_t *paint_radial_stops(paint_t *paint,
 typedef struct _paint_image {
     paint_t paint;
     mb_img_data_t *img;
+    mbe_surface_t *surf;
     mbe_pattern_t *ptn;
 } paint_image_t;
 
+int _paint_image_size = sizeof(paint_image_t);
+
 static
-void paint_image_prepare(paint_t *paint, mbe_t *cr) {
+void paint_image_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_image_t *paint_img = (paint_image_t *)paint;
     mb_img_data_t *img_data;
 
@@ -262,11 +285,12 @@ static
 void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     paint_image_t *paint_img = (paint_image_t *)paint;
     mb_img_data_t *img_data;
-    
+
+    mbe_surface_destroy(paint_img->surf);
     img_data = paint_img->img;
     MB_IMG_DATA_FREE(img_data);
     paint_destroy(&paint_img->paint);
-    free(paint);
+    elmpool_elm_free(rdman->paint_image_pool, paint_img);
 }
 
 /*! \brief Create an image painter.
@@ -280,18 +304,29 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
 			       mb_img_data_t *img) {
     paint_image_t *paint;
 
-    paint = O_ALLOC(paint_image_t);
+    paint = elmpool_elm_alloc(rdman->paint_image_pool);
     if(paint == NULL)
 	return NULL;
-    
+
     paint_init(&paint->paint, MBP_IMAGE,
 	       paint_image_prepare, paint_image_free);
     paint->img = img;
-    
-    paint->ptn = mbe_pattern_create_image(img);
+    paint->surf = mbe_image_surface_create_for_data(img->content,
+						      img->fmt,
+						      img->w,
+						      img->h,
+						      img->stride);
+    if(paint->surf == NULL) {
+	paint_destroy(&paint->paint);
+	elmpool_elm_free(rdman->paint_image_pool, paint);
+	return NULL;
+    }
+
+    paint->ptn = mbe_pattern_create_for_surface(paint->surf);
     if(paint->ptn == NULL) {
 	paint_destroy(&paint->paint);
-	free(paint);
+	mbe_surface_destroy(paint->surf);
+	elmpool_elm_free(rdman->paint_image_pool, paint);
 	return NULL;
     }
 
@@ -306,13 +341,13 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
  */
 void paint_image_set_matrix(paint_t *paint, co_aix matrix[6]) {
     paint_image_t *img_paint = (paint_image_t *)paint;
-    
+
     mbe_pattern_set_matrix(img_paint->ptn, matrix);
 }
 
 void paint_image_get_size(paint_t *paint, int *w, int *h) {
     paint_image_t *ipaint = (paint_image_t *)paint;
-    
+
     ASSERT(paint->pnt_type == MBP_IMAGE);
     *w = ipaint->img->w;
     *h = ipaint->img->h;

@@ -10,7 +10,7 @@
 
 typedef struct _engine engine_t;
 struct _engine {
-    X_MB_runtime_t *rt;
+    mb_rt_t *rt;
     redraw_man_t *rdman;
     menu_t *menu;
     int state;
@@ -21,12 +21,12 @@ struct _engine {
 engine_t *engine_init()
 {
 
-    X_MB_runtime_t *rt;
-    rt = X_MB_new(":0.0", 800, 600);
+    mb_rt_t *rt;
+    rt = mb_runtime_new(":0.0", 800, 600);
     engine_t *en = (engine_t *) malloc(sizeof(engine_t));
 
     en->rt = rt;
-    en->rdman =  X_MB_rdman(rt);
+    en->rdman =  mb_runtime_rdman(rt);
     en->state = 0;
     return en;
 }
@@ -36,13 +36,13 @@ void engine_close(engine_t *en)
      * Start handle connections, includes one to X server.
      * User start to interact with the application.
      */
-    X_MB_handle_connection(en->rt);
+    mb_runtime_event_loop(en->rt);
 
     /*
      * Clean
      */
     menu_free(en->menu);
-    X_MB_free(en->rt);
+    mb_runtime_free(en->rt);
     free(en);
 }
 #define COORD_SHOW(group) coord_show(group);rdman_coord_changed(X_MB_rdman(ex_rt->rt), group)

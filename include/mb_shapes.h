@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \file
  * \brief Declare interfaces of shapes.
  *
@@ -26,7 +28,7 @@
  *     - mb_obj_init() to initialize shape_t::obj.
  *   - assign *_free() to \ref shape_t::free.
  *   - make new object been managed by a redraw manager.
- *     - call rdman_shape_man()
+ *     - call rdman_man_shape()
  * - *_free()
  *   - assigned to \ref shape_t::free.
  * - *_transform()
@@ -34,7 +36,7 @@
  *   - *_draw() is responsive to define shape.  How the shape is filled
  *     or stroked is defined by paint.
  * - first member variable of a shape type must be a shape_t.
- * 
+ *
  * Must modify
  * - event.c::draw_shape_path()
  * - redraw_man.c::clean_shape()
@@ -48,14 +50,14 @@
  * update geo_t.
  *
  * \section rdman_man_shape Make a redraw manager managing a shape.
- * 
+ *
  * It means managing life cycle of a shape to make a redraw manager
  * managing a shape.  Shapes are referenced by a redraw manager to
  * update output device.  So, a redraw manager must make sure all
  * shapes are valid when they are needed to update output.  To make sure
  * lifecycle of shapes are synchronized with status of a redraw manager,
  * lifecycle of shapes are managed by associated redraw manager.
- * 
+ *
  */
 
 /*! \defgroup shapes Shapes
@@ -85,12 +87,12 @@ extern shape_t *rdman_shape_text_new(redraw_man_t *rdman,
 				     co_aix font_size,
 				     mbe_font_face_t *face,PangoAttrList *attrs);
 /*! \brief Change the content of the text element.
- *  In the SVG, the content of a text tag can be composed of several tspan inside it. The Madbutterfly parser will collect all content of a 
+ *  In the SVG, the content of a text tag can be composed of several tspan inside it. The Madbutterfly parser will collect all content of a
  *  text segement as a single string. The attribute of these characters are saved in a seperate data structure. In the program level, we will
- *  not keep the SVG text tree. Instead, all attributes will be expanded into a list. 
+ *  not keep the SVG text tree. Instead, all attributes will be expanded into a list.
  *
- *  When you change the content of a text element, please remember that the attributes will not be removed by the way. You need to change 
- *  them seperately. 
+ *  When you change the content of a text element, please remember that the attributes will not be removed by the way. You need to change
+ *  them seperately.
  *
  */
 extern void sh_text_set_text(shape_t *shape, const char *txt);
@@ -142,34 +144,34 @@ typedef struct {
 
 /*! \brief Change the style of the text.
  *
- *  This function can add a couple of attributes to a segment of text or the whole text field. If the @end is -1, the attributes 
+ *  This function can add a couple of attributes to a segment of text or the whole text field. If the @end is -1, the attributes
  *  will be applied to the whole text field. The @style should be initialized by using the mb_textstyle_xxx functions. All attributes
  *  which is not initialized will not be changed. It means that the @style will be added into all existing style instead of reaplcing
  *  it.
  */
 extern void sh_text_set_style(shape_t *shape,int begin,int end,mb_textstyle_t *format);
 /*! \brief Change the color of the text field
- *  Change the color of the whole text field. This will removed all existing color attribute. If you want to change part of the text 
+ *  Change the color of the whole text field. This will removed all existing color attribute. If you want to change part of the text
  *  field only, please use the sh_text_set_style instead.
  */
 extern void sh_text_set_color(shape_t *shape, unsigned color);
 /*! \brief Turn on/off the bold attribute.
- *  Turn on/off the font weight of the whole text field. This will removed all existing bold setting. If you want to change part of the text 
+ *  Turn on/off the font weight of the whole text field. This will removed all existing bold setting. If you want to change part of the text
  *  field only, please use the sh_text_set_style instead.
  */
 extern void sh_text_set_bold(shape_t *shape, int bold);
 /*! \brief Turn on/off the italic attribute.
- *  Turn on/off the italic of the whole text field. This will removed all existing italic setting. If you want to change part of the text 
+ *  Turn on/off the italic of the whole text field. This will removed all existing italic setting. If you want to change part of the text
  *  field only, please use the sh_text_set_style instead.
  */
 extern void sh_text_set_italic(shape_t *shape, int italic);
 /*! \brief Turn on/off the underline attribute.
- *  Turn on/off the underline of the whole text field. This will removed all existing underline setting. If you want to change part of the text 
+ *  Turn on/off the underline of the whole text field. This will removed all existing underline setting. If you want to change part of the text
  *  field only, please use the sh_text_set_style instead.
  */
 extern void sh_text_set_underline(shape_t *shape, int underline);
 /*! \brief Change the font of the text field.
- *  Change the font of the whole text field. This will removed all existing underline setting. If you want to change part of the text 
+ *  Change the font of the whole text field. This will removed all existing underline setting. If you want to change part of the text
  *  field only, please use the sh_text_set_style instead.
  */
 extern void sh_text_set_font(shape_t *shape, char *family);
@@ -195,7 +197,7 @@ static inline char *mb_textstyle_get_font(mb_textstyle_t *style)
         return NULL;
 }
 extern void mb_textstyle_set_bold(mb_textstyle_t *style, int bold);
-static inline int mb_textstyle_get_bold(mb_textstyle_t *style) 
+static inline int mb_textstyle_get_bold(mb_textstyle_t *style)
 {
     return style->property & TEXTSTYLE_BOLD;
 }

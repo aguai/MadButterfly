@@ -58,9 +58,9 @@ struct _tank_bullet {
     int direction;
     mb_progm_t *progm;
     mb_timeval_t start_time;
-    observer_t *ob_redraw;
-    mb_timer_t *hit_tmr;
-    mb_tman_t *tman;
+    observer_t *observer_redraw;
+    int hit_tmr;
+    mb_timer_man_t *timer_man;
 };
 typedef struct _tank_bullet tank_bullet_t;
 /*! \brief The direction a bullet is going.
@@ -106,7 +106,7 @@ struct _tank_rt {
     tank_t *tanks[12];
     int n_tanks;
     void *map[12][16];
-    X_MB_runtime_t *mb_rt;
+    mb_rt_t *mb_rt;
     observer_t *kb_observer;
 };
 
@@ -124,7 +124,7 @@ static tank_t *tank_new(coord_t *coord_pos,
     if(tank == NULL)
 	return NULL;
 
-    rdman = X_MB_rdman(tank_rt->mb_rt);
+    rdman = mb_runtime_rdman(tank_rt->mb_rt);
 
     tank->coord_pos = coord_pos;
     tank->coord_rot = coord_rot;
@@ -145,11 +145,8 @@ static tank_t *tank_new(coord_t *coord_pos,
     return tank;
 }
 
-static void tank_free(tank_t *tank, X_MB_runtime_t *xmb_rt) {
-    mb_tman_t *tman;
-
+static void tank_free(tank_t *tank, mb_rt_t *mb_rt) {
     if(tank->progm) {
-	tman = X_MB_tman(xmb_rt);
 	mb_progm_abort(tank->progm);
     }
     free(tank);
@@ -170,10 +167,10 @@ static void clean_tank_progm_handler(event_t *event, void *arg) {
 
 static void tank_move(tank_t *tank, int direction,
 		      tank_rt_t *tank_rt) {
-    X_MB_runtime_t *xmb_rt = tank_rt->mb_rt;
+    mb_rt_t *mb_rt = tank_rt->mb_rt;
     redraw_man_t *rdman;
-    mb_tman_t *tman;
-    ob_factory_t *factory;
+    mb_timer_man_t *timer_man;
+    observer_factory_t *factory;
     /* for the program */
     mb_progm_t *progm;
     subject_t *comp_sub;
@@ -239,9 +236,9 @@ static void tank_move(tank_t *tank, int direction,
 	}
     }
 
-    rdman = X_MB_rdman(xmb_rt);
-    tman = X_MB_tman(xmb_rt);
-    factory = X_MB_ob_factory(xmb_rt);
+    rdman = mb_runtime_rdman(mb_rt);
+    timer_man = mb_runtime_timer_man(mb_rt);
+    factory = mb_runtime_observer_factory(mb_rt);
 
     progm = mb_progm_new(1, rdman);
     tank->progm = progm;
@@ -269,7 +266,7 @@ static void tank_move(tank_t *tank, int direction,
     subject_add_observer(comp_sub, clean_tank_progm_handler, tank);
 
     get_now(&now);
-    mb_progm_start(progm, tman, &now);
+    mb_progm_start(progm, timer_man, &now);
 }
 
 /* @} */
@@ -310,6 +307,7 @@ static tank_bullet_t *tank_bullet_new(redraw_man_t *rdman,
 
     bullet = O_ALLOC(tank_bullet_t);
     bullet->rdman = rdman;
+    bullet->hit_tmr = -1;
 
     make_bullet_elf_coords(rdman, &bullet->coord_pos,
 			   &bullet->coord_rot,
@@ -338,6 +336,8 @@ static tank_bullet_t *tank_bullet_new(redraw_man_t *rdman,
 }
 
 static void tank_bullet_free(tank_bullet_t *bullet) {
+    if(bullet->hit_tmr != -1)
+	mb_timer_man_remove(bullet->timer_man, bullet->hit_tmr);
     bullet_free(bullet->bullet_obj);
     rdman_coord_subtree_free(bullet->rdman, bullet->coord_pos);
 }
@@ -350,8 +350,10 @@ static void bullet_go_out_map(event_t *event, void *arg) {
     bullet = tank->bullet;
     rdman = bullet->rdman;
 
-    if(bullet->hit_tmr != NULL)
-	mb_tman_remove(bullet->tman, bullet->hit_tmr);
+    if(bullet->hit_tmr != -1) {
+	mb_timer_man_remove(bullet->timer_man, bullet->hit_tmr);
+	bullet->hit_tmr = -1;
+    }
 
     coord_hide(bullet->coord_pos);
     rdman_coord_changed(rdman, bullet->coord_pos);
@@ -364,7 +366,7 @@ static void bullet_go_out_map(event_t *event, void *arg) {
 
 static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
     redraw_man_t *rdman;
-    mb_tman_t *tman;
+    mb_timer_man_t *timer_man;
     mb_progm_t *progm;
     mb_word_t *word;
     mb_timeval_t start, playing;
@@ -373,7 +375,7 @@ static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
     co_aix *matrix;
 
     rdman = bullet->rdman;
-    tman = bullet->tman;
+    timer_man = bullet->timer_man;
 
     bang = bang_new(rdman, rdman->root_coord);
     matrix = bang->root_coord->matrix;
@@ -401,11 +403,12 @@ static void bullet_bang(tank_bullet_t *bullet, int map_x, int map_y) {
     mb_progm_free_completed(progm);
 
     get_now(&now);
-    mb_progm_start(progm, tman, &now);
+    mb_progm_start(progm, timer_man, &now);
 }
 
 /*! \brief To check if a bullet hits walls or tanks. */
-static void bullet_hit_chk(const mb_timeval_t *tmo,
+static void bullet_hit_chk(int hdl,
+			   const mb_timeval_t *tmo,
 			   const mb_timeval_t *now,
 			   void *arg) {
     tank_t *tank = (tank_t *)arg;
@@ -422,9 +425,9 @@ static void bullet_hit_chk(const mb_timeval_t *tmo,
     static int move_adj[][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
     bullet = tank->bullet;
-    bullet->hit_tmr = NULL;	/* clear hit timer that bullet_go_out_map()
-				 * can not remove it & currupt memory.
-				 */
+    bullet->hit_tmr = -1;  /* clear hit timer that bullet_go_out_map()
+			    * can not remove it & currupt memory.
+			    */
 
     MB_TIMEVAL_CP(&diff, now);
     MB_TIMEVAL_DIFF(&diff, &bullet->start_time);
@@ -480,13 +483,13 @@ static void bullet_hit_chk(const mb_timeval_t *tmo,
 
     MB_TIMEVAL_SET(&next, 0, 100000);
     MB_TIMEVAL_ADD(&next, now);
-    bullet->hit_tmr = mb_tman_timeout(bullet->tman, &next,
-				      bullet_hit_chk, arg);
+    bullet->hit_tmr = mb_timer_man_timeout(bullet->timer_man, &next,
+					   bullet_hit_chk, arg);
 }
 
 /*! \brief To fire a bullet for a tank. */
 static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
-    X_MB_runtime_t *xmb_rt;
+    mb_rt_t *mb_rt;
     redraw_man_t *rdman;
     int map_x, map_y;
     int shift_x, shift_y;
@@ -498,16 +501,16 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     mb_action_t *act;
     mb_timeval_t start, playing;
     mb_timeval_t now, next;
-    mb_tman_t *tman;
+    mb_timer_man_t *timer_man;
     subject_t *subject;
     static int map_xy_adj[][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
     if(tank->bullet != NULL)
 	return;
 
-    xmb_rt = tank_rt->mb_rt;
-    rdman = X_MB_rdman(xmb_rt);
-    tman = X_MB_tman(xmb_rt);
+    mb_rt = tank_rt->mb_rt;
+    rdman = mb_runtime_rdman(mb_rt);
+    timer_man = mb_runtime_timer_man(mb_rt);
 
     dir = tank->direction;
     map_x = tank->map_x + map_xy_adj[dir][0];
@@ -540,7 +543,7 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
 
     tank->bullet = tank_bullet_new(rdman, map_x, map_y, dir);
     bullet = tank->bullet;
-    bullet->tman = tman;
+    bullet->timer_man = timer_man;
 
     progm = mb_progm_new(2, rdman);
     MB_TIMEVAL_SET(&start, 0, 0);
@@ -555,11 +558,12 @@ static void tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
 
     get_now(&now);
     MB_TIMEVAL_CP(&bullet->start_time, &now);
-    mb_progm_start(progm, tman, &now);
+    mb_progm_start(progm, timer_man, &now);
 
     MB_TIMEVAL_SET(&next, 0, 100000);
     MB_TIMEVAL_ADD(&next, &now);
-    bullet->hit_tmr = mb_tman_timeout(tman, &next, bullet_hit_chk, tank);
+    bullet->hit_tmr = mb_timer_man_timeout(timer_man, &next,
+					   bullet_hit_chk, tank);
 }
 
 /* @} */
@@ -615,14 +619,14 @@ static void keyboard_handler(event_t *event, void *arg) {
 }
 
 static void init_keyboard(tank_rt_t *tank_rt) {
-    X_MB_runtime_t *mb_rt;
+    mb_rt_t *mb_rt;
     subject_t *kbevents;
     redraw_man_t *rdman;
 
     mb_rt = tank_rt->mb_rt;
-    kbevents = X_MB_kbevents(mb_rt);
+    kbevents = mb_runtime_kbevents(mb_rt);
 
-    rdman = X_MB_rdman(mb_rt);
+    rdman = mb_runtime_rdman(mb_rt);
 
     tank_rt->kb_observer =
 	subject_add_observer(kbevents, keyboard_handler, tank_rt);
@@ -654,7 +658,7 @@ static void make_elf_coords(redraw_man_t *rdman, coord_t **coord_pos,
 }
 
 void
-initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
+initial_tank(tank_rt_t *tank_rt, mb_rt_t *mb_rt) {
     redraw_man_t *rdman;
     /* for map areas */
     mud_t *mud;
@@ -668,7 +672,7 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
     tank_en_t *tank_en_o;
     int i, j;
 
-    rdman = X_MB_rdman(mb_rt);
+    rdman = mb_runtime_rdman(mb_rt);
 
     tank_rt->mb_rt = mb_rt;
     for(i = 0; i < 12; i++) {
@@ -727,16 +731,16 @@ initial_tank(tank_rt_t *tank_rt, X_MB_runtime_t *mb_rt) {
 
 int
 main(int argc, char *const argv[]) {
-    X_MB_runtime_t *rt;
+    mb_rt_t *rt;
     tank_rt_t tank_rt;
 
-    rt = X_MB_new(":0.0", 800, 600);
+    rt = mb_runtime_new(":0.0", 800, 600);
 
     initial_tank(&tank_rt, rt);
     
-    X_MB_handle_connection(rt);
+    mb_runtime_event_loop(rt);
 
-    X_MB_free(rt);
+    mb_runtime_free(rt);
 }
 
 /* @} */

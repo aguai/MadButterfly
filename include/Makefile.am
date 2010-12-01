@@ -1,3 +1,5 @@
+# -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+# vim: sw=4:ts=8:sts=4
 include_HEADERS = 	\
 	mb_config.h	\
 	mb_animate.h 	\
@@ -10,9 +12,16 @@ include_HEADERS = 	\
 	mb_shapes.h	\
 	mb_tools.h	\
 	mb_prop.h	\
-	mb_X_supp.h	\
 	mb_img_ldr.h    \
 	mb_af.h         \
 	mb_ani_menu.h \
 	mbbutton.h      \
 	mb_so.h
+
+if X_BACKEND
+include_HEADERS += mb_X_supp.h
+endif
+
+if DFB_BACKEND
+include_HEADERS += mb_dfb_supp.h
+endif

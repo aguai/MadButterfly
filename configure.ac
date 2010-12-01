@@ -26,6 +26,12 @@ AC_STRUCT_TM
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 
+# Explicit initialize pkg-config for conditional PKG_CHECK_MODULE
+# see http://www.flameeyes.eu/autotools-mythbuster/autoconf/macros.html
+# and http://www.flameeyes.eu/autotools-mythbuster/ \
+#		pkgconfig/pkg_check_modules.html
+PKG_PROG_PKG_CONFIG
+
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
@@ -33,32 +39,35 @@ AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_FUNCS([gettimeofday memset select sqrt strdup])
 
 AC_ARG_ENABLE([testcase],
-	[  --enable-testcase	Enable testcase],
-[case "${enableval}" in
-  yes) testcase=true ;;
-  no) testcase=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-testcase]) ;;
-esac],[testcase=false])
+        [AS_HELP_STRING([--enable-testcase],[Enable testcase])],
+        [case "${enableval}" in
+            (yes) testcase=true ;;
+            (no) testcase=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --enable-testcase]) ;;
+        esac],[testcase=false])
+
 AM_CONDITIONAL([TESTCASE], [test x$testcase = xtrue])
 
 AC_ARG_ENABLE([sh_text],
-	[  --disable-sh_text	Turn off sh_text],
-[case "${enableval}" in
-  yes) sh_text=true ;;
-  no) sh_text=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_text]) ;;
-esac],[sh_text=true])
+        [AS_HELP_STRING([--disable-sh_text],[Turn off sh_text])],
+        [case "${enableval}" in
+            (yes) sh_text=true ;;
+            (no) sh_text=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_text]) ;;
+        esac],[sh_text=true])
 
 AC_ARG_ENABLE([sh_stext],
-	[  --disable-sh_stext	Turn off sh_stext],
-[case "${enableval}" in
-  yes) sh_stext=true ;;
-  no) sh_stext=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_stext]) ;;
-esac],[sh_stext=true])
+        [AS_HELP_STRING([--disable-sh_stext],[Turn off sh_stext])],
+        [case "${enableval}" in
+            (yes) sh_stext=true ;;
+            (no) sh_stext=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --disable-sh_stext]) ;;
+        esac],[sh_stext=true])
+
 AM_CONDITIONAL([SH_STEXT], [test x$sh_stext = xtrue])
+
 [if [ x"${sh_stext}" = xtrue ]; then]
-AC_DEFINE([SH_STEXT])
+    AC_DEFINE([SH_STEXT])
 [fi]
 
 AC_ARG_ENABLE([mbaf],
@@ -69,109 +78,174 @@ AC_ARG_ENABLE([mbaf],
   *) AC_MSG_ERROR([bad value ${enableval} for --disable-mbaf]) ;;
 esac],[mbaf=true])
 
-AC_ARG_ENABLE([X_supp],
-	[  --disable-X_supp	Turn off X backend],
-[case "${enableval}" in
-  yes) X_supp=true ;;
-  no) X_supp=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --disable-X_supp]) ;;
-esac],[X_supp=true])
+AC_ARG_WITH([backend],
+        [AS_HELP_STRING([--with-backend=FOO],[Use FOO as display backend (default is 'X')])],
+        [case "${withval}" in
+            ('X') backend='X'; default_graphic_engine="cairo" ;;
+            ('dfb') backend='dfb'; default_graphic_engine="dfb" ;;
+            ('no') backend='none'; default_graphic_engine="cairo" ;;
+            (*) AC_MSG_ERROR([bad value ${withval} for --with-backend]) ;;
+        esac],[backend='X'; default_graphic_engine="cairo"])
 
-AC_ARG_ENABLE([skia],
-	[  --enable-skia	Turn on Skia instead of Cairo],
-[case "${enableval}" in
-  yes) skia=true ;;
-  no) skia=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-skia]) ;;
-esac],[skia=false])
+AC_ARG_WITH([graphic-engine],
+	[AS_HELP_STRING([--with-graphic-engine=FOO],
+			[Use FOO as graphic engine (default is '${default_graphic_engine}')])],
+	[case "${withval}" in
+	    ('cairo') graphic_engine="cairo" ;;
+	    ('skia') graphic_engine="skia" ;;
+	    ('openvg') graphic_engine="openvg" ;;
+	    ('dfb') graphic_engine="dfb" ;;
+	    (*) AC_MSG_ERROR([bad value ${withval} for --with-graphic-engine])
+	    	;;
+	esac], [graphic_engine="${default_graphic_engine}"])
 
-AC_ARG_ENABLE([openvg],
-	[  --enable-openvg	Turn on OpenVG instead of Cairo or Skia],
-[case "${enableval}" in
-  yes) openvg=true ;;
-  no) openvg=false ;;
-  *)  AC_MSG_ERROR([bad value ${enableval} for --enable-openvg]) ;;
-esac],[openvg=false])
+AC_ARG_WITH([image-loader],
+	[AS_HELP_STRING([--with-image-loader=FOO],
+			[Use FOO as image loader (default is 'cairo')])],
+	[case "${withval}" in
+	    ('cairo') image_loader="cairo" ;;
+	    ('imlib2') image_loader="imlib2" ;;
+	    ('no') image_loader="none" ;;
+	    (*) AC_MSG_ERROR([bad value ${withval} for --with-image-loader])
+	    	;;
+	esac], [image_loader="cairo"])
 
-[if [ x"$skia-%openvg" = xtrue-true ]; then]
-   AC_MSG_ERROR([confliction on --enable-skia and --enable-openvg])
+xshm=false
+[if [ x"${backend}" = x"X" ]; then ]
+AC_ARG_ENABLE([xshm],
+	[AS_HELP_STRING([--disable-xshm],[Turn off XSHM supporting])],
+	[case "${enableval}" in
+	    (yes) xshm=true ;;
+	    (no) xshm=false ;;
+	    (*) AC_MSG_ERROR([bad value ${enableval} for --disable-xshm]) ;;
+	esac], [xshm=true])
 [fi]
 
-[if [ x"${skia}" = xtrue ]; then ]
-AC_DEFINE([SKIA_GRAPH_ENGINE])
-cairo=false
-[elif [ x"${openvg}" = xtrue ]; then ]
-AC_DEFINE([OPENVG_GRAPH_ENGINE])
-cairo=false
-mbaf=false
+[if [ x"${graphic_engine}" = x"skia" ]; then ]
+    AC_DEFINE([SKIA_GRAPH_ENGINE])
+[elif [ x"${graphic_engine}" = x"openvg" ]; then ]
+    AC_DEFINE([OPENVG_GRAPH_ENGINE])
+[elif [ x"${graphic_engine}" = x"dfb" ]; then ]
+    AC_DEFINE([DFB_GRAPH_ENGINE])
 [else]
-AC_DEFINE([CAIRO_GRAPH_ENGINE])
-cairo=true
+    AC_DEFINE([CAIRO_GRAPH_ENGINE])
 [fi]
 
-AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x$skia = xtrue])
-AM_CONDITIONAL([OPENVG_GRAPH_ENGINE], [test x$openvg = xtrue])
-AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x"$cairo" = xtrue])
+AM_CONDITIONAL([SKIA_GRAPH_ENGINE], [test x"${graphic_engine}" = x"skia"])
+AM_CONDITIONAL([OPENVG_GRAPH_ENGINE], [test x"${graphic_engine}" = x"openvg"])
+AM_CONDITIONAL([DFB_GRAPH_ENGINE], [test x"${graphic_engine}" = x"dfb"])
+AM_CONDITIONAL([CAIRO_GRAPH_ENGINE], [test x"${graphic_engine}" = x"cairo"])
 AM_CONDITIONAL([MBAF], [test x"$mbaf" = xtrue])
 
 AC_ARG_ENABLE([nodejs],
-	[  --enable-nodejs	Turn on nodejs support],
-[case "${enableval}" in
-  yes) nodejs=true ;;
-  no) nodejs=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-nodejs]) ;;
-esac],[nodejs=false])
+        [AS_HELP_STRING([--enable-nodejs],[Turn on nodejs support])],
+        [case "${enableval}" in
+            (yes) nodejs=true ;;
+            (no) nodejs=false ;;
+            (*) AC_MSG_ERROR([bad value ${enableval} for --enable-nodejs]) ;;
+        esac],[nodejs=false])
+
 [if [ x"${nodejs}" = xtrue ]; then ]
-  AC_PATH_PROG([NODE_WAF], [node-waf])
-  AC_CHECK_PROG([has_node], [node], [true], [false])
+    AC_PATH_PROG([NODE_WAF], [node-waf])
+    AC_CHECK_PROG([has_node], [node], [true], [false])
 [fi]
+
 AM_CONDITIONAL([NODEJS], [test x"${nodejs}-${has_node}" = xtrue-true])
 
 # Define AM and AC variable for sh_text
-AM_CONDITIONAL([SH_TEXT], [test x$sh_text = xtrue -a x$cairo = xtrue])
-[if [ x"${sh_text}" = xtrue -a x$cairo = xtrue ]; then]
-AC_DEFINE([SH_TEXT])
+
+AM_CONDITIONAL([SH_TEXT],
+	[test x$sh_text = xtrue -a x"${graphic_engine}" = x"cairo"])
+
+[if [ x"${sh_text}" = xtrue -a x"${graphic_engine}" = x"cairo" ]; then]
+    AC_DEFINE([SH_TEXT])
 [fi]
 
-# Define AM and AC variable for X_supp
-AM_CONDITIONAL([X_SUPP],
-	 [test x$X_supp = xtrue -a \( x$cairo = xtrue -o x$openvg = xtrue \)])
-[if [ x"${X_supp}" = xtrue -a \( x"${cairo}" = xtrue -o x"${openvg}" = xtrue \) ]; then]
-AC_DEFINE([X_SUPP])
+# Define AM and AC variable for display backend
+
+AM_CONDITIONAL([X_BACKEND],
+	[test x$backend = x'X' -a x"${graphic_engine}" = x"cairo"])
+
+[if [ x"${backend}" = x'X' -a x"${graphic_engine}" = x"cairo" ]; then]
+    AC_DEFINE([X_BACKEND])
+[fi]
+
+AM_CONDITIONAL([DFB_BACKEND],
+	[test x$backend = x'dfb' -a x"${graphic_engine}" = x"cairo"])
+
+[if [ x"${backend}" = x'dfb' -a x"${graphic_engine}" = x"cairo" ]; then]
+    AC_DEFINE([DFB_BACKEND])
+[fi]
+
+AM_CONDITIONAL([CAIRO_IMG_LOADER],
+	[test x"${image_loader}" = x"cairo"])
+
+[if [ x"${image_loader}" = x"cairo" ]; then]
+    AC_DEFINE([CAIRO_IMG_LOADER])
+    [if [ x"${graphic_engine}" != x"cairo" ]; then]
+        AC_MSG_ERROR([bad value cairo for --with-image-loader while value of --with-graphic-engine is not cairo])
+    [fi]
+[fi]
+
+AM_CONDITIONAL([IMLIB2_IMG_LOADER],
+	[test x"${image_loader}" = x"imlib2"])
+
+[if [ x"${image_loader}" = x"imlib2" ]; then]
+    AC_DEFINE([IMLIB2_IMG_LOADER])
+[fi]
+
+AM_CONDITIONAL([XSHM],
+	[test x"${xshm}" = xtrue -a x"${graphic_engine}" = x"cairo" -a x$backend = x'X'])
+
+[if [ x"${xshm}" = xtrue -a x"${graphic_engine}" = x"cairo" -a x$backend = x'X' ]; then]
+    AC_DEFINE([XSHM])
 [fi]
 
 # Checks for libraries.
-[if [ x"${openvg}" = xtrue ]; then]
+[if [ x"${graphic_engine}" = x"openvg" ]; then]
 AC_CHECK_HEADERS([GL/glut.h],, [AC_MSG_ERROR([can not find GL/glut.h])])
 [fi]
 
+[if [ x"${image_loader}" = x"imlib2" ]; then]
 PKG_CHECK_MODULES([imlib2], [imlib2 >= 1.4.1], , AC_MSG_ERROR([imlib2 >= 1.4.1 not found]))
-[if [ x"${cairo}" = xtrue ]; then]
-PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
-PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found]))
 [fi]
 
-AC_CONFIG_FILES([Makefile
-                 libmbfly.pc
-                 libmbfly-uninstalled.pc
-                 examples/Makefile
-                 examples/calculator/Makefile
-                 examples/svg2code_ex/Makefile
-                 examples/tank/Makefile
-                 examples/drag/Makefile
-		 examples/dynamic/Makefile
-                 examples/menu/Makefile
-                 src/Makefile
-                 include/Makefile
-                 inkscape/Makefile
-		 nodejs/Makefile
-                 tools/Makefile])
+[if [ x"${graphic_engine}" = x"cairo" ]; then]
+    PKG_CHECK_MODULES([cairo], [cairo >= 1.6], , AC_MSG_ERROR([cairo >= 1.6 not found]))
+    #PKG_CHECK_MODULES([cairo2], [cairo2 >= 2.0], , AC_MSG_ERROR([cairo2 >= 2.0 not found]))
+    [if [ x"${sh_text}" = xtrue ]; then]
+        PKG_CHECK_MODULES([pangocairo], [pangocairo >= 1.0], , AC_MSG_ERROR([pangocairo >= 1.0 not found: use --disable-sh_text to configure without pangocairo.]))
+    [fi]
+[fi]
+
+AC_CONFIG_FILES([
+        Makefile
+        libmbfly.pc
+        libmbfly-uninstalled.pc
+        examples/Makefile
+        examples/calculator/Makefile
+        examples/svg2code_ex/Makefile
+        examples/tank/Makefile
+        examples/drag/Makefile
+        examples/dynamic/Makefile
+        examples/menu/Makefile
+        src/Makefile
+        include/Makefile
+        inkscape/Makefile
+        nodejs/Makefile
+        tools/Makefile
+        ])
 
 AH_TEMPLATE([SH_TEXT],[Enable sh_text object])
 AH_TEMPLATE([SH_STEXT],[Enable sh_stext object])
 AH_TEMPLATE([SKIA_GRAPH_ENGINE], [Enable Skia Graphic Engine])
 AH_TEMPLATE([OPENVG_GRAPH_ENGINE], [Enable OpenVG Graphic Engine])
 AH_TEMPLATE([CAIRO_GRAPH_ENGINE], [Enable Cairo Graphic Engine])
-AH_TEMPLATE([X_SUPP], [Enable X backend])
+AH_TEMPLATE([DFB_GRAPH_ENGINE], [Enable DirectFB Graphic Engine])
+AH_TEMPLATE([CAIRO_IMG_LOADER], [Enable Cairo Image Loader])
+AH_TEMPLATE([IMLIB2_IMG_LOADER], [Enable Imlib2 Image Loader])
+AH_TEMPLATE([X_BACKEND], [Enable X backend])
+AH_TEMPLATE([DFB_BACKEND], [Enable DirectFB backend])
+AH_TEMPLATE([XSHM], [Enable XSHM])
 
 AC_OUTPUT

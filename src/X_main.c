@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -13,6 +15,7 @@
 #include "mb_paint.h"
 #include "mb_timer.h"
 #include "mb_animate.h"
+#include "mb_backend_utils.h"
 
 #define OK 0
 #define ERR -1
@@ -67,14 +70,17 @@ void event_interaction(Display *display,
     XFlush(display);
 }
 
-void handle_connection(Display *display, mb_tman_t *tman,
+void handle_connection(Display *display, mb_timer_man_t *timer_man,
 		       redraw_man_t *rdman, int w, int h) {
     int xcon;
     fd_set rds;
     int nfds;
     struct timeval tmo;
     mb_timeval_t mb_tmo, next_mb_tmo;
+    mb_tman_t *tman;
     int r;
+
+    tman = tman_timer_man_get_tman(timer_man);
 
     XSelectInput(display, win, PointerMotionMask | ExposureMask);
     XFlush(display);
@@ -134,7 +140,7 @@ void draw_path(mbe_t *cr, int w, int h) {
     grad_stop_t fill3_stops[3];
     mbe_font_face_t *face;
     struct timeval tv;
-    mb_tman_t *tman;
+    mb_timer_man_t *timer_man;
     mb_timeval_t mbtv, start, playing;
     mb_progm_t *progm;
     mb_word_t *word;
@@ -191,7 +197,7 @@ void draw_path(mbe_t *cr, int w, int h) {
     rdman_add_shape(&rdman, (shape_t *)path1, coord1);
     rdman_add_shape(&rdman, (shape_t *)path2, coord2);
 
-    
+
     fill3 = rdman_paint_linear_new(&rdman, 50, 50, 150, 150);
     grad_stop_init(fill3_stops, 0, 1, 0, 0, 0.5);
     grad_stop_init(fill3_stops + 1, 0.5, 0, 1, 0, 0.5);
@@ -205,11 +211,11 @@ void draw_path(mbe_t *cr, int w, int h) {
 
     XFlush(display);
 
-    tman = mb_tman_new();
-    if(tman) {
+    timer_man = mb_timer_man_new(&tman_timer_factory);
+    if(timer_man) {
 	/* Prepare an animation program. */
-	progm = mb_progm_new(10, &rdman);
-	
+	progm = mb_progm_new(30, &rdman);
+
 	MB_TIMEVAL_SET(&start, 0, 0);
 	MB_TIMEVAL_SET(&playing, 1, 0);
 	word = mb_progm_next_word(progm, &start, &playing);
@@ -224,7 +230,7 @@ void draw_path(mbe_t *cr, int w, int h) {
 	act = mb_shift_new(0, 20, coord1, word);
 	act = mb_shift_new(0, -20, coord2, word);
 	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
-	
+
 	MB_TIMEVAL_SET(&start, 3, 0);
 	MB_TIMEVAL_SET(&playing, 2, 0);
 	word = mb_progm_next_word(progm, &start, &playing);
@@ -234,16 +240,176 @@ void draw_path(mbe_t *cr, int w, int h) {
 	act = mb_chgcolor_new(0, 0, 1, 0.5, fill1, word);
 	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
 	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
-	
+
+	MB_TIMEVAL_SET(&start, 5, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill1, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 7, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 9, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 11, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 13, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 15, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 17, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 19, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 21, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 23, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 25, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 27, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 29, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 31, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 33, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, 20, coord1, word);
+	act = mb_shift_new(0, -20, coord2, word);
+	act = mb_chgcolor_new(0, 0, 1, 1, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 1, fill2, word);
+	act = mb_visibility_new(VIS_HIDDEN, coord3, word);
+
+	MB_TIMEVAL_SET(&start, 35, 0);
+	MB_TIMEVAL_SET(&playing, 2, 0);
+	word = mb_progm_next_word(progm, &start, &playing);
+
+	act = mb_shift_new(0, -20, coord1, word);
+	act = mb_shift_new(0, 20, coord2, word);
+	act = mb_chgcolor_new(0, 1, 0, 0.5, fill1, word);
+	act = mb_chgcolor_new(1, 0, 0, 0.5, fill2, word);
+	act = mb_visibility_new(VIS_VISIBLE, coord3, word);
+
 	/* Start playing the program. */
 	gettimeofday(&tv, NULL);
 	MB_TIMEVAL_SET(&mbtv, tv.tv_sec, tv.tv_usec);
-	mb_progm_start(progm, tman, &mbtv);
+	mb_progm_start(progm, timer_man, &mbtv);
 
-	handle_connection(display, tman, &rdman, w, h);
+	handle_connection(display, timer_man, &rdman, w, h);
 
 	mb_progm_free(progm);
-	mb_tman_free(tman);
+	mb_timer_man_free(&tman_timer_factory, timer_man);
     }
 
     rdman_paint_free(&rdman, fill1);

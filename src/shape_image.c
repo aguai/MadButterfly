@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <string.h>
 #include "mb_graph_engine.h"
@@ -53,11 +55,11 @@
  */
 typedef struct _sh_image {
     shape_t shape;
-    
+
     co_aix x, y;
     co_aix w, h;
     co_aix poses[4][2];
-    
+
     redraw_man_t *rdman;
 } sh_image_t;
 
@@ -70,8 +72,6 @@ static void sh_image_free(shape_t *shape);
 shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 			       co_aix x, co_aix y, co_aix w, co_aix h) {
     sh_image_t *img;
-    mb_img_fmt_t fmt;
-    int r;
 
     img = O_ALLOC(sh_image_t);
     if(img == NULL)
@@ -86,7 +86,9 @@ shape_t *rdman_shape_image_new(redraw_man_t *rdman,
     img->y = y;
     img->w = w;
     img->h = h;
-    
+
+    rdman_man_shape(rdman, (shape_t *)img);
+
     return (shape_t *)img;
 }
 
@@ -102,10 +104,11 @@ void sh_image_transform(shape_t *shape) {
     paint_t *paint;
     co_aix (*poses)[2];
     co_aix img_matrix[6];
+    co_aix rev_matrix[6];
     co_aix x_factor, y_factor;
     int img_w, img_h;
     int i;
-    
+
     poses = img->poses;
     poses[0][0] = img->x;
     poses[0][1] = img->y;
@@ -117,7 +120,7 @@ void sh_image_transform(shape_t *shape) {
     poses[3][1] = img->y + img->h;
     for(i = 0; i < 4; i++)
 	coord_trans_pos(img->shape.coord, &poses[i][0], &poses[i][1]);
-    
+
     geo_from_positions(sh_get_geo(shape), 4, poses);
 
     paint = sh_get_fill(shape);
@@ -125,29 +128,28 @@ void sh_image_transform(shape_t *shape) {
 	return;
 
     ASSERT(paint.pnt_type == MBP_IMAGE);
-    
+
     paint_image_get_size(paint, &img_w, &img_h);
-    
-    /* Transformation from user space to image space */
+
+    /* Transformation from image space to user space */
     img_matrix[0] = (poses[1][0] - poses[0][0]) / img->w;
-    img_matrix[1] = (poses[1][1] - poses[0][1]) / img->w;
-    img_matrix[2] = -poses[0][0];
-    img_matrix[3] = (poses[3][0] - poses[0][0]) / img->h;
+    img_matrix[1] = (poses[3][0] - poses[3][0]) / img->h;
+    img_matrix[2] = poses[0][0];
+    img_matrix[3] = (poses[1][1] - poses[0][1]) / img->w;
     img_matrix[4] = (poses[3][1] - poses[0][1]) / img->h;
-    img_matrix[5] = -poses[0][1];
+    img_matrix[5] = poses[0][1];
     if(img->w != img_w ||
        img->h != img_h) {
 	/* Resize image */
-	x_factor = img_w / img->w;
+	x_factor = img->w / img_w;
 	img_matrix[0] *= x_factor;
 	img_matrix[1] *= x_factor;
-	img_matrix[2] *= x_factor;
-	y_factor = img_h / img->h;
+	y_factor = img->h / img_h;
 	img_matrix[3] *= y_factor;
 	img_matrix[4] *= y_factor;
-	img_matrix[5] *= y_factor;
     }
-    paint_image_set_matrix(sh_get_fill(shape), img_matrix);
+    compute_reverse(img_matrix, rev_matrix);
+    paint_image_set_matrix(sh_get_fill(shape), rev_matrix);
 }
 
 /*! \brief Draw image for an image shape.
@@ -156,9 +158,7 @@ void sh_image_transform(shape_t *shape) {
  */
 void sh_image_draw(shape_t *shape, mbe_t *cr) {
     sh_image_t *img = (sh_image_t *)shape;
-    mbe_pattern_t *saved_source;
-    co_aix *aggr;
-    
+
     mbe_move_to(cr, img->poses[0][0], img->poses[0][1]);
     mbe_line_to(cr, img->poses[1][0], img->poses[1][1]);
     mbe_line_to(cr, img->poses[2][0], img->poses[2][1]);

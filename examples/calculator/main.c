@@ -5,7 +5,7 @@
 
 typedef struct _calc_data calc_data_t;
 struct _calc_data {
-    X_MB_runtime_t *rt;
+    mb_rt_t *rt;
     calculator_scr_t *code;
 };
 
@@ -64,7 +64,7 @@ static void show_text(calc_data_t *calc_data, int num, int saved, int op,
     char buf[20];
     redraw_man_t *rdman;
 
-    rdman = X_MB_rdman(calc_data->rt);
+    rdman = mb_runtime_rdman(calc_data->rt);
 
     sprintf(buf, "%d%s", num, suffix);
     sh_stext_set_text(calc_data->code->screen_text_u, buf);
@@ -142,7 +142,7 @@ static void compute(calc_data_t *calc_data, coord_t *tgt) {
 	    break;
 	}
     }
-    rdman = X_MB_rdman(calc_data->rt);
+    rdman = mb_runtime_rdman(calc_data->rt);
     rdman_redraw_changed(rdman);
 }
 
@@ -174,24 +174,24 @@ static void setup_observers(calc_data_t *calc_data) {
 }
 
 int main(int argc, char * const argv[]) {
-    X_MB_runtime_t *rt;
+    mb_rt_t *rt;
     redraw_man_t *rdman;
     calculator_scr_t *calculator_scr;
     calc_data_t calc_data;
 
-    rt = X_MB_new(":0.0", 300, 400);
+    rt = mb_runtime_new(":0.0", 300, 400);
 
-    rdman = X_MB_rdman(rt);
+    rdman = mb_runtime_rdman(rt);
     calculator_scr = calculator_scr_new(rdman, rdman->root_coord);
 
     calc_data.rt = rt;
     calc_data.code = calculator_scr;
     setup_observers(&calc_data);
 
-    X_MB_handle_connection(rt);
+    mb_runtime_event_loop(rt);
 
     calculator_scr_free(calculator_scr);
-    X_MB_free(rt);
+    mb_runtime_free(rt);
 
     return 0;
 }

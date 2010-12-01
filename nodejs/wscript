@@ -15,19 +15,33 @@ def configure(conf):
     conf.check_tool('compiler_cc')
     conf.check_tool('node_addon')
     conf.env.SRCDIR = Options.options.srcdir
-    conf.env.TOP_BUILDDIR = os.environ['TOP_BUILDDIR']    
+    conf.env.TOP_BUILDDIR = os.environ['TOP_BUILDDIR']
     pass
 
 def build(conf):
     import Utils
     
+    for m in 'observer coord mbfly_njs shapes paints'.split():
+        conf(rule='m4 -I ${SRCDIR}/../tools gen_v8_binding.m4 ${SRC} > ${TGT}',
+             source=m+'.m4', target=m+'-inc.h',
+             name=m+'-inc', shell=True, always=True, before=['cxx'])
+        pass
+
     obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
     obj.target = 'mbfly'
-    obj.source = 'mbfly_njs.cc coord.cc shapes.cc paints.cc font.cc'
-    obj.add_objects = 'X_supp_njs.o'
+    obj.source = 'font.cc image_ldr.cc'
+    obj.add_objects = 'njs_mb_supp.o observer.o coord.o mbfly_njs.o ' + \
+        'shapes.o paints.o'
     obj.staticlib = 'mbfly'
+
+    for src in 'observer.cc coord.cc mbfly_njs.cc shapes.cc paints.cc'.split():
+        obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
+        obj.target = src[:-3] + '.o'
+        obj.source = src
+        obj.includes = '.'
+        pass
     
     obj = conf.new_task_gen('cc', 'shlib', 'node_addon')
-    obj.target = 'X_supp_njs.o'
-    obj.source = 'X_supp_njs.c'
+    obj.target = 'njs_mb_supp.o'
+    obj.source = 'njs_mb_supp.c'
     pass

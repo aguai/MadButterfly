@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+# -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+# vim: sw=4:ts=8:sts=4
 from xml.dom.minidom import parse
 import sys
 import re
@@ -131,7 +133,7 @@ def translate_style(node, coord_id, codefo, doc, prefix):
         style_str = node.getAttribute('style')
         prop_map = get_style_map(style_str)
         pass
-    
+
     if node.hasAttribute('fill-opacity'):
         opacity = float(node.getAttribute('fill-opacity'))
     elif node.hasAttribute('opacity'):
@@ -234,15 +236,15 @@ def translate_shape_transform(shape, coord_id, codefo):
 # \see calc_center_and_x_aix()
 def _calc_ellipse_of_arc(x0, y0, rx, ry, x_rotate, large, sweep, x, y):
     import math
-    
+
     _sin = math.sin(x_rotate)
     _cos = math.cos(x_rotate)
-    
+
     nrx = x * _cos + y * _sin   # Not Rotated X
     nry = x * -_sin + y * _cos
     nrx0 = x0 * _cos + y0 * _sin
     nry0 = x0 * -_sin + y0 * _cos
-    
+
     udx = (nrx - nrx0) / 2 / rx # ux - umx
     udy = (nry - nry0) / 2 / ry # uy - umy
     umx = (nrx + nrx0) / 2 / rx
@@ -279,10 +281,10 @@ def _calc_ellipse_of_arc(x0, y0, rx, ry, x_rotate, large, sweep, x, y):
 
     nrcx = rx * (udcx + umx)
     nrcy = ry * (udcy + umy)
-    
+
     cx = nrcx * _cos - nrcy * _sin
     cy = nrcx * _sin + nrcy * _cos
-    
+
     return cx, cy
 
 # M x y             : Move to (x,y)
@@ -313,20 +315,20 @@ command_length={'M': 2, 'm':2,
 
 def _angle_rotated_ellipse(x, y, rx, ry, x_rotate):
     import math
-    
+
     _cos = math.cos(x_rotate)
     _sin = math.sin(x_rotate)
 
     nrx = (x * _cos + y * _sin) / rx
     nry = (-x * _sin + y * _cos) / ry
-    
+
     xy_tan = nry / nrx
     xy_angle = math.atan(xy_tan)
 
     if nrx < 0:
         xy_angle = math.pi + xy_angle
         pass
-    
+
     return xy_angle
 
 def rotate(x, y, angle):
@@ -340,7 +342,7 @@ def rotate(x, y, angle):
 def translate_path_data(data, codefo):
     import string
     import math
-    
+
     temp = data.split()
     fields=[]
     for f in temp:
@@ -385,7 +387,7 @@ def translate_path_data(data, codefo):
             pnts.append(pnts[-2])
             pnts.append(arg + pnts[-2])
             continue
-            
+
         arg = float(f)
         if (cmd not in 'am') and (cmd in string.lowercase):
             # relative and not arc or moveto
@@ -424,14 +426,14 @@ def translate_path_data(data, codefo):
 
             c3x, c3y = rotate(-rx, ry, x_rotate)
             c3x, c3y = c3x + cx, c3y + cy
-            
+
             pnts[-7:] = [c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y, abs_x, abs_y]
-            
+
             start_angle = _angle_rotated_ellipse(x0 - cx, y0 - cy,
                                              rx, ry, x_rotate)
             stop_angle = _angle_rotated_ellipse(x - cx, y - cy,
                                             rx, ry, x_rotate)
-            
+
             # sweep == 1 for positive-angle direction
             # sweep == 0 for negative-angle direction
             if start_angle > stop_angle and sweep:
@@ -439,7 +441,7 @@ def translate_path_data(data, codefo):
             elif start_angle < stop_angle and not sweep:
                 start_angle = math.pi * 2 + start_angle
                 pass
-            
+
             float_args.extend([cx, cy, rx, ry,
                                start_angle, stop_angle, x_rotate])
             pass
@@ -548,7 +550,7 @@ def translate_tspan(tspan, text, coord_id, codefo, doc, txt_strs, attrs):
         pass
     if tspan.hasAttribute('x'):
         # Render the tspan as an independent text if the x
-        # attribute is defined. All elements inside 
+        # attribute is defined. All elements inside
         # the tspan will be ignore by the outter text or tspan elements.
         # FIXME: We need to apply the style map recursively.
         merge_style(tspan, text)
@@ -585,7 +587,7 @@ def pango_generate_font_attributes(attrs,coord_id, codefo,doc):
                 print >> codefo, 'PANGO_SIZE(%d,%d,%d)dnl' % (font_sz*1024,start,end)
                 pass
             pass
-        
+
         if style_map.has_key('font-style'):
             font_style = style_map['font-style'].lower()
 	    if font_style == 'normal':
@@ -674,10 +676,10 @@ def pango_gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
 
 def stext_generate_font_attributes(text, attrs, coord_id, codefo, doc):
     text_id = _get_id(text)
-    
+
     for start, end, node in attrs:
         style_map = node.style_map
-        
+
         font_sz = 10
         if style_map.has_key('font-size'):
             fsz = style_map['font-size']
@@ -687,13 +689,13 @@ def stext_generate_font_attributes(text, attrs, coord_id, codefo, doc):
                 font_sz = float(fsz)
                 pass
             pass
-        
+
         if style_map.has_key('font-family'):
             font_family = style_map['font-family']
         else:
             font_family = 'serif'
             pass
-        
+
         font_slant = 0
         if style_map.has_key('font-style'):
             fn_style = style_map['font-style']
@@ -706,7 +708,7 @@ def stext_generate_font_attributes(text, attrs, coord_id, codefo, doc):
             else:
                 raise ValueError, '%s is not a valid font-style' % (fn_style)
             pass
-        
+
         font_weight = 80
         if style_map.has_key('font-weight'):
             fn_weight = style_map['font-weight']
@@ -726,7 +728,7 @@ def stext_generate_font_attributes(text, attrs, coord_id, codefo, doc):
                 font_weight = int(fn_weight)
                 pass
             pass
-        
+
         print >> codefo, 'STYLE_BLOCK([%s], %d, [%s], %f, %d, %d)dnl' % (
             text_id, end - start, font_family, font_sz,
             font_slant, font_weight)
@@ -736,7 +738,7 @@ def stext_generate_font_attributes(text, attrs, coord_id, codefo, doc):
 def stext_gen_text(text, coord_id, codefo, doc, txt_strs, attrs):
     if not txt_strs:
         return
-    
+
     text_id = _get_id(text)
     x = float(text.getAttribute('x'))
     y = float(text.getAttribute('y'))
@@ -757,7 +759,7 @@ def translate_text(text, coord_id, codefo, doc):
     coord_id = translate_shape_transform(text, coord_id, codefo)
     try:
         map = text.style_map
-    except:	
+    except:
         map = translate_font_style(text, codefo)
         text.style_map = map
         pass
@@ -781,7 +783,7 @@ def translate_text(text, coord_id, codefo, doc):
 @check_mbname
 def translate_image(image, coord_id, codefo, doc):
     coord_id = translate_shape_transform(image, coord_id, codefo)
-    
+
     image_id = _get_id(image)
     if not image.hasAttributeNS(xlinkns, 'href'):
 	raise ValueError, 'image %s must has a href attribute.' % (image_id)
@@ -815,7 +817,7 @@ def translate_image(image, coord_id, codefo, doc):
 		'ADD_IMAGE([%s], [%s], %f, %f, %f, %f, [%s])dnl' % (
 		        image_id, href, x, y, width, height, coord_id)
     pass
- 
+
 
 reo_func = re.compile('([a-zA-Z]+)\\([^\\)]*\\)')
 reo_translate = re.compile('translate\\(([-+]?[0-9]+(\\.[0-9]+)?),([-+]?[0-9]+(\\.[0-9]+)?)\\)')
@@ -889,7 +891,7 @@ def translate_scenes(scenes_node, codefo, doc):
                 not scene.hasAttribute('ref') or \
                 not scene.hasAttribute('start'):
             continue
-        
+
         start_str = scene.getAttribute('start')
         start = end = int(start_str)
         if scene.hasAttribute('end'):
@@ -897,11 +899,11 @@ def translate_scenes(scenes_node, codefo, doc):
             end = int(end_str)
             pass
         ref = scene.getAttribute('ref')
-        
+
         while len(scenes) <= end:
             scenes.append([])
             pass
-        
+
         for i in range(start, end + 1):
             scenes[i].append(ref)
             pass
@@ -925,7 +927,7 @@ def svg_2_code(dom, codefo):
         pass
     else:
         raise ValueErr, 'no any svg tag node.'
-    
+
     svg = node
     for node in svg.childNodes:
         if node.localName == 'defs' and node.namespaceURI == svgns:
@@ -946,14 +948,14 @@ def svg_2_code(dom, codefo):
 if __name__ == '__main__':
     from os import path
     import optparse
-    
+
     usage='usage: %prog [options] <SVG file> [<output>]'
     parser = optparse.OptionParser(usage=usage)
     parser.add_option('-s', '--stext', dest='stext',
                       action='store_true', default=False,
                       help='Use sh_stext instead of sh_text');
     options, args = parser.parse_args()
-    
+
     if len(args) == 2:
         svgfn = args[0]
         codefn = args[1]
@@ -964,7 +966,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(1)
         pass
-    
+
     struct_name = path.basename(codefn).split('.')[0]
 
     if options.stext:

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \file
  * \brief Convenience functions for event relative work.
  */
@@ -135,11 +137,11 @@ typedef struct mb_obj mb_obj_t;
 #define MB_OBJ_INIT(obj, type) do { (obj)->obj_type = type; } while(0)
 
 #define GEF_OV_DRAW 0x1
-#define GEF_HIDDEN 0x2
+#define GEF_NOT_SHOWED 0x20
 
 struct shape {
     mb_obj_t obj;
-    
+
     coord_t *coord;
     area_t area;
     shape_t *all_next;
@@ -148,7 +150,7 @@ struct shape {
     void *fill, *stroke;
     struct shape *sibling;
     int flags;
-    
+
     int num_points;
     co_aix points[32][2];
 };
@@ -179,7 +181,7 @@ static int sh_pos_is_in(shape_t *shape, co_aix x, co_aix y) {
 
 struct coord {
     mb_obj_t obj;
-  
+
     area_t area;
     int flags;
     coord_t *parent;
@@ -208,7 +210,7 @@ static
 void _areas_merge(area_t *area1, area_t *area2) {
     co_aix lu_x, lu_y;
     co_aix rb_x, rb_y;
-    
+
     lu_x = area2->x;
     lu_y = area2->y;
     rb_x = lu_x + area2->w - 1;
@@ -225,7 +227,7 @@ void coord_update_area(coord_t *coord) {
     area_t *cur_area;
 
     area = coord_get_area(coord);
-    
+
     shape = STAILQ_HEAD(coord->shapes);
     if(shape != NULL) {
 	cur_area = sh_get_area(shape);
@@ -236,7 +238,7 @@ void coord_update_area(coord_t *coord) {
 	cur_area = coord_get_area(child);
     }
     memcpy(area, cur_area, sizeof(area_t));
-	
+
     FOR_COORD_SHAPES(coord, shape) {
 	cur_area = sh_get_area(shape);
 	_areas_merge(area, cur_area);
@@ -261,9 +263,9 @@ static
 coord_t *preorder_coord_subtree(coord_t *root, coord_t *last) {
     if(STAILQ_HEAD(last->children) && !(last->flags & COF_SKIP))
 	return STAILQ_HEAD(last->children);
-    
+
     last->flags &= ~COF_SKIP;
-    
+
     if(last == root)
 	return NULL;
     while(STAILQ_NEXT(coord_t, sibling, last) == NULL) {
@@ -282,7 +284,7 @@ void preorder_coord_skip_subtree(coord_t *coord) {
 static
 coord_t *postorder_coord_subtree(coord_t *root, coord_t *last) {
     coord_t *cur;
-    
+
     if(last != NULL) {
 	if(STAILQ_NEXT(coord_t, sibling, last) == NULL) {
 	    if(cur == root)
@@ -445,7 +447,7 @@ shape_t *rdman_shape_new(redraw_man_t *rdman) {
     memset(shape, 0, sizeof(shape_t));
     MB_OBJ_INIT(&shape->obj, MBO_PATH);
     STAILQ_INS(rdman->all_shapes, shape_t, all_next, shape);
-    
+
     return shape;
 }
 
@@ -482,7 +484,7 @@ void *mbe_image_surface_get_data(mbe_surface_t *surf) {
     int i, j;
 
     cr = surf->cr;
-    
+
     STAILQ_FOR_EACH(cr->drawed, shape_t, sibling, shape1) {
 	for(i = 0; i < shape1->num_points; i++) {
 	    x1 = shape1->points[i][0];
@@ -510,7 +512,7 @@ static int _collect_shapes_at_point(redraw_man_t *rdman,
 				   co_aix x, co_aix y) {
     shape_t *shape;
     int r;
-    
+
     r = rdman_force_clean(rdman);
     if(r != OK)
 	return ERR;
@@ -611,7 +613,7 @@ static shape_t *_find_shape_in_pos(redraw_man_t *rdman,
     cr = rdman_get_cr(rdman);
     for(i = rdman_shape_gl_len(rdman) - 1; i >= 0; i--) {
 	shape = rdman_get_shape_gl(rdman, i);
-	if(sh_get_flags(shape, GEF_HIDDEN))
+	if(sh_get_flags(shape, GEF_NOT_SHOWED))
 	    continue;
 	r = _shape_pos_is_in(shape, x, y, in_stroke, cr);
 	if(r)
@@ -676,7 +678,7 @@ mbe_t * _prepare_mbe_for_testing(redraw_man_t *rdman) {
     rdman_surface = mbe_get_target(rdman_get_cr(rdman));
     w = mbe_image_surface_get_width(rdman_surface);
     h = mbe_image_surface_get_height(rdman_surface);
-    
+
     surface = mbe_image_surface_create(MB_IFMT_A1, w, h);
     if(surface == NULL)
 	return NULL;
@@ -684,7 +686,7 @@ mbe_t * _prepare_mbe_for_testing(redraw_man_t *rdman) {
     cr = mbe_create(surface);
     if(cr == NULL)
 	mbe_surface_destroy(surface);
-    
+
     return cr;
 }
 
@@ -693,20 +695,14 @@ void _release_mbe_for_testing(mbe_t *cr) {
     mbe_destroy(cr);
 }
 
-#ifdef OVERLAY_DRAW_TEST
-/*
- * Since we remove mbe_clip(), mb_objs_are_overlay() should not use
- * clip for testing overlay anymore.
- */
-
 static
 void _draw_to_mask(shape_t *shape, mbe_t *cr) {
     if(sh_get_flags(shape, GEF_OV_DRAW))
 	return;
-    
+
     draw_shape_path(shape, cr);
     mbe_clip(cr);
-    
+
     sh_set_flags(shape, GEF_OV_DRAW);
 }
 
@@ -734,7 +730,6 @@ int _fill_and_check(shape_t *shape, mbe_t *cr) {
 
     return FALSE;
 }
-#endif
 
 /*! \brief Is a mb_obj_t overlaid with another mb_obj_t and
  *	descendants.
@@ -752,9 +747,9 @@ int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
     shape_t *shape, *candi_shape;
     int obj_is_shape;
     int r;
-    
+
     obj_is_shape = IS_MBO_SHAPES(obj);
-    
+
     if(obj_is_shape) {
 	shape = (shape_t *)obj;
 	area = sh_get_area(shape);
@@ -763,30 +758,26 @@ int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
 	area = coord_get_area(coord);
 	shape = NULL;
     }
-	
+
     if(IS_MBO_SHAPES(others_root)) {
 	candi_shape = (shape_t *)others_root;
 	candi_area =  sh_get_area(candi_shape);
-	
+
 	r = areas_are_overlay(area, candi_area);
 	if(!r)
 	    return FALSE;
-	
-#ifdef OVERLAY_DRAW_TEST
+
 	if(!obj_is_shape)
 	    return TRUE;
 
 	_draw_to_mask(candi_shape, cr);
 	r = _fill_and_check(shape, cr);
-	
+
 	return r;
-#else
-	return TRUE;
-#endif
     }
-    
+
     ASSERT(IS_MBO_COORD(others_root));
-    
+
     root = (coord_t *)others_root;
     FOR_COORDS_PREORDER(root, candi_coord) {
 	candi_area = coord_get_area(candi_coord);
@@ -795,27 +786,23 @@ int _is_obj_objs_overlay(mb_obj_t *obj, mb_obj_t *others_root,
 	    preorder_coord_skip_subtree(candi_coord);
 	    continue;
 	}
-	
+
 	FOR_COORD_SHAPES(candi_coord, candi_shape) {
 	    candi_area = sh_get_area(candi_shape);
 	    r = areas_are_overlay(area, candi_area);
 	    if(!r)
 		continue;
 
-#ifdef OVERLAY_DRAW_TEST
 	    if(!obj_is_shape)
 		return TRUE;
-	    
+
 	    _draw_to_mask(candi_shape, cr);
 	    r = _fill_and_check(shape, cr);
 	    if(r)
 		return TRUE;
-#else
-	    return TRUE;
-#endif
 	}
     }
-    
+
     return FALSE;
 }
 
@@ -858,7 +845,7 @@ int mb_objs_are_overlay(redraw_man_t *rdman,
 	r = _is_obj_objs_overlay(obj1, obj2, cr);
 	goto out;
     }
-    
+
     root = (coord_t *)obj1;
     FOR_COORDS_PREORDER(root, coord) {
 	area = coord_get_area(coord);
@@ -875,7 +862,7 @@ int mb_objs_are_overlay(redraw_man_t *rdman,
 	}
     }
     r = FALSE;
-    
+
  out:
     _clear_ov_draw(obj2);	/* marked by _is_obj_objs_overlay() */
     _release_mbe_for_testing(cr);
@@ -896,7 +883,7 @@ redraw_man_t *_fake_rdman(void) {
     cr = mbe_create(surf);
     backend = mbe_create(surf);
     rdman = redraw_man_new(cr, backend);
-    
+
     return rdman;
 }
 
@@ -949,7 +936,6 @@ void test_mb_obj_pos_is_in(void) {
     _free_fake_rdman(rdman);
 }
 
-#ifdef OVERLAY_DRAW_TEST
 static
 void test_is_obj_objs_overlay(void) {
     redraw_man_t *rdman;
@@ -978,7 +964,7 @@ void test_is_obj_objs_overlay(void) {
     shape_add_point(shape1, 3, 2);
     shape_add_point(shape2, 5, 5);
     shape_add_point(shape3, 4, 3);
-    
+
     surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
     cr = mbe_create(surf);
     r = _is_obj_objs_overlay((mb_obj_t *)coord1, (mb_obj_t *)coord2, cr);
@@ -1026,7 +1012,7 @@ void test_is_obj_objs_overlay(void) {
     mbe_destroy(cr);
     mbe_surface_destroy(surf);
     sh_clear_flags(shape3, GEF_OV_DRAW);
-    
+
     shape_add_point(shape1, 5, 5);
 
     surf = mbe_image_surface_create(MB_IFMT_A1, 100, 100);
@@ -1113,55 +1099,52 @@ void test_mb_objs_are_overlay(void) {
 
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)coord1, (mb_obj_t *)coord2);
     CU_ASSERT(!r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)shape1, (mb_obj_t *)coord2);
     CU_ASSERT(!r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)shape1, (mb_obj_t *)shape2);
     CU_ASSERT(!r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)coord1, (mb_obj_t *)shape2);
     CU_ASSERT(!r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)shape1, (mb_obj_t *)shape3);
     CU_ASSERT(!r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)coord1, (mb_obj_t *)shape3);
     CU_ASSERT(!r);
 
     shape_add_point(shape1, 5, 5);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)coord1, (mb_obj_t *)coord2);
     CU_ASSERT(r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)shape1, (mb_obj_t *)coord2);
     CU_ASSERT(r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)shape1, (mb_obj_t *)shape2);
     CU_ASSERT(r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)coord1, (mb_obj_t *)shape2);
     CU_ASSERT(r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)shape1, (mb_obj_t *)shape3);
     CU_ASSERT(!r);
-    
+
     r = mb_objs_are_overlay(rdman, (mb_obj_t *)coord1, (mb_obj_t *)shape3);
     CU_ASSERT(!r);
 
     _free_fake_rdman(rdman);
 }
-#endif
 
 CU_pSuite get_event_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_event", NULL, NULL);
     CU_ADD_TEST(suite, test_mb_obj_pos_is_in);
-#ifdef OVERLAY_DRAW_TEST
     CU_ADD_TEST(suite, test_is_obj_objs_overlay);
     CU_ADD_TEST(suite, test_mb_objs_are_overlay);
-#endif
 
     return suite;
 }

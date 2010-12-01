@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 /*! \page ge_layer Graphic Engine Layer
  *
  * Graphic Engine Layer is an abstract of graphic engine; likes Cairo
@@ -81,7 +83,7 @@ struct _mbe_t {
     SkPath *path, *subpath;
     SkPaint *paint;
     SkRegion *saved_region;
-    
+
     struct _mbe_states_t *states;
 };
 
@@ -135,9 +137,9 @@ _prepare_sized_pattern(mbe_t *mbe, mbe_pattern_t *ptn) {
     SkPath path;
     co_aix x, y;
     co_aix reverse[6];
-    
+
     *mbe->saved_region = canvas->getTotalClip();
-    
+
     compute_reverse(ptn->matrix, reverse);
     x = 0; y = 0;
     matrix_trans_pos(reverse, &x, &y);
@@ -149,14 +151,14 @@ _prepare_sized_pattern(mbe_t *mbe, mbe_pattern_t *ptn) {
     matrix_trans_pos(reverse, &x, &y);
     path.moveTo(CO_AIX_2_SKSCALAR(x), CO_AIX_2_SKSCALAR(y));
     path.close();
-    
+
     canvas->clipPath(path, SkRegion::kIntersect_Op);
 }
 
 static void
 _finish_sized_pattern(mbe_t *mbe) {
     SkCanvas *canvas = mbe->canvas;
-    
+
     canvas->setClipRegion(*mbe->saved_region);
 }
 
@@ -180,7 +182,7 @@ _update_path(mbe_t *mbe) {
 
     MB_MATRIX_2_SKMATRIX(canvas_matrix, mbe->states->matrix);
     path->addPath(*subpath, canvas_matrix);
-    
+
     subpath->getLastPt(&point);
     subpath->rewind();
     subpath->moveTo(point);
@@ -200,7 +202,7 @@ _prepare_paint(mbe_t *mbe, SkPaint::Style style) {
     SkMatrix skmatrix;
 
     paint->setStyle(style);
-    
+
     if(ptn != NULL) {
 	/* Local matrix of SkShader is a mapping from source pattern to
 	 * user space.  Unlikely, for Cairo is a mapping from user space
@@ -223,7 +225,7 @@ _prepare_paint(mbe_t *mbe, SkPaint::Style style) {
 static void
 _finish_paint(mbe_t *mbe) {
     mbe_pattern_t *ptn = mbe->states->ptn;
-    
+
     mbe->paint->reset();
     if(ptn != NULL && ptn->has_size)
 	_finish_sized_pattern(mbe);
@@ -241,13 +243,13 @@ mbe_pattern_t *mbe_pattern_create_for_surface(mbe_surface_t *surface) {
 	free(ptn);
 	return NULL;
     }
-    
+
     ptn->has_size = 1;
     ptn->w = bitmap->width();
     ptn->h = bitmap->height();
 
     memcpy(ptn->matrix, id_matrix, sizeof(co_aix) * 6);
-    
+
     return ptn;
 }
 
@@ -269,7 +271,7 @@ mbe_pattern_create_radial(co_aix cx0, co_aix cy0, co_aix radius0,
 	goto fail;
 
     center.set(CO_AIX_2_SKSCALAR(cx1), CO_AIX_2_SKSCALAR(cy1));
-    
+
     stop = stops;
     for(i = 0; i < stop_cnt; i++) {
 	colors[i] = MBSTOP_2_SKCOLOR(stop);
@@ -289,11 +291,11 @@ mbe_pattern_create_radial(co_aix cx0, co_aix cy0, co_aix radius0,
 	goto fail;
 
     memcpy(ptn->matrix, id_matrix, sizeof(co_aix) * 6);
-    
+
     delete colors;
     delete poses;
     return ptn;
-    
+
  fail:
     if(ptn) free(ptn);
     if(colors) delete colors;
@@ -320,7 +322,7 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0,
 
     points[0].set(CO_AIX_2_SKSCALAR(x0), CO_AIX_2_SKSCALAR(y0));
     points[1].set(CO_AIX_2_SKSCALAR(x1), CO_AIX_2_SKSCALAR(y1));
-    
+
     stop = stops;
     for(i = 0; i < stop_cnt; i++) {
 	colors[i] = MBSTOP_2_SKCOLOR(stop);
@@ -339,20 +341,15 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0,
 	goto fail;
 
     memcpy(ptn->matrix, id_matrix, sizeof(co_aix) * 6);
-    
+
     delete colors;
     delete poses;
     return ptn;
-    
+
  fail:
     if(ptn) free(ptn);
     if(colors) delete colors;
     if(poses) delete poses;
-    return NULL;
-}
-
-mbe_pattern_t *
-mbe_pattern_create_image(mb_img_data_t *img) {
     return NULL;
 }
 
@@ -386,11 +383,49 @@ unsigned char *mbe_image_surface_get_data(mbe_surface_t *surface) {
     return (unsigned char *)((SkBitmap *)surface)->getPixels();
 }
 
+mbe_surface_t *mbe_image_surface_create_from_png(const char *filename) {}
+
+mbe_surface_t *
+mbe_image_surface_create_for_data(unsigned char *data,
+				  mb_img_fmt_t fmt,
+				  int width, int height,
+				  int stride) {
+    SkBitmap *bitmap;
+    SkBitmap::Config cfg;
+
+    switch(fmt) {
+    case MB_IFMT_ARGB32:
+	cfg = SkBitmap::kARGB_8888_Config; break;
+
+    case MB_IFMT_A8:
+	cfg = SkBitmap::kA8_Config; break;
+
+    case MB_IFMT_A1:
+	cfg = SkBitmap::kA1_Config; break;
+
+    case MB_IFMT_RGB16_565:
+	cfg = SkBitmap::kRGB_565_Config; break;
+
+    case MB_IFMT_RGB24:
+    default:
+	return NULL;
+    }
+
+    bitmap = new SkBitmap();
+    if(bitmap == NULL)
+	return NULL;
+
+    bitmap->setConfig(cfg, width, height, stride);
+    bitmap->setPixels(data);
+
+    return (mbe_surface_t *)bitmap;
+}
+
 mb_img_fmt_t mbe_image_surface_get_format(mbe_surface_t *surface) {
     SkBitmap *bitmap = (SkBitmap *)surface;
     mb_img_fmt_t fmt;
     SkBitmap::Config cfg;
-    
+
     cfg = bitmap->getConfig();
     switch(cfg) {
     case SkBitmap::kARGB_8888_Config:
@@ -420,25 +455,25 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int width, int height) {
     switch(fmt) {
     case MB_IFMT_ARGB32:
 	cfg = SkBitmap::kARGB_8888_Config; break;
-	
+
     case MB_IFMT_A8:
 	cfg = SkBitmap::kA8_Config; break;
-	
+
     case MB_IFMT_A1:
 	cfg = SkBitmap::kA1_Config; break;
-	
+
     case MB_IFMT_RGB16_565:
 	cfg = SkBitmap::kRGB_565_Config; break;
-	
+
     case MB_IFMT_RGB24:
     default:
 	return NULL;
     }
-    
+
     bitmap = new SkBitmap();
     if(bitmap == NULL)
 	return NULL;
-    
+
     bitmap->setConfig(cfg, width, height);
     bitmap->allocPixels();
 
@@ -470,12 +505,12 @@ void mbe_paint_with_alpha(mbe_t *canvas, co_aix alpha) {
 	SkColorFilter::CreatePorterDuffFilter(color,
 					      SkPorterDuff::kSrcOver_Mode);
     mbe_paint(canvas);
-    
+
 }
 
 void mbe_surface_destroy(mbe_surface_t *surface) {
     SkBitmap *bmap = (SkBitmap *)surface;
-    
+
     delete bmap;
 }
 
@@ -511,7 +546,7 @@ void mbe_fill_preserve(mbe_t *canvas) {
 
     if(!canvas->subpath->isEmpty())
 	_update_path(canvas);
-    
+
     _prepare_paint(canvas, SkPaint::kFill_Style);
 
     canvas->canvas->drawPath(*path, *paint);
@@ -523,7 +558,7 @@ void mbe_set_source(mbe_t *canvas, mbe_pattern_t *source) {
     canvas->states->ptn = source;
 }
 
-void mbe_reset_scissoring(mbe_t *canvas) {
+void mbe_reset_clip(mbe_t *canvas) {
     SkRegion clip;
 
     _canvas_device_region(canvas->canvas, &clip);
@@ -543,7 +578,7 @@ void mbe_text_path(mbe_t *canvas, const char *txt) {}
 void mbe_rectangle(mbe_t *canvas, co_aix x, co_aix y,
 			  co_aix width, co_aix height) {
     SkPath *subpath = canvas->subpath;
-    
+
     subpath->addRect(CO_AIX_2_SKSCALAR(x), CO_AIX_2_SKSCALAR(y),
 		     CO_AIX_2_SKSCALAR(x + width),
 		     CO_AIX_2_SKSCALAR(y + height));
@@ -572,7 +607,7 @@ void mbe_restore(mbe_t *canvas) {
     struct _mbe_states_t *states;
 
     _update_path(canvas);
-    
+
     states = canvas->states;
     ASSERT(states->next);
     canvas->states = states->next;
@@ -595,10 +630,10 @@ int mbe_in_fill(mbe_t *canvas, co_aix x, co_aix y) {
 
     if(!canvas->subpath->isEmpty())
 	_update_path(canvas);
-    
+
     _canvas_device_region(canvas->canvas, &dev_region);
     region.setPath(*canvas->path, dev_region);
-    
+
     in_fill = region.contains(x, y);
 
     return in_fill;
@@ -637,7 +672,7 @@ mbe_t *skia_mbe_create_by_canvas(SkCanvas *canvas) {
     mbe = (mbe_t *)malloc(sizeof(mbe_t));
     if(mbe == NULL)
 	return NULL;
-    
+
     mbe->states = (struct _mbe_states_t *)
 	malloc(sizeof(struct _mbe_states_t));
     states = mbe->states;
@@ -645,7 +680,7 @@ mbe_t *skia_mbe_create_by_canvas(SkCanvas *canvas) {
 	free(mbe);
 	return NULL;
     }
-    
+
     canvas->ref();
     mbe->canvas = canvas;
     mbe->path = new SkPath();
@@ -663,7 +698,7 @@ mbe_t *skia_mbe_create_by_canvas(SkCanvas *canvas) {
 	goto fail;
 
     memcpy(states->matrix, id_matrix, sizeof(co_aix) * 6);
-    
+
     return mbe;
 
  fail:
@@ -674,7 +709,7 @@ mbe_t *skia_mbe_create_by_canvas(SkCanvas *canvas) {
     if(mbe->saved_region) delete mbe->saved_region;
     free(states);
     free(mbe);
-    
+
     return NULL;
 }
 
@@ -688,20 +723,20 @@ mbe_t *mbe_create(mbe_surface_t *target) {
 	delete bitmap;
 	return NULL;
     }
-	
+
     mbe = skia_mbe_create_by_canvas(canvas);
     canvas->unref();
-    
+
     if(mbe == NULL) {
 	delete bitmap;
     }
-    
+
     return mbe;
 }
 
 void mbe_destroy(mbe_t *canvas) {
     struct _mbe_states_t *states;
-    
+
     canvas->canvas->unref();
     delete canvas->path;
     delete canvas->subpath;
@@ -710,7 +745,7 @@ void mbe_destroy(mbe_t *canvas) {
     while(canvas->states) {
 	states = canvas->states;
 	canvas->states = states->next;
-	
+
 	if(states->ptn && states->ptn_owned)
 	    mbe_pattern_destroy(states->ptn);
 	free(states);
@@ -722,9 +757,9 @@ void mbe_paint(mbe_t *canvas) {
     SkPaint *paint = canvas->paint;
 
     ASSERT(paint);
-    
+
     _prepare_paint(canvas, SkPaint::kFill_Style);
-    
+
     canvas->canvas->drawPaint(*paint);
 
     _finish_paint(canvas);
@@ -735,7 +770,7 @@ void mbe_save(mbe_t *canvas) {
 
     states = (struct _mbe_states_t *)malloc(sizeof(struct _mbe_states_t));
     ASSERT(states);
-    
+
     memcpy(states, canvas->states, sizeof(struct _mbe_states_t));
     states->next = canvas->states;
     canvas->states = states;
@@ -747,23 +782,13 @@ void mbe_fill(mbe_t *canvas) {
     canvas->subpath->rewind();
 }
 
-void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
-    int i;
-    area_t *area;
-    SkPath *path;
+void mbe_clip(mbe_t *canvas) {
+    if(!canvas->subpath->isEmpty())
+	_update_path(canvas);
 
-    mbe_new_path(canvas);
-    
-    path = canvas->path;
-    for(i = 0; i < n_areas; i++) {
-	area = areas[i];
-	path->addRect(CO_AIX_2_SKSCALAR(area->x), CO_AIX_2_SKSCALAR(area->y),
-		      CO_AIX_2_SKSCALAR(area->x + area->width),
-		      CO_AIX_2_SKSCALAR(area->y + area->height));
-    }
-
-    canvas->canvas->clipPath(*path, SkRegion::kIntersect_Op);
-    path->rewind();
+    canvas->canvas->clipPath(*canvas->path, SkRegion::kIntersect_Op);
+    canvas->path->rewind();
+    canvas->subpath->rewind();
 }
 
 mbe_font_face_t * mbe_query_font_face(const char *family,
@@ -787,7 +812,7 @@ void mbe_copy_source(mbe_t *src, mbe_t *dst) {
     bmap = &src->canvas->getDevice()->accessBitmap(false);
 
     dst->canvas->drawBitmap(*bmap, 0, 0, paint);
-    
+
     paint->reset();
     mode->unref();
     /* _finish_paint(dst); */
@@ -795,7 +820,7 @@ void mbe_copy_source(mbe_t *src, mbe_t *dst) {
 
 void mbe_transform(mbe_t *mbe, co_aix matrix[6]) {
     _update_path(mbe);
-    
+
     matrix_mul(matrix, mbe->states->matrix, mbe->states->matrix);
 }
 
@@ -815,7 +840,7 @@ void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
     r = CO_AIX_2_SKSCALAR(radius);
     ang_start = CO_AIX_2_SKSCALAR(angle_start * 180 / PI);
     ang_stop = CO_AIX_2_SKSCALAR(angle_stop * 180 / PI);
-    
+
     /* Skia can only draw an arc in clockwise directly.  We negative
      * start and stop point to draw the arc in the mirror along x-axis
      * in a sub-path.  Then, the sub-path are reflected along x-axis,
@@ -826,7 +851,7 @@ void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
 	SkMatrix matrix;
 	co_aix reflect[6] = { 1, 0, 0,
 			      0, -1, 0};
-	
+
 	rect.set(-r, -r, r, r);
 	sweep = ang_start - ang_stop;
 	tmppath.arcTo(rect, -ang_start, sweep, false);
