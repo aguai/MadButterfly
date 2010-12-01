@@ -203,7 +203,7 @@ AM_CONDITIONAL([XSHM],
 
 # Checks for libraries.
 [if [ x"${graphic_engine}" = x"openvg" ]; then]
-AC_CHECK_HEADERS([GL/glut.h],, [AC_MSG_ERROR([can not find GL/glut.h])])
+AC_CHECK_HEADERS([EGL/egl.h],, [AC_MSG_ERROR([can not find EGL/egl.h])])
 [fi]
 
 [if [ x"${image_loader}" = x"imlib2" ]; then]

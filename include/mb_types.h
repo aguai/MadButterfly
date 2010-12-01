@@ -10,7 +10,6 @@
 
 typedef struct _shape shape_t;
 typedef struct _geo geo_t;
-typedef struct _area area_t;
 typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
 typedef struct _mb_obj mb_obj_t;
@@ -101,11 +100,6 @@ enum { MBP_DUMMY,
 struct _shnode {
     shape_t *shape;
     shnode_t *next;
-};
-
-struct _area {
-    co_aix x, y;
-    co_aix w, h;
 };
 
 /*! \brief Geometry data of a shape or a group of shape.

@@ -2237,36 +2237,22 @@ static void clear_canvas(canvas_t *canvas) {
     mbe_clear(canvas);
 }
 
-static void make_clip(mbe_t *cr, int n_dirty_areas,
-		      area_t **dirty_areas) {
-    int i;
-    area_t *area;
-
-    mbe_new_path(cr);
-    for(i = 0; i < n_dirty_areas; i++) {
-	area = dirty_areas[i];
-	if(area->w < 0.1 || area->h < 0.1)
-	    continue;
-	mbe_rectangle(cr, area->x, area->y, area->w, area->h);
-    }
-    mbe_clip(cr);
-}
+#define make_scissoring(canvas, n_dirty_areas, dirty_areas)	\
+    mbe_scissoring(canvas, n_dirty_areas, dirty_areas)
 
 static void reset_clip(canvas_t *cr) {
-    mbe_reset_clip(cr);
+    mbe_reset_scissoring(cr);
 }
 
 static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 			      area_t **dirty_areas) {
     if(n_dirty_areas)
-	make_clip(rdman->backend, n_dirty_areas, dirty_areas);
-
+	make_scissoring(rdman->backend, n_dirty_areas, dirty_areas);
+    
     mbe_copy_source(rdman->cr, rdman->backend);
 }
 #else /* UNITTEST */
-static void make_clip(mbe_t *cr, int n_dirty_areas,
-		      area_t **dirty_areas) {
-}
+#define make_scissoring(canvas, n_dirty_areas, dirty_areas)
 
 static void clear_canvas(canvas_t *canvas) {
 }
@@ -2401,7 +2387,7 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
 	area->h = ceilf(area->h);
     }
 
-    make_clip(canvas, n_areas, areas);
+    make_scissoring(canvas, n_areas, areas);
     clear_canvas(canvas);
 
     r = draw_coord_shapes_in_dirty_areas(rdman, coord);
