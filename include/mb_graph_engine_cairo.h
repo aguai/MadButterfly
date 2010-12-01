@@ -15,7 +15,9 @@
 #define MBE_OPERATOR_SOURCE CAIRO_OPERATOR_SOURCE
 #define MBE_STATUS_SUCCESS CAIRO_STATUS_SUCCESS
 
+/* This function is only used by img_ldr.c */
 #define mbe_image_surface_create_from_png cairo_image_surface_create_from_png
+
 #define mbe_pattern_create_for_surface cairo_pattern_create_for_surface
 #define mbe_scaled_font_text_extents cairo_scaled_font_text_extents
 #define mbe_image_surface_get_stride cairo_image_surface_get_stride
