@@ -5,15 +5,11 @@ EXTRA_DIST = calculator_scr.svg
 
 calc_SOURCES = main.c
 nodist_calc_SOURCES = calculator_scr.c calculator_scr.h
-calc_CPPFLAGS = @pangocairo_CFLAGS@ $(INCLUDES)
-calc_LDFLAGS = @pangocairo_LIBS@ 
+calc_CPPFLAGS = $(APPCFLAGS) $(INCLUDES)
+calc_LDFLAGS = $(APPLDFLAGS)
 calc_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = calculator_scr.c calculator_scr.h calculator_scr.mb
 CLEANFILES = calculator_scr.c calculator_scr.h calculator_scr.mb
-
-if OPENVG_GRAPH_ENGINE
-calc_LDFLAGS += -lOpenVG -lEGL
-endif
 
 calculator_scr.mb: $(srcdir)/calculator_scr.svg
 	$(top_srcdir)/tools/svg2code.py -s $? $@

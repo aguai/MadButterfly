@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #ifndef __MB_PROP_H_
 #define __MB_PROP_H_
 
@@ -32,6 +34,7 @@ enum {
     PROP_DUMMY,
     PROP_MEVT_OB_CNT,
     PROP_MEVT_OBSERVER,
+    PROP_JSOBJ,
     PROP_LAST
 };
 

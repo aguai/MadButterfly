@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <string.h>
 #include "mb_graph_engine.h"
@@ -34,8 +36,8 @@ typedef struct _ut_shape {
 
 #undef mb_obj_init
 #define mb_obj_init(o, t)
-#undef rdman_shape_man
-#define rdman_shape_man(rdman, sh)
+#undef rdman_man_shape
+#define rdman_man_shape(rdman, sh)
 
 #define rdman_shape_stext_new ut_rdman_shape_stext_new
 #define sh_stext_transform ut_sh_stext_transform
@@ -100,7 +102,7 @@ typedef struct _mb_scaled_font mb_scaled_font_t;
  *
  * Although, mb_text_extents_t is defined as a mbe_scaled_font_t, but
  * programmers should assume it is opague.
- * 
+ *
  * An extents is the span of showing a fragement of text on the output device.
  * It includes x and y advance of cursor after showinng the text.
  * The cursor maybe not really existed.  But, the advance is computed as
@@ -151,9 +153,9 @@ mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
     mbe_scaled_font_t *scaled_font;
     static co_aix id[6] = { 1, 0, 0,
 			    0, 1, 0 };
-    
+
     ASSERT(matrix != NULL);
-    
+
     scaled_font = mbe_scaled_font_create((mbe_font_face_t *)face,
 					 matrix, &id);
 
@@ -198,14 +200,14 @@ void draw_text_scaled(mbe_t *cr, const char *txt, int tlen,
 	buf = strndup(txt, tlen);
     else
 	buf = txt;
-    
+
     saved_scaled = mbe_get_scaled_font(cr);
     mbe_scaled_font_reference(saved_scaled);
     mbe_set_scaled_font(cr, (mbe_scaled_font_t *)scaled);
-    
+
     mbe_move_to(cr, x, y);
     mbe_text_path(cr, buf);
-    
+
     mbe_set_scaled_font(cr, saved_scaled);
     mbe_scaled_font_destroy(saved_scaled);
 
@@ -265,12 +267,12 @@ void _rdman_shape_stext_free(shape_t *shape) {
     int i;
 
     DARRAY_DESTROY(&txt_o->style_blks);
-    
+
     for(i = 0; i < txt_o->scaled_fonts.num; i++)
 	scaled_font_free(txt_o->scaled_fonts.ds[i]);
     DARRAY_DESTROY(&txt_o->scaled_fonts);
     DARRAY_DESTROY(&txt_o->sub_exts);
-    
+
     if(txt_o->txt)
 	free((void *)txt_o->txt);
 
@@ -282,14 +284,14 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, const char *txt,
     sh_stext_t *txt_o;
 
     ASSERT(txt != NULL);
-    
+
     txt_o = (sh_stext_t *)malloc(sizeof(sh_stext_t));
     if(txt_o == NULL)
 	return NULL;
 
     memset(&txt_o->shape, 0, sizeof(shape_t));
     mb_obj_init(txt_o, MBO_STEXT);
-    
+
     txt_o->txt = strdup(txt);
     DARRAY_INIT(&txt_o->style_blks);
     txt_o->x = x;
@@ -303,9 +305,9 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, const char *txt,
     }
 
     txt_o->shape.free = _rdman_shape_stext_free;
-    
-    rdman_shape_man(rdman, (shape_t *)txt_o);
-    
+
+    rdman_man_shape(rdman, (shape_t *)txt_o);
+
     return (shape_t *)txt_o;
 }
 
@@ -314,7 +316,7 @@ int compute_utf8_chars_sz(const char *txt, int n_chars) {
     int i;
     const char *p = txt;
     const char *v;
-    
+
     for(i = 0; i < n_chars && *p; i++) {
 	if(!(*p & 0x80))	/* single byte */
 	    p++;
@@ -333,7 +335,7 @@ int compute_utf8_chars_sz(const char *txt, int n_chars) {
     for(v = txt; v != p; v++)
 	if(*v == '\x0')
 	    return ERR;
-    
+
     return p - txt;
 }
 
@@ -351,15 +353,15 @@ mb_scaled_font_t *make_scaled_font_face(sh_stext_t *txt_o,
     memcpy(noshift_aggr, aggr, sizeof(co_aix) * 6);
     noshift_aggr[2] = 0;
     noshift_aggr[5] = 0;
-    
+
     matrix[0] = font_sz;
     matrix[1] = 0;
     matrix[2] = shift_x;
     matrix[3] = 0;
     matrix[4] = font_sz;
-    matrix[5] += shift_y;
+    matrix[5] = shift_y;
     matrix_mul(noshift_aggr, matrix, scaled_matrix);
-    
+
     scaled = make_scaled_font_face_matrix(face, scaled_matrix);
 
     return scaled;
@@ -384,13 +386,13 @@ void extent_extents(mb_text_extents_t *full, mb_text_extents_t *sub) {
     s_ybr = MBE_GET_Y_BEARING(sub) + MBE_GET_Y_ADV(full);
     s_rbx = s_xbr + MBE_GET_WIDTH(sub);
     s_rby = s_ybr + MBE_GET_HEIGHT(sub);
-    
+
     /* set bearing */
     if(MBE_GET_X_BEARING(full) > s_xbr)
 	MBE_SET_X_BEARING(full, s_xbr);
     if(MBE_GET_Y_BEARING(full) > s_ybr)
 	MBE_SET_Y_BEARING(full, s_ybr);
-    
+
     /* set width/height */
     if(f_rbx < s_rbx)
 	MBE_SET_WIDTH(full, s_rbx - MBE_GET_X_BEARING(full));
@@ -435,19 +437,19 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
     mb_text_extents_t *sub;
     char *txt, saved;
     int i, nscaled;
-    
+
     scaled_fonts = &txt_o->scaled_fonts;
     for(i = 0; i < scaled_fonts->num; i++)
 	scaled_font_free(scaled_fonts->ds[i]);
     DARRAY_CLEAN(scaled_fonts);
-    
+
     style_blks = &txt_o->style_blks;
     blk = style_blks->ds;
 
     sub_exts = &txt_o->sub_exts;
     DARRAY_CLEAN(sub_exts);
     extents_lst_adv(sub_exts, style_blks->num);
-    
+
     txt = (char *)txt_o->txt;
     for(i = 0; i < style_blks->num; i++) {
 	scaled = make_scaled_font_face(txt_o, blk->face,
@@ -455,10 +457,10 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
 	ASSERT(scaled != NULL);
 	scaled_fonts_lst_add(scaled_fonts, scaled);
 	sub = sub_exts->ds + i;
-	
+
 	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
 	ASSERT(blk_txt_len != ERR);
-	
+
 	saved = txt[blk_txt_len];
 	txt[blk_txt_len] = 0;
 	compute_text_extents(scaled, txt, sub);
@@ -467,7 +469,7 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
 	blk++;
 	txt += blk_txt_len;
     }
-    
+
     if(style_blks->num > 0) {
 	sub = sub_exts->ds;
 	memcpy(&txt_o->extents, sub, sizeof(mb_text_extents_t));
@@ -476,7 +478,7 @@ void compute_styled_extents_n_scaled_font(sh_stext_t *txt_o) {
 	    extent_extents(&txt_o->extents, sub);
 	}
     } else
-	memset(&txt_o->extents, sizeof(mb_text_extents_t), 0);    
+	memset(&txt_o->extents, sizeof(mb_text_extents_t), 0);
 }
 
 /*
@@ -499,14 +501,14 @@ void sh_stext_transform(shape_t *shape) {
     ASSERT(txt_o != NULL);
 
     aggr = sh_get_aggr_matrix(shape);
-    
+
     txt_o->dx = txt_o->x;
     txt_o->dy = txt_o->y;
     matrix_trans_pos(aggr, &txt_o->dx, &txt_o->dy);
-    
+
     compute_styled_extents_n_scaled_font(txt_o);
     ext = &txt_o->extents;
-    
+
     area = sh_get_area(shape);
     area->x = MBE_GET_X_BEARING(ext) + txt_o->dx;
     area->y = MBE_GET_Y_BEARING(ext) + txt_o->dy;
@@ -527,20 +529,20 @@ void sh_stext_draw(shape_t *shape, mbe_t *cr) {
     int i;
 
     ASSERT(txt_o != NULL);
-    
+
     x = txt_o->dx;
     y = txt_o->dy;
     txt = txt_o->txt;
     scaled_fonts = &txt_o->scaled_fonts;
     style_blks = &txt_o->style_blks;
     ext = txt_o->sub_exts.ds;
-    
+
     for(i = 0; i < scaled_fonts->num; i++) {
 	scaled = scaled_fonts->ds[i];
 	blk = style_blks->ds + i;
 	blk_txt_len = compute_utf8_chars_sz(txt, blk->n_chars);
 	draw_text_scaled(cr, txt, blk_txt_len, scaled, x, y);
-	
+
 	x += MBE_GET_X_ADV(ext);
 	y += MBE_GET_Y_ADV(ext);
 	txt += blk_txt_len;
@@ -554,15 +556,15 @@ int sh_stext_set_text(shape_t *shape, const char *txt) {
 
     ASSERT(txt_o != NULL);
     ASSERT(txt != NULL);
-    
+
     sz = strlen(txt) + 1;
     new_txt = (char *)realloc((void *)txt_o->txt, sz);
     if(new_txt == NULL)
 	return ERR;
-    
+
     memcpy(new_txt, txt, sz);
     txt_o->txt = new_txt;
-    
+
     return OK;
 }
 
@@ -576,14 +578,14 @@ int sh_stext_set_style(shape_t *shape,
 
     ASSERT(txt_o != NULL);
     ASSERT(nblks >= 0);
-    
+
     style_blks = &txt_o->style_blks;
     DARRAY_CLEAN(style_blks);
     style_blks_lst_adv(style_blks, nblks);
-    
+
     memcpy(style_blks->ds,
 	   blks, nblks * sizeof(mb_style_blk_t));
-	   
+
     return OK;
 }
 
@@ -597,7 +599,7 @@ void test_query_font_face(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    
+
     free_font_face(face);
 }
 
@@ -609,10 +611,10 @@ void test_make_scaled_font_face_matrix(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    
+
     scaled = make_scaled_font_face_matrix(face, matrix);
     CU_ASSERT(scaled != NULL);
-    
+
     scaled_font_free(scaled);
     free_font_face(face);
 }
@@ -665,14 +667,14 @@ void test_extent_extents(void) {
     MBE_SET_Y_BEARING(&ext1, -8);
     MBE_SET_X_ADV(&ext1, 21);
     MBE_SET_Y_ADV(&ext1, -3);
-    
+
     MBE_SET_WIDTH(&ext2, 30);
     MBE_SET_HEIGHT(&ext2, 11);
     MBE_SET_X_BEARING(&ext2, 2);
     MBE_SET_Y_BEARING(&ext2, -11);
     MBE_SET_X_ADV(&ext2, 32);
     MBE_SET_Y_ADV(&ext2, -5);
-    
+
     extent_extents(&ext1, &ext2);
 
     CU_ASSERT(MBE_GET_WIDTH(&ext1) == 52);
@@ -687,7 +689,7 @@ static
 void test_compute_utf8_chars_sz(void) {
     const char *str = "\xe4\xb8\xad\xe6\x96\x87test\xe6\xb8\xac\xe8\xa9\xa6";
     int sz;
-    
+
     sz = compute_utf8_chars_sz(str, 4);
     CU_ASSERT(sz == 8);
 
@@ -718,15 +720,15 @@ void test_compute_styled_extents_n_scaled_font(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    
+
     blks[0].n_chars = 5;
     blks[0].face = face;
     blks[0].font_sz = 10;
-    
+
     blks[1].n_chars = 4;
     blks[1].face = face;
     blks[1].font_sz = 15.5;
-    
+
     r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
     CU_ASSERT(r == OK);
 
@@ -740,7 +742,7 @@ void test_compute_styled_extents_n_scaled_font(void) {
     CU_ASSERT(MBE_GET_X_ADV(ext) > 36);
     CU_ASSERT(MBE_GET_X_ADV(ext) < 72);
     CU_ASSERT(MBE_GET_Y_ADV(ext) == 0);
-    
+
     _rdman_shape_stext_free((shape_t *)txt_o);
     free_font_face(face);
 }
@@ -768,15 +770,15 @@ void test_compute_styled_extents_n_scaled_font_rotate(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    
+
     blks[0].n_chars = 5;
     blks[0].face = face;
     blks[0].font_sz = 10;
-    
+
     blks[1].n_chars = 4;
     blks[1].face = face;
     blks[1].font_sz = 15.5;
-    
+
     r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
     CU_ASSERT(r == OK);
 
@@ -791,7 +793,7 @@ void test_compute_styled_extents_n_scaled_font_rotate(void) {
     CU_ASSERT(MBE_GET_X_ADV(ext) < 72);
     CU_ASSERT(MBE_GET_Y_ADV(ext) > 36);
     CU_ASSERT(MBE_GET_Y_ADV(ext) < 72);
-    
+
     _rdman_shape_stext_free((shape_t *)txt_o);
     free_font_face(face);
 }
@@ -818,15 +820,15 @@ void test_sh_stext_transform(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    
+
     blks[0].n_chars = 5;
     blks[0].face = face;
     blks[0].font_sz = 10;
-    
+
     blks[1].n_chars = 4;
     blks[1].face = face;
     blks[1].font_sz = 15.5;
-    
+
     r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
     CU_ASSERT(r == OK);
 
@@ -837,7 +839,7 @@ void test_sh_stext_transform(void) {
     CU_ASSERT(area->y >= 40 && area->y < 50);
     CU_ASSERT(area->w >= 80 && area->w < 120);
     CU_ASSERT(area->h >= 8 && area->h < 12);
-    
+
     _rdman_shape_stext_free((shape_t *)txt_o);
     free_font_face(face);
 }
@@ -853,7 +855,7 @@ void test_sh_stext_draw(void) {
 
     txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, "hello world", 100, 50);
     CU_ASSERT(txt_o != NULL);
-    
+
     aggr = txt_o->shape.aggr;
     aggr[0] = 2;
     aggr[1] = 0;
@@ -864,15 +866,15 @@ void test_sh_stext_draw(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    
+
     blks[0].n_chars = 5;
     blks[0].face = face;
     blks[0].font_sz = 10;
-    
+
     blks[1].n_chars = 6;
     blks[1].face = face;
     blks[1].font_sz = 15.5;
-    
+
     r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
     CU_ASSERT(r == OK);
 
@@ -901,7 +903,7 @@ void test_sh_stext_draw_rotate(void) {
 
     txt_o = (sh_stext_t *)rdman_shape_stext_new(NULL, "hello world", 100, 50);
     CU_ASSERT(txt_o != NULL);
-    
+
     aggr = txt_o->shape.aggr;
     aggr[0] = 2;
     aggr[1] = 0;
@@ -912,15 +914,15 @@ void test_sh_stext_draw_rotate(void) {
 
     face = query_font_face("serif", MB_FONT_SLANT_ROMAN, 100);
     CU_ASSERT(face != NULL);
-    
+
     blks[0].n_chars = 5;
     blks[0].face = face;
     blks[0].font_sz = 10;
-    
+
     blks[1].n_chars = 6;
     blks[1].face = face;
     blks[1].font_sz = 15.5;
-    
+
     r = sh_stext_set_style((shape_t *)txt_o, blks, 2);
     CU_ASSERT(r == OK);
 

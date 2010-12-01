@@ -5,8 +5,8 @@ EXTRA_DIST = menu.svg
 
 ex1_SOURCES = main.c
 nodist_ex1_SOURCES = menu.c menu.h
-ex1_CPPFLAGS = @pangocairo_CFLAGS@ -I$(top_srcdir)
-ex1_LDFLAGS = @pangocairo_LIBS@ 
+ex1_CPPFLAGS = $(APPCFLAGS) -I$(top_srcdir)
+ex1_LDFLAGS = $(APPLDFLAGS)
 ex1_LDADD = $(top_builddir)/src/libmbfly.la
 BUILT_SOURCES = menu.c menu.h menu.mb
 CLEANFILES = menu.c menu.h menu.mb

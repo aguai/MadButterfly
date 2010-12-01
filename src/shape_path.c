@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -23,8 +25,12 @@ typedef struct _sh_path {
     int float_arg_len;
     char *user_data;
     char *dev_data;		/* device space data */
+    
+    redraw_man_t *rdman;	/*!< \brief This is used by sh_path_free() */
 } sh_path_t;
 #define RESERVED_AIXS sizeof(co_aix[2])
+
+int _sh_path_size = sizeof(sh_path_t);
 
 #define ASSERT(x)
 #define SKIP_SPACE(x) while(*(x) && (isspace(*(x)) || *(x) == ',')) { (x)++; }
@@ -35,7 +41,7 @@ typedef struct _sh_path {
 	   *(x) == 'E' ||				\
 	   *(x) == '-' ||				\
 	   *(x) == '+' ||				\
-	   *(x) == '.'))  {					\
+	   *(x) == '.'))  {				\
 	(x)++;						\
     }
 #define OK 0
@@ -43,8 +49,22 @@ typedef struct _sh_path {
 #define PI 3.1415926535897931
 
 #ifdef UNITTEST
-#undef rdman_shape_man
-#define rdman_shape_man(x, y)
+#undef rdman_man_shape
+#define rdman_man_shape(x, y)
+
+#undef elmpool_elm_alloc
+#define elmpool_elm_alloc(pool) _elmpool_elm_alloc(pool)
+static void *
+_elmpool_elm_alloc(void *dummy) {
+    return malloc(sizeof(sh_path_t));
+}
+
+#undef elmpool_elm_free
+#define elmpool_elm_free(pool, elm) _elmpool_elm_free(pool, elm)
+static void
+_elmpool_elm_free(void *pool, void *elm) {
+    free(elm);
+}
 #endif
 
 /* ============================================================
@@ -108,13 +128,13 @@ static int _calc_center(co_aix x0, co_aix y0,
     float _sin = sinf(x_rotate);
     float _cos = cosf(x_rotate);
     int reflect;
-    
+
     /* Compute center of the ellipse */
     nrx = x * _cos + y * _sin;
     nry = x * -_sin + y * _cos;
     nrx0 = x0 * _cos + y0 * _sin;
     nry0 = x0 * -_sin + y0 * _cos;
-    
+
     udx = (nrx - nrx0) / 2 / rx; /* ux - umx */
     udy = (nry - nry0) / 2 / ry; /* uy - umy */
     umx = (nrx + nrx0) / 2 / rx;
@@ -168,12 +188,12 @@ static co_aix _angle_rotated_ellipse(co_aix x, co_aix y,
     nrx = (x * _cos + y * _sin) / rx;
     nry = (-x * _sin + y * _cos) / ry;
     xy_tan = nry / nrx;
-    
+
     angle = atan(xy_tan);
 
     if(nrx < 0)
 	angle = PI + angle;
-    
+
     return angle;
 }
 
@@ -261,7 +281,7 @@ static int _sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 	    *pnts++ = corners[i][0] + cx;
 	    *pnts++ = corners[i][1] + cy;
 	}
-	
+
 	*(pnts++) = x;
 	*(pnts++) = y;
 
@@ -274,7 +294,7 @@ static int _sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 	    angle_stop += 2 * PI;
 	else if((!sweep) && angle_start < angle_stop)
 	    angle_start += 2 * PI;
-	
+
 	*float_args++ = cx;
 	*float_args++ = cy;
 	*float_args++ = rx;
@@ -282,7 +302,7 @@ static int _sh_path_arc_cmd_arg_fill(char cmd, char **cmds_p,
 	*float_args++ = angle_start;
 	*float_args++ = angle_stop;
 	*float_args++ = x_rotate;
-	
+
 	*cmds++ = toupper(cmd);
     }
 
@@ -308,7 +328,7 @@ static co_aix angle_diff(co_aix sx, co_aix sy, co_aix dx, co_aix dy) {
 
     rd2 = distance_pow2(dx, dy);
     rd = sqrtf(rd2);
-    
+
     inner = INNER(sx, sy, dx, dy);
     cross = CROSS(sx, sy, dx, dy);
     angle = acos(inner / rd);
@@ -352,7 +372,7 @@ void _sh_path_arc_path(mbe_t *cr, sh_path_t *path, const co_aix **pnts_p,
 
     _sin = sinf(x_rotate);
     _cos = cosf(x_rotate);
-    
+
     xyratio = ry / rx;
     aggr = sh_get_aggr_matrix((shape_t *)path);
     matrix[0] = _cos;
@@ -365,7 +385,7 @@ void _sh_path_arc_path(mbe_t *cr, sh_path_t *path, const co_aix **pnts_p,
     matrix_mul(aggr, matrix, dev_matrix);
     mbe_save(cr);
     mbe_transform(cr, dev_matrix);
-    mbe_arc(cr, 0, 0, rx, angle_start, angle_stop); 
+    mbe_arc(cr, 0, 0, rx, angle_start, angle_stop);
     mbe_restore(cr);
 
     *pnts_p = pnts;
@@ -376,9 +396,11 @@ void _sh_path_arc_path(mbe_t *cr, sh_path_t *path, const co_aix **pnts_p,
 
 static void sh_path_free(shape_t *shape) {
     sh_path_t *path = (sh_path_t *)shape;
+
+    mb_obj_destroy(path);
     if(path->user_data)
 	free(path->user_data);
-    free(path);
+    elmpool_elm_free(path->rdman->sh_path_pool, path);
 }
 
 /*! \brief Count number of arguments.
@@ -529,7 +551,7 @@ static int sh_path_cmd_arg_cnt(const char *data, int *cmd_cntp, int *pnt_cntp,
 		SKIP_NUM(p);
 		if(p == old)
 		    break;
-		
+
 		for(i = 0; i < 6; i++) {
 		    SKIP_SPACE(p);
 		    old = p;
@@ -570,6 +592,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
     char cmd;
     co_aix *pnts;
     co_aix *float_args;
+    co_aix sx = 0, sy = 0;
     co_aix x, y;
     int r;
 
@@ -626,6 +649,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSX;
+		x = *pnts;
 		pnts++;
 
 		SKIP_SPACE(p);
@@ -634,6 +658,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSY;
+		y = *pnts;
 		pnts++;
 
 		*cmds++ = toupper(cmd);
@@ -667,6 +692,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSX;
+		x = *pnts;
 		pnts++;
 
 		SKIP_SPACE(p);
@@ -675,13 +701,43 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSY;
+		y = *pnts;
 		pnts++;
 
 		*cmds++ = toupper(cmd);
 	    }
 	    break;
+
 	case 'm':
 	case 'M':
+	    while(*p) {
+		old = p;
+		SKIP_SPACE(p);
+		old = p;
+		SKIP_NUM(p);
+		if(p == old)
+		    break;
+		*pnts = TO_ABSX;
+		x = *pnts;
+		pnts++;
+
+		SKIP_SPACE(p);
+		old = p;
+		SKIP_NUM(p);
+		if(p == old)
+		    return ERR;
+		*pnts = TO_ABSY;
+		y = *pnts;
+		pnts++;
+
+		*cmds++ = toupper(cmd);
+
+		/* save initial point of a subpath */
+		sx = x;
+		sy = y;
+	    }
+	    break;
+
 	case 'l':
 	case 'L':
 	case 't':
@@ -694,6 +750,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    break;
 		*pnts = TO_ABSX;
+		x = *pnts;
 		pnts++;
 
 		SKIP_SPACE(p);
@@ -702,6 +759,7 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 		if(p == old)
 		    return ERR;
 		*pnts = TO_ABSY;
+		y = *pnts;
 		pnts++;
 
 		*cmds++ = toupper(cmd);
@@ -726,6 +784,9 @@ static int sh_path_cmd_arg_fill(const char *data, sh_path_t *path) {
 	case 'z':
 	case 'Z':
 	    *cmds++ = toupper(cmd);
+	    /* Go back to initial point of a subpath */
+	    x = sx;
+	    y = sy;
 	    break;
 	default:
 	    return ERR;
@@ -757,7 +818,7 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
     cmd_cnt = (cmd_cnt + 3) & ~0x3;
 
     /*! \todo Use elmpool to manage sh_path_t objects. */
-    path = (sh_path_t *)malloc(sizeof(sh_path_t));
+    path = (sh_path_t *)elmpool_elm_alloc(rdman->sh_path_pool);
     /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
     mb_obj_init(path, MBO_PATH);
@@ -769,7 +830,7 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
 	sizeof(co_aix) * float_arg_cnt;
     path->user_data = (char *)malloc(msz * 2);
     if(path->user_data == NULL) {
-	free(path);
+	elmpool_elm_free(rdman->sh_path_pool, path);
 	return NULL;
     }
 
@@ -778,14 +839,15 @@ shape_t *rdman_shape_path_new(redraw_man_t *rdman, const char *data) {
     r = sh_path_cmd_arg_fill(data, path);
     if(r == ERR) {
 	free(path->user_data);
-	free(path);
+	elmpool_elm_free(rdman->sh_path_pool, path);
 	return NULL;
     }
     memcpy(path->dev_data, path->user_data, msz);
 
     path->shape.free = sh_path_free;
+    path->rdman = rdman;
 
-    rdman_shape_man(rdman, (shape_t *)path);
+    rdman_man_shape(rdman, (shape_t *)path);
 
     return (shape_t *)path;
 }
@@ -800,7 +862,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     int cmd_cnt = strlen(commands);
 
     /*! \todo Use elmpool to manage sh_path_t objects. */
-    path = (sh_path_t *)malloc(sizeof(sh_path_t));
+    path = (sh_path_t *)elmpool_elm_alloc(rdman->sh_path_pool);
     /*! \todo Remove this memset()? */
     memset(&path->shape, 0, sizeof(shape_t));
     mb_obj_init(path, MBO_PATH);
@@ -812,7 +874,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
 	sizeof(co_aix) * float_arg_cnt;
     path->user_data = (char *)malloc(msz * 2);
     if(path->user_data == NULL) {
-	free(path);
+	elmpool_elm_free(rdman->sh_path_pool, path);
 	return NULL;
     }
 
@@ -822,10 +884,11 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     memcpy(path->user_data + cmd_cnt + pnt_cnt * sizeof(co_aix),
 	   float_args, sizeof(co_aix) * float_arg_cnt);
     memcpy(path->dev_data, path->user_data, msz);
-    
+
     path->shape.free = sh_path_free;
-    
-    rdman_shape_man(rdman, (shape_t *)path);
+    path->rdman = rdman;
+
+    rdman_man_shape(rdman, (shape_t *)path);
 
     return (shape_t *)path;
 }
@@ -960,8 +1023,9 @@ void sh_path_draw(shape_t *shape, mbe_t *cr) {
 void test_rdman_shape_path_new(void) {
     sh_path_t *path;
     co_aix *pnts;
+    redraw_man_t rdman;
 
-    path = (sh_path_t *)rdman_shape_path_new(NULL, "M 33 25l33 55c 33 87 44 22 55 99L33 77z");
+    path = (sh_path_t *)rdman_shape_path_new(&rdman, "M 33 25l33 55c 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->pnt_len == 12);
@@ -989,8 +1053,9 @@ void test_path_transform(void) {
     co_aix *pnts;
     coord_t coord;
     geo_t geo;
+    redraw_man_t rdman;
 
-    path = (sh_path_t *)rdman_shape_path_new(NULL, "M 33 25l33 55C 33 87 44 22 55 99L33 77z");
+    path = (sh_path_t *)rdman_shape_path_new(&rdman, "M 33 25l33 55C 33 87 44 22 55 99L33 77z");
     CU_ASSERT(path != NULL);
     CU_ASSERT(path->cmd_len == ((5 + RESERVED_AIXS + 3) & ~0x3));
     CU_ASSERT(path->pnt_len == 12);
@@ -1029,9 +1094,10 @@ void test_path_transform(void) {
 
 void test_spaces_head_tail(void) {
     sh_path_t *path;
+    redraw_man_t rdman;
 
     path = (sh_path_t *)
-	rdman_shape_path_new(NULL,
+	rdman_shape_path_new(&rdman,
 			     " M 33 25l33 55C 33 87 44 22 55 99L33 77z ");
     CU_ASSERT(path != NULL);
     sh_path_free((shape_t *)path);

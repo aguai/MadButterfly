@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #ifndef __MB_H_
 #define __MB_H_
 
@@ -5,10 +7,15 @@
 
 #include "mb_types.h"
 #include "mb_redraw_man.h"
-#ifdef X_SUPP
+#ifdef X_BACKEND
 #include "mb_X_supp.h"
+#endif
+#ifdef DFB_BACKEND
+#include "mb_dfb_supp.h"
 #endif
 #include "mb_animate.h"
 #include "mb_shapes.h"
+#include "mb_backend.h"
+#include "mb_sprite.h"
 
 #endif /* __MB_H_ */

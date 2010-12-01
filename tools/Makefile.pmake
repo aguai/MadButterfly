@@ -1,3 +1,5 @@
+# -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+# vim: sw=4:ts=8:sts=4
 BINS= svg2code.py
 M4SCRIPTS= mb_c_header.m4 mb_c_source.m4 foreach.m4
 PREFIX?= /usr/local/

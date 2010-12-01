@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #ifndef __MB_TYPES_H_
 #define __MB_TYPES_H_
 
@@ -8,6 +10,7 @@
 
 typedef struct _shape shape_t;
 typedef struct _geo geo_t;
+typedef struct _area area_t;
 typedef struct _shnode shnode_t;
 typedef struct _paint paint_t;
 typedef struct _mb_obj mb_obj_t;
@@ -30,9 +33,11 @@ struct _redraw_man;
  * mb_obj_t should be initialized with mb_obj_init() and destroied with
  * mb_obj_destroy().
  *
- * We have defined a set of convienent API which will wrap the coord_t or shape_t API accoridng to its type.
- * Please refer to http://www.assembla.com/wiki/show/dFrSMOtDer3BZUab7jnrAJ/MBAF_Object for the details. This
- * API is designed for regular programmers which can be used to change some common properties of objects without
+ * We have defined a set of convienent API which will wrap the coord_t
+ * or shape_t API accoridng to its type.  Please refer to
+ * http://www.assembla.com/wiki/show/dFrSMOtDer3BZUab7jnrAJ/MBAF_Object
+ * for the details. This API is designed for regular programmers which
+ * can be used to change some common properties of objects without
  * checking its type.
  */
 struct _mb_obj {
@@ -79,7 +84,7 @@ enum { MBO_DUMMY,
 struct _paint {
     int pnt_type;
     int flags;
-    void (*prepare)(paint_t *paint, mbe_t *cr);
+    void (*prepare)(paint_t *paint, mbe_t *cr, shape_t *sh);
     void (*free)(struct _redraw_man *rdman, paint_t *paint);
     STAILQ(shnode_t) members;
     paint_t *pnt_next;		/*!< \brief Collect all paints of a rdman. */
@@ -96,6 +101,11 @@ enum { MBP_DUMMY,
 struct _shnode {
     shape_t *shape;
     shnode_t *next;
+};
+
+struct _area {
+    co_aix x, y;
+    co_aix w, h;
 };
 
 /*! \brief Geometry data of a shape or a group of shape.
@@ -118,6 +128,13 @@ struct _geo {
 #define GEF_FREE 0x4
 #define GEF_OV_DRAW 0x8		/*!< To flag drawed for a overlay testing. */
 #define GEF_SWAP 0x10
+#define GEF_NOT_SHOWED 0x20	/*!< This geo is not showed.
+				 *
+				 * A geo is not showed if it is hidden
+				 * or one of its ancestors is hidden.
+				 * Redraw manager uses this flag to
+				 * determine who is not showed.
+				 */
 
 extern int areas_are_overlay(area_t *r1, area_t *r2);
 extern void area_init(area_t *area, int n_pos, co_aix pos[][2]);
@@ -160,6 +177,12 @@ typedef struct _coord_canvas_info {
                                  *   cached. */
     area_t *pcache_cur_area;	/*!< Current area for parent cached. */
     area_t *pcache_last_area;	/*!< Last area for parent cached. */
+    co_aix cache_2_pdev[6];	/*!< Transfrom matrix from space of
+				 * cached one to its parent. */
+    co_aix cache_2_pdev_rev[6];	/*!< Reverse of cache_2_pdev. */
+    co_aix aggr_2_pdev[6];	/*!< Aggregation of cache_2_pdev from root  */
+    co_aix aggr_2_pdev_rev[6];	/*!< Aggregation of cache_2_pdev_rev
+				 * from root  */
 } coord_canvas_info_t;
 
 /*! \brief A coordination system.
@@ -214,7 +237,7 @@ struct _coord {
 #define COF_DIRTY 0x1
 #define COF_HIDDEN 0x2	        /*!< A coord is hidden. */
 #define COF_OWN_CANVAS 0x4	/*!< A coord owns a canvas or inherit it
-				 * from an ancestor. 
+				 * from an ancestor.
 				 */
 #define COF_SKIP_TRIVAL 0x8	/*!< temporary skip descendants
 				 * when trivaling.
@@ -238,15 +261,19 @@ struct _coord {
 				 */
 #define COF_TEMP_MARK 0x400	/*!< \brief Temporary mark a coord. */
 #define COF_JUST_ZERO 0x800	/*!< \brief The coord is real peformed zeroing.
-				 * 
+				 *
 				 * It's canvas is changed by zeroing.
 				 */
-#define COF_DIRTY_PCACHE_AREA 0x1000 /*!< \brief pcache_area shoud be
-                                      *  updated.
-				      */
+/*! \brief pcache_area shoud be updated.
+ *
+ * A coord is marked with COF_DIRTY_PCACHE_AREA means its pcache_area
+ * must be re-computed when zeroing.
+ */
+#define COF_DIRTY_PCACHE_AREA 0x1000 
 #define COF_SKIP_ZERO 0x2000	/*!< \brief The coord just skip zeroing.
 				 * No real zeroing was performed.
 				 */
+#define COF_ALWAYS_CACHE 0x4000	/*!< \brief The coord always own a canvas */
 /* @} */
 
 extern void matrix_mul(co_aix *m1, co_aix *m2, co_aix *dst);
@@ -284,21 +311,9 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 	(co)->flags &= ~COF_CACHE_MASK;				\
     } while(0)
 #define coord_is_root(co) ((co)->parent == NULL)
-#define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
-#define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
-#define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
-#define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
-#define coord_set_zeroing(co) \
-    do { (co)->flags |= COF_MUST_ZEROING; } while(0)
-#define coord_clear_zeroing(co) \
-    do { (co)->flags &= ~COF_MUST_ZEROING; } while(0)
-#define coord_set_flags(co, _flags)		\
-    do { (co)->flags |= (_flags); } while(0)
-#define coord_get_parent(co) ((co)->parent)
-#define coord_get_flags(co, _flags) ((co)->flags & (_flags))
-#define coord_clear_flags(co, _flags)		\
-    do { (co)->flags &= ~(_flags); } while(0)
 #define coord_get_mouse_event(coord) ((coord)->mouse_event)
+#define coord_get_opacity(coord) ((coord)->opacity)
+#define coord_set_opacity(coord, v) do { (coord)->opacity = v; } while(0)
 #define coord_get_aggr_matrix(coord) ((coord)->aggr_matrix)
 #define coord_get_matrix(coord) ((coord)->matrix)
 #define FOR_COORDS_POSTORDER(coord, cur)			\
@@ -333,18 +348,6 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 					       sh_get_geo(shape))))
 #define coord_get_area(coord) ((coord)->cur_area)
 #define coord_get_last_area(coord) ((coord)->last_area)
-#define coord_get_pcache_area(coord) ((coord)->canvas_info->pcache_cur_area)
-#define coord_get_pcache_last_area(coord)	\
-    ((coord)->canvas_info->pcache_last_area)
-#define coord_get_cached(coord) ((coord)->canvas_info->owner)
-#define _coord_get_canvas(coord) ((coord)->canvas_info->canvas)
-#define _coord_set_canvas(coord, _canvas)		\
-    do {						\
-	(coord)->canvas_info->canvas = _canvas;		\
-    } while(0)
-#define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
-#define _coord_get_aggr_dirty_areas(coord)	\
-    ((coord)->canvas_info->aggr_dirty_areas)
 
 /* @} */
 
@@ -395,49 +398,5 @@ struct _shape {
 #define sh_get_stroke(sh) ((sh)->stroke)
 #define sh_set_stroke_width(sh, v) do { (sh)->stroke_width = (v); } while(0)
 #define sh_get_stroke_width(sh) (sh)->stroke_width
-
-
-/*! \brief A sprite is a set of graphics that being an object in animation.
- *
- * A sprite include graphics comprise an object.  For example, a tank, in
- * example tank, is comprised a set of graphics that is represented as a
- * sprite.
- */
-struct _mb_sprite {
-    void (*free)(mb_sprite_t *);
-    mb_obj_t *(*get_obj_with_name)(mb_sprite_t *sprite, const char *id);
-    /*! Return non-zero for error. */
-    int (*goto_scene)(mb_sprite_t *sprite, int scene_no);
-};
-
-#define MB_SPRITE_FREE(sprite) ((mb_sprite_t *)(sprite))->free(sprite)
-#define MB_SPRITE_GET_OBJ(sprite, name)					\
-    ((mb_sprite_t *)(sprite))->get_obj_with_name((mb_sprite_t *)(sprite), \
-						 (name))
-#define MB_SPRITE_GOTO_SCENE(sprite, scene_no)				\
-    ((mb_sprite_t *)(sprite))->goto_scene((mb_sprite_t *)(sprite), scene_no)
-
-
-/*! \defgroup mb_sprite_lsym Sprite with linear symbol table.
- * @{
- */ 
-struct _mb_sprite_lsym_entry {
-    const char *sym;
-    const int offset;
-};
-typedef struct _mb_sprite_lsym_entry mb_sprite_lsym_entry_t;
-
-/*! \brief A sub-type of mb_sprite_t with linear symbol table.
- *
- * This type of sprite search symbols with linear/or binary searching.
- */
-struct _mb_sprite_lsym {
-    mb_sprite_t sprite;
-    int num_entries;
-    mb_sprite_lsym_entry_t *entries;
-};
-typedef struct _mb_sprite_lsym mb_sprite_lsym_t;
-
-/* @} */
 
 #endif /* __MB_TYPES_H_ */

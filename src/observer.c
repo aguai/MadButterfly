@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include "mb_redraw_man.h"
 #include "mb_observer.h"
@@ -7,7 +9,7 @@
 #define ASSERT(x)
 #endif
 
-subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
+subject_t *subject_new(observer_factory_t *factory, void *obj, int obj_type) {
     subject_t *subject;
 
     subject = factory->subject_alloc(factory);
@@ -26,10 +28,10 @@ subject_t *subject_new(ob_factory_t *factory, void *obj, int obj_type) {
 }
 
 /*!
- * \todo Keep ob_factory following subject objects.
+ * \todo Keep observer_factory following subject objects.
  */
 void subject_free(subject_t *subject) {
-    ob_factory_t *factory = subject->factory;
+    observer_factory_t *factory = subject->factory;
     observer_t *observer;
     monitor_event_t mevt;
 
@@ -41,7 +43,7 @@ void subject_free(subject_t *subject) {
 	subject->flags |= SUBF_FREE;
 	return;
     }
-    
+
     if(subject->monitor_sub) {
 	mevt.event.type = EVT_MONITOR_FREE;
 	mevt.subject = subject;
@@ -58,7 +60,7 @@ void subject_free(subject_t *subject) {
 
 
 void subject_notify(subject_t *subject, event_t *evt) {
-    ob_factory_t *factory = subject->factory;
+    observer_factory_t *factory = subject->factory;
     observer_t *observer;
     subject_t *old_subject;
     int stop_propagate = 0;
@@ -81,7 +83,7 @@ void subject_notify(subject_t *subject, event_t *evt) {
 	    observer = STAILQ_NEXT(observer_t, next, observer)) {
 	    if (observer->type == EVT_ANY || observer->type == evt->type) {
 		observer->hdr(evt, observer->arg);
-		
+
 		if(evt->flags & EVTF_STOP_NOTIFY) {
 		    stop_propagate = 1;
 			break;
@@ -112,7 +114,7 @@ void subject_notify(subject_t *subject, event_t *evt) {
  */
 observer_t *subject_add_event_observer(subject_t *subject, int type,
 				 evt_handler hdr, void *arg) {
-    ob_factory_t *factory = subject->factory;
+    observer_factory_t *factory = subject->factory;
     observer_t *observer;
     monitor_event_t mevt;
 
@@ -139,7 +141,7 @@ observer_t *subject_add_event_observer(subject_t *subject, int type,
  */
 observer_t *subject_add_event_observer_head(subject_t *subject, int type,
 					    evt_handler hdr, void *arg) {
-    ob_factory_t *factory = subject->factory;
+    observer_factory_t *factory = subject->factory;
     observer_t *observer;
     monitor_event_t mevt;
 
@@ -164,11 +166,11 @@ observer_t *subject_add_event_observer_head(subject_t *subject, int type,
 
 void subject_remove_observer(subject_t *subject,
 			     observer_t *observer) {
-    ob_factory_t *factory = subject->factory;
+    observer_factory_t *factory = subject->factory;
     monitor_event_t mevt;
 
     STAILQ_REMOVE(subject->observers, observer_t, next, observer);
-    
+
     if(subject->monitor_sub) {
 	mevt.event.type = EVT_MONITOR_REMOVE;
 	mevt.subject = subject;
@@ -184,34 +186,36 @@ void subject_remove_observer(subject_t *subject,
 #include <CUnit/Basic.h>
 #include <stdlib.h>
 
-static subject_t *test_subject_alloc(ob_factory_t *factory) {
+static subject_t *test_subject_alloc(observer_factory_t *factory) {
     subject_t *subject;
 
     subject = (subject_t *)malloc(sizeof(subject_t));
     return subject;
 }
 
-static void test_subject_free(ob_factory_t *factory, subject_t *subject) {
+static void
+test_subject_free(observer_factory_t *factory, subject_t *subject) {
     free(subject);
 }
 
-static observer_t *test_observer_alloc(ob_factory_t *factory) {
+static observer_t *test_observer_alloc(observer_factory_t *factory) {
     observer_t *observer;
 
     observer = (observer_t *)malloc(sizeof(observer_t));
     return observer;
 }
 
-static void test_observer_free(ob_factory_t *factory, observer_t *observer) {
+static void
+test_observer_free(observer_factory_t *factory, observer_t *observer) {
     free(observer);
 }
 
-static subject_t *test_get_parent_subject(ob_factory_t *factory,
+static subject_t *test_get_parent_subject(observer_factory_t *factory,
 					  subject_t *subject) {
     return NULL;
 }
 
-static ob_factory_t test_factory = {
+static observer_factory_t test_factory = {
     test_subject_alloc,
     test_subject_free,
     test_observer_alloc,

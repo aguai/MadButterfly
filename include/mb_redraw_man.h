@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #ifndef __REDRAW_MAN_H_
 #define __REDRAW_MAN_H_
 
@@ -6,10 +8,15 @@
 #include "mb_types.h"
 #include "mb_observer.h"
 #include "mb_img_ldr.h"
-#include "mb_timer.h"
 
+/*! \defgroup rdman Redraw Manager
+ * @{
+ */
 typedef struct _redraw_man redraw_man_t;
 
+/*! \defgroup rdman_private Private Types of Redraw Manager
+ * @{
+ */
 typedef void (*free_func_t)(redraw_man_t *rdman, void *obj);
 struct _free_obj {
     void *obj;
@@ -24,6 +31,7 @@ typedef struct _free_objs free_objs_t;
 
 DARRAY(coords, coord_t *);
 DARRAY(geos, geo_t *);
+/* @} */
 
 /*! \brief Manage redrawing of shapes (graphic elements).
  *
@@ -48,14 +56,18 @@ struct _redraw_man {
     elmpool_t *geo_pool;
     elmpool_t *coord_pool;
     elmpool_t *shnode_pool;
+    elmpool_t *sh_path_pool;
+    elmpool_t *sh_rect_pool;
     elmpool_t *observer_pool;
     elmpool_t *subject_pool;
     elmpool_t *paint_color_pool;
+    elmpool_t *paint_linear_pool;
+    elmpool_t *paint_radial_pool;
+    elmpool_t *paint_image_pool;
     elmpool_t *pent_pool;
     elmpool_t *coord_canvas_pool;
 
     coords_t dirty_coords;
-    coords_t dirty_pcache_area_coords;
     geos_t dirty_geos;
     int n_dirty_areas;		/*!< \brief Number of all dirty areas. */
 
@@ -70,7 +82,7 @@ struct _redraw_man {
     mbe_t *cr;
     mbe_t *backend;
 
-    ob_factory_t ob_factory;
+    observer_factory_t observer_factory;
 
     subject_t *redraw;		/*!< \brief Notified after redrawing. */
     subject_t *addrm_monitor;	/*!< \brief Monitor adding/removing observers
@@ -78,8 +90,8 @@ struct _redraw_man {
 				 *	    \see addrm_monitor_hdlr()
 				 */
     mb_obj_t *last_mouse_over;
-    void *rt;                  /*!< \brief This is a pointer to the current 
-                                *          graphic backend. 
+    void *rt;                  /*!< \brief This is a pointer to the current
+                                *          graphic backend.
 				*          \see rdman_attach_backend()
 				*/
     mb_prop_store_t props;
@@ -100,13 +112,15 @@ extern int rdman_find_overlaid_shapes(redraw_man_t *rdman,
 extern int rdman_add_shape(redraw_man_t *rdman,
 			   shape_t *shape, coord_t *coord);
 /*! \brief Make a shape been managed by a redraw manager. */
-#define rdman_shape_man(rdman, shape)					\
+#define rdman_man_shape(rdman, shape)					\
     do {								\
 	mb_prop_store_init(&((mb_obj_t *)(shape))->props,		\
 			   (rdman)->pent_pool);				\
 	STAILQ_INS_TAIL(rdman->shapes, shape_t, sh_next, shape);	\
 	if(rdman->last_mouse_over == (mb_obj_t *)(shape))		\
 	    rdman->last_mouse_over = NULL;				\
+	mb_prop_store_init(&((mb_obj_t *)(shape))->props,		\
+			   (rdman)->pent_pool);				\
     } while(0)
 extern int rdman_shape_free(redraw_man_t *rdman, shape_t *shape);
 
@@ -140,6 +154,10 @@ extern shnode_t *shnode_new(redraw_man_t *rdman, shape_t *shape);
 	}							\
 	shnode_free(rdman, __last);				\
     } while(0)
+
+/*! \defgroup rdman_paints Paints Supporting of Redraw Manger
+ * @{
+ */
 #define _rdman_paint_child(rdman, paint, shape)		\
     do {						\
 	shnode_t *__node;				\
@@ -183,14 +201,23 @@ extern void _rdman_paint_real_remove_child(redraw_man_t *rdman,
 	(shape)->stroke = paint;				\
     } while(0)
 extern int rdman_paint_changed(redraw_man_t *rdman, paint_t *paint);
+/* @} */
 
+/*! \defgroup rdman_pos Position/Overlay Detection for Managed Objects
+ * @{
+ */
 extern shape_t *find_shape_at_pos(redraw_man_t *rdman,
 				  co_aix x, co_aix y, int *in_stroke);
 extern int mb_obj_pos_is_in(redraw_man_t *rdman, mb_obj_t *obj,
 			    co_aix x, co_aix y, int *in_stroke);
 extern int mb_objs_are_overlay(redraw_man_t *rdman,
 			       mb_obj_t *obj1, mb_obj_t *obj2);
-#define rdman_get_ob_factory(rdman) (&(rdman)->ob_factory)
+/* @} */
+
+/*! \defgroup rdman_accessors Accessors of Redraw Manager
+ * @{
+ */
+#define rdman_get_observer_factory(rdman) (&(rdman)->observer_factory)
 #define rdman_get_redraw_subject(rdman) ((rdman)->redraw)
 #define rdman_get_root(rdman) ((rdman)->root_coord)
 #define rdman_get_cr(rdman) ((rdman)->cr)
@@ -204,62 +231,24 @@ extern int rdman_add_gen_geos(redraw_man_t *rdman, geo_t *geo);
     rdman_get_gen_geos(rdman)->num
 #define rdman_clear_shape_gl(rdman)		\
     DARRAY_CLEAN(rdman_get_gen_geos(rdman))
+#define _coord_get_canvas(coord) ((coord)->canvas_info->canvas)
+#define _coord_set_canvas(coord, _canvas)		\
+    do {						\
+	(coord)->canvas_info->canvas = _canvas;		\
+    } while(0)
 #define rdman_prop_store(rdman) ((rdman)->props)
 #define rdman_img_ldr(rdman) ((rdman)->img_ldr)
 #define rdman_set_img_ldr(rdman, ldr)		\
     do { (rdman)->img_ldr = ldr; } while(0)
+/* @} */
 
 /*! \brief Attach backend to the redraw manager so that we can hide the backend from the users.
  *
  */
 #define rdman_attach_backend(rdman,backend) (((rdman)->rt)=(backend))
-/*! \brief Load sprite dymanicly from the shared object module. 
- *  
- * The search path can be changed by sprite_set_search_path. The name
- * can have a relative path in the front of it.
- * This function will search the object in the current working directory
- * and then search the system search path.
- */
-extern mb_sprite_t *sprite_load(const char *name, redraw_man_t *rdman,
-				coord_t *root);
-
-/*! \brief Set the search path of dymanic object loading.
- *
- */
-extern void sprite_set_search_path(char *path);
 
 extern paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman,
 					 const char *img_id);
-
-typedef void (*mb_eventcb_t )(int fd,void *arg);
-#define MONITOR_READ   1
-#define MONITOR_WRITE  2
-
-/*! \brief The backend engine mb_backend_t is used to define the interface to realize the MB.
- *
- * A backend is used to receive events from the system. The MB does not define the backend by itself.
- * Instead, it define an interface which allow the lower layer to implement the event system. Each
- * backend need to provides the following events.
- *
- * - keyboard event
- * - timer event
- * - image loader(?)
- * - render manager(?)
- */
-typedef struct {
-    
-    void *(*init)(char *display,int w,int h);
-    void (*free)(void *be);
-    void (*add_event)(void *be,int type, int fd, mb_eventcb_t f,void *arg);
-    void (*remove_event)(void *be,int type, int fd);
-    void (*loop)(void *be);
-    subject_t *(*kbevents)(void *be);
-    redraw_man_t *(*rdman)(void *be);
-    mb_tman_t *(*tman)(void *be);
-    ob_factory_t *(*factory)(void *be);
-    mb_img_ldr_t *(*loader)(void *be);
-} mb_backend_t;
-
-extern mb_backend_t backend;
+/* @} */
 
 #endif /* __REDRAW_MAN_H_ */

@@ -1,3 +1,5 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -158,7 +160,7 @@
  *   - areas of descendants of cached coord are in space defined
  *     by aggr_matrix of cached coord.
  *   - descendants are marked with \ref COF_ANCESTOR_CACHE
- * 
+ *
  * Since *_transform of shapes compute area with aggr_matrix that is
  * derived from aggr_matrix of a cached ancestor, area of
  * \ref COF_ANCESTOR_CACHE ones should be transformed to device space in
@@ -237,7 +239,7 @@
  * process of adjusting left-top of bounding box is zeroing.
  *
  * Following is rules.
- * - zeroing on a cached coord is performed by adjust coord_t::aggr_matrix 
+ * - zeroing on a cached coord is performed by adjust coord_t::aggr_matrix
  *   of the cached coord and descendnats.
  * - Clean coords works just like before without change.
  *   - in preorder
@@ -302,6 +304,38 @@
 #define ASSERT(x)
 #endif
 
+/*
+ * Conitions for coords.
+ */
+#define coord_is_cached(co) ((co)->flags & COF_OWN_CANVAS)
+#define coord_is_always_cached(co) ((co)->flags & COF_ALWAYS_CACHE)
+#define coord_is_fast_cached(co) ((co)->flags & COF_FAST_MASK)
+#define coord_is_precise_cached(co) ((co)->flags & COF_PRECISE_MASK)
+#define coord_is_zeroing(co) ((co)->flags & COF_MUST_ZEROING)
+#define coord_set_zeroing(co) \
+    do { (co)->flags |= COF_MUST_ZEROING; } while(0)
+#define coord_clear_zeroing(co) \
+    do { (co)->flags &= ~COF_MUST_ZEROING; } while(0)
+#define coord_set_flags(co, _flags)		\
+    do { (co)->flags |= (_flags); } while(0)
+#define coord_get_parent(co) ((co)->parent)
+#define coord_get_flags(co, _flags) ((co)->flags & (_flags))
+#define coord_clear_flags(co, _flags)		\
+    do { (co)->flags &= ~(_flags); } while(0)
+
+#define coord_get_pcache_area(coord) ((coord)->canvas_info->pcache_cur_area)
+#define coord_get_pcache_last_area(coord)	\
+    ((coord)->canvas_info->pcache_last_area)
+#define coord_get_cached(coord) ((coord)->canvas_info->owner)
+#define _coord_get_dirty_areas(coord) (&(coord)->canvas_info->dirty_areas)
+#define _coord_get_aggr_dirty_areas(coord)	\
+    ((coord)->canvas_info->aggr_dirty_areas)
+#define coord_get_2pdev(coord) ((coord)->canvas_info->cache_2_pdev)
+#define coord_get_2pdev_rev(coord) ((coord)->canvas_info->cache_2_pdev_rev)
+#define coord_get_aggr2pdev(coord) ((coord)->canvas_info->aggr_2_pdev)
+#define coord_get_aggr2pdev_rev(coord) ((coord)->canvas_info->aggr_2_pdev_rev)
+
+
 /* NOTE: bounding box should also consider width of stroke.
  */
 
@@ -336,12 +370,14 @@ extern void sh_dummy_transform(shape_t *shape);
 extern void sh_dummy_fill(shape_t *, mbe_t *);
 #endif /* UNITTEST */
 
-static subject_t *ob_subject_alloc(ob_factory_t *factory);
-static void ob_subject_free(ob_factory_t *factory, subject_t *subject);
-static observer_t *ob_observer_alloc(ob_factory_t *factory);
-static void ob_observer_free(ob_factory_t *factory, observer_t *observer);
-static subject_t *ob_get_parent_subject(ob_factory_t *factory,
-					subject_t *cur_subject);
+static subject_t *observer_subject_alloc(observer_factory_t *factory);
+static void observer_subject_free(observer_factory_t *factory,
+				  subject_t *subject);
+static observer_t *observer_observer_alloc(observer_factory_t *factory);
+static void observer_observer_free(observer_factory_t *factory,
+				   observer_t *observer);
+static subject_t *observer_get_parent_subject(observer_factory_t *factory,
+					      subject_t *cur_subject);
 /* Functions for children. */
 #define FORCHILDREN(coord, child)				\
     for((child) = STAILQ_HEAD((coord)->children);		\
@@ -456,10 +492,10 @@ static int add_dirty_geo(redraw_man_t *rdman, geo_t *geo) {
 
 static int add_dirty_area(redraw_man_t *rdman, coord_t *coord, area_t *area) {
     int r;
-    
+
     if(area->w < 0.01 || area->h < 0.01)
 	return OK;
-    
+
     rdman->n_dirty_areas++;
     r = areas_add(_coord_get_dirty_areas(coord), area);
     return r == 0? OK: ERR;
@@ -472,8 +508,10 @@ static int add_zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 }
 
 static int add_dirty_pcache_area_coord(redraw_man_t *rdman, coord_t *coord) {
-    coord_set_flags(coord, COF_DIRTY_PCACHE_AREA);
-    ADD_DATA(coords, dirty_pcache_area_coords, coord);
+    if(!coord_get_flags(coord, COF_DIRTY_PCACHE_AREA)) {
+	coord_set_flags(coord, COF_DIRTY_PCACHE_AREA);
+	ADD_DATA(coords, zeroing_coords, coord);
+    }
     return OK;
 }
 
@@ -515,26 +553,41 @@ static void free_objs_destroy(redraw_man_t *rdman) {
 	free(rdman->free_objs.objs);
 }
 
-
+#ifdef UNITTEST
+/*! \brief This is only used for unittest.
+ */
+typedef struct {
+    co_aix parent_2_cache[6];
+    int w, h;
+} mock_mbe_t;
+#endif
 
 static mbe_t *canvas_new(int w, int h) {
 #ifndef UNITTEST
     mbe_surface_t *surface;
     mbe_t *cr;
-    
+
     surface = mbe_image_surface_create(MB_IFMT_ARGB32,
 					 w, h);
     cr = mbe_create(surface);
 
     return cr;
 #else
-    return NULL;
+    mock_mbe_t *mbe;
+
+    mbe = malloc(sizeof(mock_mbe_t));
+    mbe->w = w;
+    mbe->h = h;
+    
+    return (mbe_t *)mbe;
 #endif
 }
 
 static void canvas_free(mbe_t *canvas) {
 #ifndef UNITTEST
     mbe_destroy(canvas);
+#else
+    free(canvas);
 #endif
 }
 
@@ -546,8 +599,11 @@ static void canvas_get_size(mbe_t *canvas, int *w, int *h) {
     *w = mbe_image_surface_get_width(surface);
     *h = mbe_image_surface_get_height(surface);
 #else
-    *w = 0;
-    *h = 0;
+    mock_mbe_t *mbe;
+
+    mbe = (mock_mbe_t *)canvas;
+    *w = mbe->w;
+    *h = mbe->h;
 #endif
 }
 
@@ -584,22 +640,29 @@ static void geo_detach_coord(geo_t *geo, coord_t *coord) {
     coord->num_members--;
 }
 
-static coord_canvas_info_t *coord_canvas_info_new(redraw_man_t *rdman,
-						  coord_t *coord,
-						  mbe_t *canvas) {
+/*! \brief Create a new canvas and respective info struct for a coord.
+ */
+static coord_canvas_info_t *
+coord_canvas_info_new(redraw_man_t *rdman, coord_t *coord,
+		      mbe_t *canvas) {
     coord_canvas_info_t *info;
+    static co_aix id[6] = {1, 0, 0, 0, 1, 0};
 
     info = (coord_canvas_info_t *)elmpool_elm_alloc(rdman->coord_canvas_pool);
     if(info == NULL)
 	return info;
-    
+
     info->owner = coord;
     info->canvas = canvas;
     DARRAY_INIT(&info->dirty_areas);
-    
+
     bzero(info->pcache_areas, sizeof(area_t) * 2);
     info->pcache_cur_area = &info->pcache_areas[0];
     info->pcache_last_area = &info->pcache_areas[1];
+    memcpy(info->cache_2_pdev, id, sizeof(co_aix) * 6);
+    memcpy(info->cache_2_pdev_rev, id, sizeof(co_aix) * 6);
+    memcpy(info->aggr_2_pdev, id, sizeof(co_aix) * 6);
+    memcpy(info->aggr_2_pdev_rev, id, sizeof(co_aix) * 6);
 
     return info;
 }
@@ -615,24 +678,33 @@ static void mouse_event_root_dummy(event_t *evt, void *arg) {
 
 int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     extern void redraw_man_destroy(redraw_man_t *rdman);
+    extern int _sh_path_size;
+    extern int _sh_rect_size;
     extern int _paint_color_size;
+    extern int _paint_linear_size;
+    extern int _paint_radial_size;
+    extern int _paint_image_size;
     observer_t *addrm_ob;
     extern void addrm_monitor_hdlr(event_t *evt, void *arg);
 
     memset(rdman, 0, sizeof(redraw_man_t));
 
     DARRAY_INIT(&rdman->dirty_coords);
-    DARRAY_INIT(&rdman->dirty_pcache_area_coords);
     DARRAY_INIT(&rdman->dirty_geos);
     DARRAY_INIT(&rdman->gen_geos);
     DARRAY_INIT(&rdman->zeroing_coords);
-    
+
     rdman->geo_pool = elmpool_new(sizeof(geo_t), 128);
     rdman->coord_pool = elmpool_new(sizeof(coord_t), 16);
     rdman->shnode_pool = elmpool_new(sizeof(shnode_t), 16);
+    rdman->sh_path_pool = elmpool_new(_sh_path_size, 16);
+    rdman->sh_rect_pool = elmpool_new(_sh_rect_size, 16);
     rdman->observer_pool = elmpool_new(sizeof(observer_t), 32);
     rdman->subject_pool = elmpool_new(sizeof(subject_t), 32);
     rdman->paint_color_pool = elmpool_new(_paint_color_size, 64);
+    rdman->paint_linear_pool = elmpool_new(_paint_linear_size, 64);
+    rdman->paint_radial_pool = elmpool_new(_paint_radial_size, 64);
+    rdman->paint_image_pool = elmpool_new(_paint_image_size, 64);
     rdman->pent_pool = elmpool_new(sizeof(mb_prop_entry_t), 128);
     rdman->coord_canvas_pool = elmpool_new(sizeof(coord_canvas_info_t), 16);
     if(!(rdman->geo_pool && rdman->coord_pool && rdman->shnode_pool &&
@@ -640,16 +712,16 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 	 rdman->paint_color_pool && rdman->coord_canvas_pool))
 	goto err;
 
-    rdman->ob_factory.subject_alloc = ob_subject_alloc;
-    rdman->ob_factory.subject_free = ob_subject_free;
-    rdman->ob_factory.observer_alloc = ob_observer_alloc;
-    rdman->ob_factory.observer_free = ob_observer_free;
-    rdman->ob_factory.get_parent_subject = ob_get_parent_subject;
+    rdman->observer_factory.subject_alloc = observer_subject_alloc;
+    rdman->observer_factory.subject_free = observer_subject_free;
+    rdman->observer_factory.observer_alloc = observer_observer_alloc;
+    rdman->observer_factory.observer_free = observer_observer_free;
+    rdman->observer_factory.get_parent_subject = observer_get_parent_subject;
 
     rdman->redraw =
-	subject_new(&rdman->ob_factory, rdman, OBJT_RDMAN);
+	subject_new(&rdman->observer_factory, rdman, OBJT_RDMAN);
     rdman->addrm_monitor =
-	subject_new(&rdman->ob_factory, rdman, OBJT_RDMAN);
+	subject_new(&rdman->observer_factory, rdman, OBJT_RDMAN);
     if(!(rdman->redraw && rdman->addrm_monitor))
 	goto err;
 
@@ -666,7 +738,7 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     rdman->n_coords = 1;
     coord_init(rdman->root_coord, NULL);
     mb_prop_store_init(&rdman->root_coord->obj.props, rdman->pent_pool);
-    rdman->root_coord->mouse_event = subject_new(&rdman->ob_factory,
+    rdman->root_coord->mouse_event = subject_new(&rdman->observer_factory,
 						 rdman->root_coord,
 						 OBJT_COORD);
     coord_set_flags(rdman->root_coord, COF_OWN_CANVAS);
@@ -678,7 +750,7 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
     rdman->backend = backend;
 
     STAILQ_INIT(rdman->shapes);
-    
+
     /* \note To make root coord always have at leat one observer.
      * It triggers mouse interpreter to be installed on root.
      */
@@ -697,18 +769,27 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 	elmpool_free(rdman->coord_pool);
     if(rdman->shnode_pool)
 	elmpool_free(rdman->shnode_pool);
+    if(rdman->sh_path_pool)
+	elmpool_free(rdman->sh_path_pool);
+    if(rdman->sh_rect_pool)
+	elmpool_free(rdman->sh_rect_pool);
     if(rdman->observer_pool)
 	elmpool_free(rdman->observer_pool);
     if(rdman->subject_pool)
 	elmpool_free(rdman->subject_pool);
     if(rdman->paint_color_pool)
 	elmpool_free(rdman->paint_color_pool);
+    if(rdman->paint_linear_pool)
+	elmpool_free(rdman->paint_linear_pool);
+    if(rdman->paint_radial_pool)
+	elmpool_free(rdman->paint_radial_pool);
+    if(rdman->paint_image_pool)
+	elmpool_free(rdman->paint_image_pool);
     if(rdman->pent_pool)
 	elmpool_free(rdman->pent_pool);
     if(rdman->coord_canvas_pool)
 	elmpool_free(rdman->coord_canvas_pool);
     DARRAY_DESTROY(&rdman->dirty_coords);
-    DARRAY_DESTROY(&rdman->dirty_pcache_area_coords);
     DARRAY_DESTROY(&rdman->dirty_geos);
     DARRAY_DESTROY(&rdman->gen_geos);
     DARRAY_DESTROY(&rdman->zeroing_coords);
@@ -717,7 +798,7 @@ int redraw_man_init(redraw_man_t *rdman, mbe_t *cr, mbe_t *backend) {
 
 void redraw_man_destroy(redraw_man_t *rdman) {
     coord_t *coord, *saved_coord;
-    shape_t *shape, *saved_shape;
+    shape_t *shape;
     geo_t *member;
 
     mb_prop_store_destroy(&rdman->props);
@@ -729,7 +810,6 @@ void redraw_man_destroy(redraw_man_t *rdman) {
      *  successfully.
      */
     DARRAY_CLEAN(&rdman->dirty_coords);
-    DARRAY_CLEAN(&rdman->dirty_pcache_area_coords);
     DARRAY_CLEAN(&rdman->dirty_geos);
 
     coord = postorder_coord_subtree(rdman->root_coord, NULL);
@@ -748,24 +828,28 @@ void redraw_man_destroy(redraw_man_t *rdman) {
     while((shape = STAILQ_HEAD(rdman->shapes)) != NULL) {
 	rdman_shape_free(rdman, shape);
     }
-    
+
     coord_canvas_info_free(rdman, rdman->root_coord->canvas_info);
 
     /* XXX: paints are not freed, here.  All resources of paints would
      * be reclaimed by freeing elmpools.
      */
-    
+
     elmpool_free(rdman->coord_pool);
     elmpool_free(rdman->geo_pool);
     elmpool_free(rdman->shnode_pool);
+    elmpool_free(rdman->sh_path_pool);
+    elmpool_free(rdman->sh_rect_pool);
     elmpool_free(rdman->observer_pool);
     elmpool_free(rdman->subject_pool);
     elmpool_free(rdman->paint_color_pool);
+    elmpool_free(rdman->paint_linear_pool);
+    elmpool_free(rdman->paint_radial_pool);
+    elmpool_free(rdman->paint_image_pool);
     elmpool_free(rdman->pent_pool);
     elmpool_free(rdman->coord_canvas_pool);
 
     DARRAY_DESTROY(&rdman->dirty_coords);
-    DARRAY_DESTROY(&rdman->dirty_pcache_area_coords);
     DARRAY_DESTROY(&rdman->dirty_geos);
     DARRAY_DESTROY(&rdman->gen_geos);
     DARRAY_DESTROY(&rdman->zeroing_coords);
@@ -802,9 +886,9 @@ int rdman_add_shape(redraw_man_t *rdman, shape_t *shape, coord_t *coord) {
     geo = elmpool_elm_alloc(rdman->geo_pool);
     if(geo == NULL)
 	return ERR;
-    
+
     geo_init(geo);
-    geo->mouse_event = subject_new(&rdman->ob_factory, geo, OBJT_GEO);
+    geo->mouse_event = subject_new(&rdman->observer_factory, geo, OBJT_GEO);
     subject_set_monitor(geo->mouse_event, rdman->addrm_monitor);
 
     geo_attach_coord(geo, coord);
@@ -854,7 +938,7 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
 	rdman_paint_stroke(rdman, (paint_t *)NULL, shape);
     if(shape->fill != NULL)
 	rdman_paint_fill(rdman, (paint_t *)NULL, shape);
-    
+
     if(geo != NULL) {
 	subject_free(geo->mouse_event);
 	geo_detach_coord(geo, shape->coord);
@@ -869,7 +953,7 @@ int rdman_shape_free(redraw_man_t *rdman, shape_t *shape) {
     if(rdman->last_mouse_over == (mb_obj_t *)shape)
 	rdman->last_mouse_over = NULL;
 
-    
+
     return OK;
 }
 
@@ -889,7 +973,7 @@ int rdman_paint_free(redraw_man_t *rdman, paint_t *paint) {
     shape_t *shape;
 
     if(rdman_is_dirty(rdman)) {
-	if(!(paint->flags & PNTF_FREE))
+	if(paint->flags & PNTF_FREE)
 	    return ERR;
 	add_free_obj(rdman, paint, (free_func_t)rdman_paint_free);
 	paint->flags |= PNTF_FREE;
@@ -901,26 +985,26 @@ int rdman_paint_free(redraw_man_t *rdman, paint_t *paint) {
     FORPAINTMEMBERS(paint, shnode) {
 	if(saved_shnode) {
 	    RM_PAINTMEMBER(paint, saved_shnode);
-	    
+
 	    shape = saved_shnode->shape;
 	    if(shape->stroke == paint)
 		rdman_paint_stroke(rdman, (paint_t *)NULL, shape);
 	    if(shape->fill == paint)
 		rdman_paint_fill(rdman, (paint_t *)NULL, shape);
-	    
+
 	    shnode_free(rdman, saved_shnode);
 	}
 	saved_shnode = shnode;
     }
     if(saved_shnode) {
 	RM_PAINTMEMBER(paint, saved_shnode);
-	
+
 	shape = saved_shnode->shape;
 	if(shape->stroke == paint)
 	    rdman_paint_stroke(rdman, (paint_t *)NULL, shape);
 	if(shape->fill == paint)
 	    rdman_paint_fill(rdman, (paint_t *)NULL, shape);
-	
+
 	shnode_free(rdman, saved_shnode);
     }
 
@@ -952,7 +1036,7 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
 
     coord_init(coord, parent);
     mb_prop_store_init(&coord->obj.props, rdman->pent_pool);
-    coord->mouse_event = subject_new(&rdman->ob_factory,
+    coord->mouse_event = subject_new(&rdman->observer_factory,
 				     coord,
 				     OBJT_COORD);
     subject_set_monitor(coord->mouse_event, rdman->addrm_monitor);
@@ -988,7 +1072,7 @@ static int rdman_coord_free_postponse(redraw_man_t *rdman, coord_t *coord) {
 
     if(coord->flags & COF_FREE)
 	return ERR;
-    
+
     coord->flags |= COF_FREE;
     coord_hide(coord);
     if(!(coord->flags & COF_DIRTY)) {
@@ -1033,7 +1117,7 @@ int rdman_coord_free(redraw_man_t *rdman, coord_t *coord) {
 	if(!(member->flags & GEF_FREE))
 	    return ERR;
     }
-    
+
     if(cm_cnt || rdman_is_dirty(rdman))
 	return rdman_coord_free_postponse(rdman, coord);
 
@@ -1226,10 +1310,11 @@ static void clean_shape(shape_t *shape) {
     }
     shape->geo->flags &= ~GEF_DIRTY;
 
-    if(is_coord_subtree_hidden(shape->coord))
-	sh_hide(shape);
+    if(sh_get_flags(shape, GEF_HIDDEN) ||
+       is_coord_subtree_hidden(shape->coord))
+	sh_set_flags(shape, GEF_NOT_SHOWED);
     else
-	sh_show(shape);
+	sh_clear_flags(shape, GEF_NOT_SHOWED);
 }
 
 /*! \brief Setup canvas_info for the coord.
@@ -1242,7 +1327,7 @@ static void setup_canvas_info(redraw_man_t *rdman, coord_t *coord) {
     if(coord->parent == NULL)
 	return;
 
-    if(coord->opacity != 1 || coord_is_cached(coord)) {
+    if(coord->opacity != 1 || coord_is_always_cached(coord)) {
 	if(!coord_is_cached(coord)) {
 	    /* canvas is assigned latter, in zeroing_coord() */
 	    coord->canvas_info = coord_canvas_info_new(rdman, coord, NULL);
@@ -1264,8 +1349,8 @@ static void setup_canvas_info(redraw_man_t *rdman, coord_t *coord) {
 
 /* \brief Compute matrix from cached canvas to parent device space.
  */
-static void compute_cached_2_pdev_matrix(coord_t *coord,
-					   co_aix canvas2pdev_matrix[6]) {
+static void compute_cached_2_pdev_matrix(coord_t *coord) {
+    co_aix *canvas2pdev_matrix = coord_get_2pdev(coord);
     coord_t *parent;
     co_aix *aggr;
     co_aix *matrix, *paggr;
@@ -1277,9 +1362,9 @@ static void compute_cached_2_pdev_matrix(coord_t *coord,
     matrix = coord->matrix;
     parent = coord->parent;
     paggr = coord_get_aggr_matrix(parent);
-    
+
     scale_x = matrix[0] / aggr[0];
-    scale_y = matrix[3] / aggr[3];
+    scale_y = matrix[4] / aggr[4];
     shift_x = matrix[2] - scale_x * aggr[2];
     shift_y = matrix[5] - scale_y * aggr[5];
 
@@ -1291,6 +1376,8 @@ static void compute_cached_2_pdev_matrix(coord_t *coord,
     canvas2p[5] = shift_y;
 
     matrix_mul(paggr, canvas2p, canvas2pdev_matrix);
+
+    compute_reverse(canvas2pdev_matrix, coord_get_2pdev_rev(coord));
 }
 
 /*! \brief Compute area in parent cached coord for a cached coord.
@@ -1303,22 +1390,21 @@ static void compute_cached_2_pdev_matrix(coord_t *coord,
  * ancestral cached coord can be retreived by shifting and resizing
  * canvas box in reverse and transform to coordination system of
  * ancestral cached coord.
- */ 
+ */
 static void compute_pcache_area(coord_t *coord) {
-    co_aix cached2pdev[6];
+    co_aix *cached2pdev = coord_get_2pdev(coord);
     int c_w, c_h;
     canvas_t *canvas;
     coord_canvas_info_t *canvas_info;
     co_aix poses[4][2];
-    
+
     canvas_info = coord->canvas_info;
     SWAP(canvas_info->pcache_cur_area, canvas_info->pcache_last_area,
 	 area_t *);
-    compute_cached_2_pdev_matrix(coord, cached2pdev);
-    
+
     canvas = _coord_get_canvas(coord);
     canvas_get_size(canvas, &c_w, &c_h);
-    
+
     poses[0][0] = 0;
     poses[0][1] = 0;
     poses[1][0] = c_w;
@@ -1331,28 +1417,29 @@ static void compute_pcache_area(coord_t *coord) {
     matrix_trans_pos(cached2pdev, &poses[1][0], &poses[1][1]);
     matrix_trans_pos(cached2pdev, &poses[2][0], &poses[2][1]);
     matrix_trans_pos(cached2pdev, &poses[3][0], &poses[3][1]);
-    
+
     area_init(coord_get_pcache_area(coord), 4, poses);
 
-    coord_set_flags(coord, COF_DIRTY_PCACHE_AREA);
+    coord_clear_flags(coord, COF_DIRTY_PCACHE_AREA);
 }
 
 /*! \brief Compute area of a coord.
  */
 static int
 compute_area(coord_t *coord) {
-    static co_aix (*poses)[2];
+    static co_aix (*poses)[2] = NULL;
     static int max_poses = 0;
     geo_t *geo;
     int cnt, pos_cnt;
-    
+
     cnt = 0;
     FORMEMBERS(coord, geo) {
 	cnt++;
     }
-    
+
     if(max_poses < (cnt * 2)) {
-	free(poses);
+	if(poses)
+	    free(poses);
 	max_poses = cnt * 2;
 	poses = (co_aix (*)[2])malloc(sizeof(co_aix [2]) * max_poses);
 	if(poses == NULL)
@@ -1374,7 +1461,7 @@ static int coord_clean_members_n_compute_area(coord_t *coord) {
     geo_t *geo;
     int r;
     /*! \note poses is shared by invokings, it is not support reentrying. */
-    
+
     /* Clean member shapes. */
     FORMEMBERS(coord, geo) {
 	clean_shape(geo->shape);
@@ -1396,9 +1483,8 @@ static int coord_clean_members_n_compute_area(coord_t *coord) {
  * \note coords their opacity != 1 are also traded as cached ones.
  */
 static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
-    coord_t *child;
     int r;
-    
+
     setup_canvas_info(rdman, coord);
 
     compute_aggr(coord);
@@ -1412,17 +1498,14 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
     if(r != OK)
 	return ERR;
 
+    /* Dirty areas of cached one is added after update pcache_areas.
+     */
     add_dirty_area(rdman, coord, coord->cur_area);
     add_dirty_area(rdman, coord, coord->last_area);
-
+    
     coord_clear_flags(coord, COF_DIRTY);
     coord_set_flags(coord, COF_JUST_CLEAN);
-    
-    FORCHILDREN(coord, child) {
-	if(coord_is_cached(child))
-	    add_dirty_pcache_area_coord(rdman, child);
-    }
-    
+
     return OK;
 }
 
@@ -1434,7 +1517,7 @@ static int clean_coord(redraw_man_t *rdman, coord_t *coord) {
  * coord, coord_canvas_info_t::pcache_cur_area, for its cached children.
  */
 static int clean_rdman_coords(redraw_man_t *rdman) {
-    coord_t *coord, *child;
+    coord_t *coord;
     coord_t **dirty_coords;
     int n_dirty_coords;
     int i, r;
@@ -1476,7 +1559,7 @@ static int clean_rdman_geos(redraw_man_t *rdman) {
 	    add_dirty_area(rdman, coord, visit_geo->cur_area);
 	    add_dirty_area(rdman, coord, visit_geo->last_area);
 	}
-    }    
+    }
 
     return OK;
 }
@@ -1489,7 +1572,7 @@ static int clean_rdman_geos(redraw_man_t *rdman) {
 static
 void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     coord_t *cur;
-    area_t *area, *saved_area;
+    area_t *area;
     geo_t *geo;
     co_aix min_x, min_y;
     co_aix max_x, max_y;
@@ -1498,7 +1581,6 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     int c_w, c_h;
     mbe_t *canvas;
     co_aix *aggr;
-    co_aix poses[4][2];
 
     if(coord->parent == NULL)	/*! \note Should not zeroing root coord */
 	abort();
@@ -1519,26 +1601,44 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     for(cur = preorder_coord_subtree(coord, coord);
 	cur != NULL;
 	cur = preorder_coord_subtree(coord, cur)) {
-	area = coord_get_area(cur);
+	if(coord_is_cached(cur)) {
+	    preorder_coord_skip_subtree(cur);
+	    /* This means pcache_area of descendants must be computed
+	     * before zeroing ancestor cached one.
+	     * (See add_rdman_zeroing_n_pcache_coords())
+	     */
+	    area = coord_get_pcache_area(cur);
+	} else
+	    area = coord_get_area(cur);
+
+	if(area->w == 0 && area->h == 0)
+	    continue;
+	
+	if(min_x == max_x && min_y == max_y) {
+	    min_x = area->x;
+	    max_x = area->x + area->w;
+	    min_y = area->y;
+	    max_y = area->y + area->h;
+	    continue;
+	}
+	
 	if(area->x < min_x)
 	    min_x = area->x;
 	if(area->y < min_y)
 	    min_y = area->y;
-	
+
 	x = area->x + area->w;
 	y = area->y + area->h;
-	
+
 	if(x > max_x)
 	    max_x = x;
 	if(y > max_y)
 	    max_y = y;
-	if(coord_is_cached(cur))
-	    preorder_coord_skip_subtree(cur);
     }
 
     w = max_x - min_x;
     h = max_y - min_y;
-    
+
     canvas = _coord_get_canvas(coord);
     if(canvas)
 	canvas_get_size(canvas, &c_w, &c_h);
@@ -1560,7 +1660,7 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 	coord_set_flags(coord, COF_SKIP_ZERO);
 	return;
     }
-    
+
     /*
      * Adjust matrics of descendants to align left-top corner of
      * minimum covering area with origin of space defined by
@@ -1577,9 +1677,9 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 	}
 	/* Shift space */
 	aggr = coord_get_aggr_matrix(cur);
-	aggr[3] -= min_x;
+	aggr[2] -= min_x;
 	aggr[5] -= min_y;
-	
+
 	FOR_COORD_MEMBERS(coord, geo) {
 	    /* \see GEO_SWAP() */
 	    if(!geo_get_flags(geo, GEF_SWAP))
@@ -1587,7 +1687,7 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
 	}
 	coord_clean_members_n_compute_area(cur);
     }
-    
+
     /*
      * Setup canvas
      *
@@ -1604,16 +1704,29 @@ void zeroing_coord(redraw_man_t *rdman, coord_t *coord) {
     coord_set_flags(coord, COF_JUST_ZERO);
 }
 
-/*! \brief Add canvas owner of dirty geos to redraw_man_t::zeroing_coords.
+/*! \brief Add coords that need to perform zeroing or re-compute pcache_area.
  *
- * All possible coords that need a zeroing have at least one dirty geo.
+ * A coord that need to perform zeroing has one or more dirty members
+ * in its descendants.
+ *
+ * To zeroing a coord, pcache_area of first level cached descendants
+ * must be updated.  To update the pcache_area of a cached coord, the
+ * cached coord also need to perform zeroing.  So, zeroing and
+ * re-computing pcache_area are interleaved.
+ *
+ * The pcache_area of a cached coord must be re-computed if its
+ * parent/ancestors is dirty/just cleaned, or it must be zeroed.  It
+ * means cached coord with jsut cleaned parent should also re-compute
+ * pcache_area.  So, this function also check and add coords for this
+ * situation.
  */
-static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
+static int add_rdman_zeroing_n_pcache_coords(redraw_man_t *rdman) {
     int i;
     int n_dirty_geos;
     geo_t **dirty_geos, *geo;
     int n_dirty_coords;
     coord_t **dirty_coords, *coord;
+    coord_t *parent_coord;
 
     /* Mark all cached ancestral coords of dirty geos */
     n_dirty_geos = rdman->dirty_geos.num;
@@ -1628,7 +1741,7 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 	    coord = coord_get_cached(coord_get_parent(coord));
 	}
     }
-    
+
     /* Mark all cached ancestral coords of dirty coords */
     n_dirty_coords = rdman->dirty_coords.num;
     dirty_coords = rdman->dirty_coords.ds;
@@ -1641,23 +1754,28 @@ static int add_rdman_zeroing_coords(redraw_man_t *rdman) {
 	    coord = coord_get_cached(coord_get_parent(coord));
 	}
     }
-    
+
     /* Add all marked coords into redraw_man_t::zeroing_coords list */
     FOR_COORDS_PREORDER(rdman->root_coord, coord) {
-	if(!coord_is_cached(coord))
+	if(!coord_is_cached(coord) || coord_is_root(coord))
 	    continue;		/* skip coords that is not cached */
-	
+
 	if(!coord_get_flags(coord, COF_TEMP_MARK)) {
-	    if(coord_get_flags(coord, COF_DIRTY_PCACHE_AREA))
+	    parent_coord = coord_get_parent(coord);
+	    /* The pcache_area of a cached coord that is a child of a
+	     * just cleaned one must be recomputed.
+	     */
+	    if(coord_get_flags(parent_coord, COF_JUST_CLEAN))
 		add_dirty_pcache_area_coord(rdman, coord);
+	    
 	    preorder_coord_skip_subtree(coord);
 	    continue;
 	}
 	add_zeroing_coord(rdman, coord);
-	
+
 	coord_clear_flags(coord, COF_TEMP_MARK);
     }
-    
+
     return OK;
 }
 
@@ -1671,7 +1789,7 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
     int i;
     coords_t *all_zeroing;
     coord_t *coord;
-   
+
     all_zeroing = &rdman->zeroing_coords;
     /*! Zeroing is performed from leaves to root.
      *
@@ -1686,34 +1804,43 @@ static int zeroing_rdman_coords(redraw_man_t *rdman) {
      */
     for(i = all_zeroing->num - 1; i >= 0; i--) {
 	coord = all_zeroing->ds[i];
-	zeroing_coord(rdman, coord);
+	if(coord_is_zeroing(coord))
+	    zeroing_coord(rdman, coord);
+	compute_cached_2_pdev_matrix(coord);
+	/* This is required by ancester cached ones to perform
+	 * zeroing.
+	 */
 	compute_pcache_area(coord);
     }
-    
+
     return OK;
 }
 
-/*! \brief Compute pcache_area for coords whoes pcache_area is dirty.
+/*! \brief Update aggregated cache_2_pdev matrix for cached coords.
  *
- * coord_t::dirty_pcache_area_coords also includes part of coords in
- * coord_t::zeroing_coords.  The pcache_area of coords that is in
- * coord_t::dirty_pcache_area_coords, but is not in
- * coord_t::zeroing_coords should be computed here.
- * zeroing_rdman_coords() is responsible for computing pcache_area for
- * zeroing ones.
+ * This is perfromed from root to leaves.  Aggregated cache_2_pdev is
+ * named as aggr_2_pdev field of canvas_info_t.  It is the matrix to
+ * transform a point from space of a cached coord to the space of root
+ * coord.
  */
 static int
-compute_rdman_coords_pcache_area(redraw_man_t *rdman) {
-    coords_t *all_coords;
-    coord_t *coord;
+update_aggr_pdev(redraw_man_t *rdman) {
     int i;
-    
-    all_coords = &rdman->dirty_pcache_area_coords;
-    for(i = 0; i < all_coords->num; i++) {
-	coord = all_coords->ds[i];
-	if(coord_get_flags(coord, COF_DIRTY_PCACHE_AREA))
-	    compute_pcache_area(coord);
+    coords_t *all_zeroing;
+    coord_t *coord, *parent_cached;
+
+    all_zeroing = &rdman->zeroing_coords;
+    for(i = 0; i < all_zeroing->num; i++) {
+	coord = all_zeroing->ds[i];
+	parent_cached = coord_get_cached(coord_get_parent(coord));
+	matrix_mul(coord_get_2pdev(parent_cached),
+		   coord_get_2pdev(coord),
+		   coord_get_aggr2pdev(coord));
+	matrix_mul(coord_get_2pdev_rev(coord),
+		   coord_get_2pdev_rev(parent_cached),
+		   coord_get_aggr2pdev_rev(coord));
     }
+
     return OK;
 }
 
@@ -1727,19 +1854,31 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 					      coord_t *coord) {
     int i;
     int n_areas;
-    int enable_poses1 = 0;
     co_aix poses0[2][2], poses1[2][2];
-    co_aix reverse[6];
-    co_aix canvas2pdev_matrix[6];
+    co_aix *canvas2pdev_matrix;
     area_t **areas, *area;
     area_t *area0, *area1;
     coord_t *parent, *pcached_coord;
 
     n_areas = _coord_get_dirty_areas(coord)->num;
     areas = _coord_get_dirty_areas(coord)->ds;
-    if(n_areas == 0)
-	abort();		/* should not happen! */
-    
+    if(n_areas == 0) {
+	/* Go here for cached one that is descendant of another zeroed
+	 * one, but itself is not zeroed.  It is here for recomputing
+	 * pcache areas.
+	 */
+	if(coord_get_flags(coord, COF_JUST_CLEAN | COF_JUST_ZERO))
+	    abort();		/* should not happen! */
+	
+	parent = coord_get_parent(coord);
+	pcached_coord = coord_get_cached(parent);
+	area = coord_get_pcache_area(coord);
+	add_dirty_area(rdman, pcached_coord, area);
+	area = coord_get_pcache_last_area(coord);
+	add_dirty_area(rdman, pcached_coord, area);
+	return;
+    }
+
     area0 = _coord_get_aggr_dirty_areas(coord);
     area1 = area0 + 1;
 
@@ -1755,13 +1894,13 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 
     if(i >= n_areas)
 	return;
-    
+
     area = areas[i++];
     poses0[0][0] = area->x;
     poses0[0][1] = area->y;
     poses0[1][0] = area->x + area->w;
     poses0[1][1] = area->y + area->h;
-    
+
     if(i < n_areas) {
 	area = areas[i++];
 	poses1[0][0] = area->x;
@@ -1774,7 +1913,7 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 	poses1[1][0] = 0;
 	poses1[1][1] = 0;
     }
-    
+
     for(; i < n_areas - 1;) {
 	/* Even areas */
 	area = areas[i++];
@@ -1793,7 +1932,7 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 	    poses1[1][1] = MB_MAX(poses1[1][1], area->y + area->h);
 	}
     }
-    
+
     if(i < n_areas) {
 	area = areas[i];
 	if(area->w != 0 || area->h != 0) {
@@ -1803,18 +1942,18 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
 	    poses0[1][1] = MB_MAX(poses0[1][1], area->y + area->h);
 	}
     }
-    
+
     parent = coord_get_parent(coord);
     pcached_coord = coord_get_cached(parent);
-    
-    compute_cached_2_pdev_matrix(coord, canvas2pdev_matrix);
+
+    canvas2pdev_matrix = coord_get_2pdev(coord);
 
     /* Add dirty areas to parent cached coord. */
     matrix_trans_pos(canvas2pdev_matrix, poses0[0], poses0[0] + 1);
     matrix_trans_pos(canvas2pdev_matrix, poses0[1], poses0[1] + 1);
     area_init(area0, 2, poses0);
     add_dirty_area(rdman, pcached_coord, area0);
-    
+
     matrix_trans_pos(canvas2pdev_matrix, poses1[0], poses1[0] + 1);
     matrix_trans_pos(canvas2pdev_matrix, poses1[1], poses1[1] + 1);
     area_init(area1, 2, poses1);
@@ -1840,29 +1979,18 @@ static void add_aggr_dirty_areas_to_ancestor(redraw_man_t *rdman,
  */
 static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
     int i;
-    int n_zeroing;
-    coord_t **zeroings;
-    coord_t *coord, *pcached_coord;
-    int n_dpca_coords;		/* number of dirty pcache area coords */
-    coord_t **dpca_coords;	/* dirty pcache area coords */
-    
-    /* Add aggregated areas to parent cached one for coords in zeroing
-     * list
-     */
-    n_zeroing = rdman->zeroing_coords.num;
-    zeroings = rdman->zeroing_coords.ds;
-    for(i = 0; i < n_zeroing; i++) {
-	if(coord_get_flags(coord, COF_TEMP_MARK))
-	    continue;
-	coord_set_flags(coord, COF_TEMP_MARK);
-	
-	coord = zeroings[i];
-	pcached_coord = coord_get_cached(coord_get_parent(coord));
-	
-	if(coord_is_root(coord) || IS_CACHE_REDRAW_ALL(pcached_coord))
-	    continue;
-	
+    coord_t *coord, *parent_coord, *pcached_coord;
+    int n_zeroing_coords;     /* number of dirty pcache area coords */
+    coord_t **zeroing_coords; /* dirty pcache area coords */
+
+    n_zeroing_coords = rdman->zeroing_coords.num;
+    zeroing_coords = rdman->zeroing_coords.ds;
+    for(i = n_zeroing_coords - 1; i >= 0; i--) {
+	coord = zeroing_coords[i];
 	if(IS_CACHE_REDRAW_ALL(coord)) {
+	    parent_coord = coord_get_parent(coord);
+	    pcached_coord = coord_get_cached(parent_coord);
+	    
 	    add_dirty_area(rdman, pcached_coord,
 			   coord_get_pcache_area(coord));
 	    add_dirty_area(rdman, pcached_coord,
@@ -1870,36 +1998,6 @@ static int add_rdman_aggr_dirty_areas(redraw_man_t *rdman) {
 	} else {
 	    add_aggr_dirty_areas_to_ancestor(rdman, coord);
 	}
-    }
-    
-    /* Add pcache_areas to parent cached one for coord that is
-     * non-zeroing and its parent is changed.
-     */
-    n_dpca_coords = rdman->dirty_pcache_area_coords.num;
-    dpca_coords = rdman->dirty_pcache_area_coords.ds;
-    for(i = 0; i < n_dpca_coords; i++) {
-	if(coord_get_flags(coord, COF_TEMP_MARK))
-	    continue;
-	coord_set_flags(coord, COF_TEMP_MARK);
-
-	coord = dpca_coords[i];
-	pcached_coord = coord_get_cached(coord_get_parent(coord));
-	
-	if(coord_is_root(coord) || IS_CACHE_REDRAW_ALL(pcached_coord))
-	    continue;
-	
-	add_dirty_area(rdman, pcached_coord,
-		       coord_get_pcache_area(coord));
-	add_dirty_area(rdman, pcached_coord,
-		       coord_get_pcache_last_area(coord));
-    }
-
-    /* Remove temporary mark */
-    for(i = 0; i < n_zeroing; i++) {
-	coord_clear_flags(zeroings[i], COF_TEMP_MARK);
-    }
-    for(i = 0; i < n_dpca_coords; i++) {
-	coord_clear_flags(dpca_coords[i], COF_TEMP_MARK);
     }
 
     return OK;
@@ -1981,13 +2079,15 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
 	    GEO_SWAP(geo);
 	}
     }
-    
+
+    /* XXX: some geo may swap two times.  Should avoid it.
+     */
     geos = rdman->dirty_geos.ds;
     for(i = 0; i < rdman->dirty_geos.num; i++) {
 	geo = geos[i];
 	GEO_SWAP(geo);
     }
-    
+
     r = clean_rdman_coords(rdman);
     if(r != OK)
 	return ERR;
@@ -2003,7 +2103,7 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     /* Zeroing must be performed after clearing to get latest position
      * of shapes for computing new bounding box
      */
-    r = add_rdman_zeroing_coords(rdman);
+    r = add_rdman_zeroing_n_pcache_coords(rdman);
     if(r != OK)
 	return ERR;
 
@@ -2011,11 +2111,11 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
 
-    r = compute_rdman_coords_pcache_area(rdman);
+    r = add_rdman_aggr_dirty_areas(rdman);
     if(r != OK)
 	return ERR;
-    
-    r = add_rdman_aggr_dirty_areas(rdman);
+
+    r = update_aggr_pdev(rdman);
     if(r != OK)
 	return ERR;
 
@@ -2035,17 +2135,13 @@ static int rdman_clean_dirties(redraw_man_t *rdman) {
     for(i = 0; i < rdman->zeroing_coords.num; i++)
 	coord_clear_flags(coords[i],
 			  COF_JUST_CLEAN | COF_JUST_ZERO | COF_SKIP_ZERO);
-    coords = rdman->dirty_pcache_area_coords.ds;
-    for(i = 0; i < rdman->dirty_pcache_area_coords.num; i++)
-	coord_clear_flags(coords[i],
-			  COF_JUST_CLEAN | COF_JUST_ZERO | COF_SKIP_ZERO);
     
     /* \see GEO_SWAP() */
     for(i = 0; i < rdman->dirty_geos.num; i++) {
 	geo = geos[i];
 	geo_clear_flags(geo, GEF_SWAP);
     }
-    
+
     return OK;
 }
 
@@ -2059,28 +2155,28 @@ static void set_shape_stroke_param(shape_t *shape, mbe_t *cr) {
     mbe_set_line_width(cr, shape->stroke_width);
 }
 
-static void fill_path_preserve(redraw_man_t *rdman) {
-    mbe_fill_preserve(rdman->cr);
+static void fill_path_preserve(redraw_man_t *rdman, mbe_t *cr) {
+    mbe_fill_preserve(cr);
 }
 
-static void fill_path(redraw_man_t *rdman) {
-    mbe_fill(rdman->cr);
+static void fill_path(redraw_man_t *rdman, mbe_t *cr) {
+    mbe_fill(cr);
 }
 
-static void stroke_path(redraw_man_t *rdman) {
-    mbe_stroke(rdman->cr);
+static void stroke_path(redraw_man_t *rdman, mbe_t *cr) {
+    mbe_stroke(cr);
 }
 #else
 static void set_shape_stroke_param(shape_t *shape, mbe_t *cr) {
 }
 
-static void fill_path_preserve(redraw_man_t *rdman) {
+static void fill_path_preserve(redraw_man_t *rdman, mbe_t *cr) {
 }
 
-static void fill_path(redraw_man_t *rdman) {
+static void fill_path(redraw_man_t *rdman, mbe_t *cr) {
 }
 
-static void stroke_path(redraw_man_t *rdman) {
+static void stroke_path(redraw_man_t *rdman, mbe_t *cr) {
 }
 #endif
 
@@ -2120,20 +2216,20 @@ static void draw_shape(redraw_man_t *rdman, mbe_t *cr, shape_t *shape) {
 
 	fill = shape->fill;
 	if(shape->fill) {
-	    fill->prepare(fill, cr);
+	    fill->prepare(fill, cr, shape);
 	    if(shape->stroke)
-		fill_path_preserve(rdman);
+		fill_path_preserve(rdman, cr);
 	    else
-		fill_path(rdman);
+		fill_path(rdman, cr);
 	}
 
 	stroke = shape->stroke;
 	if(stroke) {
-	    stroke->prepare(stroke, cr);
+	    stroke->prepare(stroke, cr, shape);
 	    set_shape_stroke_param(shape, cr);
-	    stroke_path(rdman);
+	    stroke_path(rdman, cr);
 	}
-    } 
+    }
 }
 
 #ifndef UNITTEST
@@ -2141,22 +2237,36 @@ static void clear_canvas(canvas_t *canvas) {
     mbe_clear(canvas);
 }
 
-#define make_clip(canvas, n_dirty_areas, dirty_areas)	\
-    mbe_scissoring(canvas, n_dirty_areas, dirty_areas)
+static void make_clip(mbe_t *cr, int n_dirty_areas,
+		      area_t **dirty_areas) {
+    int i;
+    area_t *area;
+
+    mbe_new_path(cr);
+    for(i = 0; i < n_dirty_areas; i++) {
+	area = dirty_areas[i];
+	if(area->w < 0.1 || area->h < 0.1)
+	    continue;
+	mbe_rectangle(cr, area->x, area->y, area->w, area->h);
+    }
+    mbe_clip(cr);
+}
 
 static void reset_clip(canvas_t *cr) {
-    mbe_reset_scissoring(cr);
+    mbe_reset_clip(cr);
 }
 
 static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 			      area_t **dirty_areas) {
     if(n_dirty_areas)
 	make_clip(rdman->backend, n_dirty_areas, dirty_areas);
-    
+
     mbe_copy_source(rdman->cr, rdman->backend);
 }
 #else /* UNITTEST */
-#define make_clip(canvas, n_dirty_areas, dirty_areas)
+static void make_clip(mbe_t *cr, int n_dirty_areas,
+		      area_t **dirty_areas) {
+}
 
 static void clear_canvas(canvas_t *canvas) {
 }
@@ -2169,27 +2279,39 @@ static void copy_cr_2_backend(redraw_man_t *rdman, int n_dirty_areas,
 }
 #endif /* UNITTEST */
 
-static void update_cached_canvas_2_parent(redraw_man_t *rdman,
-					  coord_t *coord) {
-    mbe_t *pcanvas, *canvas;
+static void
+_update_cached_canvas_2_parent(redraw_man_t *rdman, co_aix reverse[6],
+			       mbe_t *canvas, mbe_t *pcanvas,
+			       co_aix opacity) {
     mbe_surface_t *surface;
     mbe_pattern_t *pattern;
-    co_aix reverse[6];
-    co_aix canvas2pdev_matrix[6];
-
-    if(coord_is_root(coord))
-	return;
-
-    compute_cached_2_pdev_matrix(coord, canvas2pdev_matrix);
-    compute_reverse(canvas2pdev_matrix, reverse);
     
-    canvas = _coord_get_canvas(coord);
-    pcanvas = _coord_get_canvas(coord->parent);
     surface = mbe_get_target(canvas);
     pattern = mbe_pattern_create_for_surface(surface);
     mbe_pattern_set_matrix(pattern, reverse);
     mbe_set_source(pcanvas, pattern);
-    mbe_paint_with_alpha(pcanvas, coord->opacity);
+    mbe_paint_with_alpha(pcanvas, opacity);
+}
+
+static void update_cached_canvas_2_parent(redraw_man_t *rdman,
+					  coord_t *coord) {
+    mbe_t *pcanvas, *canvas;
+    co_aix *c2pdev_reverse;
+
+    if(coord_is_root(coord))
+	return;
+
+    c2pdev_reverse = coord_get_2pdev_rev(coord);
+
+    canvas = _coord_get_canvas(coord);
+    pcanvas = _coord_get_canvas(coord->parent);
+#ifndef UNITTEST
+    _update_cached_canvas_2_parent(rdman, c2pdev_reverse, canvas, pcanvas,
+				   coord->opacity);
+#else
+    memcpy(((mock_mbe_t *)canvas)->parent_2_cache, c2pdev_reverse,
+	   sizeof(co_aix) * 6);
+#endif
 }
 
 static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
@@ -2205,11 +2327,11 @@ static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
 
     if(coord->flags & COF_HIDDEN)
 	return OK;
-    
+
     areas = _coord_get_dirty_areas(coord)->ds;
     n_areas = _coord_get_dirty_areas(coord)->num;
     canvas = _coord_get_canvas(coord);
-    
+
     member = FIRST_MEMBER(coord);
     mem_idx = 0;
     child = FIRST_CHILD(coord);
@@ -2217,7 +2339,8 @@ static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
 	if(child && child->before_pmem == mem_idx) {
 	    if(coord_is_cached(child)) {
 		if(!(child->flags & COF_HIDDEN) &&
-		   is_area_in_areas(coord_get_area(child), n_areas, areas)) {
+		   is_area_in_areas(coord_get_pcache_area(child),
+				    n_areas, areas)) {
 		    update_cached_canvas_2_parent(rdman, child);
 		    dirty = 1;
 		}
@@ -2228,7 +2351,7 @@ static int draw_coord_shapes_in_dirty_areas(redraw_man_t *rdman,
 	    child = NEXT_CHILD(child);
 	} else {
 	    ASSERT(member != NULL);
-	    if((!(member->flags & GEF_HIDDEN)) &&
+	    if((!(member->flags & GEF_NOT_SHOWED)) &&
 	       is_geo_in_areas(member, n_areas, areas)) {
 		draw_shape(rdman, canvas, member->shape);
 		dirty = 1;
@@ -2251,9 +2374,9 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
     mbe_surface_t *surface;
     int i;
     int r;
-    
+
     canvas = _coord_get_canvas(coord);
-    
+
     if(IS_CACHE_REDRAW_ALL(coord)) {
 	/*
 	 * full_area covers all dirty areas of the cached coord.
@@ -2269,7 +2392,7 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
 
     areas = _coord_get_dirty_areas(coord)->ds;
     n_areas = _coord_get_dirty_areas(coord)->num;
-    
+
     for(i = 0; i < n_areas; i++) {
 	area = areas[i];
 	area->x = floorf(area->x);
@@ -2282,7 +2405,7 @@ static int draw_dirty_cached_coord(redraw_man_t *rdman,
     clear_canvas(canvas);
 
     r = draw_coord_shapes_in_dirty_areas(rdman, coord);
-    
+
     reset_clip(canvas);
 
     return OK;
@@ -2306,8 +2429,10 @@ static void draw_shapes_in_dirty_areas(redraw_man_t *rdman) {
 	draw_dirty_cached_coord(rdman, coord);
 	coord_set_flags(coord, COF_TEMP_MARK);
     }
-    for(i = 0; i < num; i++)
+    for(i = 0; i < num; i++) {
+	coord = zeroings[i];
 	coord_clear_flags(coord, COF_TEMP_MARK);
+    }
 
     draw_dirty_cached_coord(rdman, rdman->root_coord);
 }
@@ -2350,10 +2475,10 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     event_t event;
     subject_t *redraw;
     int i;
-    coord_t *coord, **coords;
+    coord_t *coord;
     int n_areas;
     area_t **areas;
-    
+
     r = rdman_clean_dirties(rdman);
     if(r != OK)
 	return ERR;
@@ -2378,8 +2503,7 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     DARRAY_CLEAN(&rdman->dirty_coords);
     DARRAY_CLEAN(&rdman->dirty_geos);
     DARRAY_CLEAN(&rdman->zeroing_coords);
-    DARRAY_CLEAN(&rdman->dirty_pcache_area_coords);
-    
+
     /* Free postponsed removing */
     free_free_objs(rdman);
 
@@ -2441,7 +2565,7 @@ int rdman_redraw_area(redraw_man_t *rdman, co_aix x, co_aix y,
 geo_t *rdman_geos(redraw_man_t *rdman, geo_t *last) {
     geo_t *next;
     coord_t *coord;
-    
+
     if(last == NULL) {
 	coord = rdman->root_coord;
 	while(coord != NULL && FIRST_MEMBER(coord) == NULL)
@@ -2497,48 +2621,51 @@ int rdman_force_clean(redraw_man_t *rdman) {
  * Implment factory and strategy functions for observers and subjects.
  * @{
  */
-static subject_t *ob_subject_alloc(ob_factory_t *factory) {
+static subject_t *observer_subject_alloc(observer_factory_t *factory) {
     redraw_man_t *rdman;
     subject_t *subject;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     subject = elmpool_elm_alloc(rdman->subject_pool);
 
     return subject;
 }
 
-static void ob_subject_free(ob_factory_t *factory, subject_t *subject) {
+static void
+observer_subject_free(observer_factory_t *factory, subject_t *subject) {
     redraw_man_t *rdman;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     elmpool_elm_free(rdman->subject_pool, subject);
 }
 
-static observer_t *ob_observer_alloc(ob_factory_t *factory) {
+static observer_t *observer_observer_alloc(observer_factory_t *factory) {
     redraw_man_t *rdman;
     observer_t *observer;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     observer = elmpool_elm_alloc(rdman->observer_pool);
 
     return observer;
 }
 
-static void ob_observer_free(ob_factory_t *factory, observer_t *observer) {
+static void
+observer_observer_free(observer_factory_t *factory, observer_t *observer) {
     redraw_man_t *rdman;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     elmpool_elm_free(rdman->observer_pool, observer);
 }
 
-static subject_t *ob_get_parent_subject(ob_factory_t *factory,
-					subject_t *cur_subject) {
+static subject_t *
+observer_get_parent_subject(observer_factory_t *factory,
+			    subject_t *cur_subject) {
     redraw_man_t *rdman;
     coord_t *coord, *parent_coord;
     geo_t *geo;
     subject_t *parent;
 
-    rdman = MEM2OBJ(factory, redraw_man_t, ob_factory);
+    rdman = MEM2OBJ(factory, redraw_man_t, observer_factory);
     switch(cur_subject->obj_type) {
     case OBJT_GEO:
 	geo = (geo_t *)cur_subject->obj;
@@ -2570,15 +2697,15 @@ paint_t *rdman_img_ldr_load_paint(redraw_man_t *rdman, const char *img_id) {
     mb_img_data_t *img_data;
     paint_t *paint;
     mb_img_ldr_t *ldr = rdman_img_ldr(rdman);
-    
+
     img_data = MB_IMG_LDR_LOAD(ldr, img_id);
     if(img_data == NULL)
 	return NULL;
-    
+
     paint = rdman_paint_image_new(rdman, img_data);
     if(paint == NULL)
 	MB_IMG_DATA_FREE(img_data);
-    
+
     return paint;
 }
 
@@ -2593,6 +2720,7 @@ struct _sh_dummy {
     co_aix w, h;
     int trans_cnt;
     int draw_cnt;
+    mbe_t *last_draw;
 };
 
 void sh_dummy_free(shape_t *sh) {
@@ -2616,8 +2744,8 @@ shape_t *sh_dummy_new(redraw_man_t *rdman,
     dummy->trans_cnt = 0;
     dummy->draw_cnt = 0;
     dummy->shape.free = sh_dummy_free;
-    
-    rdman_shape_man(rdman, (shape_t *)dummy);
+
+    rdman_man_shape(rdman, (shape_t *)dummy);
 
     return (shape_t *)dummy;
 }
@@ -2626,7 +2754,7 @@ void sh_dummy_transform(shape_t *shape) {
     sh_dummy_t *dummy = (sh_dummy_t *)shape;
     co_aix poses[2][2];
     co_aix x1, y1, x2, y2;
-    
+
     if(shape->geo && shape->coord) {
 	x1 = dummy->x;
 	y1 = dummy->y;
@@ -2639,7 +2767,7 @@ void sh_dummy_transform(shape_t *shape) {
 	poses[0][1] = y1;
 	poses[1][0] = x2;
 	poses[1][1] = y2;
-    
+
 	if(shape->geo)
 	    geo_from_positions(shape->geo, 2, poses);
     }
@@ -2651,6 +2779,7 @@ void sh_dummy_fill(shape_t *shape, mbe_t *cr) {
 
     dummy = (sh_dummy_t *)shape;
     dummy->draw_cnt++;
+    dummy->last_draw = cr;
 }
 
 static void dummy_paint_prepare(paint_t *paint, mbe_t *cr) {
@@ -2703,7 +2832,7 @@ static void test_rdman_redraw_changed(void) {
     CU_ASSERT(dummys[0]->draw_cnt == 1);
     CU_ASSERT(dummys[1]->draw_cnt == 1);
     CU_ASSERT(dummys[2]->draw_cnt == 1);
-    
+
     coords[2]->matrix[2] = 100;
     coords[2]->matrix[5] = 100;
     rdman_coord_changed(rdman, coords[0]);
@@ -2741,12 +2870,168 @@ static void test_rdman_free_objs(void) {
     CU_ASSERT(test_free_pass == 4);
 }
 
+static void
+test_setup_canvas_info(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+
+    coord = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord->parent == rdman->root_coord);
+
+    coord_set_opacity(coord, 0.9);
+    setup_canvas_info(rdman, coord);
+
+    CU_ASSERT(coord->canvas_info != rdman->root_coord->canvas_info);
+
+    coord_set_opacity(coord, 1);
+    setup_canvas_info(rdman, coord);
+
+    CU_ASSERT(coord->canvas_info == rdman->root_coord->canvas_info);
+}
+
+static void
+test_own_canvas_area(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord1, *coord2;
+    sh_dummy_t *sh;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+
+    coord1 = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord1->parent == rdman->root_coord);
+
+    coord2 = rdman_coord_new(rdman, coord1);
+    CU_ASSERT(coord2->parent == coord1);
+
+    coord_set_opacity(coord2, 0.9);
+    rdman_coord_changed(rdman, coord2);
+
+    sh = (sh_dummy_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    rdman_add_shape(rdman, (shape_t *)sh, coord2);
+    rdman_shape_changed(rdman, (shape_t *)sh);
+
+    clean_coord(rdman, coord2);
+
+    /* Parent cached coord must be updated */
+    CU_ASSERT(geo_get_area(coord2)->x == 100);
+    CU_ASSERT(geo_get_area(coord2)->y == 100);
+    CU_ASSERT(geo_get_area(coord2)->w <= 22 && geo_get_area(coord2)->w >= 19);
+    CU_ASSERT(geo_get_area(coord2)->h <= 22 && geo_get_area(coord2)->h >= 19);
+
+    redraw_man_destroy(rdman);
+}
+
+static void
+test_own_canvas(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord1, *coord2;
+    sh_dummy_t *sh;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+
+    coord1 = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord1->parent == rdman->root_coord);
+
+    coord2 = rdman_coord_new(rdman, coord1);
+    CU_ASSERT(coord2->parent == coord1);
+
+    coord_set_opacity(coord2, 0.9);
+    rdman_coord_changed(rdman, coord2);
+
+    sh = (sh_dummy_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    rdman_add_shape(rdman, (shape_t *)sh, coord2);
+    rdman_shape_changed(rdman, (shape_t *)sh);
+
+    rdman_clean_dirties(rdman);
+
+    /* Parent cached coord must be updated */
+    CU_ASSERT(_coord_get_dirty_areas(rdman->root_coord)->num == 1);
+
+    CU_ASSERT(geo_get_area(coord2)->x == 0);
+    CU_ASSERT(geo_get_area(coord2)->y == 0);
+    CU_ASSERT(geo_get_area(coord2)->w <= 22 && geo_get_area(coord2)->w >= 19);
+    CU_ASSERT(geo_get_area(coord2)->h <= 22 && geo_get_area(coord2)->h >= 19);
+    
+    redraw_man_destroy(rdman);
+}
+
+static void
+test_own_canvas_redraw(void) {
+    redraw_man_t *rdman;
+    redraw_man_t _rdman;
+    coord_t *coord1, *coord2;
+    sh_dummy_t *sh;
+    paint_t *paint;
+    co_aix *parent_2_cache;
+
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+    
+    coord1 = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord1->parent == rdman->root_coord);
+
+    coord2 = rdman_coord_new(rdman, coord1);
+    CU_ASSERT(coord2->parent == coord1);
+
+    coord_set_opacity(coord2, 0.9);
+    rdman_coord_changed(rdman, coord2);
+
+    sh = (sh_dummy_t *)sh_dummy_new(rdman, 100, 100, 20, 20);
+    rdman_add_shape(rdman, (shape_t *)sh, coord2);
+    rdman_shape_changed(rdman, (shape_t *)sh);
+
+    paint = dummy_paint_new(rdman);
+    rdman_paint_fill(rdman, paint, (shape_t *)sh);
+    
+    rdman_redraw_all(rdman);
+
+    CU_ASSERT(sh->draw_cnt == 1);
+    CU_ASSERT(sh->last_draw == _coord_get_canvas(coord2));
+
+    parent_2_cache = ((mock_mbe_t *)_coord_get_canvas(coord2))->parent_2_cache;
+    CU_ASSERT(parent_2_cache[0] == 1);
+    CU_ASSERT(parent_2_cache[1] == 0);
+    CU_ASSERT(parent_2_cache[2] == -100);
+    CU_ASSERT(parent_2_cache[3] == 0);
+    CU_ASSERT(parent_2_cache[4] == 1);
+    CU_ASSERT(parent_2_cache[5] == -100);
+
+    coord2->matrix[2] = 20;
+    coord2->matrix[5] = 30;
+    rdman_coord_changed(rdman, coord2);
+    rdman_redraw_changed(rdman);
+    
+    /* To test if transform matrix of cached coord working */
+    parent_2_cache = ((mock_mbe_t *)_coord_get_canvas(coord2))->parent_2_cache;
+    CU_ASSERT(parent_2_cache[0] == 1);
+    CU_ASSERT(parent_2_cache[1] == 0);
+    CU_ASSERT(parent_2_cache[2] == -120);
+    CU_ASSERT(parent_2_cache[3] == 0);
+    CU_ASSERT(parent_2_cache[4] == 1);
+    CU_ASSERT(parent_2_cache[5] == -130);    
+    
+    rdman_paint_free(rdman, paint);
+    redraw_man_destroy(rdman);
+}
+
 CU_pSuite get_redraw_man_suite(void) {
     CU_pSuite suite;
 
     suite = CU_add_suite("Suite_redraw_man", NULL, NULL);
     CU_ADD_TEST(suite, test_rdman_redraw_changed);
     CU_ADD_TEST(suite, test_rdman_free_objs);
+    CU_ADD_TEST(suite, test_setup_canvas_info);
+    CU_ADD_TEST(suite, test_own_canvas_area);
+    CU_ADD_TEST(suite, test_own_canvas);
+    CU_ADD_TEST(suite, test_own_canvas_redraw);
 
     return suite;
 }

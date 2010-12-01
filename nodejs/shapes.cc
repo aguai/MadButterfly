@@ -1,5 +1,9 @@
+// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
+// vim: sw=4:ts=8:sts=4
 #include <v8.h>
 #include "mbfly_njs.h"
+
+#include <string.h>
 
 extern "C" {
 #include <mb.h>
@@ -9,73 +13,116 @@ extern "C" {
 #define ASSERT(x)
 #endif
 
+#define OK 0
+
 using namespace v8;
 
-/*! \defgroup shape_temp Templates for shape and derivations.
+/*! \defgroup xnjsmb_shapes JS binding for shapes.
+ * \ingroup xnjsmb
  *
  * @{
  */
-static Persistent<FunctionTemplate> xnjsmb_shape_temp;
-
-static Handle<Value>
-xnjsmb_shape_show(const Arguments &args) {
-    shape_t *sh;
-    Handle<Object> self;
-
-    self = args.This();
-    sh = (shape_t *)UNWRAP(self);
-    sh_show(sh);
-    
-    return Null();
-}
-
-static Handle<Value>
-xnjsmb_shape_hide(const Arguments &args) {
-    shape_t *sh;
-    Handle<Object> self;
-
-    self = args.This();
-    sh = (shape_t *)UNWRAP(self);
-    sh_hide(sh);
-    
-    return Null();
-}
-
-/*! \brief Get stroke width of a shape.
- */
-static Handle<Value>
-xnjsmb_shape_stroke_width_getter(Local<String> property,
-				 const AccessorInfo &info) {
-    Handle<Object> self = info.This();
-    shape_t *sh;
-    float w;
-    Handle<Value> w_val;
-    
-    sh = (shape_t *)UNWRAP(self);
-    w = sh_get_stroke_width(sh);
-    w_val = Number::New(w);
-    
-    return w_val;
-}
-
-/*! \brief Set stroke width of a shape.
+/*! \brief This function is called when GC collecting a shape.
+ *
+ * It was installed by Persistent<Object>::MakeWeak().
  */
 static void
-xnjsmb_shape_stroke_width_setter(Local<String> property,
-				 Local<Value> value,
-				 const AccessorInfo &info) {
-    Handle<Object> self = info.This();
-    Handle<Object> rt;
-    shape_t *sh;
+xnjsmb_shape_recycled(Persistent<Value> obj, void *parameter) {
+    Persistent<Object> *self_hdl = (Persistent<Object> *)parameter;
+    Handle<Object> js_rt;
     redraw_man_t *rdman;
-    float w;
-    Handle<Number> w_num;
-    
-    sh = (shape_t *)UNWRAP(self);
-    w_num = value->ToNumber();
-    w = w_num->Value();
+    shape_t *shape;
 
-    sh_set_stroke_width(sh, w);
+    shape = (shape_t *)UNWRAP(*self_hdl);
+    if(shape == NULL)
+	return;
+
+    WRAP(*self_hdl, NULL);
+
+    js_rt = GET(*self_hdl, "mbrt")->ToObject();
+    rdman = xnjsmb_rt_rdman(js_rt);
+    rdman_shape_changed(rdman, shape);
+    rdman_shape_free(rdman, shape);
+
+    self_hdl->Dispose();
+    delete self_hdl;
+}
+
+static void
+xnjsmb_shape_mod(Handle<Object> self, shape_t *sh) {
+    Persistent<Object> *self_hdl;
+    static int count = 0;
+
+    /* Keep associated js object in property store for retrieving,
+     * later, without create new js object.
+     */
+    self_hdl = new Persistent<Object>();
+    *self_hdl = Persistent<Object>::New(self);
+    mb_prop_set(&sh->obj.props, PROP_JSOBJ, self_hdl);
+
+    self_hdl->MakeWeak(self_hdl, xnjsmb_shape_recycled);
+
+    /* XXX: should be remove.  It is for trace recycle of shape */
+    count++;
+    if(count > 10000) {
+	V8::LowMemoryNotification();
+	count = 0;
+    }
+}
+
+static void
+xnjsmb_sh_stext_set_text(shape_t *sh, Handle<Object> self,
+			 const char *txt) {
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+    
+    sh_stext_set_text(sh, txt);
+    
+    /*
+     * Mark changed.
+     */
+    rt = GET(self, "mbrt")->ToObject();
+    ASSERT(rt != NULL);
+    rdman = xnjsmb_rt_rdman(rt);
+
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+}
+
+/*! \brief Set style blocks for a stext object from JS.
+ *
+ * A style block is style setting of a chip of text.  It is a 3-tuple,
+ * includes number of charaters, a font face, and font size.  This
+ * function need a list of 3-tuples to set style of text chips of the
+ * stext.
+ */
+static void
+xnjsmb_sh_stext_set_style(shape_t *sh, Handle<Object> self,
+			  Handle<Value> blks, const char **err) {
+    Array *blksobj;
+    Array *blkobj;
+    mb_style_blk_t *mb_blks;
+    int nblks;
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+    int r;
+    int i;
+
+    blksobj = Array::Cast(*blks);
+    nblks = blksobj->Length();
+    mb_blks = new mb_style_blk_t[nblks];
+    for(i = 0; i < nblks; i++) {
+	blkobj = Array::Cast(*blksobj->Get(i));
+	mb_blks[i].n_chars = blkobj->Get(0)->ToInt32()->Value();
+	mb_blks[i].face = (mb_font_face_t *)UNWRAP(blkobj->Get(1)->ToObject());
+	mb_blks[i].font_sz = blkobj->Get(2)->ToNumber()->Value();
+    }
+
+    r = sh_stext_set_style(sh, mb_blks, nblks);
+    if(r != 0) {
+	*err = "Unknown error";
+	return;
+    }
 
     /*
      * Mark changed.
@@ -83,280 +130,226 @@ xnjsmb_shape_stroke_width_setter(Local<String> property,
     rt = GET(self, "mbrt")->ToObject();
     ASSERT(rt != NULL);
     rdman = xnjsmb_rt_rdman(rt);
-    
+
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+
+    delete mb_blks;
+}
+
+static Handle<Value>
+xnjsmb_shape_stroke_width_get(Handle<Object> self, shape_t *sh,
+			      const char **err) {
+    float stroke_width;
+
+    stroke_width = sh_get_stroke_width(sh);
+    return Number::New(stroke_width);
+}
+
+static void
+xnjsmb_shape_stroke_width_set(Handle<Object> self, shape_t *sh,
+			      Handle<Value> value, const char **err) {
+    float stroke_width;
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+
+    stroke_width = value->Int32Value();
+    sh_set_stroke_width(sh, stroke_width);
+
+    /*
+     * Mark changed.
+     */
+    rt = GET(self, "mbrt")->ToObject();
+    ASSERT(rt != NULL);
+    rdman = xnjsmb_rt_rdman(rt);
+
     if(sh_get_coord(sh))
 	rdman_shape_changed(rdman, sh);
 }
 
 static void
-xnjsmb_init_shape_temp(void) {
-    Handle<FunctionTemplate> temp;
-    Handle<ObjectTemplate> proto_temp;
-    Handle<FunctionTemplate> method_temp;
-
-    temp = FunctionTemplate::New();
-    temp->SetClassName(String::New("shape"));
-    xnjsmb_shape_temp = Persistent<FunctionTemplate>::New(temp);
-    proto_temp = temp->PrototypeTemplate();
-    
-    method_temp = FunctionTemplate::New(xnjsmb_shape_show);
-    SET(proto_temp, "show", method_temp);
-    method_temp = FunctionTemplate::New(xnjsmb_shape_hide);
-    SET(proto_temp, "hide", method_temp);
-
-    proto_temp->SetAccessor(String::New("stroke_width"),
-			    xnjsmb_shape_stroke_width_getter,
-			    xnjsmb_shape_stroke_width_setter);
-}
-
-/* @} */
-
-/*! \defgroup path_temp Templates for path objects.
- *
- * @{
- */
-static Persistent<FunctionTemplate> xnjsmb_path_temp;
-
-/*! \brief Callback of constructor of path objects for Javascript.
- */
-static Handle<Value>
-xnjsmb_shape_path(const Arguments &args) {
-    shape_t *sh;
+xnjsmb_shape_show(shape_t *sh, Handle<Object> self) {
+    Handle<Object> js_rt;
     redraw_man_t *rdman;
-    Handle<Object> self = args.This(); // path object
-    Handle<Object> rt;
-    char *dstr;
-    int argc;
 
-    argc = args.Length();
-    if(argc != 2)
-	THROW("Invalid number of arugments (!= 1)");
-    if(!args[0]->IsString())
-	THROW("Invalid argument type (should be a string)");
-    if(!args[1]->IsObject())
-	THROW("Invalid argument type (should be an object)");
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
 
-    String::Utf8Value dutf8(args[0]->ToString());
-    dstr = *dutf8;
-
-    rt = args[1]->ToObject();
-    rdman = xnjsmb_rt_rdman(rt);
-    sh = rdman_shape_path_new(rdman, dstr);
-
-    WRAP(self, sh);
-    SET(self, "mbrt", rt);
-
-    return Null();
+    sh_show(sh);
+    rdman_shape_changed(rdman, sh);
 }
 
-/*! \brief Initial function template for constructor of path objects.
- */
 static void
-xnjsmb_init_path_temp(void) {
-    Handle<FunctionTemplate> temp;
-    Handle<ObjectTemplate> inst_temp;
-
-    temp = FunctionTemplate::New(xnjsmb_shape_path);
-    temp->Inherit(xnjsmb_shape_temp);
-    temp->SetClassName(String::New("path"));
-
-    inst_temp = temp->InstanceTemplate();
-    inst_temp->SetInternalFieldCount(1);
-
-    xnjsmb_path_temp = Persistent<FunctionTemplate>::New(temp);
-}
-
-/*! \brief Callback function of mb_rt.path_new().
- */
-static Handle<Value>
-xnjsmb_shape_path_new(const Arguments &args) {
-    HandleScope scope;
-    Handle<Object> self = args.This(); // runtime object
-    Handle<Object> path_obj;
-    Handle<Value> path_args[2];
-    int argc;
-
-    argc = args.Length();
-    if(argc != 1)
-	THROW("Invalid number of arugments (!= 1)");
-    if(!args[0]->IsString())
-	THROW("Invalid argument type (shoud be a string)");
-
-    path_args[0] = args[0];
-    path_args[1] = self;
-    
-    path_obj = xnjsmb_path_temp->GetFunction()->NewInstance(2, path_args);
-    
-    scope.Close(path_obj);
-    return path_obj;
-}
-
-/* @} */
-
-/*! \defgroup stext_path Template for stext objects.
- *
- * @{
- */
-
-/*! \brief Constructor for stext objects.
- *
- * 4 arguments
- * \param rt is a runtime object.
- * \param data is a text to be showed.
- * \param x is postion in x-axis.
- * \param y is position in y-axis.
- */
-static Handle<Value>
-xnjsmb_shape_stext(const Arguments &args) {
-    int argc = args.Length();
-    Handle<Object> self = args.This();
-    Handle<Object> rt;
-    float x, y;
-    char *data;
+xnjsmb_shape_hide(shape_t *sh, Handle<Object> self) {
+    Handle<Object> js_rt;
     redraw_man_t *rdman;
-    shape_t *stext;
-    
-    if(argc != 4)
-	THROW("Invalid number of arguments (!= 4)");
-    if(!args[0]->IsObject() || !args[1]->IsString() ||
-       !args[2]->IsNumber() || !args[3]->IsNumber())
-	THROW("Invalid argument type");
 
-    rt = args[0]->ToObject();
-    String::Utf8Value data_utf8(args[1]);
-    data = *data_utf8;
-    x = args[2]->ToNumber()->Value();
-    y = args[3]->ToNumber()->Value();
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
 
-    rdman = xnjsmb_rt_rdman(rt);
-    ASSERT(rdman != NULL);
-
-    stext = rdman_shape_stext_new(rdman, data, x, y);
-
-    WRAP(self, stext);
-    SET(self, "mbrt", rt);
-
-    return Null();
+    sh_hide(sh);
+    rdman_shape_changed(rdman, sh);
 }
 
-static Persistent<FunctionTemplate> xnjsmb_shape_stext_temp;
-
-/*! \brief Create a stext and return it.
- */
-static Handle<Value>
-xnjsmb_shape_stext_new(const Arguments &args) {
-    HandleScope scope;
-    int argc = args.Length();
-    Handle<Object> self = args.This();
-    Handle<Value> stext_args[4];
-    Handle<Object> stext_obj;
-    Handle<Function> func;
-
-    if(argc != 3)
-	THROW("Invalid number of arguments (!= 3)");
-
-    stext_args[0] = self;
-    stext_args[1] = args[0];
-    stext_args[2] = args[1];
-    stext_args[3] = args[2];
-
-    func = xnjsmb_shape_stext_temp->GetFunction();
-    stext_obj = func->NewInstance(4, stext_args);
-    ASSERT(stext_obj != NULL);
-
-    return stext_obj;
-}
-
-/*! \brief Setup style blocks for a stext.
- *
- * It defines font style and size for blocks of text message.
- *
- * \param blks is a list (n_char, face, font size) tuples.
- */
-static Handle<Value>
-xnjsmb_shape_stext_set_style(const Arguments &args) {
-    HandleScope scope;
-    int argc = args.Length();
-    Handle<Object> self = args.This();
-    shape_t *sh;
-    Array *blksobj;
-    Array *blkobj;
-    mb_style_blk_t *blks;
-    int nblks;
-    int i;
+static void
+xnjsmb_shape_remove(shape_t *sh, Handle<Object> self) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    Persistent<Object> *self_hdl;
     int r;
 
-    if(argc != 1)
-	THROW("Invalid number of arguments (!= 1)");
-    if(!args[0]->IsArray())
-	THROW("Invalid type of the argument");
+    self_hdl = (Persistent<Object> *)mb_prop_get(&sh->obj.props,
+						 PROP_JSOBJ);
 
-    blksobj = Array::Cast(*args[0]);
-    nblks = blksobj->Length();
-    blks = new mb_style_blk_t[nblks];
-    for(i = 0; i < nblks; i++) {
-	blkobj = Array::Cast(*blksobj->Get(i));
-	blks[i].n_chars = blkobj->Get(0)->ToInt32()->Value();
-	blks[i].face = (mb_font_face_t *)UNWRAP(blkobj->Get(1)->ToObject());
-	blks[i].font_sz = blkobj->Get(2)->ToNumber()->Value();
-    }
-    
-    sh = (shape_t *)UNWRAP(self);
-    r = sh_stext_set_style(sh, blks, nblks);
-    if(r != 0)
-	THROW("Unknown error");
-    
-    delete blks;
-    
-    return Null();
+    SET(*self_hdl, "valid", Boolean::New(0));
+    WRAP(*self_hdl, NULL);
+
+    js_rt = GET(*self_hdl, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+
+    rdman_shape_changed(rdman, sh);
+    r = rdman_shape_free(rdman, sh);
+    if(r != OK)
+	THROW_noret("Can not free a shape for unknown reason");
+
+    self_hdl->Dispose();
+    delete self_hdl;
 }
 
-/*! \brief Initialize function template for stext objects.
- */
-void
-xnjsmb_init_stext_temp(void) {
-    Handle<FunctionTemplate> func_temp;
-    Handle<FunctionTemplate> meth_temp;
-    Handle<ObjectTemplate> inst_temp;
-    Handle<ObjectTemplate> proto_temp;
-    
-    func_temp = FunctionTemplate::New(xnjsmb_shape_stext);
-    func_temp->Inherit(xnjsmb_shape_temp);
-    func_temp->SetClassName(String::New("stext"));
-    
-    inst_temp = func_temp->InstanceTemplate();
-    inst_temp->SetInternalFieldCount(1);
+static void
+xnjsmb_sh_rect_set(shape_t *sh, Handle<Object> self, float x, float y,
+		   float w, float h, float rx, float ry) {
+    Handle<Object> rt;
+    redraw_man_t *rdman;
 
-    proto_temp = func_temp->PrototypeTemplate();
-    meth_temp = FunctionTemplate::New(xnjsmb_shape_stext_set_style);
-    SET(proto_temp, "set_style", meth_temp);
-    
-    xnjsmb_shape_stext_temp = Persistent<FunctionTemplate>::New(func_temp);
+    sh_rect_set(sh, x, y, w, h, rx, ry);
+
+    /*
+     * Mark changed.
+     */
+    rt = GET(self, "mbrt")->ToObject();
+    ASSERT(rt != NULL);
+    rdman = xnjsmb_rt_rdman(rt);
+
+    if(sh_get_coord(sh))
+	rdman_shape_changed(rdman, sh);
+}
+
+/* @} */
+
+#include "shapes-inc.h"
+
+/*! \defgroup xnjsmb_shapes_wraps Exported wrapper makers for shapes
+ * \ingroup xnjsmb_shapes
+ *
+ * These functions are used by methods of mb_rt to wrap shape objects
+ * as Javascript objects.
+ *
+ * @{
+ */
+Handle<Value>
+export_xnjsmb_auto_path_new(shape_t *sh) {
+    return xnjsmb_auto_path_new(sh);
+}
+
+Handle<Value>
+export_xnjsmb_auto_stext_new(shape_t *sh) {
+    return xnjsmb_auto_stext_new(sh);
+}
+
+Handle<Value>
+export_xnjsmb_auto_image_new(shape_t *sh) {
+    return xnjsmb_auto_image_new(sh);
+}
+
+Handle<Value>
+export_xnjsmb_auto_rect_new(shape_t *sh) {
+    return xnjsmb_auto_rect_new(sh);
+}
+
+/* @} */
+
+/*! \defgroup xnjsmb_shapes_cons Constructor of shapes
+ * \ingroup xnjsmb_shapes
+ *
+ * @{
+ */
+shape_t *
+xnjsmb_path_new(njs_runtime_t *rt, const char *d) {
+    redraw_man_t *rdman;
+    shape_t *sh;
+
+    rdman = njs_mb_rdman(rt);
+    sh = rdman_shape_path_new(rdman, d);
+    /* Code generator supposes that callee should free the memory */
+    free((void *)d);
+
+    return sh;
+}
+
+shape_t *
+xnjsmb_stext_new(njs_runtime_t *rt, const char *txt, float x, float y) {
+    redraw_man_t *rdman;
+    shape_t *sh;
+
+    rdman = njs_mb_rdman(rt);
+    sh = rdman_shape_stext_new(rdman, txt, x, y);
+    /* Code generator supposes that callee should free the memory */
+    free((void *)txt);
+
+    return sh;
+}
+
+shape_t *
+xnjsmb_image_new(njs_runtime_t *rt, float x, float y, float w, float h) {
+    redraw_man_t *rdman;
+    shape_t *sh;
+
+    rdman = njs_mb_rdman(rt);
+    sh = rdman_shape_image_new(rdman, x, y, w, h);
+
+    return sh;
+}
+
+shape_t *
+xnjsmb_rect_new(njs_runtime_t *rt, float x, float y, float w, float h,
+		float rx, float ry, const char **err) {
+    redraw_man_t *rdman;
+    shape_t *sh;
+
+    rdman = njs_mb_rdman(rt);
+    sh = rdman_shape_rect_new(rdman, x, y, w, h, rx, ry);
+    if(sh == NULL) {
+	*err = "Can not create a sh_rect_t";
+	return NULL;
+    }
+
+    return sh;
 }
 
 /* @} */
 
 /*! \brief Set properties of template of mb_rt.
+ * \ingroup xnjsmb_shapes
  */
 void
 xnjsmb_shapes_init_mb_rt_temp(Handle<FunctionTemplate> rt_temp) {
     HandleScope scope;
     Handle<FunctionTemplate> path_new_temp, stext_new_temp;
+    Handle<FunctionTemplate> image_new_temp;
     Handle<ObjectTemplate> rt_proto_temp;
     static int temp_init_flag = 0;
 
     if(temp_init_flag == 0) {
-	xnjsmb_init_shape_temp();
-	xnjsmb_init_path_temp();
-	xnjsmb_init_stext_temp();
+	xnjsmb_auto_shape_init();
+	xnjsmb_auto_path_init();
+	xnjsmb_auto_stext_init();
+	xnjsmb_auto_image_init();
+	xnjsmb_auto_rect_init();
 	temp_init_flag = 1;
     }
-
-    rt_proto_temp = rt_temp->PrototypeTemplate();
-    
-    path_new_temp = FunctionTemplate::New(xnjsmb_shape_path_new);
-    SET(rt_proto_temp, "path_new", path_new_temp);
-
-    stext_new_temp = FunctionTemplate::New(xnjsmb_shape_stext_new);
-    SET(rt_proto_temp, "stext_new", stext_new_temp);
+    return;
 }
