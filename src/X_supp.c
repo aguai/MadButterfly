@@ -48,7 +48,6 @@ struct _X_supp_runtime {
     Window win;
     Visual *visual;
     mbe_surface_t *surface, *backend_surface;
-    mbe_pattern_t *surface_ptn;
     mbe_t *cr, *backend_cr;
     redraw_man_t *rdman;
     mb_img_ldr_t *img_ldr;
@@ -786,9 +785,6 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
 
-    xmb_rt->surface_ptn =
-	mbe_pattern_create_for_surface(xmb_rt->surface);
-
     if(xmb_rt->backend_surface == NULL) /* xshm_init() may create one */
 	xmb_rt->backend_surface =
 	    mbe_win_surface_create(xmb_rt->display,
@@ -798,13 +794,7 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
 
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
-
-    /* TODO: Remove this line.  Since we use mbe_copy_source(), it
-     * will set source for the backend.  So, this line is redundants.
-     * It can be removed.  surface_ptn can be removed, too.
-     */
-    mbe_set_source(xmb_rt->backend_cr, xmb_rt->surface_ptn);
-
+    
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
     /* FIXME: This is a wired loopback reference. This is inly
@@ -912,8 +902,6 @@ static void x_supp_destroy(X_supp_runtime_t *xmb_rt) {
 
     if(xmb_rt->surface)
 	mbe_surface_destroy(xmb_rt->surface);
-    if(xmb_rt->surface_ptn)
-	mbe_pattern_destroy(xmb_rt->surface_ptn);
     if(xmb_rt->backend_surface)
 	mbe_surface_destroy(xmb_rt->backend_surface);
 
