@@ -801,7 +801,7 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
 
     /* TODO: Remove this line.  Since we use mbe_copy_source(), it
      * will set source for the backend.  So, this line is redundants.
-     * It can be removed.  sourface_ptn can be removed, too.
+     * It can be removed.  surface_ptn can be removed, too.
      */
     mbe_set_source(xmb_rt->backend_cr, xmb_rt->surface_ptn);
 
