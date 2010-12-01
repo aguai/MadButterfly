@@ -8,6 +8,16 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 #define ASSERT(x)
 #endif
 
+#ifndef ERR
+#include <stdio.h>
+#include <stdlib.h>
+#define ERR(msg) do { fprintf(stderr, __FILE__ ":%d: %s", __LINE__, msg); abort(); } while(0)
+#endif
+#ifndef NOT_IMPLEMENT
+#define NOT_IMPLEMENT(func)			\
+    ERR(func " is not impmemented\n")
+#endif
+
 #define MB_2_VG_COLOR(r, g, b, a) ((((int)(0xf * r) & 0xf) << 24) |	\
 				   (((int)(0xf * g) & 0xf) << 16) |	\
 				   (((int)(0xf * b) & 0xf) << 16) |	\
@@ -148,6 +158,7 @@ _ge_vg_img_activate_for_pattern(mbe_pattern_t *ptn) {
  */
 static void
 _ge_vg_img_deactivate_for_surface(void *obj) {
+    NOT_IMPLEMENT("_ge_vg_img_deactivate_for_surface");
 }
 
 /*! \brief Activate a VGImage for a surface
@@ -538,8 +549,8 @@ _get_img_fmt_from_xvisual(Display *display, Visual *visual) {
  * This function is compiled only for GLX enabled.
  */
 mbe_surface_t *
-mbe_vg_win_surface_create(Display *display, Drawable drawable,
-			  Visual *visual, int width, int height) {
+mbe_win_surface_create(Display *display, Drawable drawable,
+		       Visual *visual, int width, int height) {
     EGLDisplay egl_disp;
     EGLSurface egl_surface;
     mbe_surface_t *surface;
@@ -626,6 +637,15 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     mbe_surface->h = h;
 
     return mbe_surface;
+}
+
+mbe_surface_t *
+mbe_image_surface_create_for_data(unsigned char *data,
+				  mb_img_fmt_t fmt,
+				  int width, int height,
+				  int stride) {
+    NOT_IMPLEMENT("mbe_image_surface_create_for_data");
+    return NULL;
 }
 
 void
