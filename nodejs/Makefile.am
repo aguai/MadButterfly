@@ -6,8 +6,10 @@ mbfly_node_SRCS = mbfly_njs.cc njs_mb_supp.c coord.cc shapes.cc paints.cc \
 mbfly_node_CFLAGS= -I$(abs_top_builddir)/include \
 	-I$(abs_top_srcdir)/include \
 	-I$(prefix)/include \
+	@imlib2_CFLAGS@ \
 	@pangocairo_CFLAGS@ $(CFLAGS)
-mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@
+mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@ \
+	@imlib2_LIBS@
 
 if XSHM
 mbfly_node_LDFLAGS += -lXext
