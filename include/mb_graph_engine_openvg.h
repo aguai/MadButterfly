@@ -228,14 +228,19 @@ extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-extern mbe_surface_t *mbe_vg_win_surface_create(Display *display,
-						Drawable drawable,
-						Visual *visual,
-						int width, int height);
+extern mbe_surface_t *mbe_win_surface_create(Display *display,
+					     Drawable drawable,
+					     Visual *visual,
+					     int width, int height);
 #endif
 
 extern mbe_surface_t *mbe_image_surface_create(mb_img_fmt_t fmt,
 					       int w, int h);
+extern mbe_surface_t *
+mbe_image_surface_create_for_data(unsigned char *data,
+				  mb_img_fmt_t fmt,
+				  int width, int height,
+				  int stride);
 extern void mbe_surface_destroy(mbe_surface_t *surface);
 
 extern void mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas);
