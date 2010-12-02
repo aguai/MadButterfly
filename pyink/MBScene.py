@@ -421,6 +421,34 @@ class MBScene():
 		pass
 	    pass
 	pass
+    def enterGroup(self,obj):
+        for l in self.layers:
+	    for s in l.node.childList():
+	        if s.getId() == obj.attribute("id"):
+		    self.desktop.setCurrentLayer(s)
+        
+    def selectSceneObject(self,frameline, nth):
+        i = 0
+        while i < len(frameline._keys):
+	    s = frameline._keys[i]
+	    if s.right_tween is False:
+	        if nth == s.idx+1:
+		    self.enterGroup(s.ref)
+		    return
+		else:
+		    pass
+		i = i + 1
+		continue
+
+	    if nth >= (s.idx+1) and nth <= (frameline._keys[i+1].idx+1):
+	        self.enterGroup(s.ref)
+		return
+	    else:
+	        pass
+	    i = i + 2
+	    pass
+        pass
+
 	
 	
     def newCell(self,file):
@@ -521,9 +549,11 @@ class MBScene():
 	color = cell.get_colormap().alloc_color("green")
 	cell.modify_bg(gtk.STATE_NORMAL, color)
 	pass
+	    
     
     def doEditScene(self,w):
 	self.setCurrentScene(self.last_frame+1)
+	self.selectSceneObject(self.last_line,self.last_frame+1)
 	pass
     
     def doInsertKeyScene(self,w):
