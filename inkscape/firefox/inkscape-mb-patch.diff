@@ -1,0 +1,278 @@
+diff -cr inkscape-0.46/share/ui/menus-bars.xml inkscape-0.46-mb/share/ui/menus-bars.xml
+*** inkscape-0.46/share/ui/menus-bars.xml	2008-03-11 12:21:15.000000000 +0800
+--- inkscape-0.46-mb/share/ui/menus-bars.xml	2009-01-18 12:09:57.000000000 +0800
+***************
+*** 22,27 ****
+--- 22,28 ----
+        <menuitem action='InkscapePreferences'/>
+        <separator/>
+        <menuitem action='Close'/>
++       <menuitem action='EffectMadButterfly'/>
+        <menuitem action='Quit'/>
+      </menu>
+      <menu action='MenuEdit'>
+diff -cr inkscape-0.46/src/dom/io/uristream.cpp inkscape-0.46-mb/src/dom/io/uristream.cpp
+*** inkscape-0.46/src/dom/io/uristream.cpp	2008-03-11 12:19:31.000000000 +0800
+--- inkscape-0.46-mb/src/dom/io/uristream.cpp	2008-11-04 23:08:25.000000000 +0800
+***************
+*** 39,45 ****
+   * Released under GNU GPL, read the file 'COPYING' for more information
+   */
+  
+! 
+  #include "uristream.h"
+  
+  
+--- 39,45 ----
+   * Released under GNU GPL, read the file 'COPYING' for more information
+   */
+  
+! #include <string.h>
+  #include "uristream.h"
+  
+  
+diff -cr inkscape-0.46/src/extension/effect.cpp inkscape-0.46-mb/src/extension/effect.cpp
+*** inkscape-0.46/src/extension/effect.cpp	2008-03-11 12:20:24.000000000 +0800
+--- inkscape-0.46-mb/src/extension/effect.cpp	2009-01-18 10:54:48.000000000 +0800
+***************
+*** 27,32 ****
+--- 27,35 ----
+  namespace Extension {
+  
+  Effect * Effect::_last_effect = NULL;
++ #ifdef CONF_MADBUTTERFLY
++ Effect * Effect::MadButterflyEffect = NULL;
++ #endif
+  Inkscape::XML::Node * Effect::_effects_list = NULL;
+  
+  Effect::Effect (Inkscape::XML::Node * in_repr, Implementation::Implementation * in_imp)
+***************
+*** 44,49 ****
+--- 47,58 ----
+      if (!strcmp(this->get_id(), "org.inkscape.filter.dropshadow"))
+          return;
+  
++ #ifdef CONF_MADBUTTERFLY
++     if (!strcmp(this->get_id(),"net.sourceforge.madbutterfly.filter.update")) {
++         MadButterflyEffect = this;
++     }
++ #endif
++ 
+      bool hidden = false;
+  
+      no_doc = false;
+diff -cr inkscape-0.46/src/extension/effect.h inkscape-0.46-mb/src/extension/effect.h
+*** inkscape-0.46/src/extension/effect.h	2008-03-11 12:20:18.000000000 +0800
+--- inkscape-0.46-mb/src/extension/effect.h	2009-01-18 09:51:23.000000000 +0800
+***************
+*** 40,45 ****
+--- 40,48 ----
+      /** \brief  This is the last effect that was used.  This is used in
+                  a menu item to rapidly recall the same effect. */
+      static Effect * _last_effect;
++ #ifdef CONF_MADBUTTERFLY
++     static Effect * MadButterflyEffect;
++ #endif
+      /** \brief  The location of the effects menu on the menu structure
+                  XML file.  This is saved so it only has to be discovered
+                  once. */
+***************
+*** 120,125 ****
+--- 123,131 ----
+  
+      /** \brief  Static function to get the last effect used */
+      static Effect *  get_last_effect (void) { return _last_effect; };
++ #ifdef CONF_MADBUTTERFLY
++     static Effect *  get_madbutterfly_effect (void) { return MadButterflyEffect; };
++ #endif
+      static void      set_last_effect (Effect * in_effect);
+  
+      static void      place_menus (void);
+diff -cr inkscape-0.46/src/extension/init.cpp inkscape-0.46-mb/src/extension/init.cpp
+*** inkscape-0.46/src/extension/init.cpp	2008-03-11 12:20:24.000000000 +0800
+--- inkscape-0.46-mb/src/extension/init.cpp	2009-01-18 10:16:51.000000000 +0800
+***************
+*** 97,103 ****
+  #include "internal/bitmap/unsharpmask.h"
+  #include "internal/bitmap/wave.h"
+  #endif /* WITH_IMAGE_MAGICK */
+! 
+  extern gboolean inkscape_app_use_gui( Inkscape::Application const *app );
+  
+  namespace Inkscape {
+--- 97,103 ----
+  #include "internal/bitmap/unsharpmask.h"
+  #include "internal/bitmap/wave.h"
+  #endif /* WITH_IMAGE_MAGICK */
+! #include "effect.h"
+  extern gboolean inkscape_app_use_gui( Inkscape::Application const *app );
+  
+  namespace Inkscape {
+diff -cr inkscape-0.46/src/inkscape.cpp inkscape-0.46-mb/src/inkscape.cpp
+*** inkscape-0.46/src/inkscape.cpp	2008-03-11 12:20:05.000000000 +0800
+--- inkscape-0.46-mb/src/inkscape.cpp	2009-01-21 23:48:17.000000000 +0800
+***************
+*** 61,66 ****
+--- 61,68 ----
+  #include "prefs-utils.h"
+  #include "xml/repr.h"
+  #include "io/sys.h"
++ #include "verbs.h"
++ #include "helper/action.h"
+  
+  #include "extension/init.h"
+  
+***************
+*** 577,582 ****
+--- 579,596 ----
+  }
+  
+  
++ #ifdef CONF_MADBUTTERFLY
++ void
++ inkscape_int_handler(int signo)
++ {
++     SPDesktop *desk = inkscape_active_desktop();
++     Inkscape::Verb *v = Inkscape::Verb::get(SP_VERB_EFFECT_MADBUTTERFLY);
++     SPAction *act = v->get_action(desk);
++     if (act)
++         sp_action_perform(act,NULL);
++     signal(SIGINT, inkscape_int_handler);
++ }
++ #endif
+  
+  void
+  inkscape_application_init (const gchar *argv0, gboolean use_gui)
+***************
+*** 591,596 ****
+--- 605,613 ----
+  #ifndef WIN32
+      bus_handler  = signal (SIGBUS,  inkscape_crash_handler);
+  #endif
++ //#ifdef CONF_MADBUTTERFLY
++     signal(SIGUSR2, inkscape_int_handler);
++ //#endif
+  
+      inkscape->use_gui = use_gui;
+      inkscape->argv0 = g_strdup(argv0);
+diff -cr inkscape-0.46/src/verbs.cpp inkscape-0.46-mb/src/verbs.cpp
+*** inkscape-0.46/src/verbs.cpp	2008-03-11 12:20:07.000000000 +0800
+--- inkscape-0.46-mb/src/verbs.cpp	2009-01-18 12:04:40.000000000 +0800
+***************
+*** 1903,1908 ****
+--- 1903,1974 ----
+  SPActionEventVector TextVerb::vector =
+              {{NULL},TextVerb::perform, NULL, NULL, NULL, NULL};
+  
++ #ifdef CONF_MADBUTTERFLY
++ /* *********** Effect MadButterfly ********** */
++ 
++ /** \brief A class to represent the last effect issued */
++ class EffectMadButterflyVerb : public Verb {
++ private:
++     static void perform(SPAction *action, void *mydata, void *otherdata);
++     static SPActionEventVector vector;
++ protected:
++     virtual SPAction *make_action(Inkscape::UI::View::View *view);
++ public:
++     /** \brief Use the Verb initializer with the same parameters. */
++     EffectMadButterflyVerb(unsigned int const code,
++                    gchar const *id,
++                    gchar const *name,
++                    gchar const *tip,
++                    gchar const *image) :
++         Verb(code, id, name, tip, image)
++     {
++         set_default_sensitive(false);
++     }
++ }; /* EffectMadButterflyVerb class */
++ 
++ /**
++  * The vector to attach in the last effect verb.
++  */
++ SPActionEventVector EffectMadButterflyVerb::vector =
++             {{NULL},EffectMadButterflyVerb::perform, NULL, NULL, NULL, NULL};
++ 
++ /** \brief  Create an action for a \c EffectLastVerb
++     \param  view  Which view the action should be created for
++     \return The built action.
++ 
++     Calls \c make_action_helper with the \c vector.
++ */
++ SPAction *
++ EffectMadButterflyVerb::make_action(Inkscape::UI::View::View *view)
++ {
++     return make_action_helper(view, &vector);
++ }
++ 
++ /** \brief  Decode the verb code and take appropriate action */
++ void
++ EffectMadButterflyVerb::perform(SPAction *action, void *data, void */*pdata*/)
++ {
++     /* These aren't used, but are here to remind people not to use
++        the CURRENT_DOCUMENT macros unless they really have to. */
++     Inkscape::UI::View::View *current_view = sp_action_get_view(action);
++     // SPDocument *current_document = SP_VIEW_DOCUMENT(current_view);
++     Inkscape::Extension::Effect *effect = Inkscape::Extension::Effect::get_madbutterfly_effect();
++ 
++     if (effect == NULL) return;
++     if (current_view == NULL) return;
++ 
++     switch ((long) data) {
++         case SP_VERB_EFFECT_MADBUTTERFLY:
++             effect->effect(current_view);
++             break;
++         default:
++             return;
++     }
++ 
++     return;
++ }
++ /* *********** End Effect MadButterfly ********** */
++ #endif
+  
+  /* *********** Effect Last ********** */
+  
+***************
+*** 2570,2575 ****
+--- 2636,2645 ----
+                         N_("Repeat the last effect with the same settings"), NULL),
+      new EffectLastVerb(SP_VERB_EFFECT_LAST_PREF, "EffectLastPref", N_("Previous Effect Settings..."),
+                         N_("Repeat the last effect with new settings"), NULL),
++ //#ifdef CONF_MADBUTTERFLY
++     new EffectMadButterflyVerb(SP_VERB_EFFECT_MADBUTTERFLY, "EffectMadButterfly", N_("Effect for MadButterfly"),
++                        N_("For MadButterfly integration"), NULL),
++ //#endif
+  
+      /* Fit Page */
+      new FitCanvasVerb(SP_VERB_FIT_CANVAS_TO_SELECTION, "FitCanvasToSelection", N_("Fit Page to Selection"),
+diff -cr inkscape-0.46/src/verbs.h inkscape-0.46-mb/src/verbs.h
+*** inkscape-0.46/src/verbs.h	2008-03-11 12:20:28.000000000 +0800
+--- inkscape-0.46-mb/src/verbs.h	2009-01-18 00:37:43.000000000 +0800
+***************
+*** 23,29 ****
+  #include "helper/helper-forward.h"
+  #include "forward.h"
+  #include <glibmm/ustring.h>
+! 
+  /** \brief This anonymous enum is used to provide a list of the Verbs
+             which are defined staticly in the verb files.  There may be
+             other verbs which are defined dynamically also. */
+--- 23,29 ----
+  #include "helper/helper-forward.h"
+  #include "forward.h"
+  #include <glibmm/ustring.h>
+! #define CONF_MADBUTTERFLY
+  /** \brief This anonymous enum is used to provide a list of the Verbs
+             which are defined staticly in the verb files.  There may be
+             other verbs which are defined dynamically also. */
+***************
+*** 246,251 ****
+--- 246,252 ----
+      /* Effects */
+      SP_VERB_EFFECT_LAST,
+      SP_VERB_EFFECT_LAST_PREF,
++     SP_VERB_EFFECT_MADBUTTERFLY,
+      /* Fit Canvas */
+      SP_VERB_FIT_CANVAS_TO_SELECTION,
+      SP_VERB_FIT_CANVAS_TO_DRAWING,
