@@ -112,6 +112,7 @@ struct _ge_openvg_surface {
 				 * surface and mbe */
     _ge_openvg_img_t *asso_img;
     int w, h;
+    mb_img_fmt_t fmt;
 };
 
 struct _ge_openvg_pattern {
