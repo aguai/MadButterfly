@@ -38,6 +38,35 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 
 #define VG_MBE_SURFACE(mbe) ((mbe)->tgt->surface)
 
+/*! \brief Information associated with VGImage.
+ *
+ * A VGImage can associated one of pattern or surface.  This type is
+ * used to make sure previous associated pattern or surface being
+ * released before new association.
+ *
+ * A _ge_openvg_img can be associated by mutltiple patterns and
+ * surfaces.  But, at most one of associated patterns or surfaces, the
+ * _ge_openvg_img can be activated for at any instant.
+ * _ge_openvg_img::activated_for trace the object it being activated
+ * for.  When a context will be current, the _ge_openvg_img associated
+ * with its surface would be activated for the surface.  When a paint
+ * wil be used, the _ge_openvg_img associated must be activated for
+ * the paint.  Before activated, the old activation must be
+ * deactivated.  _ge_openvg_img::deactivate_func is a pointer to
+ * deactivation function of activated pattern or surface.
+ *
+ * \sa _ge_openvg_img_t
+ * \note This is type is for internal using of OpenVG graphic engine.
+ */
+struct _ge_openvg_img {
+    int ref;
+    VGImage img;
+    void *activated_for;
+    void (*deactivate_func)(void *obj);
+};
+
+#define SURFACE_VG_IMG(surface) ((surface)->tgt->asso_img->img)
+
 static EGLContext init_ctx;
 
 /*! \brief Convert mb_img_fmt_t to VGImageFormat */
@@ -680,7 +709,7 @@ mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas) {
     vgSeti(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE);
     vgLoadIdentity();
     
-    vg_img = src_canvas->tgt->asso_img;
+    vg_img = SURFACE_VG_IMG(src_canvas);
     vgDrawImage(vg_img);
 
     display = _VG_DISPLAY();
