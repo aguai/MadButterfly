@@ -36,6 +36,8 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 	(mtx)[8] = 1;				\
     } while(0)
 
+#define VG_MBE_SURFACE(mbe) ((mbe)->tgt->surface)
+
 /*! \brief Convert mb_img_fmt_t to VGImageFormat */
 static VGImageFormat
 _mb_ifmt_2_vgifmt(mb_img_fmt_t fmt) {
@@ -582,6 +584,7 @@ mbe_win_surface_create(Display *display, Drawable drawable,
 
     surface->surface = egl_surface;
     surface->asso_img = NULL;
+    surface->fmt = fmt;
 
     return surface;
 }
@@ -593,7 +596,7 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     EGLSurface surface;
     EGLDisplay display;
     EGLConfig config;
-    EGLint attrib_list[5];
+    EGLint attrib_list[1] = {EGL_NONE};
     _ge_openvg_img_t *ge_img;
     mbe_surface_t *mbe_surface;
     int r;
@@ -608,13 +611,10 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
 	return NULL;
 
     display = _VG_DISPLAY();
-    attrib_list[0] = EGL_WIDTH;
-    attrib_list[1] = w;
-    attrib_list[2] = EGL_HEIGHT;
-    attrib_list[3] = h;
-    attrib_list[4] = EGL_NONE;
     /* Some implementation does not support pbuffer.
      * We need use some other surface to replace this one.
+     *
+     * EGL does not support any attributes for pbuffer used by OpenVG.
      */
     surface = eglCreatePbufferFromClientBuffer(display, EGL_OPENVG_IMAGE,
 					       (EGLClientBuffer)ge_img->img,
@@ -635,6 +635,7 @@ mbe_image_surface_create(mb_img_fmt_t fmt, int w, int h) {
     mbe_surface->asso_img = ge_img;
     mbe_surface->w = w;
     mbe_surface->h = h;
+    mbe_surface->fmt = fmt;
 
     return mbe_surface;
 }
@@ -667,6 +668,7 @@ mbe_surface_destroy(mbe_surface_t *surface) {
 void
 mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas) {
     VGImage vg_img;
+    EGLDisplay display;
     
     ASSERT(src_canvas->tgt->asso_img != NULL);
     
@@ -677,6 +679,9 @@ mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas) {
     
     vg_img = src_canvas->tgt->asso_img;
     vgDrawImage(vg_img);
+
+    display = _VG_DISPLAY();
+    eglSwapBuffers(display, VG_MBE_SURFACE(dst_canvas));
 }
 
 mbe_t *
@@ -688,8 +693,15 @@ mbe_create(mbe_surface_t *surface) {
     EGLint attrib_list[2] = {EGL_NONE};
     static VGfloat clear_color[4] = {0, 0, 0, 1};
     mbe_t *canvas;
+    int r;
 
     display = _VG_DISPLAY();
+    
+    r = _openvg_find_config(surface->fmt, surface->w, surface->h, &config);
+    if(r != 0)
+	return NULL;
+    
+    shared = EGL_NO_CONTEXT;
     ctx = eglCreateContext(display, config, shared, attrib_list);
     if(ctx == EGL_NO_CONTEXT)
 	return NULL;
