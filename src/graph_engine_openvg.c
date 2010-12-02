@@ -38,6 +38,8 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 
 #define VG_MBE_SURFACE(mbe) ((mbe)->tgt->surface)
 
+static EGLContext init_ctx;
+
 /*! \brief Convert mb_img_fmt_t to VGImageFormat */
 static VGImageFormat
 _mb_ifmt_2_vgifmt(mb_img_fmt_t fmt) {
@@ -583,6 +585,7 @@ mbe_win_surface_create(Display *display, Drawable drawable,
     }
 
     surface->surface = egl_surface;
+    surface->asso_mbe = NULL;
     surface->asso_img = NULL;
     surface->fmt = fmt;
 
@@ -701,7 +704,8 @@ mbe_create(mbe_surface_t *surface) {
     if(r != 0)
 	return NULL;
     
-    shared = EGL_NO_CONTEXT;
+    /* shared = EGL_NO_CONTEXT; */
+    shared = init_ctx;
     ctx = eglCreateContext(display, config, shared, attrib_list);
     if(ctx == EGL_NO_CONTEXT)
 	return NULL;
@@ -726,6 +730,8 @@ mbe_create(mbe_surface_t *surface) {
     canvas->tgt = surface;
     canvas->ctx = ctx;
     canvas->path = path;
+
+    surface->asso_mbe = canvas;
     
     /* Set clear color for the context */
     _MK_CURRENT_CTX(canvas);
@@ -837,7 +843,6 @@ mbe_clear(mbe_t *canvas) {
 }
 
 void mbe_init() {
-    static EGLContext init_ctx;
     static EGLSurface init_surf;
     EGLDisplay display;
     EGLConfig config;
