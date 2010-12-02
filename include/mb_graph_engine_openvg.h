@@ -121,33 +121,6 @@ struct _ge_openvg_pattern {
     VGPaint paint;
 };
 
-/*! \brief Information associated with VGImage.
- *
- * A VGImage can associated one of pattern or surface.  This type is
- * used to make sure previous associated pattern or surface being
- * released before new association.
- *
- * A _ge_openvg_img can be associated by mutltiple patterns and
- * surfaces.  But, at most one of associated patterns or surfaces, the
- * _ge_openvg_img can be activated for at any instant.
- * _ge_openvg_img::activated_for trace the object it being activated
- * for.  When a context will be current, the _ge_openvg_img associated
- * with its surface would be activated for the surface.  When a paint
- * wil be used, the _ge_openvg_img associated must be activated for
- * the paint.  Before activated, the old activation must be
- * deactivated.  _ge_openvg_img::deactivate_func is a pointer to
- * deactivation function of activated pattern or surface.
- *
- * \sa _ge_openvg_img_t
- * \note This is type is for internal using of OpenVG graphic engine.
- */
-struct _ge_openvg_img {
-    int ref;
-    VGImage img;
-    void *activated_for;
-    void (*deactivate_func)(void *obj);
-};
-
 #define MB_MATRIX_2_OPENVG(vgmtx, mtx) do {	\
 	(vgmtx)[0] = (mtx)[0];			\
 	(vgmtx)[1] = (mtx)[1];			\
