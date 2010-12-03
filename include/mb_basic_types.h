@@ -10,4 +10,15 @@ typedef struct _grad_stop {
     co_comp_t r, g, b, a;
 } grad_stop_t;
 
+/*! \brief An rectangle area.
+ *
+ * This type is used to describe an rectangle area in an image or on a
+ * screen.
+ */
+struct _area {
+    co_aix x, y;
+    co_aix w, h;
+};
+typedef struct _area area_t;
+
 #endif /* __MB_BASIC_TYPES_H_ */
