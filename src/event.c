@@ -697,6 +697,11 @@ void _release_mbe_for_testing(mbe_t *cr) {
 
 static
 void _draw_to_mask(shape_t *shape, mbe_t *cr) {
+    /* TODO: Find a new algorithm to check if a point is in the area
+     * covered by a shape.  This function is expected to work with
+     * _fill_and_check() to detect a collision.
+     */
+#if 0
     if(sh_get_flags(shape, GEF_OV_DRAW))
 	return;
 
@@ -704,10 +709,12 @@ void _draw_to_mask(shape_t *shape, mbe_t *cr) {
     mbe_clip(cr);
 
     sh_set_flags(shape, GEF_OV_DRAW);
+#endif
 }
 
 static
 int _fill_and_check(shape_t *shape, mbe_t *cr) {
+#if 0
     int h, stride;
     mbe_surface_t *surface;
     unsigned char *data;
@@ -729,6 +736,9 @@ int _fill_and_check(shape_t *shape, mbe_t *cr) {
     }
 
     return FALSE;
+#else
+    return TRUE;
+#endif
 }
 
 /*! \brief Is a mb_obj_t overlaid with another mb_obj_t and
