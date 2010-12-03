@@ -9,7 +9,11 @@ mbfly_node_CFLAGS= -I$(abs_top_builddir)/include \
 	@imlib2_CFLAGS@ \
 	@pangocairo_CFLAGS@ $(CFLAGS) $(CPPFLAGS)
 mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@ \
-	@imlib2_LIBS@
+	@imlib2_LIBS@ $(LDFLAGS)
+
+if OPENVG_GRAPH_ENGINE
+mbfly_node_LDFLAGS += -lOpenVG
+endif
 
 if XSHM
 mbfly_node_LDFLAGS += -lXext
