@@ -51,14 +51,14 @@ void myselect(mb_animated_menu_t *m, int select)
     if (strcmp(data->titles[select],"..")==0) {
 	    strcpy(path, data->curDir);
 	    len = strlen(path);
-	    for(i=len-1;i>0;i--) {
+	    for(i=len-2;i>0;i--) {
 		    if (path[i] == '/') {
 			    path[i] = 0;
 			    break;
 		    }
 	    }
     } else {
-    	snprintf(path,1024,"%s/%s", data->curDir,data->titles[select]);
+    	snprintf(path,1024,"%s%s", data->curDir,data->titles[select]);
     }
 
     MyApp_fillDirInfo(app, path);
@@ -112,7 +112,8 @@ void myupdate(mb_animated_menu_t *m, int select)
 
     printf("check %s\n",s);
 
-    if (endWith(s,".png")) {
+    if (endWith(s,".png") || endWith(s, ".jpg") ||
+	endWith(s, ".PNG") || endWith(s, ".JPG")) {
     	    snprintf(path,1024,"%s%s", data->curDir,data->titles[select]);
 	    mypreview(data,path);
     }
@@ -146,6 +147,8 @@ MyApp_fillDirInfo(mbaf_t *app,char *curdir)
     DIR *dir;
     struct dirent *e;
     struct fileinfo *f;
+    char *path;
+    int sz;
     int i;
 
     dir = opendir(curdir);
@@ -156,7 +159,14 @@ MyApp_fillDirInfo(mbaf_t *app,char *curdir)
 
     if (data->curDir)
 	    free(data->curDir);
-    data->curDir = strdup(curdir);
+    
+    sz = strlen(curdir);
+    if(curdir[sz - 1] != '/')
+	sz++;
+    data->curDir = (char *)malloc(sz + 1);
+    strcpy(data->curDir, curdir);
+    if(curdir[sz - 1] == '\0')
+	strcat(data->curDir, "/");
     
     if (data->files) {
 	    for(i=0;i<data->nFiles;i++) {

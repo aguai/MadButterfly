@@ -6,8 +6,14 @@ mbfly_node_SRCS = mbfly_njs.cc njs_mb_supp.c coord.cc shapes.cc paints.cc \
 mbfly_node_CFLAGS= -I$(abs_top_builddir)/include \
 	-I$(abs_top_srcdir)/include \
 	-I$(prefix)/include \
-	@pangocairo_CFLAGS@ $(CFLAGS)
-mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@
+	@imlib2_CFLAGS@ \
+	@pangocairo_CFLAGS@ $(CFLAGS) $(CPPFLAGS)
+mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@ \
+	@imlib2_LIBS@ $(LDFLAGS)
+
+if OPENVG_GRAPH_ENGINE
+mbfly_node_LDFLAGS += -lOpenVG
+endif
 
 if XSHM
 mbfly_node_LDFLAGS += -lXext

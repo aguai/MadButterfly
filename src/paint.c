@@ -182,6 +182,11 @@ typedef struct _paint_radial {
 
 #define RDF_DIRTY 0x1
 
+#define pnt_radial_clear_flags(radial, _flags)	\
+    do {					\
+	(radial)->flags &= ~(_flags);		\
+    } while(0)
+
 int _paint_radial_size = sizeof(paint_radial_t);
 
 static void paint_radial_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
@@ -202,8 +207,11 @@ static void paint_radial_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
 					radial->stops,
 					radial->n_stops);
 	ASSERT(ptn != NULL);
-	mbe_pattern_destroy(radial->ptn);
+	if(radial->ptn)
+	    mbe_pattern_destroy(radial->ptn);
 	radial->ptn = ptn;
+	
+	pnt_radial_clear_flags(radial, RDF_DIRTY);
     }
     mbe_set_source(cr, radial->ptn);
 }
