@@ -56,7 +56,12 @@
 #define mbe_in_stroke(canvas, x, y) (0)
 #define mbe_new_path(canvas)				\
     vgClearPath((canvas)->path, VG_PATH_CAPABILITY_ALL)
-#define mbe_curve_to(canvas, x1, y1, x2, y2, x3, y3)
+#define mbe_curve_to(canvas, x1, y1, x2, y2, x3, y3)			\
+    do {								\
+	VGfloat _vg_data[6] = {x1, y1, x2, y2, x3, y3};			\
+	char _vg_cmd = VG_CUBIC_TO_ABS;					\
+	vgAppendPathData((canvas)->path, 1, &_vg_cmd, _vg_data);	\
+    } while(0)
 #define mbe_move_to(canvas, x, y)					\
     do {								\
 	VGfloat _vg_data[2] = {x, y};					\
