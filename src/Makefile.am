@@ -14,7 +14,7 @@ if TESTCASE
 noinst_PROGRAMS += testcase
 endif
 
-if X_BACKEND
+if MBAF
 MBAF_SOURCES=mbaf/mbapp.c mbaf/mbbutton.c mbaf/mbobject.c mbaf/animated_menu.c
 else
 MBAF_SOURCES=
@@ -24,7 +24,10 @@ libmbfly_la_SOURCES= animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
 	shape_rect.c shift.c subtree_free.c timer.c 			\
 	timertool.c tools.c visibility.c prop.c sprite.c	\
-	mouse.c shape_image.c img_ldr.c $(MBAF_SOURCES)
+	mouse.c shape_image.c $(MBAF_SOURCES)
+
+libmbfly_la_CPPFLAGS =
+libmbfly_la_LDFLAGS =
 
 if SH_TEXT
 libmbfly_la_SOURCES += shape_text.c
@@ -42,12 +45,21 @@ if DFB_BACKEND
 libmbfly_la_SOURCES += dfb_supp.c
 endif
 
-libmbfly_la_LDFLAGS =
+if CAIRO_IMG_LOADER
+libmbfly_la_SOURCES += img_ldr.c
+endif
+
+if IMLIB2_IMG_LOADER
+libmbfly_la_SOURCES += img_ldr_imlib2.c
+
+libmbfly_la_CPPFLAGS += @imlib2_CFLAGS@
+libmbfly_la_LDFLAGS += @imlib2_LIBS@
+endif
 
 if CAIRO_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_cairo.c
 
-libmbfly_la_CPPFLAGS = @cairo_CFLAGS@ @pangocairo_CFLAGS@
+libmbfly_la_CPPFLAGS += @cairo_CFLAGS@ @pangocairo_CFLAGS@
 libmbfly_la_LDFLAGS += @cairo_LIBS@ @pangocairo_LIBS@
 endif
 
@@ -57,6 +69,15 @@ endif
 
 if SKIA_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_skia.cpp
+endif
+
+if DFB_GRAPH_ENGINE
+libmbfly_la_SOURCES += graph_engine_dfb.c
+endif
+
+if OPENVG_GRAPH_ENGINE
+libmbfly_la_SOURCES += graph_engine_openvg.c
+libmbfly_la_LDFLAGS += -lOpenVG
 endif
 
 X_main_SOURCES = X_main.c

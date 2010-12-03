@@ -15,7 +15,9 @@
 #define MBE_OPERATOR_SOURCE CAIRO_OPERATOR_SOURCE
 #define MBE_STATUS_SUCCESS CAIRO_STATUS_SUCCESS
 
+/* This function is only used by img_ldr.c */
 #define mbe_image_surface_create_from_png cairo_image_surface_create_from_png
+
 #define mbe_pattern_create_for_surface cairo_pattern_create_for_surface
 #define mbe_scaled_font_text_extents cairo_scaled_font_text_extents
 #define mbe_image_surface_get_stride cairo_image_surface_get_stride
@@ -24,7 +26,7 @@
 #define mbe_image_surface_get_width cairo_image_surface_get_width
 #define mbe_image_surface_get_data cairo_image_surface_get_data
 #define mbe_scaled_font_reference cairo_scaled_font_reference
-#define mbe_xlib_surface_create cairo_xlib_surface_create
+#define mbe_win_surface_create cairo_xlib_surface_create
 #define mbe_scaled_font_destroy cairo_scaled_font_destroy
 #define mbe_font_face_reference cairo_font_face_reference
 #define mbe_font_face_destroy cairo_font_face_destroy
@@ -39,7 +41,7 @@
 #define mbe_get_font_face cairo_get_font_face
 #define mbe_fill_preserve cairo_fill_preserve
 #define mbe_set_source cairo_set_source
-#define mbe_reset_clip cairo_reset_clip
+#define mbe_reset_scissoring cairo_reset_clip
 #define mbe_get_target cairo_get_target
 #define mbe_close_path cairo_close_path
 #define mbe_text_path cairo_text_path
@@ -57,7 +59,7 @@
 #define mbe_paint cairo_paint
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
-#define mbe_clip cairo_clip
+#define mbe_init()
 
 typedef cairo_text_extents_t mbe_text_extents_t;
 typedef cairo_scaled_font_t mbe_scaled_font_t;
@@ -89,6 +91,8 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						co_aix x1, co_aix y1,
 						grad_stop_t *stops,
 						int stop_cnt);
+extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
+extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 
 
 static void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
