@@ -288,6 +288,7 @@ _mbe_pattern_create_gradient(VGfloat *gradient, int grad_len,
 	*cur_ov_stop++ = cur_stop->g;
 	*cur_ov_stop++ = cur_stop->b;
 	*cur_ov_stop++ = cur_stop->a;
+	cur_stop++;
     }
     
     paint = vgCreatePaint();
