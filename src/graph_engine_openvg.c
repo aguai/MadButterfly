@@ -271,7 +271,7 @@ _mbe_pattern_create_gradient(VGfloat *gradient, int grad_len,
     /* Make sure there is enough space */
     if(max_stop_cnt < stop_cnt) {
 	max_stop_cnt = (stop_cnt + 0xf) & ~0xf;
-	cur_ov_stop = (VGfloat *)realloc(stops,
+	cur_ov_stop = (VGfloat *)realloc(ov_stops,
 					 max_stop_cnt * sizeof(VGfloat) * 5);
 	if(cur_ov_stop == NULL) {
 	    max_stop_cnt = 0;
