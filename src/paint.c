@@ -202,7 +202,8 @@ static void paint_radial_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
 					radial->stops,
 					radial->n_stops);
 	ASSERT(ptn != NULL);
-	mbe_pattern_destroy(radial->ptn);
+	if(radial->ptn)
+	    mbe_pattern_destroy(radial->ptn);
 	radial->ptn = ptn;
     }
     mbe_set_source(cr, radial->ptn);
