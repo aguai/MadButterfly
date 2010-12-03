@@ -7,7 +7,7 @@ mbfly_node_CFLAGS= -I$(abs_top_builddir)/include \
 	-I$(abs_top_srcdir)/include \
 	-I$(prefix)/include \
 	@imlib2_CFLAGS@ \
-	@pangocairo_CFLAGS@ $(CFLAGS)
+	@pangocairo_CFLAGS@ $(CFLAGS) $(CPPFLAGS)
 mbfly_node_LDFLAGS = -L$(abs_top_builddir)/src/.libs @pangocairo_LIBS@ \
 	@imlib2_LIBS@
 
