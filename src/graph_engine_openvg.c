@@ -409,14 +409,18 @@ mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
     VGuint color;
     VGfloat rgba[4];
 
-    if(paint != VG_INVALID_HANDLE && canvas->src == NULL)
-	paint = canvas->paint;	/* previous one is also a color paint */
-    else {
+    paint = canvas->paint;
+    if(paint == VG_INVALID_HANDLE || canvas->src != NULL) {
+	/* previous one is not a color paint */
+	if(canvas->src) {
+	    mbe_pattern_destroy(canvas->src);
+	    canvas->src = NULL;
+	}
+	
 	paint = vgCreatePaint();
 	ASSERT(paint != VG_INVALID_HANDLE);
 	vgSetParameteri(paint, VG_PAINT_TYPE, VG_PAINT_TYPE_COLOR);
 	canvas->paint = paint;
-	canvas->src = NULL;
     }
     
     rgba[0] = r;
