@@ -191,7 +191,7 @@ _ge_vg_img_activate_for_pattern(mbe_pattern_t *ptn) {
  */
 static void
 _ge_vg_img_deactivate_for_surface(void *obj) {
-    NOT_IMPLEMENT("_ge_vg_img_deactivate_for_surface");
+    /* NOT_IMPLEMENT("_ge_vg_img_deactivate_for_surface"); */
 }
 
 /*! \brief Activate a VGImage for a surface
