@@ -18,11 +18,6 @@ mbe_t *_ge_openvg_current_canvas = NULL;
     ERR(func " is not impmemented\n")
 #endif
 
-#define MB_2_VG_COLOR(r, g, b, a) ((((int)(0xf * r) & 0xf) << 24) |	\
-				   (((int)(0xf * g) & 0xf) << 16) |	\
-				   (((int)(0xf * b) & 0xf) << 16) |	\
-				   ((int)(0xf * a) & 0xf))
-
 #define MK_ID(mtx)				\
     do {					\
 	(mtx)[0] = 1;				\
@@ -412,18 +407,23 @@ mbe_set_source_rgba(mbe_t *canvas, co_comp_t r, co_comp_t g,
 		    co_comp_t b, co_comp_t a) {
     VGPaint paint;
     VGuint color;
+    VGfloat rgba[4];
 
     if(paint != VG_INVALID_HANDLE && canvas->src == NULL)
 	paint = canvas->paint;	/* previous one is also a color paint */
     else {
 	paint = vgCreatePaint();
 	ASSERT(paint != VG_INVALID_HANDLE);
+	vgSetParameteri(paint, VG_PAINT_TYPE, VG_PAINT_TYPE_COLOR);
 	canvas->paint = paint;
 	canvas->src = NULL;
     }
     
-    color = MB_2_VG_COLOR(r, g, b, a);
-    vgSetColor(paint, color);
+    rgba[0] = r;
+    rgba[1] = g;
+    rgba[2] = b;
+    rgba[3] = a;
+    vgSetParameterfv(paint, VG_PAINT_COLOR, 4, rgba);
     canvas->paint_installed = 0;
 }
 
