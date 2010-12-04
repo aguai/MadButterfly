@@ -467,9 +467,9 @@ main(int argc, char * const argv[]) {
 			CWOverrideRedirect, &wattr);
     r = XMapWindow(display, win);
 
-    surface = mbe_xlib_surface_create(display, win, visual, w, h);
+    surface = mbe_win_surface_create(display, win, visual, w, h);
     if(surface == NULL)
-	printf("mbe_xlib_surface_create\n");
+	printf("mbe_win_surface_create\n");
 
     drawing(surface, w, h);
 

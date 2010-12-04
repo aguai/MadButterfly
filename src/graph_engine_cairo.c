@@ -150,3 +150,57 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0, co_aix x1, co_aix y1,
 
     return ptn;
 }
+
+mbe_pattern_t *
+mbe_pattern_create_image(mb_img_data_t *img) {
+    cairo_surface_t *surf;
+    cairo_pattern_t *ptn;
+    cairo_format_t fmt;
+
+    switch(img->fmt) {
+    case MB_IFMT_ARGB32:
+	fmt = CAIRO_FORMAT_ARGB32;
+	break;
+	
+    case MB_IFMT_RGB24:
+	fmt = CAIRO_FORMAT_RGB24;
+	break;
+	
+    case MB_IFMT_A8:
+	fmt = CAIRO_FORMAT_A8;
+	break;
+	
+    case MB_IFMT_A1:
+	fmt = CAIRO_FORMAT_A1;
+	break;
+	
+    case MB_IFMT_RGB16_565:
+	fmt = CAIRO_FORMAT_RGB16_565;
+	break;
+	
+    default:
+	return NULL;
+    }
+    
+    surf = cairo_image_surface_create_for_data(img->content, fmt,
+					       img->w, img->h, img->stride);
+    ptn = cairo_pattern_create_for_surface(surf);
+    cairo_surface_destroy(surf);
+    
+    return ptn;
+}
+
+void
+mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
+    area_t *area;
+    int i;
+    
+    cairo_new_path(canvas);
+    
+    for(i = 0; i < n_areas; i++) {
+	area = areas[i];
+	cairo_rectangle(canvas, area->x, area->y, area->w, area->h);
+    }
+
+    cairo_clip(canvas);
+}
