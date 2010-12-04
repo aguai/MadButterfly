@@ -32,7 +32,7 @@ def build(conf):
     obj.source = 'font.cc image_ldr.cc'
     obj.add_objects = 'njs_mb_supp.o observer.o coord.o mbfly_njs.o ' + \
         'shapes.o paints.o'
-    obj.staticlib = 'mbfly'
+    obj.lib = 'mbfly'
 
     for src in 'observer.cc coord.cc mbfly_njs.cc shapes.cc paints.cc'.split():
         obj = conf.new_task_gen('cxx', 'shlib', 'node_addon')
