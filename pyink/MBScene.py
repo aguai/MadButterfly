@@ -549,7 +549,46 @@ class MBScene():
 	color = cell.get_colormap().alloc_color("green")
 	cell.modify_bg(gtk.STATE_NORMAL, color)
 	pass
-	    
+    def duplicateKeyScene(self):
+        self.last_line.add_keyframe(self.last_frame)
+        # Search for the current scene
+	i = 0
+	while i < len(self.last_line._keys):
+	    key = self.last_line._keys[i]
+	    if key.idx == self.last_frame:
+	        if i == 0:
+		    # This is the first frame, we can not duplicate it
+		    self.last_line.rm_keyframe(self.last_frame)
+		    return
+		node = self.duplicateSceneGroup(last_key.ref.attribute("id"))
+	        key.ref = node
+		self.update()
+		self.show()
+	        self.doEditScene(None)
+		return
+	    last_key = key
+	    i = i + 1
+    def duplicateSceneGroup(self,gid):
+	# Search for the duplicated group
+        doc = self.desktop.doc().root()
+	rdoc = self.desktop.doc().rdoc
+	orig = None
+	for node in doc.childList():
+	    if node.repr.name() == 'svg:g':
+	        for t in node.childList():
+		    if t.repr.name() == "svg:g":
+			if t.repr.attribute("id") == gid:
+			    orig = t.repr
+			    break
+	if orig == None:
+	    return None
+	ns = orig.duplicate(rdoc)
+	gid = self.last_line.node.label()+self.newID()
+	self.ID[gid]=1
+	ns.setAttribute("id",gid,True)
+	ns.setAttribute("inkscape:groupmode","layer",True)
+	self.last_line.node.repr.appendChild(ns)
+	return ns
     
     def doEditScene(self,w):
 	self.setCurrentScene(self.last_frame+1)
@@ -560,6 +599,8 @@ class MBScene():
 	self.insertKeyScene()
 	# self.grid.show_all()
 	return
+    def doDuplicateKeyScene(self,w):
+        self.duplicateKeyScene()
 
     def doRemoveScene(self,w):
 	self.removeKeyScene()
@@ -583,6 +624,9 @@ class MBScene():
 	hbox.pack_start(btn,expand=False,fill=False)
 	btn=gtk.Button('Extend scene')
 	btn.connect('clicked', self.doExtendScene)
+	hbox.pack_start(btn,expand=False,fill=False)
+	btn=gtk.Button('Duplicate Key')
+	btn.connect('clicked', self.doDuplicateKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
 	pass
     
