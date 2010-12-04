@@ -17,4 +17,9 @@ export LD_LIBRARY_PATH
 DIR=`dirname $1`
 FNAME=`basename $1`
 
-cd $DIR; node $FNAME
+if [ -z "$DEBUG" ]; then
+    cd $DIR; node $FNAME
+else
+    # DEBUG
+    cd $DIR; gdb -args node $FNAME
+fi

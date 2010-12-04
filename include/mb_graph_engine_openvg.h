@@ -74,7 +74,7 @@
 	char _vg_cmd = VG_LINE_TO_ABS;					\
 	vgAppendPathData((canvas)->path, 1, &_vg_cmd, _vg_data);	\
     } while(0)
-#define mbe_in_fill(canvas, x, y) (0)
+#define mbe_in_fill(canvas, x, y) (1)
 /* TODO: change prototype of mbe_arc() to remove mbe_save() and
  *	 mbe_restore().
  */
