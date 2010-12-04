@@ -274,7 +274,6 @@ grad_stop_t *paint_radial_stops(paint_t *paint,
 typedef struct _paint_image {
     paint_t paint;
     mb_img_data_t *img;
-    mbe_surface_t *surf;
     mbe_pattern_t *ptn;
 } paint_image_t;
 
@@ -294,7 +293,6 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     paint_image_t *paint_img = (paint_image_t *)paint;
     mb_img_data_t *img_data;
 
-    mbe_surface_destroy(paint_img->surf);
     img_data = paint_img->img;
     MB_IMG_DATA_FREE(img_data);
     paint_destroy(&paint_img->paint);
@@ -319,21 +317,9 @@ paint_t *rdman_paint_image_new(redraw_man_t *rdman,
     paint_init(&paint->paint, MBP_IMAGE,
 	       paint_image_prepare, paint_image_free);
     paint->img = img;
-    paint->surf = mbe_image_surface_create_for_data(img->content,
-						      img->fmt,
-						      img->w,
-						      img->h,
-						      img->stride);
-    if(paint->surf == NULL) {
-	paint_destroy(&paint->paint);
-	elmpool_elm_free(rdman->paint_image_pool, paint);
-	return NULL;
-    }
-
-    paint->ptn = mbe_pattern_create_for_surface(paint->surf);
+    paint->ptn = mbe_pattern_create_image(img);
     if(paint->ptn == NULL) {
 	paint_destroy(&paint->paint);
-	mbe_surface_destroy(paint->surf);
 	elmpool_elm_free(rdman->paint_image_pool, paint);
 	return NULL;
     }
