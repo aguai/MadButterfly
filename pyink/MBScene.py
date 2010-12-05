@@ -92,7 +92,31 @@ class MBScene():
 	self.scenemap = None
 	self.top = None
 	self.last_update = None
+	self.startPolling()
+	self.last_select = None
 	pass
+
+    def startPolling(self):
+	objs =  self.desktop.selection.list()
+	if len(objs) != 1: 
+	    glib.timeout_add(500,self.startPolling)
+	    try:
+		self.nameEditor.set_text('')
+	    except:
+		traceback.print_exc()
+		pass
+	    return
+	o = objs[0]
+	if o == self.last_select: 
+            glib.timeout_add(500,self.startPolling)
+	    return
+	self.last_select = o
+	try:
+	    self.nameEditor.set_text(o.repr.attribute("inkscape:label"))
+	except:
+	    self.nameEditor.set_text('')
+	    pass
+        glib.timeout_add(500,self.startPolling)
 
     def confirm(self,msg):
 	vbox = gtk.VBox()
@@ -611,6 +635,15 @@ class MBScene():
 	self.extendScene()
 	#self.grid.show_all()
 	pass
+    def changeObjectLabel(self,w):
+	o = self.desktop.selection.list()[0]
+	o.repr.setAttribute("inkscape:label", self.nameEditor.get_text(), True)
+    def addNameEditor(self,hbox):
+	self.nameEditor = gtk.Entry(max=40)
+	hbox.pack_start(self.nameEditor,expand=False,fill=False)
+	self.editDone = gtk.Button('Set')
+	hbox.pack_start(self.editDone,expand=False,fill=False)
+	self.editDone.connect('clicked', self.changeObjectLabel)
     
     def addButtons(self,hbox):
 	#btn = gtk.Button('Edit')
@@ -628,6 +661,7 @@ class MBScene():
 	btn=gtk.Button('Duplicate Key')
 	btn.connect('clicked', self.doDuplicateKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
+	self.addNameEditor(hbox)
 	pass
     
     def onQuit(self, event):
