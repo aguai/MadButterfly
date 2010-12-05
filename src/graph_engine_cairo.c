@@ -204,3 +204,19 @@ mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
 
     cairo_clip(canvas);
 }
+
+void
+mbe_copy_source(mbe_t *src, mbe_t *dst) {
+    cairo_operator_t saved_op;
+    cairo_surface_t *surf;
+    cairo_pattern_t *ptn;
+
+    surf = cairo_get_target(src);
+    ptn = cairo_pattern_create_for_surface(surf);
+    cairo_set_source(dst, ptn);
+    cairo_pattern_destroy(ptn);
+    saved_op = cairo_get_operator(dst);
+    cairo_set_operator(dst, CAIRO_OPERATOR_SOURCE);
+    cairo_paint(dst);
+    cairo_set_operator(dst, saved_op);
+}
