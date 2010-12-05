@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include "tank.h"
@@ -219,13 +220,16 @@ static void
 enemy_tank_driver(int hdl, const mb_timeval_t *tmo,
 		  const mb_timeval_t *now, void *data) {
     tank_rt_t *tank_rt = (tank_rt_t *)data;
+    enemy_t *enemy;
     int n_enemy;
     mb_timeval_t timeout, addend;
     int i;
     
     n_enemy = tank_rt->n_enemy;
     for(i = 0; i < n_enemy; i++) {
-	_drive_enemy_tank(enemies + i);
+	enemy = enemies + i;
+	if(enemy->tank->progm == NULL)
+	    _drive_enemy_tank(enemy);
     }
     
     get_now(&timeout);
@@ -268,5 +272,6 @@ init_enemies(tank_rt_t *tank_rt) {
 	    enemies[i].memory[j] = SOMETHING;
     }
 
+    srand(time(NULL));
     start_enemy_tank_timer(tank_rt);
 }

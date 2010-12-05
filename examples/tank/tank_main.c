@@ -666,7 +666,7 @@ main(int argc, char *const argv[]) {
 
     initial_tank(&tank_rt, rt);
     
-    /* init_enemies(&tank_rt); */
+    init_enemies(&tank_rt);
     
     mb_runtime_event_loop(rt);
 
