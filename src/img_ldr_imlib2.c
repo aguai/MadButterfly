@@ -81,13 +81,15 @@ mb_img_data_t *simple_mb_img_ldr_load(mb_img_ldr_t *ldr, const char *img_id) {
 	for(j = 0; j < w; j++) {
 	    value = data[pos];
 	    alpha = value >> 24;
-	    if(alpha == 0)
-		value = 0;
-	    else if(alpha != 0xff) {
-		value = (value & 0xff000000) |
-		    (((value & 0xff0000) * alpha / 0xff) & 0xff0000) |
-		    (((value & 0xff00) * alpha / 0xff) & 0xff00) |
-		    ((value & 0xff) * alpha / 0xff);
+	    if(alpha != 0xff) {
+		if(alpha == 0)
+		    value = 0;
+		else {
+		    value = (value & 0xff000000) |
+			(((value & 0xff0000) * alpha / 0xff) & 0xff0000) |
+			(((value & 0xff00) * alpha / 0xff) & 0xff00) |
+			((value & 0xff) * alpha / 0xff);
+		}
 	    }
 	    premultiple_data[pos++] = value;
 	}
