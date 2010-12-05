@@ -93,6 +93,7 @@ extern mbe_pattern_t *mbe_pattern_create_linear(co_aix x0, co_aix y0,
 						int stop_cnt);
 extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
 extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
+extern void mbe_copy_source(mbe_t *src, mbe_t *dst);
 
 
 static void mbe_pattern_set_matrix(mbe_pattern_t *ptn,
@@ -110,21 +111,6 @@ static void mbe_clear(mbe_t *canvas) {
     cairo_set_operator(canvas, CAIRO_OPERATOR_CLEAR);
     cairo_paint(canvas);
     cairo_set_operator(canvas, old_op);
-}
-
-static void mbe_copy_source(mbe_t *src, mbe_t *dst) {
-    cairo_operator_t saved_op;
-    cairo_surface_t *surf;
-    cairo_pattern_t *ptn;
-
-    surf = cairo_get_target(src);
-    ptn = cairo_pattern_create_for_surface(surf);
-    cairo_set_source(src, ptn);
-    cairo_pattern_destroy(ptn);
-    saved_op = cairo_get_operator(dst);
-    cairo_set_operator(dst, CAIRO_OPERATOR_SOURCE);
-    cairo_paint(dst);
-    cairo_set_operator(dst, saved_op);
 }
 
 static mbe_scaled_font_t *
