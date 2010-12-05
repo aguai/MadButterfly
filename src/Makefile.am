@@ -56,6 +56,10 @@ libmbfly_la_CPPFLAGS += @imlib2_CFLAGS@
 libmbfly_la_LDFLAGS += @imlib2_LIBS@
 endif
 
+if DUMMY_IMG_LOADER
+libmbfly_la_SOURCES += img_ldr_dummy.c
+endif
+
 if CAIRO_GRAPH_ENGINE
 libmbfly_la_SOURCES += graph_engine_cairo.c
 
