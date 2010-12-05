@@ -4,7 +4,7 @@ noinst_PROGRAMS = tank
 #EXTRA_DIST = 
 svg_sources = brick.c bullet.c bush.c mud.c rock.c \
 	tank1.c tank2.c tank_en.c bang.c
-tank_SOURCES = tank_main.c
+tank_SOURCES = tank_main.c enemy.c
 nodist_tank_SOURCES = svgs.h \
 	$(svg_sources) $(svg_sources:.c=.h) $(svg_sources:.c=.mb)
 tank_CPPFLAGS = $(APPCFLAGS)
