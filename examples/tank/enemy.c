@@ -19,6 +19,8 @@ try_fire(tank_t *me, tank_t *target, tank_rt_t *tank_rt) {
     int *tracer = NULL;
     int target_value;
     int target_dir;
+    tank_t **enemies;
+    int i;
     
     if(me->map_x == target->map_x) { /* In a row */
 	tracer = &y;
@@ -43,14 +45,27 @@ try_fire(tank_t *me, tank_t *target, tank_rt_t *tank_rt) {
     /* Check obstacles between tanks */
     x = me->map_x;
     y = me->map_y;
+    enemies = tank_rt->tank_enemies;
     if(*tracer < target_value) {
 	while(++*tracer < target_value) {
 	    if(map[y][x] != MUD)
+		break;
+	    for(i = 0; i < tank_rt->n_enemy; i++) {
+		if(enemies[i]->map_x == x && enemies[i]->map_y == y)
+		    break;
+	    }
+	    if(i != tank_rt->n_enemy)
 		break;
 	}
     } else {
 	while(--*tracer > target_value) {
 	    if(map[y][x] != MUD)
+		break;
+	    for(i = 0; i < tank_rt->n_enemy; i++) {
+		if(enemies[i]->map_x == x && enemies[i]->map_y == y)
+		    break;
+	    }
+	    if(i != tank_rt->n_enemy)
 		break;
 	}
     }
@@ -142,7 +157,7 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
 
     possibles = 0;
     for(i = 0; i < 3; i++) {
-	chk_dir = (dir - 1  + i) % 4;
+	chk_dir = (dir + 3  + i) % 4;
 	if(status[chk_dir] == NOTHING)
 	    possibles++;
     }
@@ -165,13 +180,13 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
 	return;
     }
     
-    which_dir = rand() % possibles;
+    which_dir = (rand() % possibles) + 1;
     for(i = 0; i < 3; i++) {
-	chk_dir = (dir - 1  + i) % 4;
+	chk_dir = (dir + 3  + i) % 4;
 	if(status[chk_dir] == NOTHING) {
+	    which_dir--;
 	    if(which_dir == 0)
 		break;
-	    which_dir--;
 	}
     }
     switch(chk_dir) {
