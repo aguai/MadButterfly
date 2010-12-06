@@ -116,7 +116,7 @@ class frameline(gtk.DrawingArea):
     _key_mark_color = 0x000000  # color of marks for key frames.
     _key_mark_sz = 4            # width and height of a key frame mark
     _tween_color = 0x808080     # color of tween line
-    _tween_bgcolors = [0x80ff80, 0xff8080] # bg colors of tween frames
+    _tween_bgcolors = [0x80ff80, 0xff8080,0xffff80] # bg colors of tween frames
     # Colors for normal frames
     _normal_bgcolors = [0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xcccccc]
     _normal_border = 0xaaaaaa   # border color of normal frames.
@@ -124,7 +124,8 @@ class frameline(gtk.DrawingArea):
     _hover_border_color = 0xa0a0a0 # border when the pointer over a frame
     # tween types
     _tween_type_none=0
-    _tween_type_shape=3
+    _tween_type_move=1
+    _tween_type_shape=2
     
 
     FRAME_BUT_PRESS = 'frame-button-press'
@@ -464,6 +465,24 @@ class frameline(gtk.DrawingArea):
                 pass
             pass
         pass
+    def set_tween_type(self,frame_idx,typ):
+        found=False
+	for i in range(0,len(self._keys)):
+	    if self._keys[i].idx == frame_idx:
+	        idx = i
+		found = True
+		break
+	if not found: return
+        key = self._keys[idx]
+	if typ == 'normal':
+	    type = self._tween_type_none
+	elif typ == 'relocate':
+	    type = self._tween_type_move
+	elif typ == 'scale':
+	    type = self._tween_type_shape
+	if key.left_tween is False and key.right_tween is True:
+	    key.right_tween_type = type
+    	
 
     ## \brief Show a mark for the pointer for a frame.
     #
@@ -573,7 +592,7 @@ class frameline(gtk.DrawingArea):
     ## Tween the key frame specified by an index and the key frame at right.
     #
     # \see http://www.entheosweb.com/Flash/shape_tween.asp
-    def tween(self, idx, _type=0):
+    def tween(self, idx, _type='normal'):
         key_indic = [key.idx for key in self._keys]
         pos = key_indic.index(idx)
         key = self._keys[pos]
@@ -585,8 +604,25 @@ class frameline(gtk.DrawingArea):
 
         key.right_tween = True
         right_key.left_tween = True
-        key.right_tween_type = _type
+	if _type == 'normal':
+            key.right_tween_type = self._tween_type_none
+	elif _type == 'relocate':
+            key.right_tween_type = self._tween_type_move
+	elif _type == 'scale':
+            key.right_tween_type = self._tween_type_shape
         pass
+    def get_tween_type(self,idx):
+        for i in range(0,len(self._keys)):
+	    key = self._keys[i]
+	    if key.left_tween is True: continue
+	    if key.idx == idx:
+	    	if key.right_tween_type == self._tween_type_none:
+		    return 'normal'
+	    	elif key.right_tween_type == self._tween_type_move:
+		    return 'relocate'
+	    	elif key.right_tween_type == self._tween_type_shape:
+		    return 'scale'
+        
 
     ## Set active frame
     #
@@ -626,11 +662,18 @@ class frameline(gtk.DrawingArea):
 		ss.setAttribute("start", str(key.idx+1),True)
 		ss.setAttribute("ref",key.ref.attribute("id"),True)
 		ss.setAttribute("end", str(self._keys[i+1].idx+1),True)
+		if self._keys[i].right_tween_type == self._tween_type_none:
+		    ss.setAttribute("type", "normal", True)
+		elif self._keys[i].right_tween_type == self._tween_type_move:
+		    ss.setAttribute("type", "relocate", True)
+		elif self._keys[i].right_tween_type == self._tween_type_scale:
+		    ss.setAttribute("type", "scale", True)
 	    else:
 	        ss = rdoc.createElement("ns0:scene")
 		node.appendChild(ss)
 		ss.setAttribute("start", str(key.idx+1),True)
 		ss.setAttribute("ref",key.ref.attribute("id"),True)
+	        ss.setAttribute("type", "normal", True)
 
 	        
     ## \brief Start future drawing actions

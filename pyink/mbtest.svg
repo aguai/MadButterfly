@@ -15,7 +15,7 @@
    height="480px"
    id="svg2383"
    sodipodi:version="0.32"
-   inkscape:version="0.48+devel r9764 custom"
+   inkscape:version="0.48+devel r9773 custom"
    sodipodi:docname="mbtest.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    version="1.1">
@@ -27,13 +27,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.6029106"
-     inkscape:cx="69.206233"
+     inkscape:cx="238.58561"
      inkscape:cy="290.40921"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="g3189"
      inkscape:document-units="px"
      showgrid="false"
      inkscape:window-width="1400"
-     inkscape:window-height="974"
+     inkscape:window-height="973"
      inkscape:window-x="271"
      inkscape:window-y="25"
      inkscape:window-maximized="0" />
@@ -194,21 +194,26 @@
     <ns0:scenes>
       <ns0:scene
          start="1"
-         ref="g3189"
-         end="15" />
-      <ns0:scene
-         start="1"
-         ref="s4427" />
+         ref="s4427"
+         type="normal" />
       <ns0:scene
          start="2"
-         ref="s4159" />
+         ref="s4159"
+         type="normal" />
       <ns0:scene
          start="5"
          ref="s9524"
-         end="10" />
+         end="10"
+         type="normal" />
       <ns0:scene
          start="15"
-         ref="s6546" />
+         ref="s6546"
+         type="normal" />
+      <ns0:scene
+         start="1"
+         ref="g3189"
+         end="15"
+         type="relocate" />
     </ns0:scenes>
   </metadata>
   <g
@@ -237,8 +242,9 @@
          ry="10" />
       <g
          style="display:inline"
-         transform="translate(-11.385541,2.6514388)"
-         id="g3303">
+         transform="translate(-15.128732,2.0275737)"
+         id="g3303"
+         inkscape:label="action1">
         <rect
            y="15.22048"
            x="32.440987"
@@ -283,14 +289,13 @@
       </g>
     </g>
     <g
-       id="s4393"
-       style="" />
+       id="s4393" />
   </g>
   <g
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="Buton"
-     style="display:inline">
+     style="display:none">
     <g
        id="s4427"
        style="display:none" />
@@ -362,7 +367,6 @@
          y="0"
          width="100"
          height="100"
-         style="fill:#ff00"
          id="rect3116" />
     </g>
   </g>
@@ -370,5 +374,5 @@
      id="layer1"
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     style="display:inline" />
+     style="display:none" />
 </svg>

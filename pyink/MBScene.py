@@ -48,10 +48,11 @@ class Layer:
     pass
 
 class Scene:
-    def __init__(self, node, start,end):
+    def __init__(self, node, start,end,typ):
 	self.node = node
 	self.start = int(start)
 	self.end = int(end)
+	self.type = typ
 	pass
     pass
 
@@ -168,10 +169,15 @@ class MBScene():
 			except:
 			    end = start
 			    pass
+			try:
+			    typ = s.repr.attribute('type')
+			    if typ == None:
+				typ = 'normal'
+			except:
+			    traceback.print_exc()
+			    typ = 'normal'
 			link = s.repr.attribute("ref")
-			self.scenemap[link] = [int(start),int(end)]
-			print "scene %d to %d" % (self.scenemap[link][0],
-						  self.scenemap[link][1])
+			self.scenemap[link] = [int(start),int(end),typ]
 			if cur >= start and cur <= end:
 			    self.currentscene = link
 			    pass
@@ -234,7 +240,7 @@ class MBScene():
 			    lyobj.current_scene.append(scene)
 			    continue
 
-			lyobj.scenes.append(Scene(scene,scmap[0],scmap[1]))
+			lyobj.scenes.append(Scene(scene,scmap[0],scmap[1],scmap[2]))
 			pass
 		    else:
 			lyobj.current_scene.append(scene)
@@ -458,6 +464,7 @@ class MBScene():
 	    if s.right_tween is False:
 	        if nth == s.idx+1:
 		    self.enterGroup(s.ref)
+	            self.setTweenType(frameline.get_tween_type(s.idx))
 		    return
 		else:
 		    pass
@@ -466,12 +473,20 @@ class MBScene():
 
 	    if nth >= (s.idx+1) and nth <= (frameline._keys[i+1].idx+1):
 	        self.enterGroup(s.ref)
+	        self.setTweenType(frameline.get_tween_type(s.idx))
 		return
 	    else:
 	        pass
 	    i = i + 2
 	    pass
         pass
+    def setTweenType(self,typ):
+        if typ == 'normal':
+	    self.tweenTypeSelector.set_active(0)
+        elif typ == 'relocate':
+	    self.tweenTypeSelector.set_active(1)
+        elif typ == 'scale':
+	    self.tweenTypeSelector.set_active(2)
 
 	
 	
@@ -558,7 +573,7 @@ class MBScene():
 		frameline.add_keyframe(scene.start-1,scene.node.repr)
 		if scene.start != scene.end:
 		    frameline.add_keyframe(scene.end-1,scene.node.repr)
-		    frameline.tween(scene.start-1)
+		    frameline.tween(scene.start-1,scene.type)
 		pass
 	    pass
 	pass
@@ -662,7 +677,52 @@ class MBScene():
 	btn.connect('clicked', self.doDuplicateKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
 	self.addNameEditor(hbox)
+	self.addTweenTypeSelector(hbox)
 	pass
+    def onTweenTypeChange(self,w):
+	n = self.tweenTypeSelector.get_active()
+	if self.last_line == None:
+	    return
+	frameline = self.last_line
+        i = 0
+	found = -1
+        while i < len(frameline._keys):
+	    s = frameline._keys[i]
+	    if s.right_tween is False:
+	        if self.last_frame == s.idx:
+		    found = s.idx
+		    break
+		else:
+		    pass
+		i = i + 1
+		continue
+
+	    if self.last_frame >= s.idx and self.last_frame <= frameline._keys[i+1].idx:
+		found = s.idx
+		break
+	    else:
+	        pass
+	    i = i + 2
+	    pass
+        pass
+	if found == -1: return
+	self.last_line.set_tween_type(found,self.tweenTypeSelector.get_active_text())
+	self.last_line.update()
+	self.update()
+
+    def addTweenTypeSelector(self,hbox):
+	tweenbox = gtk.HBox()
+	label = gtk.Label('Tween Type')
+	tweenbox.pack_start(label)
+	
+        self.tweenTypeSelector = gtk.combo_box_new_text()
+	self.tweenTypeSelector.append_text('normal')
+	self.tweenTypeSelector.append_text('relocate')
+	self.tweenTypeSelector.append_text('scale')
+	self.tweenTypeSelector.set_active(0)
+	tweenbox.pack_start(self.tweenTypeSelector, expand=False,fill=False)
+	hbox.pack_start(tweenbox,expand=False,fill=False)
+	self.tweenTypeSelector.connect('changed', self.onTweenTypeChange)
     
     def onQuit(self, event):
 	self.OK = False
