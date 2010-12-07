@@ -12,8 +12,8 @@
  * @{
  */
 #define mbe_scaled_font_text_extents(scaled, utf8, extents)
-#define mbe_image_surface_get_stride(surface) (20)
-#define mbe_image_surface_get_format(surface) ((mb_img_fmt_t)0)
+#define mbe_image_surface_get_stride(surface) ((surface)->w * 4)
+#define mbe_image_surface_get_format(surface) ((surface)->fmt)
 #define mbe_image_surface_get_height(surface) (surface)->h
 #define mbe_image_surface_get_width(surface) (surface)->w
 #define mbe_image_surface_get_data(surface) ((unsigned char *)NULL)
