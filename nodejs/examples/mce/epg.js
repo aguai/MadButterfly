@@ -28,7 +28,12 @@ function EPG()
 		js = js + data;
 	});
 	res.on('end', function () {
-		res = JSON.parse(js);
+		try {
+		    res = JSON.parse(js);
+		} catch(e) {
+		    sys.puts(e);
+		    sys.puts(js);
+		}
 		sys.puts("parsed");
 		self.onLoad(res);
 
@@ -119,7 +124,7 @@ function httpGetFile(url,file,obj)
 	    fs.close(f);
 	    var fields = cachepath.split('.');
 	    var ext = fields.pop();
-	    if (ext != "png") {
+	    if (ext != "png" && ext != 'jpg') {
 	        fields.push("png");
 	        newf = fields.join(".");
 		sys.puts("cachepath="+cachepath+" newf="+newf);
