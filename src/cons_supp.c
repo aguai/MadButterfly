@@ -1,5 +1,3 @@
-// -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
-// vim: sw=4:ts=8:sts=4
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -656,3 +654,14 @@ mb_backend_t mb_dfl_backend = { _cons_supp_new,
 				_cons_supp_reg_IO_factory,
 				_cons_supp_reg_timer_factory,
 };
+
+/*
+ * Local Variables:
+ * indent-tabs-mode: t
+ * tab-width: 8
+ * c-basic-offset: 4
+ * c-file-style:"stroustrup"
+ * fill-column:79
+ * End:
+ */
+// vim: sw=4:ts=8:sts=4:textwidth=79
