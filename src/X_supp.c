@@ -18,7 +18,6 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
-static void XSHM_update(X_supp_runtime_t *xmb_rt);
 #endif
 
 #define ERR -1
@@ -40,6 +39,7 @@ struct _X_kb_info {
     subject_t *kbevents;
     observer_factory_t *observer_factory;
 };
+typedef struct _X_kb_info X_kb_info_t;
 
 /* @} */
 
@@ -80,6 +80,7 @@ struct _X_supp_runtime {
     int mx, my;		       /* Position of last motion event */
     int mbut_state;	       /* Button state of last motion event */
 };
+typedef struct _X_supp_runtime X_supp_runtime_t;
 
 static void _x_supp_handle_x_event(X_supp_runtime_t *rt);
 
@@ -159,6 +160,10 @@ _x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
     ASSERT(io_hdl < xmb_io_man->n_monitor);
     xmb_io_man->monitors[io_hdl].type = MB_IO_DUMMY;
 }
+
+#ifdef XSHM
+static void XSHM_update(X_supp_runtime_t *xmb_rt);
+#endif
 
 /*! \brief Handle connection coming data and timeout of timers.
  *
@@ -321,7 +326,7 @@ static void X_kb_destroy(X_kb_info_t *kbinfo) {
 static void X_kb_handle_event(X_kb_info_t *kbinfo, XKeyEvent *xkey) {
     unsigned int code;
     int sym;
-    X_kb_event_t event;
+    mb_kb_event_t event;
 
     code = xkey->keycode;
     sym = keycode2sym(kbinfo, code);
