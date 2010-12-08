@@ -226,6 +226,7 @@ mbe_image_surface_create_for_data(unsigned char *data,
 extern void mbe_surface_destroy(mbe_surface_t *surface);
 
 extern void mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas);
+extern void mbe_flush(mbe_t *canvas);
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
 extern void mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha);

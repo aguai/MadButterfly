@@ -662,7 +662,11 @@ main(int argc, char *const argv[]) {
     mb_rt_t *rt;
     tank_rt_t tank_rt;
 
+#ifdef CONSOLE_BACKEND
+    rt = mb_runtime_new(NULL, 800, 600);
+#else
     rt = mb_runtime_new(":0.0", 800, 600);
+#endif
 
     initial_tank(&tank_rt, rt);
     
