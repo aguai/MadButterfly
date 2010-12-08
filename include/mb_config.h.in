@@ -36,4 +36,10 @@
 /* Enable DirectFB backend */
 #undef DFB_BACKEND
 
+/* Enable console backend */
+#undef CONSOLE_BACKEND
+
+/* Enable XSHM */
+#undef XSHM
+
 #endif /* __MB_CONFIG_H_ */

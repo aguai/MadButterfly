@@ -83,6 +83,7 @@ AC_ARG_WITH([backend],
         [case "${withval}" in
             ('X') backend='X'; default_graphic_engine="cairo" ;;
             ('dfb') backend='dfb'; default_graphic_engine="dfb" ;;
+	    ('console') backend='console'; default_graphic_engine="openvg" ;;
             ('no') backend='none'; default_graphic_engine="cairo" ;;
             (*) AC_MSG_ERROR([bad value ${withval} for --with-backend]) ;;
         esac],[backend='X'; default_graphic_engine="cairo"])
@@ -125,6 +126,7 @@ AC_ARG_ENABLE([xshm],
 [case "${backend}-${graphic_engine}-${image_loader}" in
     X-cairo-*|X-openvg-imlib2|X-openvg-dummy) ;;
     dfb-cairo-*) ;;
+    console-openvg-imlib2) ;;
     none-*-*) ;;
     *)] AC_MSG_ERROR([The combination of --with-backend=${backend}, --with-graphic-engine=${graphic_engine} and --with-image-loader=${image_loader} is invalid]) [;;
 esac]
@@ -183,6 +185,13 @@ AM_CONDITIONAL([DFB_BACKEND],
 
 [if [ x"${backend}" = x'dfb' -a x"${graphic_engine}" = x"cairo" ]; then]
     AC_DEFINE([DFB_BACKEND])
+[fi]
+
+AM_CONDITIONAL([CONSOLE_BACKEND],
+	[test x$backend = x'console' -a x"${graphic_engine}" = x"openvg"])
+
+[if [ x"${backend}" = x'console' -a x"${graphic_engine}" = x"openvg" ]; then]
+    AC_DEFINE([CONSOLE_BACKEND])
 [fi]
 
 AM_CONDITIONAL([CAIRO_IMG_LOADER],
@@ -262,6 +271,7 @@ AH_TEMPLATE([IMLIB2_IMG_LOADER], [Enable Imlib2 Image Loader])
 AH_TEMPLATE([DUMMY_IMG_LOADER], [Enable Dummy Image Loader])
 AH_TEMPLATE([X_BACKEND], [Enable X backend])
 AH_TEMPLATE([DFB_BACKEND], [Enable DirectFB backend])
+AH_TEMPLATE([CONSOLE_BACKEND], [Enable console backend])
 AH_TEMPLATE([XSHM], [Enable XSHM])
 
 AC_OUTPUT
