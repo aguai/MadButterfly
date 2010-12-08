@@ -508,7 +508,7 @@ tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     } while(0)
 
 static void keyboard_handler(event_t *event, void *arg) {
-    X_kb_event_t *xkey = (X_kb_event_t *)event;
+    mb_kb_event_t *xkey = (mb_kb_event_t *)event;
     tank_rt_t *tank_rt = (tank_rt_t *)arg;
     int direction;
 

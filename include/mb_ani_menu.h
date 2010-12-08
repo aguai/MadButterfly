@@ -18,7 +18,7 @@ typedef struct _mb_animated_menu {
 	void (*callback)(struct _mb_animated_menu *m, int sel);
 	void (*update_callback)(struct _mb_animated_menu *m, int sel);
 	mb_progm_t *progm;
-	X_kb_event_t pending_keys[16];
+	mb_kb_event_t pending_keys[16];
     int pending_pos, pending_last;
 } mb_animated_menu_t;
 /** \brief Create an instace of animated menu.
