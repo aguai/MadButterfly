@@ -755,6 +755,48 @@ xshm_init(X_supp_runtime_t *xmb_rt) {
 }
 #endif /* XSHM */
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+static int
+_get_img_fmt_from_xvisual(Display *display, Visual *visual) {
+    VisualID visual_id;
+    XVisualInfo temp;
+    XVisualInfo *infos;
+    int n;
+    int fmt = -1;
+    
+    visual_id = XVisualIDFromVisual(visual);
+    temp.visualid = visual_id;
+    infos = XGetVisualInfo(display, VisualIDMask, &temp, &n);
+    if(n != 1)
+	return -1;
+
+    switch(infos->depth) {
+    case 32:
+	fmt = MB_IFMT_ARGB32;
+	break;
+	
+    case 24:
+	fmt = MB_IFMT_RGB24;
+	break;
+	
+    case 16:
+	fmt = MB_IFMT_RGB16_565;
+	break;
+	
+    case 8:
+	fmt = MB_IFMT_A8;
+	break;
+	
+    case 1:
+	fmt = MB_IFMT_A1;
+	break;
+    }
+
+    return fmt;
+}
+
 /*! \brief Initialize a MadButterfy runtime for Xlib.
  *
  * This one is very like _x_supp_init(), except it accepts a
@@ -772,6 +814,7 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
     int w, h;
     int disp_fd;
+    int fmt;
 
     w = xmb_rt->w;
     h = xmb_rt->h;
@@ -785,12 +828,17 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
 
-    if(xmb_rt->backend_surface == NULL) /* xshm_init() may create one */
+    if(xmb_rt->backend_surface == NULL) { /* xshm_init() may create one */
+	fmt = _get_img_fmt_from_xvisual(xmb_rt->display, xmb_rt->visual);
+	if(fmt == -1)
+	    return ERR;
+    
 	xmb_rt->backend_surface =
 	    mbe_win_surface_create(xmb_rt->display,
 				   xmb_rt->win,
-				   xmb_rt->visual,
+				   fmt,
 				   w, h);
+    }
 
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);

@@ -207,9 +207,12 @@ extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-extern mbe_surface_t *mbe_win_surface_create(Display *display,
-					     Drawable drawable,
-					     Visual *visual,
+/*
+ * TODO: define a proper type for display and drawable.
+ */
+extern mbe_surface_t *mbe_win_surface_create(void *display,
+					     void *drawable,
+					     int fmt,
 					     int width, int height);
 #endif
 
