@@ -46,6 +46,7 @@ typedef struct _cons_kb_info cons_kb_info_t;
 
 struct _cons_supp_runtime {
     MB_DISPLAY display;
+    MB_WINDOW win;
     
     mbe_surface_t *surface;
     mbe_t *cr;
@@ -365,7 +366,7 @@ _cons_supp_init_with_win_internal(cons_supp_runtime_t *cmb_rt) {
     mbe_init();
     
     cmb_rt->surface =
-	mbe_win_surface_create(cmb_rt->display, NULL,
+	mbe_win_surface_create(cmb_rt->display, cmb_rt->win,
 			       MB_IFMT_ARGB32, w, h);
 
     cmb_rt->cr = mbe_create(cmb_rt->surface);
@@ -428,6 +429,7 @@ static int _cons_supp_init(cons_supp_runtime_t *cmb_rt,
     }
     
     cmb_rt->display = (MB_DISPLAY)console_fd;
+    cmb_rt->win = NULL;
     cmb_rt->w = w;
     cmb_rt->h = h;
     
@@ -522,7 +524,7 @@ _cons_supp_new(const char *display_name, int w, int h) {
     return (mb_rt_t *)rt;
 }
 
-/*! \brief Create a new runtime for existed window for X.
+/*! \brief Create a new runtime for existed window for console.
  *
  * The object returned by this function must be free with
  * _cons_supp_free_keep_win() to prevent the window from closed.
