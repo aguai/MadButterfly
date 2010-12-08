@@ -540,76 +540,30 @@ _openvg_find_config(mb_img_fmt_t fmt, int w, int h,
 }
 
 #ifdef EGL_GLX
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
-static int
-_get_img_fmt_from_xvisual(Display *display, Visual *visual) {
-    VisualID visual_id;
-    XVisualInfo temp;
-    XVisualInfo *infos;
-    int n;
-    int fmt = -1;
-    
-    visual_id = XVisualIDFromVisual(visual);
-    temp.visualid = visual_id;
-    infos = XGetVisualInfo(display, VisualIDMask, &temp, &n);
-    if(n != 1)
-	return -1;
-
-    switch(infos->depth) {
-    case 32:
-	fmt = MB_IFMT_ARGB32;
-	break;
-	
-    case 24:
-	fmt = MB_IFMT_RGB24;
-	break;
-	
-    case 16:
-	fmt = MB_IFMT_RGB16_565;
-	break;
-	
-    case 8:
-	fmt = MB_IFMT_A8;
-	break;
-	
-    case 1:
-	fmt = MB_IFMT_A1;
-	break;
-    }
-
-    return fmt;
-}
-
 /*! \brief Create an EGL window surface for X11.
  *
  * This function is compiled only for GLX enabled.
  */
 mbe_surface_t *
-mbe_win_surface_create(Display *display, Drawable drawable,
-		       Visual *visual, int width, int height) {
+mbe_win_surface_create(void *display, void *drawable,
+		       int fmt, int width, int height) {
     EGLDisplay egl_disp;
     EGLSurface egl_surface;
     mbe_surface_t *surface;
     EGLConfig config;
     EGLint attrib_list[2] = {EGL_NONE};
-    int fmt;
     int r;
 
-    fmt = _get_img_fmt_from_xvisual(display, visual);
-    if(fmt == -1)
-	return NULL;
-    
     r = _openvg_find_config(fmt, width, height, &config);
     if(r != 0)
 	return NULL;
 
-    egl_disp = eglGetDisplay(display);
+    egl_disp = eglGetDisplay((Display *)display);
     if(egl_disp == EGL_NO_DISPLAY || egl_disp != _VG_DISPLAY())
 	return NULL;
 
-    egl_surface = eglCreateWindowSurface(egl_disp, config, drawable,
+    egl_surface = eglCreateWindowSurface(egl_disp, config,
+					 (Drawable)drawable,
 					 attrib_list);
 
     surface = O_ALLOC(mbe_surface_t);
@@ -719,6 +673,17 @@ mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas) {
 
     display = _VG_DISPLAY();
     eglSwapBuffers(display, VG_MBE_SURFACE(dst_canvas));
+}
+
+void
+mbe_flush(mbe_t *canvas) {
+    EGLDisplay display;
+    mbe_surface_t *surface;
+
+    _MK_CURRENT_CTX(canvas);
+    display = _VG_DISPLAY();
+    surface = VG_MBE_SURFACE(canvas);
+    eglSwapBuffers(display, surface);
 }
 
 mbe_t *

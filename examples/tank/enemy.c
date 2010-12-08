@@ -11,6 +11,38 @@ struct _enemy {
 };
 typedef struct _enemy enemy_t;
 
+/*! \brief Pheromone Map trace the freq. the enemy tanks moving on an area.
+ *
+ * Every time a tank move to an area, it leaves 100 units of pheromone
+ * on the area.  And 9 of 10 pheromone are removed from the area for
+ * every time slice (1/3 second).  The max value of phereomone in an
+ * area is 991.
+ */
+static int pheromone_map[MAP_H][MAP_W];
+
+static void
+init_pheromone_map(void) {
+    int i, j;
+    
+    for(i = 0; i < MAP_H; i++)
+	for(j = 0; j < MAP_W; j++)
+	    pheromone_map[i][j] = 0;
+}
+
+static void
+remove_pheromone(void) {
+    int i, j;
+    
+    for(i = 0; i < MAP_H; i++)
+	for(j = 0; j < MAP_W; j++)
+	    pheromone_map[i][j] = pheromone_map[i][j] * 9 / 10;
+}
+
+static void
+leave_pheromone(int x, int y) {
+    pheromone_map[y][x] += 100;
+}
+
 /* \brief Fire and move to the target tank if they are in a row or column.
  */
 static int
@@ -75,6 +107,8 @@ try_fire(tank_t *me, tank_t *target, tank_rt_t *tank_rt) {
 	if(me->direction == target_dir && me->bullet == NULL)
 	    tank_fire_bullet(tank_rt, me);
 	tank_move(me, target_dir, tank_rt);
+	
+	leave_pheromone(me->map_x, me->map_y);
 	return 1;
     }
 
@@ -95,8 +129,11 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
     int x, y;
     int i, tank_i;
     int dir, chk_dir;
+    int interest_areas[4];
+    int all_interest;
+    int min_interest;
     int possibles;
-    int which_dir;
+    int interest_dir;
     
     me = enemy->tank;
     tanks = tank_rt->tanks;
@@ -106,15 +143,18 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
 	x = me->map_x + shift_xy[i][0];
 	y = me->map_y + shift_xy[i][1];
 	
+	interest_areas[i] = 0;
+	
 	/* Check obstacles */
 	if(x == -1 || y == -1 || x >= MAP_W || y >= MAP_H) {
 	    /* Out of range */
 	    status[i] = SOMETHING;
 	    continue;
 	}
-	if(map[y][x] == MUD)
+	if(map[y][x] == MUD) {
 	    status[i] = NOTHING;
-	else
+	    interest_areas[i] = 992 - pheromone_map[y][x];
+	} else
 	    status[i] = SOMETHING;
 	
 	/* Check tanks */
@@ -134,6 +174,8 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
     }
     if(i == 4) {		/* Status is not changed */
 	tank_move(me, me->direction, tank_rt);
+	
+	leave_pheromone(me->map_x, me->map_y);
 	return;
     }
 
@@ -155,12 +197,22 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
 	break;
     }
 
+    /* Compute itnerest for nearby areas */
     possibles = 0;
+    all_interest = 0;
+    min_interest = 992;
     for(i = 0; i < 3; i++) {
 	chk_dir = (dir + 3  + i) % 4;
-	if(status[chk_dir] == NOTHING)
+	if(status[chk_dir] == NOTHING) {
 	    possibles++;
+	    all_interest += interest_areas[chk_dir];
+	    if(min_interest > interest_areas[chk_dir])
+		min_interest = interest_areas[chk_dir];
+	}
     }
+    all_interest -= (min_interest * possibles) + possibles;
+    for(i = 0; i < 4; i++)
+	interest_areas[i] = interest_areas[i] - min_interest + 1;
 
     if(possibles == 0) {	/* Only can move backward */
 	switch(me->direction) {
@@ -177,15 +229,17 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
 	    tank_move(me, TD_RIGHT, tank_rt);
 	    break;
 	}
+	
+	leave_pheromone(me->map_x, me->map_y);
 	return;
     }
     
-    which_dir = (rand() % possibles) + 1;
+    interest_dir = (rand() % all_interest) + 1;
     for(i = 0; i < 3; i++) {
 	chk_dir = (dir + 3  + i) % 4;
 	if(status[chk_dir] == NOTHING) {
-	    which_dir--;
-	    if(which_dir == 0)
+	    interest_dir -= interest_areas[chk_dir];
+	    if(interest_dir <= 0)
 		break;
 	}
     }
@@ -203,6 +257,8 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
 	tank_move(me, TD_UP, tank_rt);
 	break;
     }
+    
+    leave_pheromone(me->map_x, me->map_y);
 }
 
 static void
@@ -229,17 +285,18 @@ _drive_enemy_tank(enemy_t *enemy) {
 static enemy_t *enemies = NULL;
 static mb_timer_man_t *timer_man;
 
+static void enemy_tick(int hdl, const mb_timeval_t *tmo,
+		       const mb_timeval_t *now, void *data);
+
 /*! \brief Drive every enemy tanks.
  */
 static void
-enemy_tank_driver(int hdl, const mb_timeval_t *tmo,
-		  const mb_timeval_t *now, void *data) {
-    tank_rt_t *tank_rt = (tank_rt_t *)data;
+enemy_tank_driver(tank_rt_t *tank_rt) {
     enemy_t *enemy;
     int n_enemy;
     mb_timeval_t timeout, addend;
     int i;
-    
+
     n_enemy = tank_rt->n_enemy;
     for(i = 0; i < n_enemy; i++) {
 	enemy = enemies + i;
@@ -250,7 +307,16 @@ enemy_tank_driver(int hdl, const mb_timeval_t *tmo,
     get_now(&timeout);
     MB_TIMEVAL_SET(&addend, 0, 300000);
     MB_TIMEVAL_ADD(&timeout, &addend);
-    mb_timer_man_timeout(timer_man, &timeout, enemy_tank_driver, tank_rt);
+    mb_timer_man_timeout(timer_man, &timeout, enemy_tick, tank_rt);
+}
+
+static void
+enemy_tick(int hdl, const mb_timeval_t *tmo,
+	   const mb_timeval_t *now, void *data) {
+    tank_rt_t *tank_rt = (tank_rt_t *)data;
+    
+    remove_pheromone();
+    enemy_tank_driver(tank_rt);
 }
 
 /*! \brief Start a timer for enemy tank driver.
@@ -264,7 +330,7 @@ start_enemy_tank_timer(tank_rt_t *tank_rt) {
     get_now(&timeout);
     MB_TIMEVAL_SET(&addend, 0, 300000);
     MB_TIMEVAL_ADD(&timeout, &addend);
-    mb_timer_man_timeout(timer_man, &timeout, enemy_tank_driver, tank_rt);
+    mb_timer_man_timeout(timer_man, &timeout, enemy_tick, tank_rt);
 }
 
 void

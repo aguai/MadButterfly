@@ -508,7 +508,7 @@ tank_fire_bullet(tank_rt_t *tank_rt, tank_t *tank) {
     } while(0)
 
 static void keyboard_handler(event_t *event, void *arg) {
-    X_kb_event_t *xkey = (X_kb_event_t *)event;
+    mb_kb_event_t *xkey = (mb_kb_event_t *)event;
     tank_rt_t *tank_rt = (tank_rt_t *)arg;
     int direction;
 
@@ -662,7 +662,11 @@ main(int argc, char *const argv[]) {
     mb_rt_t *rt;
     tank_rt_t tank_rt;
 
+#ifdef CONSOLE_BACKEND
+    rt = mb_runtime_new(NULL, 800, 600);
+#else
     rt = mb_runtime_new(":0.0", 800, 600);
+#endif
 
     initial_tank(&tank_rt, rt);
     

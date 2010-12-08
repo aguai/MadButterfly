@@ -18,7 +18,6 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
-static void XSHM_update(X_supp_runtime_t *xmb_rt);
 #endif
 
 #define ERR -1
@@ -40,6 +39,7 @@ struct _X_kb_info {
     subject_t *kbevents;
     observer_factory_t *observer_factory;
 };
+typedef struct _X_kb_info X_kb_info_t;
 
 /* @} */
 
@@ -80,6 +80,7 @@ struct _X_supp_runtime {
     int mx, my;		       /* Position of last motion event */
     int mbut_state;	       /* Button state of last motion event */
 };
+typedef struct _X_supp_runtime X_supp_runtime_t;
 
 static void _x_supp_handle_x_event(X_supp_runtime_t *rt);
 
@@ -159,6 +160,10 @@ _x_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl) {
     ASSERT(io_hdl < xmb_io_man->n_monitor);
     xmb_io_man->monitors[io_hdl].type = MB_IO_DUMMY;
 }
+
+#ifdef XSHM
+static void XSHM_update(X_supp_runtime_t *xmb_rt);
+#endif
 
 /*! \brief Handle connection coming data and timeout of timers.
  *
@@ -321,7 +326,7 @@ static void X_kb_destroy(X_kb_info_t *kbinfo) {
 static void X_kb_handle_event(X_kb_info_t *kbinfo, XKeyEvent *xkey) {
     unsigned int code;
     int sym;
-    X_kb_event_t event;
+    mb_kb_event_t event;
 
     code = xkey->keycode;
     sym = keycode2sym(kbinfo, code);
@@ -755,6 +760,48 @@ xshm_init(X_supp_runtime_t *xmb_rt) {
 }
 #endif /* XSHM */
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+static int
+_get_img_fmt_from_xvisual(Display *display, Visual *visual) {
+    VisualID visual_id;
+    XVisualInfo temp;
+    XVisualInfo *infos;
+    int n;
+    int fmt = -1;
+    
+    visual_id = XVisualIDFromVisual(visual);
+    temp.visualid = visual_id;
+    infos = XGetVisualInfo(display, VisualIDMask, &temp, &n);
+    if(n != 1)
+	return -1;
+
+    switch(infos->depth) {
+    case 32:
+	fmt = MB_IFMT_ARGB32;
+	break;
+	
+    case 24:
+	fmt = MB_IFMT_RGB24;
+	break;
+	
+    case 16:
+	fmt = MB_IFMT_RGB16_565;
+	break;
+	
+    case 8:
+	fmt = MB_IFMT_A8;
+	break;
+	
+    case 1:
+	fmt = MB_IFMT_A1;
+	break;
+    }
+
+    return fmt;
+}
+
 /*! \brief Initialize a MadButterfy runtime for Xlib.
  *
  * This one is very like _x_supp_init(), except it accepts a
@@ -772,6 +819,7 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     mb_img_ldr_t *img_ldr;
     int w, h;
     int disp_fd;
+    int fmt;
 
     w = xmb_rt->w;
     h = xmb_rt->h;
@@ -785,17 +833,24 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
     xmb_rt->surface =
 	mbe_image_surface_create(MB_IFMT_ARGB32, w, h);
 
-    if(xmb_rt->backend_surface == NULL) /* xshm_init() may create one */
+    if(xmb_rt->backend_surface == NULL) { /* xshm_init() may create one */
+	fmt = _get_img_fmt_from_xvisual(xmb_rt->display, xmb_rt->visual);
+	if(fmt == -1)
+	    return ERR;
+    
 	xmb_rt->backend_surface =
 	    mbe_win_surface_create(xmb_rt->display,
 				   xmb_rt->win,
-				   xmb_rt->visual,
+				   fmt,
 				   w, h);
+    }
 
     xmb_rt->cr = mbe_create(xmb_rt->surface);
     xmb_rt->backend_cr = mbe_create(xmb_rt->backend_surface);
     
     xmb_rt->rdman = (redraw_man_t *)malloc(sizeof(redraw_man_t));
+    xmb_rt->rdman->w = w;
+    xmb_rt->rdman->h = h;
     redraw_man_init(xmb_rt->rdman, xmb_rt->cr, xmb_rt->backend_cr);
     /* FIXME: This is a wired loopback reference. This is inly
      *        required when we need to get the xmb_rt->tman for the

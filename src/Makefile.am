@@ -45,6 +45,10 @@ if DFB_BACKEND
 libmbfly_la_SOURCES += dfb_supp.c
 endif
 
+if CONSOLE_BACKEND
+libmbfly_la_SOURCES += cons_supp.c
+endif
+
 if CAIRO_IMG_LOADER
 libmbfly_la_SOURCES += img_ldr.c
 endif
@@ -54,6 +58,10 @@ libmbfly_la_SOURCES += img_ldr_imlib2.c
 
 libmbfly_la_CPPFLAGS += @imlib2_CFLAGS@
 libmbfly_la_LDFLAGS += @imlib2_LIBS@
+endif
+
+if DUMMY_IMG_LOADER
+libmbfly_la_SOURCES += img_ldr_dummy.c
 endif
 
 if CAIRO_GRAPH_ENGINE
