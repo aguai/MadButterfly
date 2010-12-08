@@ -246,7 +246,7 @@ static void mb_progm_step(int timer_hdl,
 #endif /* UNITTEST */
     mb_timeval_t next_tmo;
     mb_word_t *word;
-    mb_timer_t *timer;
+    int timer;
     int i;
 
     MB_TIMEVAL_SET(&next_tmo, 0, STEP_INTERVAL);
