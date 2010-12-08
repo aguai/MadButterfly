@@ -429,9 +429,35 @@ class MBScene():
 
     
     def setCurrentScene(self,nth):
+	"""
+	    Update the scene group according to the curretn scene data. There are a couple of cases.
+	    1. If the type of the scene is normal, we display it when it contains the current 
+	       frame. Otherwise hide it.
+	    2. If the type of the scene is relocate or scale, we need to duplicate the scene group
+	       and then modify its transform matrix according to the definition of the scene. Then,
+	       hide the original scenr group and display the duplciate scene group. In addition,
+	       we may need to delete the old duplicated scene group as well.
+
+	    For each layer, we will always use the duplicated scene group whose name as dup.
+	    We will put the duplicated scene group inside it. We will create this group if it is not
+	    available.
+	"""
 	self.current = nth
 	for layer in self._framelines:
 	    i=0
+
+	    # Check the duplicated scene group and create it if it is not available
+	    try:
+	        if layer.duplicateGroup:
+		    layer.duplicateGroup.parent().removeChild(layer.duplicateGroup)
+		    layer.duplicateGroup = None
+	    except:
+	        traceback.print_exc()
+	        pass
+	    # Create a new group
+	    layer.duplicateGroup = None
+
+
 	    while i < len(layer._keys):
 	        s = layer._keys[i]
 		print s.ref.attribute("id"),s.idx,s.left_tween,s.right_tween
@@ -442,13 +468,129 @@ class MBScene():
 		        s.ref.setAttribute("style","display:none",True)
 		    i = i + 1
 		    continue
-
-		if nth >= (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
+		if nth == s.idx + 1:
 		    s.ref.setAttribute("style","",True)
 		else:
-		    s.ref.setAttribute("style","display:none",True)
+		    if nth > (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
+			if i+2 < len(layer._keys):
+			    layer.duplicateGroup = self.desktop.doc().rdoc.createElement("svg:g")
+			    layer.duplicateGroup.setAttribute("inkscape:label","dup",True)
+			    s.ref.setAttribute("style","display:none",True)
+			    s.ref.parent().appendChild(layer.duplicateGroup)
+			    self.updateTweenContent(layer.duplicateGroup, layer.get_tween_type(s.idx),s, layer._keys[i+2], nth)
+		    else:
+		        s.ref.setAttribute("style","display:none",True)
 		i = i + 2
 		pass
+	    pass
+	pass
+    def updateTweenContent(self,obj, typ, source,dest,cur):
+	"""
+	    Update the content of the duplicate scene group. We will use the (start,end) and cur to calculate the percentage of
+	    the tween motion effect and then use it to update the transform matrix of the duplicated scene group.
+	"""
+	start = source.idx
+	end = dest.idx
+	print cur,start,end
+	percent = (cur-start)*1.0/(end-start)
+	i = 0
+	s = source.ref.firstChild()
+	d = dest.ref.firstChild()
+	sources={}
+	dests={}
+	# Collect all objects
+	while d:
+	    try:
+		label = d.attribute("inkscape:label")
+	    except:
+		d = d.next()
+		continue
+	    dests[label.value()] = d
+	    d = d.next()
+	# Check if the object in the source exists in the destination
+	s = source.ref.firstChild()
+	d = dest.ref.firstChild()
+	while s:
+	    print s,d
+	    try:
+		label = s.attribute("inkscape:label")
+		# Use i8nkscape:label to identidy the equipvalent objects
+		if label:
+		    if dests.hasattr(label.value()):
+			self.updateTweenObject(obj,typ,s,dests[label.value()],percent)
+			s = s.next()
+			continue
+	    except:
+		pass
+	    # Search obejcts in the destination
+	    while d:
+		try:
+		    d.attribute("inkscape:label")
+		    d = d.next()
+		    continue
+		except:
+		    pass
+		if s.name() == d.name():
+		    self.updateTweenObject(obj,typ,s,d,percent)
+		    d = d.next()
+		    break
+		d = d.next()
+	    s = s.next()
+    def parseTransform(self,obj):
+	"""
+	    Return the transform matrix of an object
+	"""
+	try:
+	    t = obj.attribute("transform")
+	    print t
+	    if t[0:9] == 'translate':
+		print "translate"
+		fields = t[10:].split(',')
+		x = float(fields[0])
+		fields = fields[1].split(')')
+		y = float(fields[0])
+		return [1,0,x,0,1,y]
+	    elif t[0:6] == 'matrix':
+		print "matrix"
+		fields=t[7:].split(')')
+		fields = fields[0].split(',')
+		return [float(fields[0]),float(fields[1]),float(fields[2]),float(fields[3]),float(fields[4]),float(fields[5])]
+	except:
+	    traceback.print_exc()
+	    return [1,0,0,0,1,0]
+
+	    
+    def updateTweenObject(self,obj,typ,s,d,p):
+	"""
+	    Generate tweened object in the @obj by using s and d in the @p percent
+	"""
+	print 'compare',s,d
+	if typ == 'relocate':
+	    print "percent",p
+	    newobj = s.duplicate(self.desktop.doc().rdoc)
+	    top = self.desktop.doc().rdoc.createElement("svg:g")
+	    top.appendChild(newobj)
+	    obj.appendChild(top)
+	    print s.name()
+	    if s.name() == 'svg:g':
+		# Parse the translate or matrix
+		sm = self.parseTransform(s)
+		dm = self.parseTransform(d)
+		print "g", (dm[2]-sm[2])*p,(dm[5]-sm[5])*p
+		top.setAttribute("transform","translate(%g,%g)" % ((dm[2]-sm[2])*p,(dm[5]-sm[5])*p),True)
+	    else:
+		try:
+		    sx = float(s.attribute("x"))
+		    sy = float(s.attribute("y"))
+		    dx = float(d.attribute("x"))
+		    dy = float(d.attribute("y"))
+		    tx = (dx-sx)*p
+		    ty = (dy-sy)*p
+		    print tx,ty
+		    top.setAttribute("transform","translate(%g,%g)" % (tx,ty),True)
+		except:
+		    traceback.print_exc()
+		    pass
 	    pass
 	pass
     def enterGroup(self,obj):
