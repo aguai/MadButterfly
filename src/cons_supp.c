@@ -97,8 +97,8 @@ struct _cons_supp_IO_man {
 };
 
 static int _cons_supp_io_man_reg(struct _mb_IO_man *io_man,
-				int fd, MB_IO_TYPE type,
-				mb_IO_cb_t cb, void *data);
+				 int fd, MB_IO_TYPE type,
+				 mb_IO_cb_t cb, void *data);
 static void _cons_supp_io_man_unreg(struct _mb_IO_man *io_man, int io_hdl);
 static mb_IO_man_t *_cons_supp_io_man_new(void);
 static void _cons_supp_io_man_free(mb_IO_man_t *io_man);
@@ -126,7 +126,7 @@ _cons_supp_io_man_free(mb_IO_man_t *io_man) {
 
 static int
 _cons_supp_io_man_reg(struct _mb_IO_man *io_man,
-		     int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data) {
+		      int fd, MB_IO_TYPE type, mb_IO_cb_t cb, void *data) {
     struct _cons_supp_IO_man *cmb_io_man = (struct _cons_supp_IO_man *)io_man;
     int i;
 
@@ -248,7 +248,7 @@ static int keycode2sym(cons_kb_info_t *kbinfo, unsigned int keycode) {
 }
 
 static int cons_kb_init(cons_kb_info_t *kbinfo, MB_DISPLAY display,
-		       redraw_man_t *rdman) {
+			redraw_man_t *rdman) {
     int n_syms;
     observer_factory_t *factory;
     int r;
@@ -413,8 +413,8 @@ _cons_supp_init_with_win_internal(cons_supp_runtime_t *cmb_rt) {
  * \param display_name is actually the path to the console/input device.
  */
 static int _cons_supp_init(cons_supp_runtime_t *cmb_rt,
-			  const char *display_name,
-			  int w, int h) {
+			   const char *display_name,
+			   int w, int h) {
     int r;
     int console_fd;
 
@@ -450,7 +450,7 @@ static int _cons_supp_init(cons_supp_runtime_t *cmb_rt,
  */
 static int
 _cons_supp_init_with_win(cons_supp_runtime_t *cmb_rt,
-			MB_DISPLAY display, MB_WINDOW win) {
+			 MB_DISPLAY display, MB_WINDOW win) {
     int r;
 
     memset(cmb_rt, 0, sizeof(cons_supp_runtime_t));
@@ -600,7 +600,7 @@ _cons_supp_img_ldr(mb_rt_t *rt) {
 
 static int
 _cons_supp_add_event(mb_rt_t *rt, int fd, MB_IO_TYPE type,
-		    mb_IO_cb_t cb, void *data)
+		     mb_IO_cb_t cb, void *data)
 {
     cons_supp_runtime_t *cmb_rt = (cons_supp_runtime_t *) rt;
     mb_IO_man_t *io_man = cmb_rt->io_man;
