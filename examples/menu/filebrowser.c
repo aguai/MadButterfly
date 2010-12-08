@@ -191,7 +191,8 @@ MyApp_fillDirInfo(mbaf_t *app,char *curdir)
     dir = opendir(curdir);
     while(e = readdir(dir)) {
 	    if (strcmp(e->d_name,".")==0) continue;
-	    if (e->d_type == DT_REG) {
+	    printf("e->d_type=%d %d name=%s\n",e->d_type,DT_REG,e->d_name);
+	    if (e->d_type == DT_REG || e->d_type == DT_LNK) {
 		    if (data->nFiles < MAX_ENTRY) {
 			    f = fileinfo_new();
 			    data->files[data->nFiles] = f;
