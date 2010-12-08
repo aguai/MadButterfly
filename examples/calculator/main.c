@@ -179,7 +179,11 @@ int main(int argc, char * const argv[]) {
     calculator_scr_t *calculator_scr;
     calc_data_t calc_data;
 
+#ifdef CONSOLE_BACKEND
+    rt = mb_runtime_new(NULL, 300, 400);
+#else
     rt = mb_runtime_new(":0.0", 300, 400);
+#endif
 
     rdman = mb_runtime_rdman(rt);
     calculator_scr = calculator_scr_new(rdman, rdman->root_coord);
@@ -187,6 +191,8 @@ int main(int argc, char * const argv[]) {
     calc_data.rt = rt;
     calc_data.code = calculator_scr;
     setup_observers(&calc_data);
+    
+    mb_runtime_flush(rt);
 
     mb_runtime_event_loop(rt);
 

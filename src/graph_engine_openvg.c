@@ -675,6 +675,17 @@ mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas) {
     eglSwapBuffers(display, VG_MBE_SURFACE(dst_canvas));
 }
 
+void
+mbe_flush(mbe_t *canvas) {
+    EGLDisplay display;
+    mbe_surface_t *surface;
+
+    _MK_CURRENT_CTX(canvas);
+    display = _VG_DISPLAY();
+    surface = VG_MBE_SURFACE(canvas);
+    eglSwapBuffers(display, surface);
+}
+
 mbe_t *
 mbe_create(mbe_surface_t *surface) {
     EGLDisplay display;

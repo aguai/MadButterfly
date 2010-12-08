@@ -2474,10 +2474,14 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
 	 * rules.
 	 */
 	draw_shapes_in_dirty_areas(rdman);
-	n_areas = _coord_get_dirty_areas(rdman->root_coord)->num;
-	areas = _coord_get_dirty_areas(rdman->root_coord)->ds;
-	copy_cr_2_backend(rdman, n_areas, areas);
-	reset_clip(rdman->backend);
+	if(rdman->backend) {
+	    n_areas = _coord_get_dirty_areas(rdman->root_coord)->num;
+	    areas = _coord_get_dirty_areas(rdman->root_coord)->ds;
+	    copy_cr_2_backend(rdman, n_areas, areas);
+	    reset_clip(rdman->backend);
+	} else {
+	    mbe_flush(rdman->cr);
+	}
 	for(i = 0; i < rdman->zeroing_coords.num; i++) {
 	    coord = rdman->zeroing_coords.ds[i];
 	    DARRAY_CLEAN(_coord_get_dirty_areas(coord));
@@ -2515,8 +2519,8 @@ int rdman_redraw_all(redraw_man_t *rdman) {
     area.x = area.y = 0;
 #ifndef UNITTEST
     surface = mbe_get_target(rdman->cr);
-    area.w = mbe_image_surface_get_width(surface);
-    area.h = mbe_image_surface_get_height(surface);
+    area.w = rdman->w;
+    area.h = rdman->h;
 #else
     area.w = 1024;
     area.h = 1024;
