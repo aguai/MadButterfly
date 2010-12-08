@@ -82,6 +82,13 @@ struct _monitor_event {
     observer_t *observer; /*!< \brief Observer been added or removed. */
 };
 
+struct _mb_kb_event {
+    event_t event;
+    int keycode;
+    int sym;
+};
+typedef struct _mb_kb_event mb_kb_event_t;
+
 /*! \brief Observer factory.
  *
  * It provides functions for allocation of subject and observer objects,

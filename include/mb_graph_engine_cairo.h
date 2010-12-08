@@ -26,7 +26,6 @@
 #define mbe_image_surface_get_width cairo_image_surface_get_width
 #define mbe_image_surface_get_data cairo_image_surface_get_data
 #define mbe_scaled_font_reference cairo_scaled_font_reference
-#define mbe_win_surface_create cairo_xlib_surface_create
 #define mbe_scaled_font_destroy cairo_scaled_font_destroy
 #define mbe_font_face_reference cairo_font_face_reference
 #define mbe_font_face_destroy cairo_font_face_destroy
@@ -57,6 +56,7 @@
 #define mbe_stroke cairo_stroke
 #define mbe_create cairo_create
 #define mbe_paint cairo_paint
+#define mbe_flush(canvas)
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
 #define mbe_init()
@@ -77,6 +77,12 @@ typedef cairo_t mbe_t;
 	(cmtx).y0 = (mtx)[5];			\
 }
 
+
+extern mbe_surface_t *mbe_win_surface_create(void *display,
+					     void *drawable,
+					     int fmt,
+					     int width,
+					     int height);
 
 extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);

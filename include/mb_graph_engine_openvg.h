@@ -12,8 +12,8 @@
  * @{
  */
 #define mbe_scaled_font_text_extents(scaled, utf8, extents)
-#define mbe_image_surface_get_stride(surface) (20)
-#define mbe_image_surface_get_format(surface) ((mb_img_fmt_t)0)
+#define mbe_image_surface_get_stride(surface) ((surface)->w * 4)
+#define mbe_image_surface_get_format(surface) ((surface)->fmt)
 #define mbe_image_surface_get_height(surface) (surface)->h
 #define mbe_image_surface_get_width(surface) (surface)->w
 #define mbe_image_surface_get_data(surface) ((unsigned char *)NULL)
@@ -207,9 +207,12 @@ extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-extern mbe_surface_t *mbe_win_surface_create(Display *display,
-					     Drawable drawable,
-					     Visual *visual,
+/*
+ * TODO: define a proper type for display and drawable.
+ */
+extern mbe_surface_t *mbe_win_surface_create(void *display,
+					     void *drawable,
+					     int fmt,
 					     int width, int height);
 #endif
 
@@ -223,6 +226,7 @@ mbe_image_surface_create_for_data(unsigned char *data,
 extern void mbe_surface_destroy(mbe_surface_t *surface);
 
 extern void mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas);
+extern void mbe_flush(mbe_t *canvas);
 extern mbe_t *mbe_create(mbe_surface_t *surface);
 extern void mbe_destroy(mbe_t *canvas);
 extern void mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha);

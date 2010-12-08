@@ -1,5 +1,6 @@
 // -*- indent-tabs-mode: t; tab-width: 8; c-basic-offset: 4; -*-
 // vim: sw=4:ts=8:sts=4
+#include <X11/Xlib.h>
 #include <fontconfig/fontconfig.h>
 #include <cairo-ft.h>
 #include "mb_graph_engine_cairo.h"
@@ -80,6 +81,23 @@ err:
 	FcPatternDestroy(ptn);
     return NULL;
 
+}
+
+extern mbe_surface_t *
+mbe_win_surface_create(void *display, void *drawable,
+		       int fmt, int width, int height) {
+    XWindowAttributes attrs;
+    mbe_surface_t *surf;
+    int r;
+
+    r = XGetWindowAttributes((Display *)display, (Drawable)drawable, &attrs);
+    if(r == 0)
+	return NULL;
+    
+    surf = cairo_xlib_surface_create((Display *)display, (Drawable)drawable,
+				     attrs.visual, width, height);
+
+    return surf;
 }
 
 /*! \brief Find out a font face for a pattern specified.

@@ -83,6 +83,7 @@ AC_ARG_WITH([backend],
         [case "${withval}" in
             ('X') backend='X'; default_graphic_engine="cairo" ;;
             ('dfb') backend='dfb'; default_graphic_engine="dfb" ;;
+	    ('console') backend='console'; default_graphic_engine="openvg" ;;
             ('no') backend='none'; default_graphic_engine="cairo" ;;
             (*) AC_MSG_ERROR([bad value ${withval} for --with-backend]) ;;
         esac],[backend='X'; default_graphic_engine="cairo"])
@@ -105,7 +106,7 @@ AC_ARG_WITH([image-loader],
 	[case "${withval}" in
 	    ('cairo') image_loader="cairo" ;;
 	    ('imlib2') image_loader="imlib2" ;;
-	    ('no') image_loader="none" ;;
+	    ('dummy') image_loader="dummy" ;;
 	    (*) AC_MSG_ERROR([bad value ${withval} for --with-image-loader])
 	    	;;
 	esac], [image_loader="cairo"])
@@ -123,8 +124,9 @@ AC_ARG_ENABLE([xshm],
 
 # Validate options
 [case "${backend}-${graphic_engine}-${image_loader}" in
-    X-cairo-*|X-openvg-imlib2) ;;
+    X-cairo-*|X-openvg-imlib2|X-openvg-dummy) ;;
     dfb-cairo-*) ;;
+    console-openvg-imlib2|console-openvg-dummy) ;;
     none-*-*) ;;
     *)] AC_MSG_ERROR([The combination of --with-backend=${backend}, --with-graphic-engine=${graphic_engine} and --with-image-loader=${image_loader} is invalid]) [;;
 esac]
@@ -185,6 +187,13 @@ AM_CONDITIONAL([DFB_BACKEND],
     AC_DEFINE([DFB_BACKEND])
 [fi]
 
+AM_CONDITIONAL([CONSOLE_BACKEND],
+	[test x$backend = x'console' -a x"${graphic_engine}" = x"openvg"])
+
+[if [ x"${backend}" = x'console' -a x"${graphic_engine}" = x"openvg" ]; then]
+    AC_DEFINE([CONSOLE_BACKEND])
+[fi]
+
 AM_CONDITIONAL([CAIRO_IMG_LOADER],
 	[test x"${image_loader}" = x"cairo"])
 
@@ -200,6 +209,13 @@ AM_CONDITIONAL([IMLIB2_IMG_LOADER],
 
 [if [ x"${image_loader}" = x"imlib2" ]; then]
     AC_DEFINE([IMLIB2_IMG_LOADER])
+[fi]
+
+AM_CONDITIONAL([DUMMY_IMG_LOADER],
+	[test x"${image_loader}" = x"dummy"])
+
+[if [ x"${image_loader}" = x"dummy" ]; then]
+    AC_DEFINE([DUMMY_IMG_LOADER])
 [fi]
 
 AM_CONDITIONAL([XSHM],
@@ -252,8 +268,10 @@ AH_TEMPLATE([CAIRO_GRAPH_ENGINE], [Enable Cairo Graphic Engine])
 AH_TEMPLATE([DFB_GRAPH_ENGINE], [Enable DirectFB Graphic Engine])
 AH_TEMPLATE([CAIRO_IMG_LOADER], [Enable Cairo Image Loader])
 AH_TEMPLATE([IMLIB2_IMG_LOADER], [Enable Imlib2 Image Loader])
+AH_TEMPLATE([DUMMY_IMG_LOADER], [Enable Dummy Image Loader])
 AH_TEMPLATE([X_BACKEND], [Enable X backend])
 AH_TEMPLATE([DFB_BACKEND], [Enable DirectFB backend])
+AH_TEMPLATE([CONSOLE_BACKEND], [Enable console backend])
 AH_TEMPLATE([XSHM], [Enable XSHM])
 
 AC_OUTPUT

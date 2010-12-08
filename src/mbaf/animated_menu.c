@@ -259,7 +259,7 @@ static void mb_animated_menu_keyHandler(event_t *ev, void *arg);
 static void mb_animated_menu_send_pending_key(event_t *ev,void *arg)
 {
     mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
-    X_kb_event_t *xkey;
+    mb_kb_event_t *xkey;
 
     xkey = &m->pending_keys[m->pending_pos];
     m->pending_pos = (m->pending_pos + 1) & 0xf;
@@ -268,7 +268,7 @@ static void mb_animated_menu_send_pending_key(event_t *ev,void *arg)
 static void mb_animated_menu_keyHandler(event_t *ev, void *arg)
 {
     mb_animated_menu_t *m = (mb_animated_menu_t *) arg;
-    X_kb_event_t *xkey = (X_kb_event_t *)ev;
+    mb_kb_event_t *xkey = (mb_kb_event_t *)ev;
     if(xkey->event.type != EVT_KB_PRESS) {
         return;
     }

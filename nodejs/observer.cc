@@ -31,7 +31,7 @@ event_handler(event_t *evt, void *arg);
 static void
 xnjsmb_event_mod(Handle<Object> self, event_t *evt) {
     mouse_event_t *mevt;
-    X_kb_event_t *xkbevt;
+    mb_kb_event_t *xkbevt;
 
     switch(evt->type) {
     case EVT_ANY:
@@ -49,7 +49,7 @@ xnjsmb_event_mod(Handle<Object> self, event_t *evt) {
 
     case EVT_KB_PRESS:
     case EVT_KB_RELEASE:
-	xkbevt = (X_kb_event_t *)evt;
+	xkbevt = (mb_kb_event_t *)evt;
 	SET(self, "keycode", Integer::New(xkbevt->keycode));
 	SET(self, "sym", Integer::New(xkbevt->sym));
 	break;
