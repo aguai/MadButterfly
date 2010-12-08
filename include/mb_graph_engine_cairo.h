@@ -56,6 +56,7 @@
 #define mbe_stroke cairo_stroke
 #define mbe_create cairo_create
 #define mbe_paint cairo_paint
+#define mbe_flush(canvas)
 #define mbe_save cairo_save
 #define mbe_fill cairo_fill
 #define mbe_init()
