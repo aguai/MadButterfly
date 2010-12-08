@@ -16,6 +16,10 @@
 #inclde "mb_dfb_supp.h"
 #endif
 
+#ifdef CONSOLE_BACKEND
+#include "mb_cons_supp.h"
+#endif
+
 struct _mb_rt;
 typedef struct _mb_rt mb_rt_t;
 
