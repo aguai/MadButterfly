@@ -549,15 +549,26 @@ class MBScene():
 		x = float(fields[0])
 		fields = fields[1].split(')')
 		y = float(fields[0])
-		return [1,0,x,0,1,y]
+		return [1,0,0,1,x,y]
 	    elif t[0:6] == 'matrix':
 		print "matrix"
 		fields=t[7:].split(')')
 		fields = fields[0].split(',')
 		return [float(fields[0]),float(fields[1]),float(fields[2]),float(fields[3]),float(fields[4]),float(fields[5])]
 	except:
-	    traceback.print_exc()
-	    return [1,0,0,0,1,0]
+	    #traceback.print_exc()
+	    return [1,0,0,1,0,0]
+
+    def invA(self,m):
+        d = m[0]*m[3]-m[2]*m[1]
+	return [m[3]/d, m[1]/d, -m[2]/d, m[0]/d, (m[1]*m[5]-m[4]*m[3])/d, (m[4]*m[2]-m[0]*m[5])/d]
+    def mulA(self,a,b):
+        return [a[0]*b[0]+a[1]*b[2],
+	        a[0]*b[1]+a[1]*b[3],
+		a[2]*b[0]+a[3]*b[2],
+		a[2]*b[1]+a[3]*b[3],
+		a[0]*b[4]+a[1]*b[5]+a[4],
+		a[2]*b[4]+a[3]*b[5]+a[5]]
 
 	    
     def updateTweenObject(self,obj,typ,s,d,p):
@@ -589,9 +600,45 @@ class MBScene():
 		    print tx,ty
 		    top.setAttribute("transform","translate(%g,%g)" % (tx,ty),True)
 		except:
+		    #traceback.print_exc()
+		    pass
+	    pass
+	elif typ == 'scale':
+	    newobj = s.duplicate(self.desktop.doc().rdoc)
+	    top = self.desktop.doc().rdoc.createElement("svg:g")
+	    top.appendChild(newobj)
+	    obj.appendChild(top)
+	    if s.name() == 'svg:g':
+		# Parse the translate or matrix
+		sm = self.parseTransform(s)
+		dm = self.parseTransform(d)
+		# r(1)*A = B
+		#   ==> r(1) = B * inv(A)
+		r1 = self.mulA(dm,self.invA(sm))
+		t0 = 1+ (r1[0]-1)*p
+		t1 = r1[1]*p
+		t2 = r1[2]*p
+		t3 = 1+(r1[3]-1)*p
+		t4 = r1[4]*p
+		t5 = r1[5]*p
+
+		print "scale: %g %g %g %g %g %g" % (t0,t1,t2,t3,t4,t5)
+		top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (t0,t1,t2,t3,t4,t5),True)
+	    else:
+		try:
+		    sw = float(s.attribute("width"))
+		    sh = float(s.attribute("height"))
+		    dw = float(d.attribute("width"))
+		    dh = float(d.attribute("height"))
+		    tx = (dw-sw)*p+sw
+		    ty = (dh-sh)*p+sh
+		    print tx,ty
+		    top.setAttribute("transform","matrix(%g,0,0,%g,0,0)" % (tx,ty),True)
+		except:
 		    traceback.print_exc()
 		    pass
 	    pass
+	    
 	pass
     def enterGroup(self,obj):
         for l in self.layers:
