@@ -825,6 +825,7 @@ mbe_paint(mbe_t *canvas) {
 void
 mbe_clear(mbe_t *canvas) {
     EGLDisplay display;
+    EGLSurface *tgt_surface;
     EGLint w, h;
     EGLBoolean r;
 
@@ -832,9 +833,10 @@ mbe_clear(mbe_t *canvas) {
 
     display = _VG_DISPLAY();
     
-    r = eglQuerySurface(display, canvas->tgt, EGL_WIDTH, &w);
+    tgt_surface = (EGLSurface *)canvas->tgt->surface;
+    r = eglQuerySurface(display, tgt_surface, EGL_WIDTH, &w);
     ASSERT(r == EGL_TRUE);
-    r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
+    r = eglQuerySurface(display, tgt_surface, EGL_HEIGHT, &h);
     ASSERT(r == EGL_TRUE);
     
     /* Clear regions to the color specified by mbe_create() */
