@@ -31,7 +31,7 @@ mbe_t *_ge_openvg_current_canvas = NULL;
 	(mtx)[8] = 1;				\
     } while(0)
 
-#define VG_MBE_SURFACE(mbe) ((mbe)->tgt->surface)
+#define VG_MBE_EGLSURFACE(mbe) ((EGLSurface *)(mbe)->tgt->surface)
 
 /*! \brief Information associated with VGImage.
  *
@@ -563,7 +563,7 @@ mbe_win_surface_create(void *display, void *drawable,
 	return NULL;
 
     egl_surface = eglCreateWindowSurface(egl_disp, config,
-					 (Drawable)drawable,
+					 (EGLNativeWindowType)drawable,
 					 attrib_list);
 
     surface = O_ALLOC(mbe_surface_t);
@@ -672,18 +672,18 @@ mbe_copy_source(mbe_t *src_canvas, mbe_t *dst_canvas) {
     vgDrawImage(vg_img);
 
     display = _VG_DISPLAY();
-    eglSwapBuffers(display, VG_MBE_SURFACE(dst_canvas));
+    eglSwapBuffers(display, VG_MBE_EGLSURFACE(dst_canvas));
 }
 
 void
 mbe_flush(mbe_t *canvas) {
     EGLDisplay display;
-    mbe_surface_t *surface;
+    EGLSurface *egl_surface;
 
     _MK_CURRENT_CTX(canvas);
     display = _VG_DISPLAY();
-    surface = VG_MBE_SURFACE(canvas);
-    eglSwapBuffers(display, surface);
+    egl_surface = VG_MBE_EGLSURFACE(canvas);
+    eglSwapBuffers(display, egl_surface);
 }
 
 mbe_t *
@@ -755,6 +755,7 @@ void
 mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha) {
     VGfloat color_trans[8] = {1, 1, 1, alpha, 0, 0, 0, 0};
     EGLDisplay display;
+    EGLSurface *egl_surface;
     EGLint w, h;
     EGLBoolean r;
     
@@ -762,9 +763,10 @@ mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha) {
 
     display = _VG_DISPLAY();
     
-    r = eglQuerySurface(display, canvas->tgt, EGL_WIDTH, &w);
+    egl_surface = VG_MBE_EGLSURFACE(canvas);
+    r = eglQuerySurface(display, egl_surface, EGL_WIDTH, &w);
     ASSERT(r == EGL_TRUE);
-    r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
+    r = eglQuerySurface(display, egl_surface, EGL_HEIGHT, &h);
     ASSERT(r == EGL_TRUE);
 
     /* Setup color transform for alpha */
@@ -783,6 +785,7 @@ mbe_paint_with_alpha(mbe_t *canvas, co_comp_t alpha) {
 void
 mbe_paint(mbe_t *canvas) {
     EGLDisplay display;
+    EGLSurface *egl_surface;
     EGLint w, h;
     EGLBoolean r;
     VGPath path;
@@ -795,9 +798,10 @@ mbe_paint(mbe_t *canvas) {
     
     display = _VG_DISPLAY();
     
-    r = eglQuerySurface(display, canvas->tgt, EGL_WIDTH, &w);
+    egl_surface = VG_MBE_EGLSURFACE(canvas);
+    r = eglQuerySurface(display, egl_surface, EGL_WIDTH, &w);
     ASSERT(r == EGL_TRUE);
-    r = eglQuerySurface(display, canvas->tgt, EGL_HEIGHT, &h);
+    r = eglQuerySurface(display, egl_surface, EGL_HEIGHT, &h);
     ASSERT(r == EGL_TRUE);
 
     /*
@@ -825,7 +829,7 @@ mbe_paint(mbe_t *canvas) {
 void
 mbe_clear(mbe_t *canvas) {
     EGLDisplay display;
-    EGLSurface *tgt_surface;
+    EGLSurface *egl_surface;
     EGLint w, h;
     EGLBoolean r;
 
@@ -833,10 +837,10 @@ mbe_clear(mbe_t *canvas) {
 
     display = _VG_DISPLAY();
     
-    tgt_surface = (EGLSurface *)canvas->tgt->surface;
-    r = eglQuerySurface(display, tgt_surface, EGL_WIDTH, &w);
+    egl_surface = VG_MBE_EGLSURFACE(canvas);
+    r = eglQuerySurface(display, egl_surface, EGL_WIDTH, &w);
     ASSERT(r == EGL_TRUE);
-    r = eglQuerySurface(display, tgt_surface, EGL_HEIGHT, &h);
+    r = eglQuerySurface(display, egl_surface, EGL_HEIGHT, &h);
     ASSERT(r == EGL_TRUE);
     
     /* Clear regions to the color specified by mbe_create() */
