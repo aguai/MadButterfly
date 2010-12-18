@@ -10,6 +10,7 @@ import random
 import traceback
 import time
 import pybInkscape
+import math
 
 # Please refer to
 # http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
@@ -55,6 +56,41 @@ class Scene:
 	self.type = typ
 	pass
     pass
+class DOM(pybInkscape.PYSPObject):
+    def __init__(self,obj=None):
+        self.proxy = obj
+	pass
+    def duplicate(self,doc):
+	return DOM(self.repr.duplicate(doc))
+
+class ObjectWatcher(pybInkscape.PYNodeObserver):
+    def __init__(self,obj,type,func,arg):
+        self.obj = obj
+	self.type = type
+	self.func = func
+	self.arg = arg
+
+    def notifyChildAdded(self,node,child,prev):
+        if self.type == 'DOMNodeInserted':
+	    self.func(node)
+    def notifyChildRemoved(self,node,child,prev):
+        if self.type == 'DOMNodeRemoved':
+	    self.func(node)
+    def notifyChildOrderChanged(self,node,child,prev):
+        pass
+    def notifyContentChanged(self,node,old_content,new_content):
+        print 'cont'
+        if self.type == 'DOMSubtreeModified':
+	    self.func(node)
+    def notifyAttributeChanged(self,node, name, old_value, new_value):
+        print 'attr'
+        if self.type == 'DOMAttrModified':
+	    self.func(node,name)
+
+def addEventListener(obj, type, func,arg):
+    obs = ObjectWatcher(obj,type,func,arg)
+    obj.addSubtreeObserver(obs)
+    
 
 _scenes = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes'
 _scene = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene'
@@ -93,7 +129,7 @@ class MBScene():
 	self.scenemap = None
 	self.top = None
 	self.last_update = None
-	self.startPolling()
+	pybInkscape.inkscape.connect('change_selection', self.show_selection)
 	self.last_select = None
 	pass
 
@@ -118,6 +154,23 @@ class MBScene():
 	    self.nameEditor.set_text('')
 	    pass
         glib.timeout_add(500,self.startPolling)
+    def show_selection(self,w,obj):
+	objs =  self.desktop.selection.list()
+	try:
+	    o = objs[0]
+	    print o.getCenter()
+	    if o == self.last_select: 
+	        return
+	except:
+	    self.nameEditor.set_text('')
+	    self.last_select = None
+	    return
+	self.last_select = o
+	try:
+	    self.nameEditor.set_text(o.repr.attribute("inkscape:label"))
+	except:
+	    self.nameEditor.set_text('')
+	    pass
 
     def confirm(self,msg):
 	vbox = gtk.VBox()
@@ -146,23 +199,23 @@ class MBScene():
     def parseMetadata(self,node):
 	self.current = 1
 	for n in node.childList():
-	    if n.repr.name() == 'ns0:scenes':
+	    if n.name() == 'ns0:scenes':
 		self.scenemap={}
 		try:
-		    cur = int(n.repr.attribute("current"))
+		    cur = int(n.attribute("current"))
 		except:
 		    cur = 1
 		self.current = cur
 
 		for s in n.childList():
-		    if s.repr.name() == 'ns0:scene':
+		    if s.name() == 'ns0:scene':
 			try:
-			    start = int(s.repr.attribute("start"))
+			    start = int(s.attribute("start"))
 			except:
 			    traceback.print_exc()
 			    continue
 			try:
-			    end = s.repr.attribute("end")
+			    end = s.attribute("end")
 			    if end == None:
 				end = start
 				pass
@@ -170,13 +223,13 @@ class MBScene():
 			    end = start
 			    pass
 			try:
-			    typ = s.repr.attribute('type')
+			    typ = s.attribute('type')
 			    if typ == None:
 				typ = 'normal'
 			except:
 			    traceback.print_exc()
 			    typ = 'normal'
-			link = s.repr.attribute("ref")
+			link = s.attribute("ref")
 			self.scenemap[link] = [int(start),int(end),typ]
 			if cur >= start and cur <= end:
 			    self.currentscene = link
@@ -187,19 +240,20 @@ class MBScene():
 	    pass
 	pass
 	if self.scenemap==None:
-	    self.desktop.doc().root().repr.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd",True)
-	    scenes = self.desktop.doc().rdoc.createElement("ns0:scenes")
-	    node.repr.appendChild(scenes)
+	    #self.desktop.doc().root().repr.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
+	    self.dom.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
+	    scenes = self.document.createElement("ns0:scenes")
+	    node.appendChild(scenes)
     def update(self):
-        doc = self.desktop.doc().root()
-	rdoc = self.desktop.doc().rdoc
+        doc = self.dom
+	rdoc = self.document
 	for node in doc.childList():
-	    if node.repr.name() == 'svg:metadata':
+	    if node.name() == 'svg:metadata':
 	        for t in node.childList():
-		    if t.repr.name() == "ns0:scenes":
-		        node.repr.removeChild(t.repr)
+		    if t.name() == "ns0:scenes":
+		        node.removeChild(t)
 			ns = rdoc.createElement("ns0:scenes")
-			node.repr.appendChild(ns)
+			node.appendChild(ns)
 			for layer in range(0,len(self._framelines)):
 			    lobj = self._framelines[layer]
 			    lobj.addScenes(rdoc,ns)
@@ -213,24 +267,37 @@ class MBScene():
 	"""
 	self.layers = []
 	self.scenemap = None
-	doc = self.desktop.doc().root()
+	doc = self.dom
 
         #obs = pybInkscape.PYNodeObserver()
-        obs = LayerAddRemoveWatcher(self)
-        doc.repr.addObserver(obs)
+        #obs = LayerAddRemoveWatcher(self)
+        #doc.addObserver(obs)
+	addEventListener(doc,'DOMNodeInserted',self.updateUI,None)
+	addEventListener(doc,'DOMNodeRemoved',self.updateUI,None)
+	doc.childList()
 	for node in doc.childList():
-	    if node.repr.name() == 'svg:metadata':
+	    print node.name()
+	    if node.name() == 'svg:metadata':
 		self.parseMetadata(node)
 		pass
-	    elif node.repr.name() == 'svg:g':
+	    elif node.name() == 'svg:g':
 		oldscene = None
-	        obs = LayerAttributeWatcher(self)
-	        node.repr.addObserver(obs)
+	        #obs = LayerAttributeWatcher(self)
+	        addEventListener(doc,'DOMAttrModified',self.updateUI,None)
+	        #node.addObserver(obs)
 		lyobj = Layer(node)
 		self.layers.append(lyobj)
 		lyobj.current_scene = []
 		for scene in node.childList():
-		    if scene.repr.name() == 'svg:g':
+		    print scene.getCenter()
+		    if scene.name() == 'svg:g':
+		        try:
+			    label = scene.attribute('inkscape:label')
+			    if label == 'dup':
+			        node.removeChild(scene)
+			except:
+			    pass
+
 			try:
 			    scmap = self.scenemap[scene.getId()]
 			    if scmap == None:
@@ -256,7 +323,7 @@ class MBScene():
 
     def collectID(self):
 	self.ID = {}
-	root = self.desktop.doc().root()
+	root = self.dom
 	for n in root.childList():
 	    self.collectID_recursive(n)
 	    pass
@@ -302,20 +369,20 @@ class MBScene():
 	"""
 	x = self.last_frame
 	y = self.last_line
-	rdoc = self.desktop.doc().rdoc
+	rdoc = self.document
 	ns = rdoc.createElement("svg:g")
 	txt = rdoc.createElement("svg:rect")
-	txt.setAttribute("x","0",True)
-	txt.setAttribute("y","0",True)
-	txt.setAttribute("width","100",True)
-	txt.setAttribute("height","100",True)
-	txt.setAttribute("style","fill:#ff00",True)
+	txt.setAttribute("x","0")
+	txt.setAttribute("y","0")
+	txt.setAttribute("width","100")
+	txt.setAttribute("height","100")
+	txt.setAttribute("style","fill:#ff00")
 	ns.appendChild(txt)
 	gid = self.last_line.node.label()+self.newID()
 	self.ID[gid]=1
-	ns.setAttribute("id",gid,True)
-	ns.setAttribute("inkscape:groupmode","layer",True)
-	self.last_line.node.repr.appendChild(ns)
+	ns.setAttribute("id",gid)
+	ns.setAttribute("inkscape:groupmode","layer")
+	self.last_line.node.appendChild(ns)
 	print 'Add key ', x
 	self.last_line.add_keyframe(x,ns)
 	self.update()
@@ -325,7 +392,7 @@ class MBScene():
     def removeKeyScene(self):
 	nth = self.last_frame
 	y = self.last_line
-	rdoc = self.desktop.doc().rdoc
+	rdoc = self.document
 	i = 0
 	layer = self.last_line
 	while i < len(layer._keys):
@@ -427,6 +494,16 @@ class MBScene():
 	    pass
 	pass
 
+    def updateMapping(self):
+	self.nodeToItem={}
+	root = self.dom
+	self.updateMappingNode(root)
+    def updateMappingNode(self,node):
+	for c in node.childList():
+	    self.updateMappingNode(c)
+	    self.nodeToItem[c.getId()] = c
+	    print "Add",c.getId()
+
     
     def setCurrentScene(self,nth):
 	"""
@@ -443,6 +520,7 @@ class MBScene():
 	    available.
 	"""
 	self.current = nth
+	self.updateMapping()
 	for layer in self._framelines:
 	    i=0
 
@@ -463,23 +541,23 @@ class MBScene():
 		print s.ref.attribute("id"),s.idx,s.left_tween,s.right_tween
 		if s.right_tween is False:
 		    if nth == s.idx+1:
-		        s.ref.setAttribute("style","",True)
+		        s.ref.setAttribute("style","")
 		    else:
-		        s.ref.setAttribute("style","display:none",True)
+		        s.ref.setAttribute("style","display:none")
 		    i = i + 1
 		    continue
 		if nth == s.idx + 1:
-		    s.ref.setAttribute("style","",True)
+		    s.ref.setAttribute("style","")
 		else:
 		    if nth > (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
 			if i+2 < len(layer._keys):
-			    layer.duplicateGroup = self.desktop.doc().rdoc.createElement("svg:g")
-			    layer.duplicateGroup.setAttribute("inkscape:label","dup",True)
-			    s.ref.setAttribute("style","display:none",True)
+			    layer.duplicateGroup = self.document.createElement("svg:g")
+			    layer.duplicateGroup.setAttribute("inkscape:label","dup")
+			    s.ref.setAttribute("style","display:none")
 			    s.ref.parent().appendChild(layer.duplicateGroup)
 			    self.updateTweenContent(layer.duplicateGroup, layer.get_tween_type(s.idx),s, layer._keys[i+2], nth)
 		    else:
-		        s.ref.setAttribute("style","display:none",True)
+		        s.ref.setAttribute("style","display:none")
 		i = i + 2
 		pass
 	    pass
@@ -498,15 +576,16 @@ class MBScene():
 	d = dest.ref.firstChild()
 	sources={}
 	dests={}
+	
 	# Collect all objects
 	while d:
 	    try:
 		label = d.attribute("inkscape:label")
 	    except:
-		d = d.next()
+		d = d.getNext()
 		continue
-	    dests[label.value()] = d
-	    d = d.next()
+	    dests[label] = d
+	    d = d.getNext()
 	# Check if the object in the source exists in the destination
 	s = source.ref.firstChild()
 	d = dest.ref.firstChild()
@@ -518,7 +597,7 @@ class MBScene():
 		if label:
 		    if dests.hasattr(label.value()):
 			self.updateTweenObject(obj,typ,s,dests[label.value()],percent)
-			s = s.next()
+			s = s.getNext()
 			continue
 	    except:
 		pass
@@ -526,16 +605,16 @@ class MBScene():
 	    while d:
 		try:
 		    d.attribute("inkscape:label")
-		    d = d.next()
+		    d = d.getNext()
 		    continue
 		except:
 		    pass
 		if s.name() == d.name():
 		    self.updateTweenObject(obj,typ,s,d,percent)
-		    d = d.next()
+		    d = d.getNext()
 		    break
-		d = d.next()
-	    s = s.next()
+		d = d.getNext()
+	    s = s.getNext()
     def parseTransform(self,obj):
 	"""
 	    Return the transform matrix of an object
@@ -561,7 +640,7 @@ class MBScene():
 
     def invA(self,m):
         d = m[0]*m[3]-m[2]*m[1]
-	return [m[3]/d, m[1]/d, -m[2]/d, m[0]/d, (m[1]*m[5]-m[4]*m[3])/d, (m[4]*m[2]-m[0]*m[5])/d]
+	return [m[3]/d, -m[1]/d, -m[2]/d, m[0]/d, (m[1]*m[5]-m[4]*m[3])/d, (m[4]*m[2]-m[0]*m[5])/d]
     def mulA(self,a,b):
         return [a[0]*b[0]+a[1]*b[2],
 	        a[0]*b[1]+a[1]*b[3],
@@ -569,17 +648,51 @@ class MBScene():
 		a[2]*b[1]+a[3]*b[3],
 		a[0]*b[4]+a[1]*b[5]+a[4],
 		a[2]*b[4]+a[3]*b[5]+a[5]]
+    def parseMatrix(self,m):
+        d = (1-m[0])*(1-m[3])-m[1]*m[2]
+	if d == 0:
+	    return [1,0,0,1,m[4],m[5]]
+	else:
+            return [m[0],m[1],m[2],m[3],(m[4]-m[3]*m[4]+m[1]*m[5])/d,(m[5]-m[0]*m[5]+m[2]*m[4])/d]
+
+    def decomposition(self,m):
+        if m[0]*m[3] == m[1]*m[2]:
+	    print "The affine matrix is singular"
+	    return [1,0,0,1,0,0]
+	A=m[0]
+	B=m[2]
+	C=m[1]
+	D=m[3]
+	E=m[4]
+	F=m[5]
+	sx = math.sqrt(m[0]*m[0]+m[2]*m[2])
+	A = A/sx
+	B = B/sx
+	shear = m[0]*m[1]+m[2]*m[3]
+	C = C - A*shear
+	D = D - B*shear
+	sy = math.sqrt(C*C+D*D)
+	C = C/sy
+	D = D/sy
+	r = A*D-B*C
+	if r == -1:
+	    shear = -shear
+	    sy = -sy
+	R = math.atan2(B,A)
+	return [sx,sy, R, E,F]
 
 	    
     def updateTweenObject(self,obj,typ,s,d,p):
 	"""
 	    Generate tweened object in the @obj by using s and d in the @p percent
+	    http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
 	"""
 	print 'compare',s,d
 	if typ == 'relocate':
 	    print "percent",p
-	    newobj = s.duplicate(self.desktop.doc().rdoc)
-	    top = self.desktop.doc().rdoc.createElement("svg:g")
+	    newobj = s.duplicate(self.document)
+	    newobj.setAttribute("ref", s.getId())
+	    top = self.document.createElement("svg:g")
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
 	    print s.name()
@@ -587,8 +700,7 @@ class MBScene():
 		# Parse the translate or matrix
 		sm = self.parseTransform(s)
 		dm = self.parseTransform(d)
-		print "g", (dm[2]-sm[2])*p,(dm[5]-sm[5])*p
-		top.setAttribute("transform","translate(%g,%g)" % ((dm[2]-sm[2])*p,(dm[5]-sm[5])*p),True)
+		top.setAttribute("transform","translate(%g,%g)" % ((dm[2]-sm[2])*p,(dm[5]-sm[5])*p))
 	    else:
 		try:
 		    sx = float(s.attribute("x"))
@@ -598,32 +710,50 @@ class MBScene():
 		    tx = (dx-sx)*p
 		    ty = (dy-sy)*p
 		    print tx,ty
-		    top.setAttribute("transform","translate(%g,%g)" % (tx,ty),True)
+		    top.setAttribute("transform","translate(%g,%g)" % (tx,ty))
 		except:
 		    #traceback.print_exc()
 		    pass
 	    pass
 	elif typ == 'scale':
-	    newobj = s.duplicate(self.desktop.doc().rdoc)
-	    top = self.desktop.doc().rdoc.createElement("svg:g")
+	    newobj = s.duplicate(self.document)
+	    top = self.document.createElement("svg:g")
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
+	        
+	    print s,d
 	    if s.name() == 'svg:g':
 		# Parse the translate or matrix
+		# 
+		# D  = B inv(A)
+	        try:
+	            item = self.nodeToItem[s.attribute("id")]
+		    (ox,oy) = item.getCenter()
+	        except:
+		    ox = 0
+		    oy = 0
+	        try:
+	            item = self.nodeToItem[d.attribute("id")]
+		    (dx,dy) = item.getCenter()
+	        except:
+		    dx = 0
+		    dy = 0
+		    
 		sm = self.parseTransform(s)
+		ss = self.decomposition(sm)
 		dm = self.parseTransform(d)
-		# r(1)*A = B
-		#   ==> r(1) = B * inv(A)
-		r1 = self.mulA(dm,self.invA(sm))
-		t0 = 1+ (r1[0]-1)*p
-		t1 = r1[1]*p
-		t2 = r1[2]*p
-		t3 = 1+(r1[3]-1)*p
-		t4 = r1[4]*p
-		t5 = r1[5]*p
-
-		print "scale: %g %g %g %g %g %g" % (t0,t1,t2,t3,t4,t5)
-		top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (t0,t1,t2,t3,t4,t5),True)
+		dd = self.decomposition(dm)
+		sx = ss[0]*(1-p)+dd[0]*p
+		sy = ss[1]*(1-p)+dd[1]*p
+		a  = ss[2]*(1-p)+dd[2]*p
+		tx = sx*(1-p)+dx*p
+		ty = sy*(1-p)+dy*p
+		#m = self.mulA([math.cos(a),-math.sin(a),math.sin(a),math.cos(a),0,0],[sx,0,0,sy,0,0])
+		m = [sx,0,0,sy,0,0]
+		m = self.mulA(m,[1,0,0,1,-ox,-oy])
+		m = [1,0,0,1,-ox,-oy]
+		if dd[0] != ss[0]:
+		    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[1],m[2],m[3],m[4],m[5]))
 	    else:
 		try:
 		    sw = float(s.attribute("width"))
@@ -633,7 +763,7 @@ class MBScene():
 		    tx = (dw-sw)*p+sw
 		    ty = (dh-sh)*p+sh
 		    print tx,ty
-		    top.setAttribute("transform","matrix(%g,0,0,%g,0,0)" % (tx,ty),True)
+		    top.setAttribute("transform","matrix(%g,0,0,%g,0,0)" % (tx,ty))
 		except:
 		    traceback.print_exc()
 		    pass
@@ -759,9 +889,9 @@ class MBScene():
 	    else:
 	        frameline.label.set_text(frameline.node.label())
 	    for scene in layer.scenes:
-		frameline.add_keyframe(scene.start-1,scene.node.repr)
+		frameline.add_keyframe(scene.start-1,scene.node)
 		if scene.start != scene.end:
-		    frameline.add_keyframe(scene.end-1,scene.node.repr)
+		    frameline.add_keyframe(scene.end-1,scene.node)
 		    frameline.tween(scene.start-1,scene.type)
 		pass
 	    pass
@@ -798,24 +928,24 @@ class MBScene():
 	    i = i + 1
     def duplicateSceneGroup(self,gid):
 	# Search for the duplicated group
-        doc = self.desktop.doc().root()
-	rdoc = self.desktop.doc().rdoc
+        doc = self.dom
+	rdoc = self.document
 	orig = None
 	for node in doc.childList():
-	    if node.repr.name() == 'svg:g':
+	    if node.name() == 'svg:g':
 	        for t in node.childList():
-		    if t.repr.name() == "svg:g":
-			if t.repr.attribute("id") == gid:
-			    orig = t.repr
+		    if t.name() == "svg:g":
+			if t.attribute("id") == gid:
+			    orig = t
 			    break
 	if orig == None:
 	    return None
 	ns = orig.duplicate(rdoc)
 	gid = self.last_line.node.label()+self.newID()
 	self.ID[gid]=1
-	ns.setAttribute("id",gid,True)
-	ns.setAttribute("inkscape:groupmode","layer",True)
-	self.last_line.node.repr.appendChild(ns)
+	ns.setAttribute("id",gid)
+	ns.setAttribute("inkscape:groupmode","layer")
+	self.last_line.node.appendChild(ns)
 	return ns
     
     def doEditScene(self,w):
@@ -841,7 +971,7 @@ class MBScene():
 	pass
     def changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
-	o.repr.setAttribute("inkscape:label", self.nameEditor.get_text(), True)
+	o.setAttribute("inkscape:label", self.nameEditor.get_text())
     def addNameEditor(self,hbox):
 	self.nameEditor = gtk.Entry(max=40)
 	hbox.pack_start(self.nameEditor,expand=False,fill=False)
@@ -923,12 +1053,14 @@ class MBScene():
 	gtk.main_quit()
 	pass
 
-    def updateUI(self):
+    def updateUI(self,node=None,arg=None):
         if self.last_update!= None:
             glib.source_remove(self.last_update)
         self.last_update = glib.timeout_add(300,self.show)
     def show(self):
 	self.OK = True
+	self.dom = self.desktop.doc().root()
+	self.document = self.desktop.doc().rdoc
 	self.parseScene()
 	self._create_framelines()
 	self._update_framelines()

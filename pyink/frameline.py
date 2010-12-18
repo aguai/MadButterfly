@@ -666,7 +666,7 @@ class frameline(gtk.DrawingArea):
 		    ss.setAttribute("type", "normal", True)
 		elif self._keys[i].right_tween_type == self._tween_type_move:
 		    ss.setAttribute("type", "relocate", True)
-		elif self._keys[i].right_tween_type == self._tween_type_scale:
+		elif self._keys[i].right_tween_type == self._tween_type_shape:
 		    ss.setAttribute("type", "scale", True)
 	    else:
 	        ss = rdoc.createElement("ns0:scene")
