@@ -1,0 +1,29 @@
+Source: madbutterfly
+Section: devel
+Priority: extra
+Maintainer: Ben Lau <benlau@visionware.com.hk>
+Build-Depends: debhelper (>= 5),cdbs , mozilla-devscripts,libcairo2-dev , libpango1.0-dev,zip
+Standards-Version: 3.7.3
+Homepage: http://www.assembla.com/spaces/MadButterfly
+
+Package: libmadbutterfly-dev
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: GUI environment toolkit
+ MadButterfly (http://www.assembla.com/spaces/MadButterfly)
+ is a toolkit for GUI environment. It is designed for 
+ embedded system. It make GUI designers and programmers 
+ work seperately. Designer export their artifacts to files 
+ with SVG format. MadButterfly provides a tool to translate 
+ graphics in SVG into C code and a framework that 
+ programmer can manipulate graphics. It works like a 
+ Javascript programmer to manipulate DOM object. 
+ Programmers using MadButterfly manipulate objects 
+ corresponding to SVG tags to interact with users of 
+ application.
+
+Package: madbuilder
+Architecture: all
+Depends: python-soappy,python-twisted,mozplugger,python-lxml,madbutterfly-inkscape
+Description: MadButterFly Integrated Development Environment
+ 
