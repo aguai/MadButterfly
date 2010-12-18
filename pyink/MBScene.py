@@ -276,6 +276,13 @@ class MBScene():
 	addEventListener(doc,'DOMNodeInserted',self.updateUI,None)
 	addEventListener(doc,'DOMNodeRemoved',self.updateUI,None)
 	doc.childList()
+	try:
+	    self.width = float(doc.attribute("width"))
+	    self.height= float(doc.attribute("height"))
+	except:
+	    self.width = 640
+	    self.height=480
+	    
 	for node in doc.childList():
 	    print node.name()
 	    if node.name() == 'svg:metadata':
@@ -666,7 +673,7 @@ class MBScene():
 	D=m[3]
 	E=m[4]
 	F=m[5]
-	sx = math.sqrt(m[0]*m[0]+m[2]*m[2])
+	sx = math.sqrt(A*A+B*B)
 	A = A/sx
 	B = B/sx
 	shear = m[0]*m[1]+m[2]*m[3]
@@ -747,14 +754,17 @@ class MBScene():
 		sx = ss[0]*(1-p)+dd[0]*p
 		sy = ss[1]*(1-p)+dd[1]*p
 		a  = ss[2]*(1-p)+dd[2]*p
-		tx = sx*(1-p)+dx*p
-		ty = sy*(1-p)+dy*p
+		tx = ox*(1-p)+dx*p
+		ty = oy*(1-p)+dy*p
 		#m = self.mulA([math.cos(a),-math.sin(a),math.sin(a),math.cos(a),0,0],[sx,0,0,sy,0,0])
-		m = [sx,0,0,sy,0,0]
-		m = self.mulA(m,[1,0,0,1,-ox,-oy])
-		m = [1,0,0,1,-ox,-oy]
+		#a=3.141592/2*p
+		m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
+		m = self.mulA([sx,0,0,sy,0,0],m)
+		m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
+		m = self.mulA([1,0,0,1,tx,self.height-ty],m)
+
 		if dd[0] != ss[0]:
-		    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[1],m[2],m[3],m[4],m[5]))
+		    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
 	    else:
 		try:
 		    sw = float(s.attribute("width"))
@@ -957,19 +967,27 @@ class MBScene():
 	pass
     
     def doInsertKeyScene(self,w):
+	self.lockui=True
 	self.insertKeyScene()
+	self.lockui=False
 	# self.grid.show_all()
 	return
     def doDuplicateKeyScene(self,w):
+	self.lockui = True
         self.duplicateKeyScene()
+	self.lockui = False
 
     def doRemoveScene(self,w):
+	self.lockui = True
 	self.removeKeyScene()
+	self.lockui = False
 	return
 
     
     def doExtendScene(self,w):
+	self.lockui = True
 	self.extendScene()
+	self.lockui = False
 	#self.grid.show_all()
 	pass
     def changeObjectLabel(self,w):
