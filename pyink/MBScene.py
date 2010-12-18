@@ -664,6 +664,10 @@ class MBScene():
             return [m[0],m[1],m[2],m[3],(m[4]-m[3]*m[4]+m[1]*m[5])/d,(m[5]-m[0]*m[5]+m[2]*m[4])/d]
 
     def decomposition(self,m):
+	"""
+	Decompose the affine matrix into production of translation,rotation,shear and scale.
+	The algorithm is documented at http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
+	"""
         if m[0]*m[3] == m[1]*m[2]:
 	    print "The affine matrix is singular"
 	    return [1,0,0,1,0,0]
@@ -756,15 +760,12 @@ class MBScene():
 		a  = ss[2]*(1-p)+dd[2]*p
 		tx = ox*(1-p)+dx*p
 		ty = oy*(1-p)+dy*p
-		#m = self.mulA([math.cos(a),-math.sin(a),math.sin(a),math.cos(a),0,0],[sx,0,0,sy,0,0])
-		#a=3.141592/2*p
 		m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
 		m = self.mulA([sx,0,0,sy,0,0],m)
 		m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
 		m = self.mulA([1,0,0,1,tx,self.height-ty],m)
 
-		if dd[0] != ss[0]:
-		    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
+		top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
 	    else:
 		try:
 		    sw = float(s.attribute("width"))
