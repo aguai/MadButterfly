@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <math.h>
 #include "mb_graph_engine.h"
 #include "mb_types.h"
 #include "mb_redraw_man.h"
@@ -47,6 +48,12 @@ int _sh_path_size = sizeof(sh_path_t);
 #define OK 0
 #define ERR -1
 #define PI 3.1415926535897931
+#define FRAC_PI 51472
+
+#define SWAP(x, y) do { x ^= y; y ^= x; x ^= y; } while(0)
+#define MAX(x, y) (((x) > (y))? (x): (y))
+#define MIN(x, y) (((x) > (y))? (y): (x))
+#define IS_NEGATIVE(x) ((x) & ~(-1 >> 1))
 
 #ifdef UNITTEST
 #undef rdman_man_shape
@@ -70,7 +77,284 @@ _elmpool_elm_free(void *pool, void *elm) {
 /* ============================================================
  * Implement arc in path.
  */
-#include <math.h>
+#if 1
+
+#include "precomputed.h"
+
+#define ABS(x) (((x) > 0)? (x): -(x))
+
+/*! \brief Compute the small slope of a vector.
+ *
+ * A small slope is based on absolute value of x-axis and y-axis.
+ * And use smaller one of absolute values as divisor.
+ */
+static int
+_small_slope(int x, int y) {
+    int _x, _y;
+    int r;
+
+    _x = ABS(x);
+    _y = ABS(y);
+    if(_x > _y)
+	r = (_y << FRACTION_SHIFT) / _x;
+    else
+	r = (_x << FRACTION_SHIFT) / _y;
+
+    return r;
+}
+
+/*! \brief Index a given angle in slope table.
+ *
+ * Binary search.
+ */
+static int
+_find_slope_index(int slope) {
+    int left, right, v;
+
+    left = 0;
+    right = SLOPE_TAB_SZ - 1;
+    while(left <= right) {
+	v = (left + right) >> 1;
+	if(slope < slope_tab[v])
+	    right = v - 1;
+	else
+	    left = v + 1;
+    }
+
+    return v;
+}
+
+static int
+_vector_len(int x, int y) {
+    int _x, _y;
+    int slope;
+    int slope_index;
+    int radius;
+    
+    _x = ABS(x);
+    _y = ABS(y);
+    
+    if(_x > _y) {
+	slope = (_y << FRACTION_SHIFT) / _x;
+	slope_index = _find_slope_index(slope);
+	radius = _x * vector_len_factor_tab[slope_index];
+    } else {
+	slope = (_x << FRACTION_SHIFT) / _y;
+	slope_index = _find_slope_index(slope);
+	radius = _y * vector_len_factor_tab[slope_index];
+    }
+    
+    return radius;
+}
+
+/*! \brief Find index of an arc-to-radius ratio in arc_radius_ratio_tab.
+ *
+ * Binary search.
+ */
+static int
+_find_arc_radius(int arc_radius_ratio) {
+    int left, right, v;
+
+    left = 0;
+    right = ARC_RADIUS_RATIO_TAB_SZ - 1;
+    while(left <= right) {
+	v = (left + right) >> 1;
+	if(arc_radius_ratio < arc_radius_ratio_tab[v])
+	    right = v - 1;
+	else
+	    left = v + 1;
+    }
+
+    return v;
+}
+
+/* Compute shift factor for the ratio of arc to radius */
+static int
+_get_arc_radius_shift_factor(int arc_x, int arc_y, int radius) {
+    int arc_len;
+    int radius_len;
+    int arc_radius_ratio;
+    int arc_radius_index;
+    int arc_radius_factor;
+    
+    arc_len = _vector_len(ABS(arc_x), ABS(arc_y));
+    arc_radius_ratio = (arc_len << FRACTION_SHIFT) / radius;
+    arc_radius_index = _find_arc_radius(arc_radius_ratio);
+    
+    arc_radius_factor = arc_radius_factor_tab[arc_radius_index];
+    
+    return arc_radius_factor;
+}
+
+/* Return a unit vector in the extend direction.
+ *
+ * This function make a decision on the direction of extend to make
+ * radius of rx direction equivlant to ry direction.  It extends the
+ * direction of short one.
+ */
+static void
+_compute_extend_unit_vector(int rx, int ry, int x_rotate,
+			    int *ext_unit_x, int *ext_unit_y) {
+    int extend_dir;
+    int extend_phase;
+    int extend_index;
+    int extend_sin, extend_cos;
+    /* Change sign of x, y values accroding phase of the vector. */
+    static int sin_cos_signs_tab[4][2] = {
+	/* 0 for positive, 1 for negative */
+	{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+    int *signs;
+    
+    if(rx > ry)
+	extend_dir = x_rotate + (FRAC_PI >> 1);
+    else
+	extend_dir = x_rotate;
+    extend_dir %= FRAC_PI * 2;
+    extend_phase = extend_dir / (FRAC_PI >> 1);
+    
+    extend_index = (extend_dir % (FRAC_PI >> 4)) * SIN_TAB_SZ /
+	(FRAC_PI >> 4);
+    if(extend_phase & 0x1)	/* half-phases 1,3 */
+	extend_index = SIN_TAB_SZ - extend_index - 1;
+    
+    extend_sin = sin_tab[extend_index];
+    extend_cos = sin_tab[SIN_TAB_SZ - extend_index - 1];
+    
+    signs = sin_cos_signs_tab[extend_phase];
+    *ext_unit_x = signs[0]? -extend_cos: extend_cos;
+    *ext_unit_y = signs[1]? -extend_sin: extend_sin;
+}
+
+static int
+_calc_center_i(int x0, int y0,
+	       int x, int y,
+	       int rx, int ry,
+	       int x_rotate,
+	       int large, int sweep,
+	       int *cx, int *cy) {
+    int radius;
+    int ext_unit_y, ext_unit_x;	/* x and y value of unit vector on
+				 * extend direction */
+    int arc_x, arc_y;
+    int radius_ref_ratio;
+    int arc_radius_factor;
+    int stat = 0;
+    int slope, slope_index;
+    int shift_cx, shift_cy;
+    int center_shift_factor;
+    static int negatives[4] = {0, 1, 1, 0};
+    /* Change sign of shift-x/y accroding sign of arc_x, arc_y,
+     * large and sweep.
+     */
+    static int shift_signs_tab[16][2] = {
+	/* -x,-y   +x,-y   -x,+y   +x,+y */
+	{0, 0}, {0, 1}, {1, 0}, {1, 1}, /* small, negative-angle */
+	{1, 1}, {1, 0}, {0, 1}, {0, 0}, /* large, negative-angle */
+	{1, 1}, {1, 0}, {0, 1}, {0, 0}, /* small, positive-angle */
+	{0, 0}, {0, 1}, {1, 0}, {1, 1}  /* large, positive-angle */
+    };
+    int extend_len;
+    int extend_x, extend_y;
+    
+    arc_x = x - x0;
+    arc_y = y - y0;
+    
+    if(arc_x == 0 && arc_y == 0) {
+	*cx = x0;
+	*cy = y0;
+	return OK;
+    }
+
+    /* Translate arc to the coordinate that extend rx or ry to the
+     * equivlant size as another.  It translate the ellipse to a
+     * circle.
+     */
+    radius = MAX(rx, ry);
+    _compute_extend_unit_vector(rx, ry, x_rotate, &ext_unit_x, &ext_unit_y);
+    
+    extend_len = (arc_x * ext_unit_x + arc_y * ext_unit_y) >> FRACTION_SHIFT;
+    extend_len = extend_len * MAX(rx, ry) / MIN(rx, ry) -
+	(1 << FRACTION_SHIFT);
+    extend_x = ext_unit_x * extend_len;
+    extend_y = ext_unit_y * extend_len;
+    
+    arc_x += extend_x;
+    arc_y += extend_y;
+    
+    /* Find range index of slope. */
+    slope = _small_slope(arc_x, arc_y);
+    slope_index = _find_slope_index(slope);
+
+    /* Compute shift factor for the ratio of arc to radius */
+    arc_radius_factor = _get_arc_radius_shift_factor(arc_x, arc_y, radius);
+
+    /* Compute ratio of radius to reference radius */
+    radius_ref_ratio = radius >> REF_RADIUS_SHIFT;
+    
+    /* Compute x/y-shift of center range index according
+     * slope_index, radius_ref_ratio and arc_radius_factor.
+     */
+    center_shift_factor = radius_ref_ratio * arc_radius_factor;
+    center_shift_factor = center_shift_factor >> FRACTION_SHIFT;
+    shift_cx = (center_shift_tab[slope_index][0] * center_shift_factor) >>
+	FRACTION_SHIFT;
+    shift_cy = (center_shift_tab[slope_index][1] * center_shift_factor) >>
+	FRACTION_SHIFT;
+    if(ABS(arc_x) <= ABS(arc_y))
+	SWAP(shift_cx, shift_cy);
+    
+    if(IS_NEGATIVE(arc_x))
+	stat |= 0x1;
+    if(IS_NEGATIVE(arc_y))
+	stat |= 0x2;
+    if(large)
+	stat |= 0x4;
+    if(sweep)
+	stat |= 0x8;
+    if(shift_signs_tab[stat][0])
+	shift_cx = -shift_cx;
+    if(shift_signs_tab[stat][1])
+	shift_cy = -shift_cy;
+
+    shift_cx += arc_x >> 2;
+    shift_cy += arc_y >> 2;
+
+    /* translate shift_cx/cy back to original coordinate */
+    extend_len = (shift_cx * ext_unit_x + shift_cy * ext_unit_y)
+	>> FRACTION_SHIFT;
+    extend_len = extend_len - extend_len * MIN(rx, ry) / MAX(rx, ry);
+    extend_x = (ext_unit_x * extend_len) >> FRACTION_SHIFT;
+    extend_y = (ext_unit_y * extend_len) >> FRACTION_SHIFT;
+    shift_cx = shift_cx - extend_x;
+    shift_cy = shift_cy - extend_y;
+    
+    /* get center */
+    *cx = x0 + shift_cx;
+    *cy = y0 + shift_cy;
+
+    return OK;
+}
+
+static int _calc_center(co_aix x0, co_aix y0,
+			co_aix x, co_aix y,
+			co_aix rx, co_aix ry,
+			co_aix x_rotate,
+			int large, int sweep,
+			co_aix *cx, co_aix *cy) {
+    int cx_i, cy_i;
+    int r;
+    
+    r = _calc_center_i(x0 * (1 << FRACTION_SHIFT), y0 * (1 << FRACTION_SHIFT),
+		       x * (1 << FRACTION_SHIFT), y * (1 << FRACTION_SHIFT),
+		       rx * (1 << FRACTION_SHIFT), ry * (1 << FRACTION_SHIFT),
+		       x_rotate * (1 << FRACTION_SHIFT),
+		       large, sweep, &cx_i, &cy_i);
+    *cx = cx_i;
+    *cy = cy_i;
+    return r;
+}
+
+#else
 /*! \brief Calculate center of the ellipse of an arc.
  *
  * Origin of our coordination is left-top corner, and y-axis are grown
@@ -119,26 +403,33 @@ static int _calc_center(co_aix x0, co_aix y0,
 		       co_aix x_rotate,
 		       int large, int sweep,
 		       co_aix *cx, co_aix *cy) {
-    co_aix nrx, nry, nrx0, nry0;
+    co_aix br_x, br_y, br_x0, br_y0; /* before-rotated x, y, x0, y0 */
     co_aix udx, udy, udx2, udy2;
     co_aix umx, umy;
     co_aix udcx, udcy;
-    co_aix nrcx, nrcy;
+    co_aix br_cx, br_cy;
     co_aix udl2;
-    float _sin = sinf(x_rotate);
+    co_aix rev_rx2, rev_ry2;
+    float _sin = -sinf(x_rotate); /* rotate to oposite direction */
     float _cos = cosf(x_rotate);
     int reflect;
 
-    /* Compute center of the ellipse */
-    nrx = x * _cos + y * _sin;
-    nry = x * -_sin + y * _cos;
-    nrx0 = x0 * _cos + y0 * _sin;
-    nry0 = x0 * -_sin + y0 * _cos;
+#define X_AFTER_ROTATE(x, y, sin, cos) (x * cos - y * sin)
+#define Y_AFTER_ROTATE(x, y, sin, cos) (x * sin + y * cos)
 
-    udx = (nrx - nrx0) / 2 / rx; /* ux - umx */
-    udy = (nry - nry0) / 2 / ry; /* uy - umy */
-    umx = (nrx + nrx0) / 2 / rx;
-    umy = (nry + nry0) / 2 / ry;
+    /* Restore positions to the value before rotation */
+    br_x = X_AFTER_ROTATE(x, y, _sin, _cos);
+    br_y = Y_AFTER_ROTATE(x, y, _sin, _cos);
+    br_x0 = X_AFTER_ROTATE(x0, y0, _sin, _cos);
+    br_y0 = Y_AFTER_ROTATE(x0, y0, _sin, _cos);
+
+    /* Resize to be an unit circle */
+    rev_rx2 = 1.0 / (2 * rx);
+    rev_ry2 = 1.0 / (2 * ry);
+    udx = (br_x - br_x0) * rev_rx2; /* ux - umx */
+    udy = (br_y - br_y0) * rev_ry2; /* uy - umy */
+    umx = (br_x + br_x0) * rev_rx2;
+    umy = (br_y + br_y0) * rev_ry2;
 
     udx2 = udx * udx;
     udy2 = udy * udy;
@@ -164,15 +455,15 @@ static int _calc_center(co_aix x0, co_aix y0,
 	udcy = -udcy;
     }
 
-    nrcx = rx * (udcx + umx);
-    nrcy = ry * (udcy + umy);
+    br_cx = rx * (udcx + umx);
+    br_cy = ry * (udcy + umy);
 
-    *cx = nrcx * _cos - nrcy * _sin;
-    *cy = nrcx * _sin + nrcy * _cos;
+    *cx = X_AFTER_ROTATE(br_cx, br_cy, -_sin, _cos);
+    *cy = Y_AFTER_ROTATE(br_cx, br_cy, -_sin, _cos);
 
     return OK;
 }
-
+#endif
 
 static co_aix _angle_rotated_ellipse(co_aix x, co_aix y,
 				     co_aix rx, co_aix ry,
@@ -1092,6 +1383,9 @@ void test_path_transform(void) {
     sh_path_free((shape_t *)path);
 }
 
+void test_calc_center(void) {
+}
+
 void test_spaces_head_tail(void) {
     sh_path_t *path;
     redraw_man_t rdman;
@@ -1109,6 +1403,7 @@ CU_pSuite get_shape_path_suite(void) {
     suite = CU_add_suite("Suite_shape_path", NULL, NULL);
     CU_ADD_TEST(suite, test_rdman_shape_path_new);
     CU_ADD_TEST(suite, test_path_transform);
+    CU_ADD_TEST(suite, test_calc_center);
 
     return suite;
 }

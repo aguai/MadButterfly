@@ -24,7 +24,7 @@ libmbfly_la_SOURCES= animate.c chgcolor.c coord.c event.c geo.c	\
 	observer.c paint.c redraw_man.c rotate.c shape_path.c		\
 	shape_rect.c shift.c subtree_free.c timer.c 			\
 	timertool.c tools.c visibility.c prop.c sprite.c	\
-	mouse.c shape_image.c $(MBAF_SOURCES)
+	mouse.c shape_image.c precomputed.c $(MBAF_SOURCES)
 
 libmbfly_la_CPPFLAGS =
 libmbfly_la_LDFLAGS =
@@ -100,3 +100,7 @@ testcase_CFLAGS = -I$(top_builddir)/include \
 testcase_LDFLAGS = -lcunit -L/usr/local/lib/ @pangocairo_LIBS@
 
 EXTRA_PROGRAMS = testcase
+
+precomputed.c precomputed.h: $(top_srcdir)/tools/gen_precomputed_tabs.py
+	$(PYTHON_PATH) $(top_srcdir)/tools/gen_precomputed_tabs.py \
+		precomputed.c precomputed.h

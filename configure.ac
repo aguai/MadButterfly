@@ -32,6 +32,12 @@ AC_TYPE_UINT64_T
 #		pkgconfig/pkg_check_modules.html
 PKG_PROG_PKG_CONFIG
 
+# Checks for buuild time tools.
+AC_PATH_PROG([PYTHON_PATH], [python])
+[if [ -z x"${PYTHON_PATH}" ]; then]
+AC_MSG_ERROR([can not found Python script engine (install Python)])
+[fi]
+
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
