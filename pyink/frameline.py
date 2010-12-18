@@ -659,21 +659,21 @@ class frameline(gtk.DrawingArea):
 	    if key.right_tween is True:
 	        ss = rdoc.createElement("ns0:scene")
 		node.appendChild(ss)
-		ss.setAttribute("start", str(key.idx+1),True)
-		ss.setAttribute("ref",key.ref.attribute("id"),True)
-		ss.setAttribute("end", str(self._keys[i+1].idx+1),True)
+		ss.setAttribute("start", str(key.idx+1))
+		ss.setAttribute("ref",key.ref.attribute("id"))
+		ss.setAttribute("end", str(self._keys[i+1].idx+1))
 		if self._keys[i].right_tween_type == self._tween_type_none:
-		    ss.setAttribute("type", "normal", True)
+		    ss.setAttribute("type", "normal")
 		elif self._keys[i].right_tween_type == self._tween_type_move:
-		    ss.setAttribute("type", "relocate", True)
+		    ss.setAttribute("type", "relocate")
 		elif self._keys[i].right_tween_type == self._tween_type_shape:
-		    ss.setAttribute("type", "scale", True)
+		    ss.setAttribute("type", "scale")
 	    else:
 	        ss = rdoc.createElement("ns0:scene")
 		node.appendChild(ss)
-		ss.setAttribute("start", str(key.idx+1),True)
-		ss.setAttribute("ref",key.ref.attribute("id"),True)
-	        ss.setAttribute("type", "normal", True)
+		ss.setAttribute("start", str(key.idx+1))
+		ss.setAttribute("ref",key.ref.attribute("id"))
+	        ss.setAttribute("type", "normal")
 
 	        
     ## \brief Start future drawing actions
