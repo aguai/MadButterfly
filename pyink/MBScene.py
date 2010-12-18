@@ -83,7 +83,7 @@ class ObjectWatcher(pybInkscape.PYNodeObserver):
         if self.type == 'DOMSubtreeModified':
 	    self.func(node)
     def notifyAttributeChanged(self,node, name, old_value, new_value):
-        print 'attr'
+        print 'attr',node,name,old_value,new_value
         if self.type == 'DOMAttrModified':
 	    self.func(node,name)
 
@@ -131,6 +131,7 @@ class MBScene():
 	self.last_update = None
 	pybInkscape.inkscape.connect('change_selection', self.show_selection)
 	self.last_select = None
+	self.lockui=False
 	pass
 
     def startPolling(self):
@@ -283,7 +284,7 @@ class MBScene():
 	    elif node.name() == 'svg:g':
 		oldscene = None
 	        #obs = LayerAttributeWatcher(self)
-	        addEventListener(doc,'DOMAttrModified',self.updateUI,None)
+	        #addEventListener(doc,'DOMAttrModified',self.updateUI,None)
 	        #node.addObserver(obs)
 		lyobj = Layer(node)
 		self.layers.append(lyobj)
@@ -822,7 +823,9 @@ class MBScene():
 	self.last_line = line
 	self.last_frame = frame
 	self.last_line.active_frame(frame)
+	self.lockui = True
         self.doEditScene(frame)
+	self.lockui = False
         
         
     def _remove_active_frame(self,widget,event):
@@ -1054,6 +1057,11 @@ class MBScene():
 	pass
 
     def updateUI(self,node=None,arg=None):
+        if self.lockui: return
+        self.lockui = True
+	self._updateUI()
+	self.lockui = False
+    def _updateUI(self,node=None,arg=None):
         if self.last_update!= None:
             glib.source_remove(self.last_update)
         self.last_update = glib.timeout_add(300,self.show)
