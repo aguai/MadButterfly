@@ -234,6 +234,9 @@ move_tank(enemy_t *enemy, tank_rt_t *tank_rt) {
 	return;
     }
     
+    if(all_interest == 0)	/* all nearby places are occupied */
+	return;
+
     interest_dir = (rand() % all_interest) + 1;
     for(i = 0; i < 3; i++) {
 	chk_dir = (dir + 3  + i) % 4;
