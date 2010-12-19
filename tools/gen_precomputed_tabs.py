@@ -19,8 +19,8 @@ class tabs_generator(object):
     _fraction_shift = 10
     _ref_radius_shift = 10
     _slope_tab_sz = 128
-    _arc_radius_ratio_tab_sz = 128
-    _arc_radius_factor_tab_sz = 128
+    _arc_radius_ratio_tab_sz = 256
+    _arc_radius_factor_tab_sz = 256
     _sin_tab_sz = 256
     
     def gen_slope_tab(self):
@@ -67,9 +67,9 @@ class tabs_generator(object):
         radius = 1 << (self._ref_radius_shift + self._fraction_shift)
 
         for i in range(self._slope_tab_sz):
-            angle = pi / 4 * i / (self._slope_tab_sz - 1)
-            x = -int(cos(angle) * radius)
-            y = -int(sin(angle) * radius)
+            angle = pi / 4 * i / (self._slope_tab_sz - 1) + pi / 2
+            x = int(cos(angle) * radius)
+            y = int(sin(angle) * radius)
             line = '    {%d, %d},' % (x, y)
             lines.append(line)
             pass

@@ -48,12 +48,12 @@ int _sh_path_size = sizeof(sh_path_t);
 #define OK 0
 #define ERR -1
 #define PI 3.1415926535897931
-#define FRAC_PI 51472
+#define FRAC_PI ((int)(PI * FRACTION_ONE))
 
 #define SWAP(x, y) do { x ^= y; y ^= x; x ^= y; } while(0)
 #define MAX(x, y) (((x) > (y))? (x): (y))
 #define MIN(x, y) (((x) > (y))? (y): (x))
-#define IS_NEGATIVE(x) ((x) & ~(-1 >> 1))
+#define IS_NEGATIVE(x) ((x) < 0)
 
 #ifdef UNITTEST
 #undef rdman_man_shape
@@ -79,9 +79,11 @@ _elmpool_elm_free(void *pool, void *elm) {
  */
 #if 1
 
+#include <stdint.h>
 #include "precomputed.h"
 
 #define ABS(x) (((x) > 0)? (x): -(x))
+#define FRACTION_ONE (1 << FRACTION_SHIFT)
 
 /*! \brief Compute the small slope of a vector.
  *
@@ -114,7 +116,7 @@ _find_slope_index(int slope) {
     left = 0;
     right = SLOPE_TAB_SZ - 1;
     while(left <= right) {
-	v = (left + right) >> 1;
+	v = (left + right) / 2;
 	if(slope < slope_tab[v])
 	    right = v - 1;
 	else
@@ -126,10 +128,10 @@ _find_slope_index(int slope) {
 
 static int
 _vector_len(int x, int y) {
-    int _x, _y;
-    int slope;
-    int slope_index;
-    int radius;
+    int64_t _x, _y;
+    int64_t slope;
+    int64_t slope_index;
+    int64_t radius;
     
     _x = ABS(x);
     _y = ABS(y);
@@ -143,6 +145,7 @@ _vector_len(int x, int y) {
 	slope_index = _find_slope_index(slope);
 	radius = _y * vector_len_factor_tab[slope_index];
     }
+    radius = radius / FRACTION_ONE;
     
     return radius;
 }
@@ -158,7 +161,7 @@ _find_arc_radius(int arc_radius_ratio) {
     left = 0;
     right = ARC_RADIUS_RATIO_TAB_SZ - 1;
     while(left <= right) {
-	v = (left + right) >> 1;
+	v = (left + right) / 2;
 	if(arc_radius_ratio < arc_radius_ratio_tab[v])
 	    right = v - 1;
 	else
@@ -194,7 +197,7 @@ _get_arc_radius_shift_factor(int arc_x, int arc_y, int radius) {
  */
 static void
 _compute_extend_unit_vector(int rx, int ry, int x_rotate,
-			    int *ext_unit_x, int *ext_unit_y) {
+			    int64_t *ext_unit_x, int64_t *ext_unit_y) {
     int extend_dir;
     int extend_phase;
     int extend_index;
@@ -212,8 +215,8 @@ _compute_extend_unit_vector(int rx, int ry, int x_rotate,
     extend_dir %= FRAC_PI * 2;
     extend_phase = extend_dir / (FRAC_PI >> 1);
     
-    extend_index = (extend_dir % (FRAC_PI >> 4)) * SIN_TAB_SZ /
-	(FRAC_PI >> 4);
+    extend_index = (extend_dir % (FRAC_PI >> 1)) * SIN_TAB_SZ /
+	(FRAC_PI >> 1);
     if(extend_phase & 0x1)	/* half-phases 1,3 */
 	extend_index = SIN_TAB_SZ - extend_index - 1;
     
@@ -225,6 +228,48 @@ _compute_extend_unit_vector(int rx, int ry, int x_rotate,
     *ext_unit_y = signs[1]? -extend_sin: extend_sin;
 }
 
+static void
+_get_center_ref_shift(int arc_x, int arc_y, int large, int sweep,
+		      int slope_index,
+		      int64_t *shift_cx, int64_t *shift_cy) {
+    int _shift_cx, _shift_cy;
+    int stat = 0;
+    /* Change sign of shift-x/y accroding sign of arc_x, arc_y,
+     * large and sweep.
+     */
+    static int shift_signs_tab[16][2] = {
+	/* +x,+y   -x,+y   +x,-y   -x,-y */
+	{1, 1}, {0, 1}, {1, 0}, {0, 0}, /* small, negative-angle */
+	{0, 0}, {1, 0}, {0, 1}, {1, 1}, /* large, negative-angle */
+	{0, 0}, {1, 0}, {0, 1}, {1, 1}, /* small, positive-angle */
+	{1, 1}, {0, 1}, {1, 0}, {0, 0}  /* large, positive-angle */
+    };
+    
+    _shift_cx = center_shift_tab[slope_index][0];
+    _shift_cy = center_shift_tab[slope_index][1];
+    if(ABS(arc_x) <= ABS(arc_y)) {
+	SWAP(_shift_cx, _shift_cy);
+	_shift_cx = -_shift_cx;
+	_shift_cy = -_shift_cy;
+    }
+    
+    if(IS_NEGATIVE(arc_x))
+	stat |= 0x1;
+    if(IS_NEGATIVE(arc_y))
+	stat |= 0x2;
+    if(large)
+	stat |= 0x4;
+    if(sweep)
+	stat |= 0x8;
+    if(shift_signs_tab[stat][0])
+	_shift_cx = -_shift_cx;
+    if(shift_signs_tab[stat][1])
+	_shift_cy = -_shift_cy;
+
+    *shift_cx = _shift_cx;
+    *shift_cy = _shift_cy;
+}
+
 static int
 _calc_center_i(int x0, int y0,
 	       int x, int y,
@@ -232,29 +277,20 @@ _calc_center_i(int x0, int y0,
 	       int x_rotate,
 	       int large, int sweep,
 	       int *cx, int *cy) {
-    int radius;
-    int ext_unit_y, ext_unit_x;	/* x and y value of unit vector on
+    int64_t radius;
+    int64_t ext_unit_y, ext_unit_x;	/* x and y value of unit vector on
 				 * extend direction */
-    int arc_x, arc_y;
-    int radius_ref_ratio;
-    int arc_radius_factor;
-    int stat = 0;
-    int slope, slope_index;
-    int shift_cx, shift_cy;
-    int center_shift_factor;
+    int64_t arc_x, arc_y;
+    int64_t radius_ref_ratio;
+    int64_t arc_radius_factor;
+    int64_t slope, slope_index;
+    int64_t shift_cx, shift_cy;
+    int64_t center_shift_factor;
     static int negatives[4] = {0, 1, 1, 0};
-    /* Change sign of shift-x/y accroding sign of arc_x, arc_y,
-     * large and sweep.
-     */
-    static int shift_signs_tab[16][2] = {
-	/* -x,-y   +x,-y   -x,+y   +x,+y */
-	{0, 0}, {0, 1}, {1, 0}, {1, 1}, /* small, negative-angle */
-	{1, 1}, {1, 0}, {0, 1}, {0, 0}, /* large, negative-angle */
-	{1, 1}, {1, 0}, {0, 1}, {0, 0}, /* small, positive-angle */
-	{0, 0}, {0, 1}, {1, 0}, {1, 1}  /* large, positive-angle */
-    };
-    int extend_len;
-    int extend_x, extend_y;
+    int64_t extend_len;
+    int64_t extend_x, extend_y;
+    
+    ASSERT(rx >= 0 && ry >= 0);
     
     arc_x = x - x0;
     arc_y = y - y0;
@@ -272,11 +308,10 @@ _calc_center_i(int x0, int y0,
     radius = MAX(rx, ry);
     _compute_extend_unit_vector(rx, ry, x_rotate, &ext_unit_x, &ext_unit_y);
     
-    extend_len = (arc_x * ext_unit_x + arc_y * ext_unit_y) >> FRACTION_SHIFT;
-    extend_len = extend_len * MAX(rx, ry) / MIN(rx, ry) -
-	(1 << FRACTION_SHIFT);
-    extend_x = ext_unit_x * extend_len;
-    extend_y = ext_unit_y * extend_len;
+    extend_len = (arc_x * ext_unit_x + arc_y * ext_unit_y) / FRACTION_ONE;
+    extend_len = extend_len * (MAX(rx, ry) - MIN(rx, ry)) / MIN(rx, ry);
+    extend_x = ext_unit_x * extend_len / FRACTION_ONE;
+    extend_y = ext_unit_y * extend_len / FRACTION_ONE;
     
     arc_x += extend_x;
     arc_y += extend_y;
@@ -294,37 +329,22 @@ _calc_center_i(int x0, int y0,
     /* Compute x/y-shift of center range index according
      * slope_index, radius_ref_ratio and arc_radius_factor.
      */
+    _get_center_ref_shift(arc_x, arc_y, large, sweep, slope_index,
+			  &shift_cx, &shift_cy);
     center_shift_factor = radius_ref_ratio * arc_radius_factor;
-    center_shift_factor = center_shift_factor >> FRACTION_SHIFT;
-    shift_cx = (center_shift_tab[slope_index][0] * center_shift_factor) >>
-	FRACTION_SHIFT;
-    shift_cy = (center_shift_tab[slope_index][1] * center_shift_factor) >>
-	FRACTION_SHIFT;
-    if(ABS(arc_x) <= ABS(arc_y))
-	SWAP(shift_cx, shift_cy);
+    center_shift_factor = center_shift_factor / FRACTION_ONE;
+    shift_cx = shift_cx * center_shift_factor / FRACTION_ONE;
+    shift_cy = shift_cy * center_shift_factor / FRACTION_ONE;
     
-    if(IS_NEGATIVE(arc_x))
-	stat |= 0x1;
-    if(IS_NEGATIVE(arc_y))
-	stat |= 0x2;
-    if(large)
-	stat |= 0x4;
-    if(sweep)
-	stat |= 0x8;
-    if(shift_signs_tab[stat][0])
-	shift_cx = -shift_cx;
-    if(shift_signs_tab[stat][1])
-	shift_cy = -shift_cy;
-
-    shift_cx += arc_x >> 2;
-    shift_cy += arc_y >> 2;
+    shift_cx += arc_x / 2;
+    shift_cy += arc_y / 2;
 
     /* translate shift_cx/cy back to original coordinate */
-    extend_len = (shift_cx * ext_unit_x + shift_cy * ext_unit_y)
-	>> FRACTION_SHIFT;
-    extend_len = extend_len - extend_len * MIN(rx, ry) / MAX(rx, ry);
-    extend_x = (ext_unit_x * extend_len) >> FRACTION_SHIFT;
-    extend_y = (ext_unit_y * extend_len) >> FRACTION_SHIFT;
+    extend_len = (shift_cx * ext_unit_x + shift_cy * ext_unit_y) /
+	FRACTION_ONE;
+    extend_len = extend_len * (MAX(rx, ry) - MIN(rx, ry)) / MAX(rx, ry);
+    extend_x = ext_unit_x * extend_len / FRACTION_ONE;
+    extend_y = ext_unit_y * extend_len / FRACTION_ONE;
     shift_cx = shift_cx - extend_x;
     shift_cy = shift_cy - extend_y;
     
@@ -344,13 +364,13 @@ static int _calc_center(co_aix x0, co_aix y0,
     int cx_i, cy_i;
     int r;
     
-    r = _calc_center_i(x0 * (1 << FRACTION_SHIFT), y0 * (1 << FRACTION_SHIFT),
-		       x * (1 << FRACTION_SHIFT), y * (1 << FRACTION_SHIFT),
-		       rx * (1 << FRACTION_SHIFT), ry * (1 << FRACTION_SHIFT),
-		       x_rotate * (1 << FRACTION_SHIFT),
+    r = _calc_center_i(x0 * FRACTION_ONE, y0 * FRACTION_ONE,
+		       x * FRACTION_ONE, y * FRACTION_ONE,
+		       rx * FRACTION_ONE, ry * FRACTION_ONE,
+		       x_rotate * FRACTION_ONE,
 		       large, sweep, &cx_i, &cy_i);
-    *cx = cx_i;
-    *cy = cy_i;
+    *cx = (co_aix)cx_i / FRACTION_ONE;
+    *cy = (co_aix)cy_i / FRACTION_ONE;
     return r;
 }
 
@@ -1383,7 +1403,263 @@ void test_path_transform(void) {
     sh_path_free((shape_t *)path);
 }
 
+void test_small_slope(void) {
+    co_aix x, y;
+    co_aix slope;
+    co_aix r;
+
+    x = 135.3;
+    y = 149.6;
+    r = (co_aix)_small_slope(x * FRACTION_ONE,
+			     y * FRACTION_ONE) /
+	FRACTION_ONE;
+
+    slope = MIN(x, y) / MAX(x, y);
+    CU_ASSERT(((r - slope) / slope) < 0.01 &&
+	      ((r - slope) / slope) > -0.01);
+}
+
+void test_find_slope_index(void) {
+    co_aix slope;
+    int idx;
+    co_aix r;
+
+    slope = 0.754;
+    idx = _find_slope_index(slope * FRACTION_ONE);
+    r = (co_aix)slope_tab[idx] / FRACTION_ONE;
+    CU_ASSERT((r / slope) < 1.01 &&
+	      (r / slope) > 0.99);
+}
+
+void test_vector_len(void) {
+    co_aix x, y;
+    co_aix len;
+    co_aix r;
+    int rlen;
+
+    x = 397;
+    y = 449;
+    len = sqrt(x * x + y * y);
+    rlen = _vector_len(x * FRACTION_ONE,
+		       y * FRACTION_ONE);
+    r = (co_aix)rlen / (1 <<FRACTION_SHIFT);
+    CU_ASSERT((r / len) < 1.01 &&
+	      (r / len) > 0.99);
+
+    x = 357;
+    y = 224;
+    len = sqrt(x * x + y * y);
+    rlen = _vector_len(x * FRACTION_ONE,
+		       y * FRACTION_ONE);
+    r = (co_aix)rlen / FRACTION_ONE;
+    CU_ASSERT((r / len) < 1.01 &&
+	      (r / len) > 0.99);
+}
+
+void test_find_arc_radius(void) {
+    co_aix ratio;
+    int idx;
+    co_aix r;
+
+    ratio = 0.732;
+    idx = _find_arc_radius(ratio * FRACTION_ONE);
+    r = (co_aix)arc_radius_ratio_tab[idx] / FRACTION_ONE;
+    CU_ASSERT((r / ratio) < 1.01 &&
+	      (r / ratio) > 0.99);
+}
+
+void test_get_arc_radius_shift_factor(void) {
+    co_aix arc_x, arc_y, radius;
+    co_aix factor;
+    int rfactor;
+    co_aix r;
+
+    arc_x = 30.5;
+    arc_y = 10.3;
+    radius = 90.3;
+    factor = sqrt(radius * radius - (arc_x * arc_x + arc_y * arc_y) / 4) /
+	radius;
+    rfactor = _get_arc_radius_shift_factor(arc_x * FRACTION_ONE,
+					   arc_y * FRACTION_ONE,
+					   radius * FRACTION_ONE);
+    r = (co_aix)rfactor / FRACTION_ONE;
+    CU_ASSERT((r / factor) < 1.01 &&
+	      (r / factor) > 0.99);
+
+    arc_x = 30.5;
+    arc_y = 70.3;
+    radius = 190.3;
+    factor = sqrt(radius * radius - (arc_x * arc_x + arc_y * arc_y) / 4) /
+	radius;
+    rfactor = _get_arc_radius_shift_factor(arc_x * FRACTION_ONE,
+					   arc_y * FRACTION_ONE,
+					   radius * FRACTION_ONE);
+    r = (co_aix)rfactor / FRACTION_ONE;
+    CU_ASSERT((r / factor) < 1.01 &&
+	      (r / factor) > 0.99);
+}
+
+void test_compute_extend_unit_vector(void) {
+    co_aix rx, ry;
+    co_aix x_rotate;
+    co_aix unit_x, unit_y;
+    co_aix runit_x, runit_y;
+    int64_t ext_unit_x, ext_unit_y;
+
+    rx = 200;
+    ry = 153;
+    x_rotate = PI * 30 / 180;
+    unit_x = cos(PI * 90 / 180 + x_rotate);
+    unit_y = sin(PI * 90 / 180 + x_rotate);
+    _compute_extend_unit_vector(rx * FRACTION_ONE, ry * FRACTION_ONE,
+				x_rotate * FRACTION_ONE,
+				&ext_unit_x, &ext_unit_y);
+    runit_x = (co_aix)ext_unit_x / FRACTION_ONE;
+    runit_y = (co_aix)ext_unit_y / FRACTION_ONE;
+    CU_ASSERT((runit_x / unit_x) < 1.01 &&
+	      (runit_x / unit_x) > 0.99);
+    CU_ASSERT((runit_y / unit_y) < 1.01 &&
+	      (runit_y / unit_y) > 0.99);
+
+    rx = 200;
+    ry = 153;
+    x_rotate = PI * 158 / 180;
+    unit_x = cos(PI * 90 / 180 + x_rotate);
+    unit_y = sin(PI * 90 / 180 + x_rotate);
+    _compute_extend_unit_vector(rx * FRACTION_ONE, ry * FRACTION_ONE,
+				x_rotate * FRACTION_ONE,
+				&ext_unit_x, &ext_unit_y);
+    runit_x = (co_aix)ext_unit_x / FRACTION_ONE;
+    runit_y = (co_aix)ext_unit_y / FRACTION_ONE;
+    CU_ASSERT((runit_x / unit_x) < 1.01 &&
+	      (runit_x / unit_x) > 0.99);
+    CU_ASSERT((runit_y / unit_y) < 1.01 &&
+	      (runit_y / unit_y) > 0.99);
+
+    rx = 100;
+    ry = 153;
+    x_rotate = PI * 158 / 180;
+    unit_x = cos(x_rotate);
+    unit_y = sin(x_rotate);
+    _compute_extend_unit_vector(rx * FRACTION_ONE, ry * FRACTION_ONE,
+				x_rotate * FRACTION_ONE,
+				&ext_unit_x, &ext_unit_y);
+    runit_x = (co_aix)ext_unit_x / FRACTION_ONE;
+    runit_y = (co_aix)ext_unit_y / FRACTION_ONE;
+    CU_ASSERT((runit_x / unit_x) < 1.01 &&
+	      (runit_x / unit_x) > 0.99);
+    CU_ASSERT((runit_y / unit_y) < 1.01 &&
+	      (runit_y / unit_y) > 0.99);
+}
+
+void test_get_center_ref_shift(void) {
+    co_aix slope;
+    int slope_index;
+    co_aix arc_len;
+    co_aix arc_x, arc_y;
+    int large, sweep;
+    co_aix shift_x, shift_y;
+    co_aix r_x, r_y;
+    int64_t rshift_x, rshift_y;
+
+    arc_x = 311;
+    arc_y = 210;
+    large = 0;			/* small arc */
+    sweep = 1;			/* positive sweep */
+    arc_len = sqrt(arc_x * arc_x + arc_y * arc_y);
+    shift_x = arc_y / arc_len * (1 << REF_RADIUS_SHIFT);
+    shift_y = arc_x / arc_len * (1 << REF_RADIUS_SHIFT);
+    if((arc_x < 0) ^ (arc_y < 0))
+	/* exactly one of arc_x and arc_y is negative */
+	shift_y = -shift_y;
+    else
+	shift_x = -shift_x;
+    slope = MIN(ABS(arc_x), ABS(arc_y)) /  MAX(ABS(arc_x), ABS(arc_y));
+    slope_index = _find_slope_index(slope * FRACTION_ONE);
+    _get_center_ref_shift(arc_x * FRACTION_ONE, arc_y * FRACTION_ONE,
+			  large, sweep,
+			  slope_index,
+			  &rshift_x, &rshift_y);
+    r_x = (co_aix)rshift_x / FRACTION_ONE;
+    r_y = (co_aix)rshift_y / FRACTION_ONE;
+    CU_ASSERT((r_x / shift_x) < 1.01 &&
+	      (r_x / shift_x) > 0.99);
+    CU_ASSERT((r_y / shift_y) < 1.01 &&
+	      (r_y / shift_y) > 0.99);
+
+    arc_x = 311;
+    arc_y = 210;
+    large = 1;			/* small arc */
+    sweep = 1;			/* positive sweep */
+    arc_len = sqrt(arc_x * arc_x + arc_y * arc_y);
+    shift_x = -arc_y / arc_len * (1 << REF_RADIUS_SHIFT);
+    shift_y = -arc_x / arc_len * (1 << REF_RADIUS_SHIFT);
+    if((arc_x < 0) ^ (arc_y < 0))
+	/* exactly one of arc_x and arc_y is negative */
+	shift_y = -shift_y;
+    else
+	shift_x = -shift_x;
+    slope = MIN(ABS(arc_x), ABS(arc_y)) /  MAX(ABS(arc_x), ABS(arc_y));
+    slope_index = _find_slope_index(slope * FRACTION_ONE);
+    _get_center_ref_shift(arc_x * FRACTION_ONE, arc_y * FRACTION_ONE,
+			  large, sweep,
+			  slope_index,
+			  &rshift_x, &rshift_y);
+    r_x = (co_aix)rshift_x / FRACTION_ONE;
+    r_y = (co_aix)rshift_y / FRACTION_ONE;
+    CU_ASSERT((r_x / shift_x) < 1.01 &&
+	      (r_x / shift_x) > 0.99);
+    CU_ASSERT((r_y / shift_y) < 1.01 &&
+	      (r_y / shift_y) > 0.99);
+}
+
 void test_calc_center(void) {
+    co_aix x0, y0, x, y;
+    co_aix rx, ry, x_rotate;
+    int large, sweep;
+    co_aix cx, cy;
+    co_aix angle_start, angle_stop;
+    co_aix rcx, rcy;
+    co_aix _x, _y;
+    
+#define ELLIPSE_POINT(angle, point_x, point_y)			\
+    do {							\
+	_x = rx * cos(angle);					\
+	_y = ry * sin(angle);					\
+	point_x = _x * cos(x_rotate) - _y * sin(x_rotate) + cx;	\
+	point_y = _x * sin(x_rotate) + _y * cos(x_rotate) + cy;	\
+    } while(0)
+#define CENTER_TEST()						\
+    do {							\
+	_calc_center(x0, y0, x, y, rx, ry, x_rotate,		\
+		     0, 1, &rcx, &rcy);				\
+	CU_ASSERT((cx - rcx) <= 2 && (cx - rcx) >= -2);		\
+	CU_ASSERT((cy - rcy) <= 2 && (cy - rcy) >= -2);		\
+	_calc_center(x0, y0, x, y, rx, ry, x_rotate,		\
+		     1, 0, &rcx, &rcy);				\
+	CU_ASSERT((cx - rcx) <= 2 && (cx - rcx) >= -2);		\
+	CU_ASSERT((cy - rcy) <= 2 && (cy - rcy) >= -2);		\
+	_calc_center(x, y, x0, y0, rx, ry, x_rotate,		\
+		     0, 0, &rcx, &rcy);				\
+	CU_ASSERT((cx - rcx) <= 2 && (cx - rcx) >= -2);		\
+	CU_ASSERT((cy - rcy) <= 2 && (cy - rcy) >= -2);		\
+	_calc_center(x, y, x0, y0, rx, ry, x_rotate,		\
+		     1, 1, &rcx, &rcy);				\
+	CU_ASSERT((cx - rcx) <= 2 && (cx - rcx) >= -2);		\
+	CU_ASSERT((cy - rcy) <= 2 && (cy - rcy) >= -2);		\
+    } while(0)
+
+    cx = 135;
+    cy = 254;
+    rx = 200;
+    ry = 170;
+    x_rotate = PI * 20 / 180;
+    angle_start = PI * 55 / 180;
+    angle_stop = PI * 97 / 180;
+    
+    ELLIPSE_POINT(angle_start, x0, y0);
+    ELLIPSE_POINT(angle_stop, x, y);
+    CENTER_TEST();
 }
 
 void test_spaces_head_tail(void) {
@@ -1403,6 +1679,13 @@ CU_pSuite get_shape_path_suite(void) {
     suite = CU_add_suite("Suite_shape_path", NULL, NULL);
     CU_ADD_TEST(suite, test_rdman_shape_path_new);
     CU_ADD_TEST(suite, test_path_transform);
+    CU_ADD_TEST(suite, test_small_slope);
+    CU_ADD_TEST(suite, test_find_slope_index);
+    CU_ADD_TEST(suite, test_vector_len);
+    CU_ADD_TEST(suite, test_find_arc_radius);
+    CU_ADD_TEST(suite, test_get_arc_radius_shift_factor);
+    CU_ADD_TEST(suite, test_compute_extend_unit_vector);
+    CU_ADD_TEST(suite, test_get_center_ref_shift);
     CU_ADD_TEST(suite, test_calc_center);
 
     return suite;
