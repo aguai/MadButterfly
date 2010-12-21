@@ -561,6 +561,7 @@ class MBScene():
 			if i+2 < len(layer._keys):
 			    layer.duplicateGroup = self.document.createElement("svg:g")
 			    layer.duplicateGroup.setAttribute("inkscape:label","dup")
+			    layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
 			    s.ref.setAttribute("style","display:none")
 			    s.ref.parent().appendChild(layer.duplicateGroup)
 			    self.updateTweenContent(layer.duplicateGroup, layer.get_tween_type(s.idx),s, layer._keys[i+2], nth)
@@ -755,11 +756,11 @@ class MBScene():
 		ss = self.decomposition(sm)
 		dm = self.parseTransform(d)
 		dd = self.decomposition(dm)
-		sx = ss[0]*(1-p)+dd[0]*p
-		sy = ss[1]*(1-p)+dd[1]*p
-		a  = ss[2]*(1-p)+dd[2]*p
-		tx = ox*(1-p)+dx*p
-		ty = oy*(1-p)+dy*p
+		sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
+		sy = (ss[1]*(1-p)+dd[1]*p)/ss[0]
+		a  = ss[2]*(1-p)+dd[2]*p-ss[2]
+		tx = ox*(1-p)+dx*p-ox
+		ty = oy*(1-p)+dy*p-oy
 		m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
 		m = self.mulA([sx,0,0,sy,0,0],m)
 		m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
@@ -772,10 +773,43 @@ class MBScene():
 		    sh = float(s.attribute("height"))
 		    dw = float(d.attribute("width"))
 		    dh = float(d.attribute("height"))
-		    tx = (dw-sw)*p+sw
-		    ty = (dh-sh)*p+sh
-		    print tx,ty
-		    top.setAttribute("transform","matrix(%g,0,0,%g,0,0)" % (tx,ty))
+	            try:
+	                item = self.nodeToItem[s.attribute("id")]
+		        (ox,oy) = item.getCenter()
+	            except:
+		        ox = 0
+		        oy = 0
+	            try:
+	                item = self.nodeToItem[d.attribute("id")]
+		        (dx,dy) = item.getCenter()
+	            except:
+		        dx = 0
+		        dy = 0
+		    try:
+		        sm = self.parseTransform(s)
+		        ss = self.decomposition(sm)
+		    except:
+		        ss = [1,1,0,0,0]
+		        pass
+		    try:
+		        dm = self.parseTransform(d)
+		        dd = self.decomposition(dm)
+		    except:
+		        dd = [1,1,0,0,0]
+		        pass
+		    dd[0] = ss[0]*dw/sw
+		    dd[1] = ss[1]*dh/sh
+		    sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
+		    sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
+		    a  = ss[2]*(1-p)+dd[2]*p-ss[2]
+		    tx = ox*(1-p)+dx*p
+		    ty = oy*(1-p)+dy*p
+		    m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
+		    m = self.mulA([sx,0,0,sy,0,0],m)
+		    m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
+		    m = self.mulA([1,0,0,1,tx,self.height-ty],m)
+
+		    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
 		except:
 		    traceback.print_exc()
 		    pass
