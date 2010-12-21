@@ -1218,6 +1218,7 @@ loadSVG.prototype.parseScenes=function(coord,node) {
 	        scene.end = scene.start;
 	    }
 	    scene.ref = node.attr('ref').value();
+	    scene.type = node.attr('type').value();
 
 	    try {
 	        this.scenenames[node.attr('name').value()] = scene.start;

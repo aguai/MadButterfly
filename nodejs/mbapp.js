@@ -169,6 +169,11 @@ app.prototype.changeScene=function(s) {
 	}
     }
 }
+
+app.prototype.runToScene=function(n) {
+    
+}
+
 app.prototype.addSceneListener=function(n, cb) {
     sys.puts("This is not implemented yet")
 }
