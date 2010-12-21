@@ -652,18 +652,19 @@
     </g>
     <g
        inkscape:label="dup"
-       id="g4809">
+       id="g4022">
       <g
-         id="g4811">
+         id="g4024"
+         transform="matrix(1,0,0,1,0,0)">
         <g
            transform="translate(-0.898833,11.981842)"
-           id="g4813">
+           id="g4026">
           <rect
              y="-10.98185"
              x="0.93578684"
              height="481.62387"
              width="641.95721"
-             id="rect4815"
+             id="rect4028"
              style="fill:#00ffff;fill-opacity:1;stroke:#000000;stroke-opacity:1;display:inline" />
           <rect
              ry="10"
@@ -672,24 +673,25 @@
              x="6.8625164"
              height="46.789886"
              width="624.48901"
-             id="rect4817"
+             id="rect4030"
              style="fill:#ffcc1d;fill-opacity:1;stroke:none" />
         </g>
       </g>
       <g
-         id="g4819">
+         id="g4032"
+         transform="matrix(1,0,0,1,0,0)">
         <g
            transform="translate(-0.898833,11.981842)"
-           id="g4821">
+           id="g4034">
           <rect
              y="15.22048"
              x="32.440987"
              height="25.57847"
              width="71.744492"
-             id="rect4823"
+             id="rect4036"
              style="fill:url(#linearGradient4897);fill-opacity:1;stroke:none;filter:url(#filter3295-1-3)" />
           <text
-             id="text4825"
+             id="text4038"
              y="33.312569"
              x="39.927368"
              style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -697,19 +699,19 @@
                style="font-size:16px"
                y="33.312569"
                x="39.927368"
-               id="tspan4827"
+               id="tspan4040"
                sodipodi:role="line">Action</tspan></text>
         </g>
       </g>
       <g
-         id="g4829"
-         transform="matrix(0.0125121,1.43174,-1.87359,0.00956133,231.497,-154.368)">
+         id="g4042"
+         transform="matrix(1.11772,0.334322,-0.361518,1.03363,-0.397653,-47.0597)">
         <g
            transform="translate(-80.478599,-177.80156)"
-           id="g4831">
+           id="g4044">
           <rect
              style="fill:url(#linearGradient3170);fill-opacity:1;stroke:none;filter:url(#filter3295-1-3-2)"
-             id="rect4833"
+             id="rect4046"
              width="71.744492"
              height="25.57847"
              x="191.09566"
@@ -719,22 +721,23 @@
              style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
              x="198.58203"
              y="222.62807"
-             id="text4835"><tspan
+             id="text4048"><tspan
                sodipodi:role="line"
-               id="tspan4837"
+               id="tspan4050"
                x="198.58203"
                y="222.62807"
                style="font-size:16px">Select</tspan></text>
         </g>
       </g>
       <g
-         id="g4839">
+         id="g4052"
+         transform="matrix(1,0,0,1,0,-5.68434e-14)">
         <g
            transform="translate(-0.898833,11.981842)"
-           id="g4841">
+           id="g4054">
           <rect
              style="fill:#000000;fill-opacity:1"
-             id="rect4843"
+             id="rect4056"
              width="67.377434"
              height="29.321661"
              x="180.92088"
@@ -814,7 +817,7 @@
     </g>
     <g
        id="s6546"
-       style="">
+       style="display:none">
       <rect
          x="0"
          y="0"
