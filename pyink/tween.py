@@ -6,8 +6,12 @@ class TweenObject:
     def __init__(self,doc,dom):
         self.document = doc
 	self.dom = dom
-	self.width = float(dom.attribute("width"))
-	self.height = float(dom.attribute("height"))
+	try:
+	    self.width = float(dom.getAttribute("width"))
+	    self.height = float(dom.getAttribute("height"))
+	except:
+	    self.width = 640
+	    self.height = 480
 
     def updateMapping(self):
 	self.nodeToItem={}
@@ -16,7 +20,10 @@ class TweenObject:
     def updateMappingNode(self,node):
 	for c in node.childList():
 	    self.updateMappingNode(c)
-	    self.nodeToItem[c.getId()] = c
+	    try:
+	        self.nodeToItem[c.getAttribute("id")] = c
+	    except:
+	        pass
     def updateTweenContent(self,obj, typ, source,dest,cur):
 	"""
 	    Update the content of the duplicate scene group. We will use the (start,end) and cur to calculate the percentage of
@@ -36,48 +43,48 @@ class TweenObject:
 	# Collect all objects
 	while d:
 	    try:
-		label = d.attribute("inkscape:label")
+		label = d.getAttribute("inkscape:label")
 	    except:
-		d = d.getNext()
+		d = d.next()
 		continue
 	    dests[label] = d
-	    d = d.getNext()
+	    d = d.next()
 	# Check if the object in the source exists in the destination
 	s = source.ref.firstChild()
 	d = dest.ref.firstChild()
 	while s:
 	    print s,d
 	    try:
-		label = s.attribute("inkscape:label")
+		label = s.getAttribute("inkscape:label")
 		# Use i8nkscape:label to identidy the equipvalent objects
 		if label:
 		    if dests.hasattr(label.value()):
 			self.updateTweenObject(obj,typ,s,dests[label.value()],percent)
-			s = s.getNext()
+			s = s.next()
 			continue
 	    except:
 		pass
 	    # Search obejcts in the destination
 	    while d:
 		try:
-		    d.attribute("inkscape:label")
-		    d = d.getNext()
+		    d.getAttribute("inkscape:label")
+		    d = d.next()
 		    continue
 		except:
 		    pass
 		if s.name() == d.name():
 		    self.updateTweenObject(obj,typ,s,d,percent)
-		    d = d.getNext()
+		    d = d.next()
 		    break
-		d = d.getNext()
-	    s = s.getNext()
+		d = d.next()
+	    s = s.next()
 
     def parseTransform(self,obj):
 	"""
 	    Return the transform matrix of an object
 	"""
 	try:
-	    t = obj.attribute("transform")
+	    t = obj.getAttribute("transform")
 	    print t
 	    if t[0:9] == 'translate':
 		print "translate"
@@ -145,7 +152,7 @@ class TweenObject:
 	"""
 	if typ == 'relocate':
 	    newobj = s.duplicate(self.document)
-	    newobj.setAttribute("ref", s.getId())
+	    newobj.setAttribute("ref", s.getAttribute("id"))
 	    top = self.document.createElement("svg:g")
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
@@ -156,10 +163,10 @@ class TweenObject:
 		top.setAttribute("transform","translate(%g,%g)" % ((dm[2]-sm[2])*p,(dm[5]-sm[5])*p))
 	    else:
 		try:
-		    sx = float(s.attribute("x"))
-		    sy = float(s.attribute("y"))
-		    dx = float(d.attribute("x"))
-		    dy = float(d.attribute("y"))
+		    sx = float(s.getAttribute("x"))
+		    sy = float(s.getAttribute("y"))
+		    dx = float(d.getAttribute("x"))
+		    dy = float(d.getAttribute("y"))
 		    tx = (dx-sx)*p
 		    ty = (dy-sy)*p
 		    print tx,ty
@@ -173,7 +180,7 @@ class TweenObject:
 	    pass
 	elif typ == 'normal':
 	    newobj = s.duplicate(self.document)
-	    newobj.setAttribute("ref", s.getId())
+	    newobj.setAttribute("ref", s.getAttribute("id"))
 	    top = self.document.createElement("svg:g")
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
@@ -198,13 +205,13 @@ class TweenObject:
 	    # 
 	    # D  = B inv(A)
 	    try:
-	        item = self.nodeToItem[s.attribute("id")]
+	        item = self.nodeToItem[s.getAttribute("id")]
 	        (ox,oy) = item.getCenter()
 	    except:
 	        ox = 0
    	        oy = 0
 	    try:
-	        item = self.nodeToItem[d.attribute("id")]
+	        item = self.nodeToItem[d.getAttribute("id")]
 	        (dx,dy) = item.getCenter()
 	    except:
 	        dx = 0
@@ -227,18 +234,18 @@ class TweenObject:
 	    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
         else:
 	    try:
-	        sw = float(s.attribute("width"))
-  	        sh = float(s.attribute("height"))
-		dw = float(d.attribute("width"))
-		dh = float(d.attribute("height"))
+	        sw = float(s.getAttribute("width"))
+  	        sh = float(s.getAttribute("height"))
+		dw = float(d.getAttribute("width"))
+		dh = float(d.getAttribute("height"))
 	        try:
-	            item = self.nodeToItem[s.attribute("id")]
+	            item = self.nodeToItem[s.getAttribute("id")]
 		    (ox,oy) = item.getCenter()
 	        except:
 		    ox = 0
 		    oy = 0
 	        try:
-	            item = self.nodeToItem[d.attribute("id")]
+	            item = self.nodeToItem[d.getAttribute("id")]
 		    (dx,dy) = item.getCenter()
 	        except:
 		    dx = 0
