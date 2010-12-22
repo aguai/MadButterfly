@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48+devel r9774 custom"
-   sodipodi:docname="aa.svg">
+   sodipodi:docname="primitive_test.svg">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -56,6 +56,7 @@
       <ns0:scene
          start="21"
          ref="Layer 1s8009"
+         end="24"
          type="normal" />
     </ns0:scenes>
   </metadata>
@@ -84,8 +85,8 @@
          id="rect3431"
          height="432.13434"
          width="64.699173"
-         y="213.35323"
-         x="9.338623" />
+         y="220.30684"
+         x="3.5009925" />
     </g>
   </g>
 </svg>
