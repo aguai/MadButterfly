@@ -151,7 +151,7 @@ class MBScene():
 	    return
 	self.last_select = o
 	try:
-	    self.nameEditor.set_text(o.repr.attribute("inkscape:label"))
+	    self.nameEditor.set_text(o.getAttribute("inkscape:label"))
 	except:
 	    self.nameEditor.set_text('')
 	    pass
@@ -186,7 +186,7 @@ class MBScene():
 	    if n.name() == 'ns0:scenes':
 		self.scenemap={}
 		try:
-		    cur = int(n.attribute("current"))
+		    cur = int(n.getAttribute("current"))
 		except:
 		    cur = 1
 		self.current = cur
@@ -194,12 +194,12 @@ class MBScene():
 		for s in n.childList():
 		    if s.name() == 'ns0:scene':
 			try:
-			    start = int(s.attribute("start"))
+			    start = int(s.getAttribute("start"))
 			except:
 			    traceback.print_exc()
 			    continue
 			try:
-			    end = s.attribute("end")
+			    end = s.getAttribute("end")
 			    if end == None:
 				end = start
 				pass
@@ -207,13 +207,13 @@ class MBScene():
 			    end = start
 			    pass
 			try:
-			    typ = s.attribute('type')
+			    typ = s.getAttribute('type')
 			    if typ == None:
 				typ = 'normal'
 			except:
 			    traceback.print_exc()
 			    typ = 'normal'
-			link = s.attribute("ref")
+			link = s.getAttribute("ref")
 			self.scenemap[link] = [int(start),int(end),typ]
 			if cur >= start and cur <= end:
 			    self.currentscene = link
@@ -260,8 +260,8 @@ class MBScene():
 	addEventListener(doc,'DOMNodeRemoved',self.updateUI,None)
 	doc.childList()
 	try:
-	    self.width = float(doc.attribute("width"))
-	    self.height= float(doc.attribute("height"))
+	    self.width = float(doc.getAttribute("width"))
+	    self.height= float(doc.getAttribute("height"))
 	except:
 	    self.width = 640
 	    self.height=480
@@ -283,14 +283,14 @@ class MBScene():
 		    print scene.getCenter()
 		    if scene.name() == 'svg:g':
 		        try:
-			    label = scene.attribute('inkscape:label')
+			    label = scene.getAttribute('inkscape:label')
 			    if label == 'dup':
 			        node.removeChild(scene)
 			except:
 			    pass
 
 			try:
-			    scmap = self.scenemap[scene.getId()]
+			    scmap = self.scenemap[scene.getAttribute('id')]
 			    if scmap == None:
 				lyobj.current_scene.append(scene)
 				continue
@@ -321,7 +321,10 @@ class MBScene():
 	pass
     
     def collectID_recursive(self,node):
-	self.ID[node.getId()] = 1
+	try:
+	    self.ID[node.getAttribute('id')] = 1
+	except:
+	    pass
 	for n in node.childList():
 	    self.collectID_recursive(n)
 	    pass
@@ -343,7 +346,7 @@ class MBScene():
     
     def getLayer(self, layer):
 	for l in self.layers:
-	    if l.node.getId() == layer:
+	    if l.node.getAttribute('id') == layer:
 		return l
 	    pass
 	return None
@@ -520,7 +523,7 @@ class MBScene():
 
 	    while i < len(layer._keys):
 	        s = layer._keys[i]
-		print s.ref.attribute("id"),s.idx,s.left_tween,s.right_tween
+		print s.ref.getAttribute("id"),s.idx,s.left_tween,s.right_tween
 		if s.right_tween is False:
 		    if nth == s.idx+1:
 		        s.ref.setAttribute("style","")
@@ -553,11 +556,26 @@ class MBScene():
 	    pass
 	pass
 
+    def DOMtoItem(self,obj):
+	"""
+	Find the corresponding PYSPObject object for a DOM object.
+	"""
+	return self.DOMtoItem_recursive(self.desktop.doc().root(),obj)
+
+    def DOMtoItem_recursive(self,tree,obj):
+	nodes = tree.childList()
+	for s in nodes:
+	    if s.getId() == obj.getAttribute('id'):
+	        return s
+	    d = self.DOMtoItem_recursive(s,obj)
+	    if d != None: return d
+	     
+
     def enterGroup(self,obj):
         for l in self.layers:
 	    for s in l.node.childList():
-	        if s.getId() == obj.attribute("id"):
-		    self.desktop.setCurrentLayer(s)
+	        if s.getAttribute('id') == obj.getAttribute("id"):
+		    self.desktop.setCurrentLayer(self.DOMtoItem(s))
         
     def selectSceneObject(self,frameline, nth):
         i = 0
@@ -648,7 +666,7 @@ class MBScene():
 	for i in range(len(self.layers)-1,-1,-1):
 	    line = frameline.frameline(nframes)
 	    hbox = gtk.HBox()
-	    label = gtk.Label(self.layers[i].node.label())
+	    label = gtk.Label(self.layers[i].node.getAttribute("inkscape:label"))
 	    label.set_size_request(100,0)
 	    hbox.pack_start(label,expand=False,fill=True)
 	    hbox.pack_start(line)
@@ -669,10 +687,10 @@ class MBScene():
     def _update_framelines(self):
 	for frameline in self._framelines:
 	    layer = frameline.layer
-	    if frameline.node.label()==None:
+	    if frameline.node.getAttribute("inkscape:label")==None:
 	        frameline.label.set_text('???')
 	    else:
-	        frameline.label.set_text(frameline.node.label())
+	        frameline.label.set_text(frameline.node.getAttribute("inkscape:label"))
 	    for scene in layer.scenes:
 		frameline.add_keyframe(scene.start-1,scene.node)
 		if scene.start != scene.end:
@@ -703,7 +721,7 @@ class MBScene():
 		    # This is the first frame, we can not duplicate it
 		    self.last_line.rm_keyframe(self.last_frame)
 		    return
-		node = self.duplicateSceneGroup(last_key.ref.attribute("id"))
+		node = self.duplicateSceneGroup(last_key.ref.getAttribute("id"))
 	        key.ref = node
 		self.update()
 		self.show()
@@ -720,7 +738,7 @@ class MBScene():
 	    if node.name() == 'svg:g':
 	        for t in node.childList():
 		    if t.name() == "svg:g":
-			if t.attribute("id") == gid:
+			if t.getAttribute("id") == gid:
 			    orig = t
 			    break
 	if orig == None:
@@ -857,7 +875,7 @@ class MBScene():
         self.last_update = glib.timeout_add(300,self.show)
     def show(self):
 	self.OK = True
-	self.dom = self.desktop.doc().root()
+	self.dom = self.desktop.doc().root().repr
 	self.document = self.desktop.doc().rdoc
 	self.tween = TweenObject(self.document,self.dom)
 	self.parseScene()
