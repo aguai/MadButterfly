@@ -372,7 +372,7 @@ class MBScene():
 	txt.setAttribute("height","100")
 	txt.setAttribute("style","fill:#ff00")
 	ns.appendChild(txt)
-	gid = self.last_line.node.label()+self.newID()
+	gid = self.last_line.node.getAttribute('inkscape:label')+self.newID()
 	self.ID[gid]=1
 	ns.setAttribute("id",gid)
 	ns.setAttribute("inkscape:groupmode","layer")
@@ -556,26 +556,11 @@ class MBScene():
 	    pass
 	pass
 
-    def DOMtoItem(self,obj):
-	"""
-	Find the corresponding PYSPObject object for a DOM object.
-	"""
-	return self.DOMtoItem_recursive(self.desktop.doc().root(),obj)
-
-    def DOMtoItem_recursive(self,tree,obj):
-	nodes = tree.childList()
-	for s in nodes:
-	    if s.getId() == obj.getAttribute('id'):
-	        return s
-	    d = self.DOMtoItem_recursive(s,obj)
-	    if d != None: return d
-	     
-
     def enterGroup(self,obj):
         for l in self.layers:
 	    for s in l.node.childList():
 	        if s.getAttribute('id') == obj.getAttribute("id"):
-		    self.desktop.setCurrentLayer(self.DOMtoItem(s))
+		    self.desktop.setCurrentLayer(s.spitem)
         
     def selectSceneObject(self,frameline, nth):
         i = 0
@@ -744,7 +729,7 @@ class MBScene():
 	if orig == None:
 	    return None
 	ns = orig.duplicate(rdoc)
-	gid = self.last_line.node.label()+self.newID()
+	gid = self.last_line.node.getAttribute("inkscape:label")+self.newID()
 	self.ID[gid]=1
 	ns.setAttribute("id",gid)
 	ns.setAttribute("inkscape:groupmode","layer")
