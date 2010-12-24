@@ -512,13 +512,17 @@ class MBScene():
 	    # Check the duplicated scene group and create it if it is not available
 	    try:
 	        if layer.duplicateGroup:
-		    layer.duplicateGroup.parent().removeChild(layer.duplicateGroup)
-		    layer.duplicateGroup = None
+	            layer.duplicateGroup.setAttribute("style","display:none")
 	    except:
-	        traceback.print_exc()
+	        print "*"*40
+	        layer.duplicateGroup = self.document.createElement("svg:g")
+	        layer.duplicateGroup.setAttribute("inkscape:label","dup")
+	        layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
+	        layer.duplicateGroup.setAttribute("style","")
+	        layer.layer.node.appendChild(layer.duplicateGroup)
 	        pass
 	    # Create a new group
-	    layer.duplicateGroup = None
+	    #layer.duplicateGroup = None
 
 
 	    while i < len(layer._keys):
@@ -536,19 +540,19 @@ class MBScene():
 		else:
 		    if nth > (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
 			if i+2 < len(layer._keys):
-			    layer.duplicateGroup = self.document.createElement("svg:g")
-			    layer.duplicateGroup.setAttribute("inkscape:label","dup")
-			    layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
+			    #s.ref.parent().appendChild(layer.duplicateGroup)
 			    s.ref.setAttribute("style","display:none")
-			    s.ref.parent().appendChild(layer.duplicateGroup)
+	                    layer.duplicateGroup.setAttribute("style","")
 			    self.tween.updateTweenContent(layer.duplicateGroup, layer.get_tween_type(s.idx),s, layer._keys[i+2], nth)
 			else:
-			    layer.duplicateGroup = s.ref.duplicate(self.document)
-			    layer.duplicateGroup.setAttribute("style","")
-			    layer.duplicateGroup.setAttribute("inkscape:label","dup")
-			    layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
+	                    layer.duplicateGroup.setAttribute("style","")
+			    #layer.duplicateGroup = s.ref.duplicate(self.document)
+			    #layer.duplicateGroup.setAttribute("style","")
+			    #layer.duplicateGroup.setAttribute("inkscape:label","dup")
+			    #layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
 			    s.ref.setAttribute("style","display:none")
-			    s.ref.parent().appendChild(layer.duplicateGroup)
+			    #s.ref.parent().appendChild(layer.duplicateGroup)
+			    pass
 		    else:
 		        s.ref.setAttribute("style","display:none")
 		i = i + 2
@@ -744,7 +748,7 @@ class MBScene():
 	if orig == None:
 	    return None
 	ns = orig.duplicate(rdoc)
-	gid = self.last_line.node.label()+self.newID()
+	gid = self.last_line.node.getAttribute('id')+self.newID()
 	self.ID[gid]=1
 	ns.setAttribute("id",gid)
 	ns.setAttribute("inkscape:groupmode","layer")
@@ -780,15 +784,23 @@ class MBScene():
 	self.lockui = False
 	#self.grid.show_all()
 	pass
+
     def changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
 	o.setAttribute("inkscape:label", self.nameEditor.get_text())
+
     def addNameEditor(self,hbox):
 	self.nameEditor = gtk.Entry(max=40)
 	hbox.pack_start(self.nameEditor,expand=False,fill=False)
 	self.editDone = gtk.Button('Set')
 	hbox.pack_start(self.editDone,expand=False,fill=False)
 	self.editDone.connect('clicked', self.changeObjectLabel)
+
+    def doRun(self):
+        """
+	    Execute the current animation till the last frame.
+	"""
+        
     
     def addButtons(self,hbox):
 	#btn = gtk.Button('Edit')
@@ -806,8 +818,12 @@ class MBScene():
 	btn=gtk.Button('Duplicate Key')
 	btn.connect('clicked', self.doDuplicateKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
+	btn=gtk.Button('Run')
+	btn.connect('clicked', self.doRun)
+	hbox.pack_start(btn,expand=False,fill=False)
 	self.addNameEditor(hbox)
 	self.addTweenTypeSelector(hbox)
+
 	pass
     def onTweenTypeChange(self,w):
 	n = self.tweenTypeSelector.get_active()

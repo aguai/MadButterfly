@@ -39,7 +39,20 @@ class TweenObject:
 	d = dest.ref.firstChild()
 	sources={}
 	dests={}
-	
+	# Collect ref from the obj
+	o = obj.firstChild()
+	maps={}
+	while o:
+	    print "--->",o
+	    try:
+	        ref = o.getAttribute("ref")
+	    except:
+	        print o
+		ref = None
+
+	    if ref:
+	        maps[ref] = o
+	    o = o.next()
 	# Collect all objects
 	while d:
 	    try:
@@ -54,12 +67,17 @@ class TweenObject:
 	d = dest.ref.firstChild()
 	while s:
 	    print s,d
+	    sid = s.getAttribute("id")
+	    if maps.has_key(sid):
+	        o = maps[sid]
+	    else:
+	        o = None
 	    try:
 		label = s.getAttribute("inkscape:label")
 		# Use i8nkscape:label to identidy the equipvalent objects
 		if label:
 		    if dests.hasattr(label.value()):
-			self.updateTweenObject(obj,typ,s,dests[label.value()],percent)
+			self.updateTweenObject(obj,typ,s,dests[label.value()],percent,o)
 			s = s.next()
 			continue
 	    except:
@@ -73,7 +91,7 @@ class TweenObject:
 		except:
 		    pass
 		if s.name() == d.name():
-		    self.updateTweenObject(obj,typ,s,d,percent)
+		    self.updateTweenObject(obj,typ,s,d,percent,o)
 		    d = d.next()
 		    break
 		d = d.next()
@@ -145,15 +163,15 @@ class TweenObject:
 	return [sx,sy, R, E,F]
 
 	    
-    def updateTweenObject(self,obj,typ,s,d,p):
+    def updateTweenObject(self,obj,typ,s,d,p,newobj):
 	"""
 	    Generate tweened object in the @obj by using s and d in the @p percent
 	    http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
 	"""
 	if typ == 'relocate':
 	    newobj = s.duplicate(self.document)
-	    newobj.setAttribute("ref", s.getAttribute("id"))
 	    top = self.document.createElement("svg:g")
+	    top.setAttribute("ref", s.getAttribute("id"))
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
 	    if s.name() == 'svg:g':
@@ -176,7 +194,7 @@ class TweenObject:
 		    pass
 	    pass
 	elif typ == 'scale':
-	    self.updateTweenObjectScale(obj,s,d,p)
+	    self.updateTweenObjectScale(obj,s,d,p,newobj)
 	    pass
 	elif typ == 'normal':
 	    newobj = s.duplicate(self.document)
@@ -186,7 +204,7 @@ class TweenObject:
 	    obj.appendChild(top)
 	pass
 
-    def updateTweenObjectScale(self,obj,s,d,p):
+    def updateTweenObjectScale(self,obj,s,d,p,newobj):
         """
 	    Generate a new group which contains the original group and then 
 	    add the transform matrix to generate a tween frame between the 
@@ -195,10 +213,15 @@ class TweenObject:
 	    We will parse the transform matrix of the @s and @d and then 
 	    generate the matrix which is (1-p) of @s and p percent of @d.
 	"""
-        newobj = s.duplicate(self.document)
-        top = self.document.createElement("svg:g")
-	top.appendChild(newobj)
-	obj.appendChild(top)
+	if newobj == None:
+            newobj = s.duplicate(self.document)
+            top = self.document.createElement("svg:g")
+	    top.setAttribute("ref",s.getAttribute("id"))
+	    top.appendChild(newobj)
+	    obj.appendChild(top)
+	else:
+	    top = newobj
+	    newobj = top.firstChild()
 	        
 	if s.name() == 'svg:g':
 	    # Parse the translate or matrix
@@ -224,8 +247,8 @@ class TweenObject:
 	    sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
 	    sy = (ss[1]*(1-p)+dd[1]*p)/ss[0]
 	    a  = ss[2]*(1-p)+dd[2]*p-ss[2]
-	    tx = ox*(1-p)+dx*p-ox
-	    ty = oy*(1-p)+dy*p-oy
+	    tx = ox*(1-p)+dx*p
+	    ty = oy*(1-p)+dy*p
 	    m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
 	    m = self.mulA([sx,0,0,sy,0,0],m)
 	    m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
@@ -234,10 +257,22 @@ class TweenObject:
 	    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
         else:
 	    try:
-	        sw = float(s.getAttribute("width"))
-  	        sh = float(s.getAttribute("height"))
-		dw = float(d.getAttribute("width"))
-		dh = float(d.getAttribute("height"))
+	        try:
+	            sw = float(s.getAttribute("width"))
+		except:
+		    sw = 1
+		try:
+  	            sh = float(s.getAttribute("height"))
+		except:
+		    sh = 1
+		try:
+		    dw = float(d.getAttribute("width"))
+		except:
+		    dw = 1
+		try:
+		    dh = float(d.getAttribute("height"))
+		except:
+		    dh = 1
 	        try:
 	            item = self.nodeToItem[s.getAttribute("id")]
 		    (ox,oy) = item.getCenter()
@@ -259,12 +294,15 @@ class TweenObject:
 		try:
 		    dm = self.parseTransform(d)
 		    dd = self.decomposition(dm)
+		    print "dd=",dd
 		except:
 		    dd = [1,1,0,0,0]
-		dd[0] = ss[0]*dw/sw
-		dd[1] = ss[1]*dh/sh
+		dd[0] = dd[0]*dw/sw
+		dd[1] = dd[1]*dh/sh
+		print "ss[0]=",ss[0],"dd[0]=",dd[0]
 		sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
 		sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
+		print "sx=",sx,"sy=",sy
 		a  = ss[2]*(1-p)+dd[2]*p-ss[2]
 		tx = ox*(1-p)+dx*p
 		ty = oy*(1-p)+dy*p
