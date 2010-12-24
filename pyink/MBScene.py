@@ -14,7 +14,7 @@ import math
 from tween import TweenObject
 
 # Please refer to
-# http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
+# http://www.assembla.com/wiki/show/MadButterfly/InkscapeForMadButterfly
 # for the designed document.
 
 
