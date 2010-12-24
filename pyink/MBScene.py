@@ -14,7 +14,7 @@ import math
 from tween import TweenObject
 
 # Please refer to
-# http://www.assembla.com/wiki/show/MadButterfly/InkscapeForMadButterfly
+# http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
 # for the designed document.
 
 
@@ -98,7 +98,6 @@ _scene = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene'
 class LayerAttributeWatcher(pybInkscape.PYNodeObserver):
     def __init__(self,ui):
         self.ui = ui
-
     def notifyChildAdded(self,node,child,prev):
         pass
 
@@ -155,6 +154,8 @@ class MBScene():
 	self.tween=None
 	self.document = None
 	self.dom = None
+	self.framerate=12
+	self.maxframe=0
 	pass
 
     def show_selection(self,w,obj):
@@ -219,13 +220,15 @@ class MBScene():
 			    traceback.print_exc()
 			    continue
 			try:
-			    end = s.getAttribute("end")
+			    end = int(s.getAttribute("end"))
 			    if end == None:
 				end = start
 				pass
 			except:
 			    end = start
 			    pass
+			if end > self.maxframe:
+			    self.maxframe = end
 			try:
 			    typ = s.getAttribute('type')
 			    if typ == None:
@@ -335,6 +338,7 @@ class MBScene():
 		    pass
 		pass
 	    pass
+
 
 	self.collectID()
 	self.dumpID()
@@ -525,20 +529,19 @@ class MBScene():
 	"""
 	    Update the scene group according to the curretn scene
 	    data. There are a couple of cases.
-
-	    1. If the type of the scene is normal, we display it when
-	       it contains the current frame. Otherwise hide it.
-
-	    2. If the type of the scene is relocate or scale, we need
-	       to duplicate the scene group and then modify its
-	       transform matrix according to the definition of the
-	       scene. Then, hide the original scenr group and display
-	       the duplciate scene group. In addition, we may need to
+	    1. If the type of the scene is normal, we display it when 
+	    it contains the current frame. Otherwise hide it.
+	    2. If the type of the scene is relocate or scale, we need 
+	       to duplicate the scene group and then modify its 
+	       transform matrix according to the definition of the 
+	       scene. Then, hide the original scenr group and display 
+	       the duplciate scene group. In addition, we may need to 
 	       delete the old duplicated scene group as well.
 
-	    For each layer, we will always use the duplicated scene
-	    group whose name as dup.  We will put the duplicated scene
-	    group inside it. We will create this group if it is not
+	    For each layer, we will always use the duplicated scene 
+	    group whose name as dup.
+	    We will put the duplicated scene group inside it. We will 
+	    create this group if it is not
 	    available.
 	"""
 	self.current = nth
@@ -549,15 +552,17 @@ class MBScene():
 	    # Check the duplicated scene group and create it if it is not available
 	    try:
 	        if layer.duplicateGroup:
-		    layer.duplicateGroup.parent().removeChild(layer.duplicateGroup)
-		    layer.duplicateGroup = None
+	            layer.duplicateGroup.setAttribute("style","display:none")
 	    except:
-	        traceback.print_exc()
+	        print "*"*40
+	        layer.duplicateGroup = self.document.createElement("svg:g")
+	        layer.duplicateGroup.setAttribute("inkscape:label","dup")
+	        layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
+	        layer.duplicateGroup.setAttribute("style","")
+	        layer.layer.node.appendChild(layer.duplicateGroup)
 	        pass
 	    # Create a new group
-	    layer.duplicateGroup = None
-
-
+#layer.duplicateGroup = None
 	    while i < len(layer._keys):
 	        s = layer._keys[i]
 		print s.ref.getAttribute("id"),s.idx,s.left_tween,s.right_tween
@@ -573,25 +578,40 @@ class MBScene():
 		else:
 		    if nth > (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
 			if i+2 < len(layer._keys):
-			    layer.duplicateGroup = self.document.createElement("svg:g")
-			    layer.duplicateGroup.setAttribute("inkscape:label","dup")
-			    layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
+			    #s.ref.parent().appendChild(layer.duplicateGroup)
 			    s.ref.setAttribute("style","display:none")
-			    s.ref.parent().appendChild(layer.duplicateGroup)
+	                    layer.duplicateGroup.setAttribute("style","")
 			    self.tween.updateTweenContent(layer.duplicateGroup, layer.get_tween_type(s.idx),s, layer._keys[i+2], nth)
 			else:
-			    layer.duplicateGroup = s.ref.duplicate(self.document)
-			    layer.duplicateGroup.setAttribute("style","")
-			    layer.duplicateGroup.setAttribute("inkscape:label","dup")
-			    layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
+	                    layer.duplicateGroup.setAttribute("style","")
+			    #layer.duplicateGroup = s.ref.duplicate(self.document)
+			    #layer.duplicateGroup.setAttribute("style","")
+			    #layer.duplicateGroup.setAttribute("inkscape:label","dup")
+			    #layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
 			    s.ref.setAttribute("style","display:none")
-			    s.ref.parent().appendChild(layer.duplicateGroup)
+			    #s.ref.parent().appendChild(layer.duplicateGroup)
+			    pass
 		    else:
 		        s.ref.setAttribute("style","display:none")
 		i = i + 2
 		pass
 	    pass
 	pass
+
+    def DOMtoItem(self,obj):
+	"""
+	Find the corresponding PYSPObject object for a DOM object.
+	"""
+	return self.DOMtoItem_recursive(self.desktop.doc().root(),obj)
+
+    def DOMtoItem_recursive(self,tree,obj):
+	nodes = tree.childList()
+	for s in nodes:
+	    if s.getId() == obj.getAttribute('id'):
+	        return s
+	    d = self.DOMtoItem_recursive(s,obj)
+	    if d != None: return d
+	     
 
     def enterGroup(self,obj):
         for l in self.layers:
@@ -819,6 +839,7 @@ class MBScene():
 	self.lockui = False
 	#self.grid.show_all()
 	pass
+
     def changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
 	o.setAttribute("inkscape:label", self.nameEditor.get_text())
@@ -832,6 +853,25 @@ class MBScene():
 	self.editDone.connect('clicked', self.changeObjectLabel)
 	pass
 
+    def doRun(self,arg):
+        """
+	    Execute the current animation till the last frame.
+	"""
+	if self.btnRun.get_label() == "Run":
+	    self.btnRun.set_label("Stop")
+            self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
+	else:
+	    self.btnRun.set_label("Run")
+	    glib.source_remove(self.last_update)
+
+    def doRunNext(self):
+	if self.current >= self.maxframe:
+	    self.current = 0
+	print self.current,self.maxframe
+	self.setCurrentScene(self.current+1)
+        self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
+        
+    
     def addButtons(self,hbox):
 	#btn = gtk.Button('Edit')
 	#btn.connect('clicked', self.doEditScene)
@@ -848,8 +888,13 @@ class MBScene():
 	btn=gtk.Button('Duplicate Key')
 	btn.connect('clicked', self.doDuplicateKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
+	btn=gtk.Button('Run')
+	btn.connect('clicked', self.doRun)
+	self.btnRun = btn
+	hbox.pack_start(btn,expand=False,fill=False)
 	self.addNameEditor(hbox)
 	self.addTweenTypeSelector(hbox)
+
 	pass
 
     def onTweenTypeChange(self,w):
