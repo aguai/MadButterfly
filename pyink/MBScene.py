@@ -98,29 +98,48 @@ _scene = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene'
 class LayerAttributeWatcher(pybInkscape.PYNodeObserver):
     def __init__(self,ui):
         self.ui = ui
+
     def notifyChildAdded(self,node,child,prev):
         pass
+
     def notifyChildRemoved(self,node,child,prev):
         pass
+
     def notifyChildOrderChanged(self,node,child,prev):
         pass
+
     def notifyContentChanged(self,node,old_content,new_content):
         pass
+
     def notifyAttributeChanged(self,node, name, old_value, new_value):
         self.ui.updateUI()
+	pass
+
 class LayerAddRemoveWatcher(pybInkscape.PYNodeObserver):
     def __init__(self,ui):
         self.ui = ui
+	pass
+
     def notifyChildAdded(self,node,child,prev):
         self.ui.updateUI()
+	pass
+
     def notifyChildRemoved(self,node,child,prev):
         self.ui.updateUI()
+	pass
+
     def notifyChildOrderChanged(self,node,child,prev):
         self.ui.updateUI()
+	pass
+
     def notifyContentChanged(self,node,old_content,new_content):
         self.ui.updateUI()
+	pass
+
     def notifyAttributeChanged(self,node, name, old_value, new_value):
         self.ui.updateUI()
+	pass
+
 class MBScene():
     def __init__(self,desktop,win):
 	self.desktop = desktop
@@ -155,6 +174,7 @@ class MBScene():
 	except:
 	    self.nameEditor.set_text('')
 	    pass
+	pass
 
     def confirm(self,msg):
 	vbox = gtk.VBox()
@@ -228,6 +248,9 @@ class MBScene():
 	    self.dom.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
 	    scenes = self.document.createElement("ns0:scenes")
 	    node.appendChild(scenes)
+	    pass
+	pass
+    
     def update(self):
         doc = self.dom
 	rdoc = self.document
@@ -241,7 +264,12 @@ class MBScene():
 			for layer in range(0,len(self._framelines)):
 			    lobj = self._framelines[layer]
 			    lobj.addScenes(rdoc,ns)
-    
+			    pass
+			pass
+		    pass
+		pass
+	    pass
+	pass
     
     def parseScene(self):
 	"""
@@ -265,6 +293,7 @@ class MBScene():
 	except:
 	    self.width = 640
 	    self.height=480
+	    pass
 	    
 	for node in doc.childList():
 	    print node.name()
@@ -306,7 +335,6 @@ class MBScene():
 		    pass
 		pass
 	    pass
-
 
 	self.collectID()
 	self.dumpID()
@@ -417,6 +445,9 @@ class MBScene():
 	        self.last_line.update()
 		return
 	    i = i + 1
+	    pass
+	pass
+    
     def extendScene(self):
 	nth = self.last_frame
 	layer = self.last_line
@@ -492,16 +523,22 @@ class MBScene():
     
     def setCurrentScene(self,nth):
 	"""
-	    Update the scene group according to the curretn scene data. There are a couple of cases.
-	    1. If the type of the scene is normal, we display it when it contains the current 
-	       frame. Otherwise hide it.
-	    2. If the type of the scene is relocate or scale, we need to duplicate the scene group
-	       and then modify its transform matrix according to the definition of the scene. Then,
-	       hide the original scenr group and display the duplciate scene group. In addition,
-	       we may need to delete the old duplicated scene group as well.
+	    Update the scene group according to the curretn scene
+	    data. There are a couple of cases.
 
-	    For each layer, we will always use the duplicated scene group whose name as dup.
-	    We will put the duplicated scene group inside it. We will create this group if it is not
+	    1. If the type of the scene is normal, we display it when
+	       it contains the current frame. Otherwise hide it.
+
+	    2. If the type of the scene is relocate or scale, we need
+	       to duplicate the scene group and then modify its
+	       transform matrix according to the definition of the
+	       scene. Then, hide the original scenr group and display
+	       the duplciate scene group. In addition, we may need to
+	       delete the old duplicated scene group as well.
+
+	    For each layer, we will always use the duplicated scene
+	    group whose name as dup.  We will put the duplicated scene
+	    group inside it. We will create this group if it is not
 	    available.
 	"""
 	self.current = nth
@@ -561,7 +598,11 @@ class MBScene():
 	    for s in l.node.childList():
 	        if s.getAttribute('id') == obj.getAttribute("id"):
 		    self.desktop.setCurrentLayer(s.spitem)
-        
+		    pass
+		pass
+	    pass
+	pass
+    
     def selectSceneObject(self,frameline, nth):
         i = 0
         while i < len(frameline._keys):
@@ -585,6 +626,7 @@ class MBScene():
 	    i = i + 2
 	    pass
         pass
+
     def setTweenType(self,typ):
         if typ == 'normal':
 	    self.tweenTypeSelector.set_active(0)
@@ -592,8 +634,8 @@ class MBScene():
 	    self.tweenTypeSelector.set_active(1)
         elif typ == 'scale':
 	    self.tweenTypeSelector.set_active(2)
-
-	
+	    pass
+	pass
 	
     def newCell(self,file):
 	img = gtk.Image()
@@ -611,7 +653,7 @@ class MBScene():
 	self.lockui = True
         self.doEditScene(frame)
 	self.lockui = False
-        
+        pass
         
     def _remove_active_frame(self,widget,event):
         """
@@ -621,6 +663,9 @@ class MBScene():
         for f in self._framelines:
 	    if f != widget:
 	        f.hide_hover()
+		pass
+	    pass
+	pass
 	    
     def _create_framelines(self):
 	import frameline
@@ -695,6 +740,7 @@ class MBScene():
 	color = cell.get_colormap().alloc_color("green")
 	cell.modify_bg(gtk.STATE_NORMAL, color)
 	pass
+
     def duplicateKeyScene(self):
         self.last_line.add_keyframe(self.last_frame)
         # Search for the current scene
@@ -714,6 +760,9 @@ class MBScene():
 		return
 	    last_key = key
 	    i = i + 1
+	    pass
+	pass
+
     def duplicateSceneGroup(self,gid):
 	# Search for the duplicated group
         doc = self.dom
@@ -726,6 +775,10 @@ class MBScene():
 			if t.getAttribute("id") == gid:
 			    orig = t
 			    break
+			pass
+		    pass
+		pass
+	    pass
 	if orig == None:
 	    return None
 	ns = orig.duplicate(rdoc)
@@ -747,6 +800,7 @@ class MBScene():
 	self.lockui=False
 	# self.grid.show_all()
 	return
+    
     def doDuplicateKeyScene(self,w):
 	self.lockui = True
         self.duplicateKeyScene()
@@ -768,13 +822,16 @@ class MBScene():
     def changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
 	o.setAttribute("inkscape:label", self.nameEditor.get_text())
+	pass
+
     def addNameEditor(self,hbox):
 	self.nameEditor = gtk.Entry(max=40)
 	hbox.pack_start(self.nameEditor,expand=False,fill=False)
 	self.editDone = gtk.Button('Set')
 	hbox.pack_start(self.editDone,expand=False,fill=False)
 	self.editDone.connect('clicked', self.changeObjectLabel)
-    
+	pass
+
     def addButtons(self,hbox):
 	#btn = gtk.Button('Edit')
 	#btn.connect('clicked', self.doEditScene)
@@ -794,6 +851,7 @@ class MBScene():
 	self.addNameEditor(hbox)
 	self.addTweenTypeSelector(hbox)
 	pass
+
     def onTweenTypeChange(self,w):
 	n = self.tweenTypeSelector.get_active()
 	if self.last_line == None:
@@ -824,6 +882,7 @@ class MBScene():
 	self.last_line.set_tween_type(found,self.tweenTypeSelector.get_active_text())
 	self.last_line.update()
 	self.update()
+	pass
 
     def addTweenTypeSelector(self,hbox):
 	tweenbox = gtk.HBox()
@@ -838,6 +897,7 @@ class MBScene():
 	tweenbox.pack_start(self.tweenTypeSelector, expand=False,fill=False)
 	hbox.pack_start(tweenbox,expand=False,fill=False)
 	self.tweenTypeSelector.connect('changed', self.onTweenTypeChange)
+	pass
     
     def onQuit(self, event):
 	self.OK = False
@@ -854,10 +914,14 @@ class MBScene():
         self.lockui = True
 	self._updateUI()
 	self.lockui = False
+	pass
+    
     def _updateUI(self,node=None,arg=None):
         if self.last_update!= None:
             glib.source_remove(self.last_update)
         self.last_update = glib.timeout_add(300,self.show)
+	pass
+    
     def show(self):
 	self.OK = True
 	self.dom = self.desktop.doc().root().repr
