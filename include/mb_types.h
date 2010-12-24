@@ -326,9 +326,9 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
  */
 #define coord_move(co,x,y) do {(co)->matrix[2] = (x); (co)->matrix[5] = (y);} while(0)
 #define coord_set_scalex(co,sx) do {(co)->matrix[0] = sx;} while(0)
-#define coord_set_scaley(co,sy) do {(co)->matrix[3] = sy;} while(0)
+#define coord_set_scaley(co,sy) do {(co)->matrix[4] = sy;} while(0)
 #define coord_scalex(co) ((co)->matrix[0])
-#define coord_scaley(co) ((co)->matrix[3])
+#define coord_scaley(co) ((co)->matrix[4])
 #define coord_x(co) ((co)->matrix[2])
 #define coord_y(co) ((co)->matrix[5])
 #define FOR_COORD_MEMBERS(coord, geo)			\
