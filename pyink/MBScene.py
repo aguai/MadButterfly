@@ -136,6 +136,8 @@ class MBScene():
 	self.tween=None
 	self.document = None
 	self.dom = None
+	self.framerate=12
+	self.maxframe=0
 	pass
 
     def show_selection(self,w,obj):
@@ -199,13 +201,15 @@ class MBScene():
 			    traceback.print_exc()
 			    continue
 			try:
-			    end = s.getAttribute("end")
+			    end = int(s.getAttribute("end"))
 			    if end == None:
 				end = start
 				pass
 			except:
 			    end = start
 			    pass
+			if end > self.maxframe:
+			    self.maxframe = end
 			try:
 			    typ = s.getAttribute('type')
 			    if typ == None:
@@ -796,10 +800,23 @@ class MBScene():
 	hbox.pack_start(self.editDone,expand=False,fill=False)
 	self.editDone.connect('clicked', self.changeObjectLabel)
 
-    def doRun(self):
+    def doRun(self,arg):
         """
 	    Execute the current animation till the last frame.
 	"""
+	if self.btnRun.get_label() == "Run":
+	    self.btnRun.set_label("Stop")
+            self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
+	else:
+	    self.btnRun.set_label("Run")
+	    glib.source_remove(self.last_update)
+
+    def doRunNext(self):
+	if self.current >= self.maxframe:
+	    self.current = 0
+	print self.current,self.maxframe
+	self.setCurrentScene(self.current+1)
+        self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
         
     
     def addButtons(self,hbox):
@@ -820,6 +837,7 @@ class MBScene():
 	hbox.pack_start(btn,expand=False,fill=False)
 	btn=gtk.Button('Run')
 	btn.connect('clicked', self.doRun)
+	self.btnRun = btn
 	hbox.pack_start(btn,expand=False,fill=False)
 	self.addNameEditor(hbox)
 	self.addTweenTypeSelector(hbox)
