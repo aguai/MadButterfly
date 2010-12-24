@@ -61,6 +61,7 @@ class DOM(pybInkscape.PYSPObject):
     def __init__(self,obj=None):
         self.proxy = obj
 	pass
+    
     def duplicate(self,doc):
 	return DOM(self.repr.duplicate(doc))
 
@@ -140,7 +141,7 @@ class LayerAddRemoveWatcher(pybInkscape.PYNodeObserver):
 	pass
 
 class MBScene():
-    def __init__(self,desktop,win):
+    def __init__(self, desktop, win, root=None):
 	self.desktop = desktop
 	self.window = win
 	self.layers = []
@@ -153,7 +154,7 @@ class MBScene():
 	self.lockui=False
 	self.tween=None
 	self.document = None
-	self.dom = None
+	self.root = root
 	self.framerate=12
 	self.maxframe=0
 	pass
@@ -248,14 +249,14 @@ class MBScene():
 	pass
 	if self.scenemap==None:
 	    #self.desktop.doc().root().repr.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
-	    self.dom.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
+	    self.root.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
 	    scenes = self.document.createElement("ns0:scenes")
 	    node.appendChild(scenes)
 	    pass
 	pass
     
     def update(self):
-        doc = self.dom
+        doc = self.root
 	rdoc = self.document
 	for node in doc.childList():
 	    if node.name() == 'svg:metadata':
@@ -282,7 +283,7 @@ class MBScene():
 	"""
 	self.layers = []
 	self.scenemap = None
-	doc = self.dom
+	doc = self.root
 
         #obs = pybInkscape.PYNodeObserver()
         #obs = LayerAddRemoveWatcher(self)
@@ -346,7 +347,7 @@ class MBScene():
 
     def collectID(self):
 	self.ID = {}
-	root = self.dom
+	root = self.root
 	for n in root.childList():
 	    self.collectID_recursive(n)
 	    pass
@@ -785,7 +786,7 @@ class MBScene():
 
     def duplicateSceneGroup(self,gid):
 	# Search for the duplicated group
-        doc = self.dom
+        doc = self.root
 	rdoc = self.document
 	orig = None
 	for node in doc.childList():
@@ -969,9 +970,12 @@ class MBScene():
     
     def show(self):
 	self.OK = True
-	self.dom = self.desktop.doc().root().repr
+	if not self.root:
+	    self.root = self.desktop.doc().root().repr
+	    pass
+	
 	self.document = self.desktop.doc().rdoc
-	self.tween = TweenObject(self.document,self.dom)
+	self.tween = TweenObject(self.document, self.root)
 	self.parseScene()
 	self._create_framelines()
 	self._update_framelines()
