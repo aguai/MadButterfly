@@ -1,3 +1,14 @@
+import os
+
+try:
+    if os.environ['PYINK_DBG_ENABLE'] == 'yes':
+        import pdb
+        pdb.set_trace()
+        pass
+    pass
+except:
+    pass
+
 import pybInkscape
 import pygtk
 import gtk

@@ -26,8 +26,10 @@ class TweenObject:
 	        pass
     def updateTweenContent(self,obj, typ, source,dest,cur):
 	"""
-	    Update the content of the duplicate scene group. We will use the (start,end) and cur to calculate the percentage of
-	    the tween motion effect and then use it to update the transform matrix of the duplicated scene group.
+	    Update the content of the duplicate scene group. We will
+	    use the (start,end) and cur to calculate the percentage of
+	    the tween motion effect and then use it to update the
+	    transform matrix of the duplicated scene group.
 	"""
 
 	start = source.idx
@@ -76,8 +78,9 @@ class TweenObject:
 		label = s.getAttribute("inkscape:label")
 		# Use i8nkscape:label to identidy the equipvalent objects
 		if label:
-		    if dests.hasattr(label.value()):
-			self.updateTweenObject(obj,typ,s,dests[label.value()],percent,o)
+		    if dests.has_key(label):
+			self.updateTweenObject(obj, typ, s,
+					       dests[label], percent, o)
 			s = s.next()
 			continue
 	    except:
@@ -168,18 +171,29 @@ class TweenObject:
 	    Generate tweened object in the @obj by using s and d in the @p percent
 	    http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
 	"""
-	if typ == 'relocate':
-	    newobj = s.duplicate(self.document)
-	    top = self.document.createElement("svg:g")
-	    top.setAttribute("ref", s.getAttribute("id"))
-	    top.appendChild(newobj)
-	    obj.appendChild(top)
+	if typ == 1:
 	    if s.name() == 'svg:g':
+		if not newobj:
+		    newobj = s.duplicate(self.document)
+		    top = self.document.createElement("svg:g")
+		    top.setAttribute("ref", s.getAttribute("id"))
+		    top.appendChild(newobj)
+		    obj.appendChild(top)
+		else:
+		    top = newobj
+		    pass
 		# Parse the translate or matrix
 		sm = self.parseTransform(s)
 		dm = self.parseTransform(d)
 		top.setAttribute("transform","translate(%g,%g)" % ((dm[2]-sm[2])*p,(dm[5]-sm[5])*p))
 	    else:
+		if not newobj:
+		    top = s.duplicate(self.document)
+		    top.setAttribute('ref', s.getAttribute('id'))
+		    obj.appendChild(top)
+		else:
+		    top = newobj
+		    pass
 		try:
 		    sx = float(s.getAttribute("x"))
 		    sy = float(s.getAttribute("y"))
@@ -193,10 +207,10 @@ class TweenObject:
 		    traceback.print_exc()
 		    pass
 	    pass
-	elif typ == 'scale':
+	elif typ == 2:
 	    self.updateTweenObjectScale(obj,s,d,p,newobj)
 	    pass
-	elif typ == 'normal':
+	elif typ == 0:
 	    newobj = s.duplicate(self.document)
 	    newobj.setAttribute("ref", s.getAttribute("id"))
 	    top = self.document.createElement("svg:g")
