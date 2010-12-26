@@ -1,6 +1,6 @@
 #!/usr/bin/python
-# -*- indent-tabs-mode: t; tab-width: 8; python-indent: 4; -*-
-# vim: sw=4:ts=8:sts=4
+# -*- indent-tabs-mode: t; tab-width: 8; python-indent: 4; fill-column: 79 -*-
+# vim: sw=4:ts=8:sts=4:textwidth=79
 import pygtk
 import gtk
 import glib
@@ -12,6 +12,7 @@ import time
 import pybInkscape
 import math
 from tween import TweenObject
+from frameline import frameline, frameruler
 
 # Please refer to
 # http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
@@ -141,6 +142,11 @@ class LayerAddRemoveWatcher(pybInkscape.PYNodeObserver):
 	pass
 
 class MBScene():
+    _tween_types = (frameline.TWEEN_TYPE_NONE,
+		    frameline.TWEEN_TYPE_MOVE,
+		    frameline.TWEEN_TYPE_SHAPE)
+    _tween_type_names = ('normal', 'relocate', 'scale')
+    
     def __init__(self, desktop, win, root=None):
 	self.desktop = desktop
 	self.window = win
@@ -157,6 +163,7 @@ class MBScene():
 	self.root = root
 	self.framerate=12
 	self.maxframe=0
+	self._disable_tween_type_selector = False
 	pass
 
     def show_selection(self,w,obj):
@@ -267,7 +274,7 @@ class MBScene():
 			node.appendChild(ns)
 			for layer in range(0,len(self._framelines)):
 			    lobj = self._framelines[layer]
-			    lobj.addScenes(rdoc,ns)
+			    self.addScenes(lobj, ns)
 			    pass
 			pass
 		    pass
@@ -285,9 +292,6 @@ class MBScene():
 	self.scenemap = None
 	doc = self.root
 
-        #obs = pybInkscape.PYNodeObserver()
-        #obs = LayerAddRemoveWatcher(self)
-        #doc.addObserver(obs)
 	addEventListener(doc,'DOMNodeInserted',self.updateUI,None)
 	addEventListener(doc,'DOMNodeRemoved',self.updateUI,None)
 	doc.childList()
@@ -413,8 +417,7 @@ class MBScene():
 	print 'Add key ', x
 	self.last_line.add_keyframe(x,ns)
 	self.update()
-	self.last_line.update()
-    
+	pass
 
     def removeKeyScene(self):
 	nth = self.last_frame
@@ -552,8 +555,7 @@ class MBScene():
 
 	    # Check the duplicated scene group and create it if it is not available
 	    try:
-	        if layer.duplicateGroup:
-	            layer.duplicateGroup.setAttribute("style","display:none")
+		layer.duplicateGroup.setAttribute("style","display:none")
 	    except:
 	        print "*"*40
 	        layer.duplicateGroup = self.document.createElement("svg:g")
@@ -574,23 +576,22 @@ class MBScene():
 		        s.ref.setAttribute("style","display:none")
 		    i = i + 1
 		    continue
+		
 		if nth == s.idx + 1:
 		    s.ref.setAttribute("style","")
 		else:
 		    if nth > (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
 			if i+2 < len(layer._keys):
-			    #s.ref.parent().appendChild(layer.duplicateGroup)
 			    s.ref.setAttribute("style","display:none")
 	                    layer.duplicateGroup.setAttribute("style","")
-			    self.tween.updateTweenContent(layer.duplicateGroup, layer.get_tween_type(s.idx),s, layer._keys[i+2], nth)
+			    d = layer._keys[i + 2]
+			    self.tween.\
+				updateTweenContent(layer.duplicateGroup,
+						   layer.get_tween_type(s.idx),
+						   s, d, nth)
 			else:
 	                    layer.duplicateGroup.setAttribute("style","")
-			    #layer.duplicateGroup = s.ref.duplicate(self.document)
-			    #layer.duplicateGroup.setAttribute("style","")
-			    #layer.duplicateGroup.setAttribute("inkscape:label","dup")
-			    #layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
 			    s.ref.setAttribute("style","display:none")
-			    #s.ref.parent().appendChild(layer.duplicateGroup)
 			    pass
 		    else:
 		        s.ref.setAttribute("style","display:none")
@@ -598,21 +599,6 @@ class MBScene():
 		pass
 	    pass
 	pass
-
-    def DOMtoItem(self,obj):
-	"""
-	Find the corresponding PYSPObject object for a DOM object.
-	"""
-	return self.DOMtoItem_recursive(self.desktop.doc().root(),obj)
-
-    def DOMtoItem_recursive(self,tree,obj):
-	nodes = tree.childList()
-	for s in nodes:
-	    if s.getId() == obj.getAttribute('id'):
-	        return s
-	    d = self.DOMtoItem_recursive(s,obj)
-	    if d != None: return d
-	     
 
     def enterGroup(self,obj):
         for l in self.layers:
@@ -648,14 +634,11 @@ class MBScene():
 	    pass
         pass
 
-    def setTweenType(self,typ):
-        if typ == 'normal':
-	    self.tweenTypeSelector.set_active(0)
-        elif typ == 'relocate':
-	    self.tweenTypeSelector.set_active(1)
-        elif typ == 'scale':
-	    self.tweenTypeSelector.set_active(2)
-	    pass
+    def setTweenType(self, tween_type):
+	sel_type = MBScene._tween_types.index(tween_type)
+	self._disable_tween_type_selector = True
+	self.tweenTypeSelector.set_active(sel_type)
+	self._disable_tween_type_selector = False
 	pass
 	
     def newCell(self,file):
@@ -689,7 +672,6 @@ class MBScene():
 	pass
 	    
     def _create_framelines(self):
-	import frameline
 	self.scrollwin = gtk.ScrolledWindow()
 	self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	self.scrollwin.set_size_request(-1,150)
@@ -700,7 +682,7 @@ class MBScene():
 	vbox.show()
 	self.scrollwin.add_with_viewport(vbox)
 	
-	ruler = frameline.frameruler(nframes)
+	ruler = frameruler(nframes)
 	ruler.set_size_request(nframes * 10, 20)
 	ruler.show()
 	hbox = gtk.HBox()
@@ -715,7 +697,7 @@ class MBScene():
 	#
 	self._framelines = []
 	for i in range(len(self.layers)-1,-1,-1):
-	    line = frameline.frameline(nframes)
+	    line = frameline(nframes)
 	    hbox = gtk.HBox()
 	    label = gtk.Label(self.layers[i].node.getAttribute("inkscape:label"))
 	    label.set_size_request(100,0)
@@ -746,7 +728,9 @@ class MBScene():
 		frameline.add_keyframe(scene.start-1,scene.node)
 		if scene.start != scene.end:
 		    frameline.add_keyframe(scene.end-1,scene.node)
-		    frameline.tween(scene.start-1,scene.type)
+		    tween_type_idx = self._tween_type_names.index(scene.type)
+		    tween_type = self._tween_types[tween_type_idx]
+		    frameline.tween(scene.start-1, tween_type)
 		pass
 	    pass
 	pass
@@ -895,39 +879,25 @@ class MBScene():
 	hbox.pack_start(btn,expand=False,fill=False)
 	self.addNameEditor(hbox)
 	self.addTweenTypeSelector(hbox)
-
 	pass
 
-    def onTweenTypeChange(self,w):
-	n = self.tweenTypeSelector.get_active()
+    def onTweenTypeChange(self, w):
+	if self._disable_tween_type_selector:
+	    return
+	
 	if self.last_line == None:
 	    return
 	frameline = self.last_line
         i = 0
 	found = -1
-        while i < len(frameline._keys):
-	    s = frameline._keys[i]
-	    if s.right_tween is False:
-	        if self.last_frame == s.idx:
-		    found = s.idx
-		    break
-		else:
-		    pass
-		i = i + 1
-		continue
-
-	    if self.last_frame >= s.idx and self.last_frame <= frameline._keys[i+1].idx:
-		found = s.idx
+	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
+	    if start_idx < stop_idx:
+		n = self.tweenTypeSelector.get_active()
+		new_tween_type = MBScene._tween_types[n]
+		self.last_line.set_tween_type(start_idx, new_tween_type)
+		self.update()
 		break
-	    else:
-	        pass
-	    i = i + 2
 	    pass
-        pass
-	if found == -1: return
-	self.last_line.set_tween_type(found,self.tweenTypeSelector.get_active_text())
-	self.last_line.update()
-	self.update()
 	pass
 
     def addTweenTypeSelector(self,hbox):
@@ -953,6 +923,24 @@ class MBScene():
     def onOK(self,event):
 	self.OK = True
 	gtk.main_quit()
+	pass
+
+    def addScenes(self, frameline, scenes_node):
+	doc = self.document
+	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
+	    ref = frameline.get_frame_data(start_idx)
+	    tween_type_idx = self._tween_types.index(tween_type)
+	    tween_type_name = self._tween_type_names[tween_type_idx]
+	    
+	    scene_node = doc.createElement("ns0:scene")
+	    scenes_node.appendChild(scene_node)
+	    scene_node.setAttribute("start", str(start_idx + 1))
+	    if start_idx != stop_idx:
+		scene_node.setAttribute("end", str(stop_idx + 1))
+		pass
+	    scene_node.setAttribute("ref", ref.attribute("id"))
+	    scene_node.setAttribute("type", tween_type_name)
+	    pass
 	pass
 
     def updateUI(self,node=None,arg=None):
@@ -984,6 +972,8 @@ class MBScene():
 	    self.desktop.getToplevel().child.child.pack_end(self.top,expand=False)
 	else:
 	    self.top.remove(self.startWindow)
+	    pass
+	
 	vbox = gtk.VBox(False,0)
 	self.startWindow = vbox
 	self.top.pack_start(vbox,expand=False)
@@ -991,10 +981,6 @@ class MBScene():
 	hbox=gtk.HBox(False,0)
 	self.addButtons(hbox)
 	vbox.pack_start(hbox,expand=False)
-
-	# self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-	# self.window.connect("destroy", gtk.main_quit)
-	# self.window.set_position(gtk.WIN_POS_MOUSE)
 
 	self.top.show_all()
 	self.last_update = None

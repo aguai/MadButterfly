@@ -1,3 +1,5 @@
+# -*- indent-tabs-mode: t; tab-width: 8; python-indent: 4; fill-column: 79 -*-
+# vim: sw=4:ts=8:sts=4:textwidth=79
 import pygtk
 pygtk.require("2.0")
 import gtk
@@ -16,7 +18,7 @@ class keyframe(object):
         self.left_tween = False
         self.right_tween = False
         self.right_tween_type = 0
-	self.ref=''
+	self.ref = ''
         pass
     pass
 
@@ -109,6 +111,9 @@ class frameruler(gtk.DrawingArea):
 # - 'frame-button-pree' for user press on a frame.
 #   - callback(widget, frame_idx, button)
 #
+# All methos that change state of the frameline, must call methods to update
+# the screen.
+#
 class frameline(gtk.DrawingArea):
     _type = 0
     _frame_width = 10           # Width for each frame is 10 pixels
@@ -116,17 +121,18 @@ class frameline(gtk.DrawingArea):
     _key_mark_color = 0x000000  # color of marks for key frames.
     _key_mark_sz = 4            # width and height of a key frame mark
     _tween_color = 0x808080     # color of tween line
-    _tween_bgcolors = [0x80ff80, 0xff8080,0xffff80] # bg colors of tween frames
+    # bg colors of tween frames
+    _tween_bgcolors = [0x80ff80, 0xff8080, 0xffff80]
     # Colors for normal frames
     _normal_bgcolors = [0xffffff, 0xffffff, 0xffffff, 0xffffff, 0xcccccc]
     _normal_border = 0xaaaaaa   # border color of normal frames.
     _active_border = 0xff3030   # border color of an active frame
     _hover_border_color = 0xa0a0a0 # border when the pointer over a frame
-    # tween types
-    _tween_type_none=0
-    _tween_type_move=1
-    _tween_type_shape=2
     
+    # tween types
+    TWEEN_TYPE_NONE = 0
+    TWEEN_TYPE_MOVE = 1
+    TWEEN_TYPE_SHAPE = 2    
 
     FRAME_BUT_PRESS = 'frame-button-press'
     
@@ -155,20 +161,100 @@ class frameline(gtk.DrawingArea):
         self._drawing = False
         pass
 
+    def __len__(self):
+        return self._num_frames
+    
+    def _find_keyframe(self, idx):
+	key_indic = [key.idx for key in self._keys]
+	key_pos = key_indic.index(idx)
+	return key_pos
+
+    def _find_keyframe_floor(self, frame_idx):
+	pos = 0
+        keys = [key.idx for key in self._keys]
+	keys.append(frame_idx)
+	keys.sort()
+	keys.reverse()
+	pos = (len(keys) - 1) - keys.index(frame_idx) - 1
+	return pos
+
+    ## \brief Find the range a continous tween.
+    #
+    def _find_tween_range(self, key_pos):
+	key = self._keys[key_pos]
+	if not (key.left_tween or key.right_tween):
+	    raise ValueError, 'the keyframe is not in a tween'
+	
+	#
+	# Initialize tween type and first_pos
+	#
+	if key.right_tween:
+	    tween_type = key.right_tween_type
+	    first_pos = key_pos
+	else:
+	    # key.left_tween is True since the key is in a tween.
+	    first_pos = key_pos -1
+	    key = self._keys[first_pos]
+	    tween_type = key.right_tween_type
+	    pass
+	
+	#
+	# Find first_pos
+	#
+        while first_pos and key.left_tween:
+	    right_pos = first_pos - 1
+	    right_key = self._keys[right_pos]
+	    if right_key.right_tween_type != tween_type:
+		break
+            first_pos = right_pos
+	    key = right_key
+            pass
+        
+	#
+	# Find last_pos
+	#
+        max_pos = len(self._keys) - 1
+        last_pos = key_pos
+	key = self._keys[last_pos]
+        while last_pos < max_pos and self._keys[last_pos].right_tween:
+	    if key.right_tween_type != tween_type:
+		break
+            last_pos = last_pos + 1
+	    key = self._keys[last_pos]
+            pass
+        
+        return first_pos, last_pos
+
     def _press_hdl(self, widget, event):
         frame = event.x / self._frame_width
         but = event.button
         self.emit(frameline.FRAME_BUT_PRESS, frame, but)
         pass
+    
     def hide_hover(self):
         if self._active_frame != self._last_hover:
             self._draw_normal_frame(self._last_hover)
+	    pass
+	pass
     
     def _motion_hdl(self, widget, event):
-        frame = int(event.x / self._frame_width)
-	    
-        if frame < self._num_frames and frame >= 0:
-            self._draw_hover(frame)
+        frame_idx = int(event.x / self._frame_width)
+        if self._last_hover != -1:
+            self._draw_frame(self._last_hover)
+	    if self._last_hover == self._active_frame:
+		self._draw_active_frame()
+		pass
+            pass
+	
+        if frame_idx < self._num_frames and frame_idx >= 0:
+            self._draw_hover_frame(frame_idx)
+	    if self._last_hover == self._active_frame:
+		self._draw_active_frame()
+		pass
+	    self._last_hover = frame_idx
+	else:
+	    self._last_hover = -1
+	    pass
         pass
 
     def _fl_expose(self, widget, event):
@@ -188,12 +274,11 @@ class frameline(gtk.DrawingArea):
         self.update()
         pass
 
-    def _draw_tween(self, first_key, last_key):
-        if not self._drawing:
-            return
-        
+    def _draw_tween(self, first_pos, last_pos):
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
+	first_key = self._keys[first_pos]
+	last_key = self._keys[last_pos]
         
         #
         # Get background color of a tween
@@ -229,9 +314,6 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_normal_frame(self, idx):
-        if not self._drawing:
-            return
-        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         
@@ -255,10 +337,7 @@ class frameline(gtk.DrawingArea):
 
     ## \brief Draw a bottom line from start to the point before stop frame.
     #
-    def _draw_bottom_line(self, start, stop):
-        if not self._drawing:
-            return
-        
+    def _draw_bottom_line(self, start_idx, stop_idx):
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         gc = self._gc
@@ -266,66 +345,41 @@ class frameline(gtk.DrawingArea):
         border_rgb = color_to_rgb(self._normal_border)
         border_color = gtk.gdk.Color(*border_rgb)
         gc.set_rgb_fg_color(border_color)
-        start_x = start * self._frame_width
-        stop_x = stop * self._frame_width
+        start_x = start_idx * self._frame_width
+        stop_x = stop_idx * self._frame_width
         win.draw_line(gc, start_x, w_h - 1, stop_x, w_h - 1)
         pass
     
-    def _draw_all_frames(self):
-        if not self._drawing:
-            return
-        
+    def _draw_active(self, idx):
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
+
+        color_v = self._active_border
+        color_rgb = color_to_rgb(color_v)
+        color = gtk.gdk.Color(*color_rgb)
+
         gc = self._gc
+        gc.set_rgb_fg_color(color)
         
-        i = 0
-        key_i = 0
-        try:
-            key = self._keys[key_i]
-        except IndexError:
-            key = keyframe(self._num_frames)
-            pass
-        num_frames = self._num_frames
-        while i < num_frames:
-            if key.idx == i and key.right_tween:
-                #
-                # Skip tween keys
-                #
-                first_tween_key = key
-                while key.idx == i or key.left_tween:
-                    last_tween_key = key
-                    key_i = key_i + 1
-                    try:
-                        key = self._keys[key_i]
-                    except IndexError:
-                        key = keyframe(self._num_frames)
-                        pass
-                    pass
+        line_x1 = idx * self._frame_width
+        line_x2 = line_x1 + self._frame_width
 
-                if first_tween_key != last_tween_key:
-                    self._draw_tween(first_tween_key, last_tween_key)
-                
-                i = last_tween_key.idx + 1
-                pass
-            else:
-	        if key.idx == i:
-		    key_i=key_i+1
-		    try:
-		        key = self._keys[key_i]
-		    except:
-		        key = keyframe(self._num_frames)
-                self._draw_normal_frame(i)
-                i = i + 1
-                pass
-            pass
-
-        self._draw_bottom_line(0, num_frames)
-        pass
+        win.draw_line(gc, line_x1, 0, line_x1, w_h)
+        win.draw_line(gc, line_x2, 0, line_x2, w_h)
+        win.draw_line(gc, line_x1, w_h - 1, line_x2, w_h - 1)
+        win.draw_line(gc, line_x1, 0, line_x2, 0)
+	pass
 
     def _draw_keyframe(self, frame_idx):
-        if not self._drawing:
-            return
+	# Only keyframes that is not right-side of NONE type tween should be
+	# draw.
+	pos = self._find_keyframe(frame_idx)
+	key = self._keys[pos]
+	if key.left_tween and not key.right_tween:
+	    left_key = self._keys[pos - 1]
+	    if left_key.right_tween_type == 0:
+		return
+	    pass
         
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
@@ -345,157 +399,14 @@ class frameline(gtk.DrawingArea):
         pass
 
     def _draw_keyframes(self):
-        if not self._drawing:
-            return
-        
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-        
-        color_v = self._key_mark_color
-        color_rgb = color_to_rgb(color_v)
-        color = gtk.gdk.Color(*color_rgb)
-        
-        gc = self._gc
-        gc.set_rgb_fg_color(color)
-        
         for key in self._keys:
-	    if key.left_tween is True and lastkey.right_tween_type == frameline._tween_type_none:
-	        continue
-	        
-            mark_sz = self._key_mark_sz
-            mark_x = int((key.idx + 0.5) * self._frame_width - mark_sz / 2)
-            mark_y = w_h * 2 / 3 - mark_sz / 2
-
-            win.draw_rectangle(gc, True, mark_x, mark_y, mark_sz, mark_sz)
-	    lastkey = key
+	    self._draw_keyframe(key.idx)
             pass
         pass
-
-    def _draw_active(self):
-        if not self._drawing:
-            return
-        
-        if self._active_frame == -1:
-            return
-        
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-
-        color_v = self._active_border
-        color_rgb = color_to_rgb(color_v)
-        color = gtk.gdk.Color(*color_rgb)
-
-        gc = self._gc
-        gc.set_rgb_fg_color(color)
-        
-        idx = self._active_frame
-        line_x1 = idx * self._frame_width
-        line_x2 = line_x1 + self._frame_width
-
-        win.draw_line(gc, line_x1, 0, line_x1, w_h)
-        win.draw_line(gc, line_x2, 0, line_x2, w_h)
-        win.draw_line(gc, line_x1, w_h - 1, line_x2, w_h - 1)
-        win.draw_line(gc, line_x1, 0, line_x2, 0)
-        pass
-
-    ## \brief Find the range a continous tween.
-    #
-    def _find_tween_range(self, key_pos):
-        first_pos = key_pos
-        while first_pos and self._keys[first_pos].left_tween:
-            first_pos = first_pos - 1
-            pass
-        
-        max_pos = len(self._keys) - 1
-        
-        last_pos = key_pos
-        while last_pos < max_pos and self._keys[last_pos].right_tween:
-            last_pos = last_pos + 1
-            pass
-        
-        return first_pos, last_pos
-
-    ## \brief Redraw a frame specified by an index.
-    #
-    def _redraw_frame(self, frame_idx):
-        if not self._drawing:
-            return
-        
-        keys = [key.idx for key in self._keys]
-        if len(keys):
-            try:
-                pos = keys.index(frame_idx)
-            except ValueError:
-                keys.append(frame_idx)
-                keys.sort()
-                pos = keys.index(frame_idx) - 1
-                pass
-            if pos < 0:
-                pos = 0
-                pass
-            key = self._keys[pos]
-        else:
-            key = None
-            pass
-        
-        if key and (key.right_tween or \
-                (key.left_tween and key.idx == frame_idx)):
-            #
-            # in tween
-            #
-            first_pos, last_pos = self._find_tween_range(pos)
-            first_key = self._keys[first_pos]
-            last_key = self._keys[last_pos]
-            
-            self._draw_tween(first_key, last_key)
-            self._draw_bottom_line(first_key.idx, last_key.idx + 1)
-
-            for i in range(first_pos, last_pos + 1):
-                key = self._keys[i]
-		if key.left_tween is False or lastkey.right_tween_type != frameline._tween_type_none:
-                    self._draw_keyframe(key.idx)
-		lastkey = key
-                pass
-            pass
-        else:                   # not in tween
-            self._draw_normal_frame(frame_idx)
-            self._draw_bottom_line(frame_idx, frame_idx + 1)
-            if key and (key.idx == frame_idx):
-                self._draw_keyframe(frame_idx)
-                pass
-            pass
-        pass
-    def set_tween_type(self,frame_idx,typ):
-        found=False
-	for i in range(0,len(self._keys)):
-	    if self._keys[i].idx == frame_idx:
-	        idx = i
-		found = True
-		break
-	if not found: return
-        key = self._keys[idx]
-	if typ == 'normal':
-	    type = self._tween_type_none
-	elif typ == 'relocate':
-	    type = self._tween_type_move
-	elif typ == 'scale':
-	    type = self._tween_type_shape
-	if key.left_tween is False and key.right_tween is True:
-	    key.right_tween_type = type
-    	
 
     ## \brief Show a mark for the pointer for a frame.
     #
     def _draw_hover(self, frame_idx):
-        if not self._drawing:
-            return
-        
-        if self._last_hover != -1:
-            self._redraw_frame(self._last_hover)
-            pass
-
-        self._draw_active()
-        
         win = self.window
         w_x, w_y, w_w, w_h, depth = win.get_geometry()
         gc = self._gc
@@ -511,10 +422,125 @@ class frameline(gtk.DrawingArea):
         win.draw_line(gc, line_x2, 1, line_x2, w_h - 2)
         win.draw_line(gc, line_x1, 1, line_x2, 1)
         win.draw_line(gc, line_x1, w_h - 2, line_x2, w_h - 2)
-
-        self._last_hover = frame_idx
         pass
     
+    ## \brief Redraw a frame specified by an index.
+    #
+    def _draw_frame(self, frame_idx):
+        if not self._drawing:
+            return
+
+	pos = self._find_keyframe_floor(frame_idx)
+	try:
+	    key = self._keys[pos]
+	except IndexError:
+	    key = None
+	    pass
+	
+	if key and (key.right_tween or
+		    (key.left_tween and key.idx == frame_idx)):
+	    #
+            # in tween
+            #
+            first_pos, last_pos = self._find_tween_range(pos)
+            first_key = self._keys[first_pos]
+            last_key = self._keys[last_pos]
+            
+            self._draw_tween_of_key(first_pos)
+        else:                   # not in tween
+            self._draw_normal_frame(frame_idx)
+            self._draw_bottom_line(frame_idx, frame_idx + 1)
+            if key and (key.idx == frame_idx):
+                self._draw_keyframe(frame_idx)
+                pass
+            pass
+        pass
+    
+    def _draw_all_frames(self):
+        if not self._drawing:
+            return
+        
+        i = 0
+        key_pos = 0
+        try:
+            key = self._keys[key_pos]
+        except IndexError:
+            key = keyframe(self._num_frames)
+            pass
+        num_frames = self._num_frames
+        while i < num_frames:
+            if key.idx == i and key.right_tween:
+                #
+                # Skip tween keys
+                #
+		first_tween_pos, last_tween_pos = \
+		    self._find_tween_range(key_pos)
+		self._draw_tween(first_tween_pos, last_tween_pos)
+		last_tween_key = self._keys[last_tween_pos]
+                i = last_tween_key.idx + 1
+	    else:
+                self._draw_normal_frame(i)
+	        if key.idx == i:
+		    key_pos = key_pos+1
+		    try:
+		        key = self._keys[key_pos]
+		    except:
+		        key = keyframe(self._num_frames)
+			pass
+		    pass
+                i = i + 1
+                pass
+            pass
+
+        self._draw_bottom_line(0, num_frames)
+
+	self._draw_keyframes()
+        pass
+
+    def _draw_tween_of_key(self, key_pos):
+        if not self._drawing:
+            return
+
+	first_pos, last_pos = self._find_tween_range(key_pos)
+	first_key = self._keys[first_pos]
+	last_key = self._keys[last_pos]
+	
+	self._draw_tween(first_pos, last_pos)
+	self._draw_bottom_line(first_key.idx, last_key.idx + 1)
+
+	for i in range(first_pos, last_pos + 1):
+	    key = self._keys[i]
+	    self._draw_keyframe(key.idx)
+            pass
+	pass
+    
+    def _draw_active_frame(self):
+        if not self._drawing:
+            return
+        
+        if self._active_frame == -1:
+            return
+
+	self._draw_active(self._active_frame)
+        pass
+
+    def _draw_hover_frame(self, frame_idx):
+	if not self._drawing:
+	    return
+	self._draw_hover(frame_idx)
+	pass
+
+    def set_tween_type(self, frame_idx, tween_type):
+	pos = self._find_keyframe(frame_idx)
+	key = self._keys[pos]
+	assert key.right_tween
+
+	key.right_tween_type = tween_type
+	self._draw_tween_of_key(pos)
+
+	self._draw_active_frame()
+	pass
+
     def update(self):
         if not self._drawing:
             return
@@ -522,21 +548,22 @@ class frameline(gtk.DrawingArea):
         win = self.window
         x, y, w, h, depth = win.get_geometry()
         self._draw_all_frames()
-        self._draw_keyframes()
-        if self._active_frame != -1:
-            self._draw_active()
-            pass
+	self._draw_active_frame()
         pass
 
     ## Add a key frame
     #
     # A key frame is the frame that user specify actions.  For
     # example, move a object or add new objects at the frame.
-    def add_keyframe(self, idx,ref=None):
-        key_indic = [key.idx for key in self._keys]
-        if idx in key_indic:
-            return
-
+    def add_keyframe(self, idx, ref=None):
+	try:
+	    pos = self._find_keyframe(idx) # it is not already a keyframe.
+	except ValueError:
+	    pass
+	else:
+	    raise ValueError, 'the frame is already a key frame'
+	
+	key_indic = [key.idx for key in self._keys]
         key_indic.append(idx)
         key_indic.sort()
         insert_pos = key_indic.index(idx)
@@ -552,78 +579,99 @@ class frameline(gtk.DrawingArea):
             key.right_tween = True
             pass
 
-        self._draw_keyframe(idx)
+	if self._drawing:
+	    self._draw_keyframe(idx)
+	    pass
         pass
 
     def rm_keyframe(self, idx):
-        found=False
-	for i in range(0,len(self._keys)):
-	    if self._keys[i].idx == idx:
-	        idx = i
-		found = True
-		break
-	if not found: return
-        key = self._keys[idx]
+	key_pos = self._find_keyframe(idx)
+        key = self._keys[key_pos]
+	del self._keys[key_pos]
         
         if key.right_tween ^ key.left_tween:
             #
             # tween in one side
             #
             if key.right_tween:
-                right_key = self._keys[idx]
+		right_key = self._keys[key_pos]
                 right_key.left_tween = False
                 redraw_range = (right_key.idx, idx + 1)
             else:
-                left_key = self._keys[idx - 1]
+                left_key = self._keys[key_pos - 1]
                 left_key.right_key = False
                 redraw_range = (idx, left_key.idx + 1)
                 pass
             for i in range(*redraw_range):
-                self._redraw_frame(i)
+                self._draw_frame(i)
                 pass
         else:
-            self._redraw_frame(idx)
+            self._draw_frame(idx)
             pass
 
-        del self._keys[idx]
-        self._draw_active()
+        self._draw_active_frame()
         pass
 
     ## Tween the key frame specified by an index and the key frame at right.
     #
     # \see http://www.entheosweb.com/Flash/shape_tween.asp
-    def tween(self, idx, _type='normal'):
-        key_indic = [key.idx for key in self._keys]
-        pos = key_indic.index(idx)
+    def tween(self, idx, tween_type=TWEEN_TYPE_NONE):
+	pos = self._find_keyframe(idx)
         key = self._keys[pos]
         
         try:
             right_key = self._keys[pos + 1]
         except IndexError:
-            raise ValueError, 'No right key frame'
+            raise ValueError, 'no right key frame'
 
         key.right_tween = True
         right_key.left_tween = True
-	if _type == 'normal':
-            key.right_tween_type = self._tween_type_none
-	elif _type == 'relocate':
-            key.right_tween_type = self._tween_type_move
-	elif _type == 'scale':
-            key.right_tween_type = self._tween_type_shape
+	key.right_tween_type = tween_type
+	
+	self._draw_tween_of_key(pos)
+	self._draw_active_frame()
         pass
-    def get_tween_type(self,idx):
+    
+    def get_tween_type(self, idx):
         for i in range(0,len(self._keys)):
 	    key = self._keys[i]
 	    if key.left_tween is True: continue
 	    if key.idx == idx:
-	    	if key.right_tween_type == self._tween_type_none:
-		    return 'normal'
-	    	elif key.right_tween_type == self._tween_type_move:
-		    return 'relocate'
-	    	elif key.right_tween_type == self._tween_type_shape:
-		    return 'scale'
-        
+		return key.right_tween_type
+	    pass
+	pass
 
+    def get_frame_blocks(self):
+	blocks = []
+	for pos, key in enumerate(self._keys):
+	    if key.right_tween:
+		next_key = self._keys[pos + 1]
+		block = (key.idx, next_key.idx, key.right_tween_type)
+	    elif not key.left_tween:
+		block = (key.idx, key.idx, 0)
+		pass
+	    blocks.append(block)
+	    pass
+	return blocks
+
+    def get_frame_block(self, idx):
+	pos = self._find_keyframe_floor(idx)
+	if pos != -1:
+	    key = self._keys[pos]
+	    if key.idx == idx:
+		return key.idx, key.idx, 0
+	    elif key.right_tween:
+		next_key = self._keys[pos + 1]
+		return key.idx, next_key.idx, key.right_tween_type
+	    pass
+	raise ValueError, \
+	    'the frame specified by idx is not in any tween or a key frame'
+    
+    def get_frame_data(self, idx):
+	pos = self._find_keyframe(idx)
+	key = self._keys[pos]
+	return key.ref
+    
     ## Set active frame
     #
     # The active frame is the frame that is working on.
@@ -633,49 +681,28 @@ class frameline(gtk.DrawingArea):
             raise IndexError, 'value of index (%d) is out of range' % (idx)
 
         if self._active_frame != -1:
-            self._redraw_frame(self._active_frame)
+            self._draw_frame(self._active_frame)
             pass
         self._active_frame = idx
-        self._draw_active()
+        self._draw_active_frame()
         pass
 
     def deactive(self):
-        self._redraw_frame(self._active_frame)
+        self._draw_frame(self._active_frame)
         self._active_frame = -1
         pass
 
     def set_num_frames(self, num):
         self._num_frames = num
+	self._
         pass
 
     def reset(self):
         self._keys = []
+	self._active_frame = -1
+	self._draw_all_frames()
         pass
 
-    def addScenes(self,rdoc,node):
-        for i in range(0,len(self._keys)):
-	    key = self._keys[i]
-	    if key.left_tween is True: continue
-	    if key.right_tween is True:
-	        ss = rdoc.createElement("ns0:scene")
-		node.appendChild(ss)
-		ss.setAttribute("start", str(key.idx+1))
-		ss.setAttribute("ref",key.ref.attribute("id"))
-		ss.setAttribute("end", str(self._keys[i+1].idx+1))
-		if self._keys[i].right_tween_type == self._tween_type_none:
-		    ss.setAttribute("type", "normal")
-		elif self._keys[i].right_tween_type == self._tween_type_move:
-		    ss.setAttribute("type", "relocate")
-		elif self._keys[i].right_tween_type == self._tween_type_shape:
-		    ss.setAttribute("type", "scale")
-	    else:
-	        ss = rdoc.createElement("ns0:scene")
-		node.appendChild(ss)
-		ss.setAttribute("start", str(key.idx+1))
-		ss.setAttribute("ref",key.ref.attribute("id"))
-	        ss.setAttribute("type", "normal")
-
-	        
     ## \brief Start future drawing actions
     #
     def start_drawing(self):
@@ -691,9 +718,6 @@ class frameline(gtk.DrawingArea):
     def stop_drawing(self):
         self._drawing = False
         pass
-
-    def __len__(self):
-        return self._num_frames
     pass
 
 if __name__ == '__main__':
