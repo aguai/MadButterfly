@@ -2,7 +2,12 @@
 # vim: sw=4:ts=8:sts=4
 import traceback
 import math
+
 class TweenObject:
+    TWEEN_TYPE_NORMAL = 0
+    TWEEN_TYPE_RELOCATE = 1
+    TWEEN_TYPE_SCALE = 2
+    
     def __init__(self,doc,dom):
         self.document = doc
 	self.dom = dom
@@ -24,81 +29,66 @@ class TweenObject:
 	        self.nodeToItem[c.getAttribute("id")] = c
 	    except:
 	        pass
-    def updateTweenContent(self,obj, typ, source,dest,cur):
+    def updateTweenContent(self, duplicate_group, tween_type,
+			   start_scene_group, stop_scene_group, percent):
 	"""
-	    Update the content of the duplicate scene group. We will
-	    use the (start,end) and cur to calculate the percentage of
-	    the tween motion effect and then use it to update the
-	    transform matrix of the duplicated scene group.
+	    Update the content of the duplicate scene group.  We will
+	    use precent, start_scene_group, stop_scene_group to
+	    compute transform matrix and update duplicate scene group
+	    specified.
 	"""
-
-	start = source.idx
-	end = dest.idx
-	print cur,start,end
-	percent = (cur-start)*1.0/(end-start)
-	i = 0
-	s = source.ref.firstChild()
-	d = dest.ref.firstChild()
-	sources={}
-	dests={}
 	# Collect ref from the obj
-	o = obj.firstChild()
-	maps={}
-	while o:
-	    print "--->",o
+	node = duplicate_group.firstChild()
+	dup_nodes = {}
+	while node:
 	    try:
-	        ref = o.getAttribute("ref")
+	        ref = node.getAttribute("ref")
+		dup_nodes[ref] = node
 	    except:
-	        print o
 		ref = None
+		pass
+	    node = node.next()
+	    pass
 
-	    if ref:
-	        maps[ref] = o
-	    o = o.next()
-	# Collect all objects
-	while d:
+	# Collect all nodes in stop scene
+	stop_nodes = {}
+	node = stop_scene_group.firstChild()
+	while node:
 	    try:
-		label = d.getAttribute("inkscape:label")
-	    except:
-		d = d.next()
-		continue
-	    dests[label] = d
-	    d = d.next()
-	# Check if the object in the source exists in the destination
-	s = source.ref.firstChild()
-	d = dest.ref.firstChild()
-	while s:
-	    print s,d
-	    sid = s.getAttribute("id")
-	    if maps.has_key(sid):
-	        o = maps[sid]
-	    else:
-	        o = None
-	    try:
-		label = s.getAttribute("inkscape:label")
-		# Use i8nkscape:label to identidy the equipvalent objects
-		if label:
-		    if dests.has_key(label):
-			self.updateTweenObject(obj, typ, s,
-					       dests[label], percent, o)
-			s = s.next()
-			continue
+		node_label = node.getAttribute("ns0:duplicate-src")
+		stop_nodes[node_label] = node
 	    except:
 		pass
-	    # Search obejcts in the destination
-	    while d:
-		try:
-		    d.getAttribute("inkscape:label")
-		    d = d.next()
-		    continue
-		except:
-		    pass
-		if s.name() == d.name():
-		    self.updateTweenObject(obj,typ,s,d,percent,o)
-		    d = d.next()
-		    break
-		d = d.next()
-	    s = s.next()
+	    node = node.next()
+	    pass
+
+	#
+	# Node ID of a node of start scene must be mapped to
+	# 'ns0:duplicate-src' attribute of a node of stop scene.  The
+	# nodes which can not be mapped to a node of stop scene are
+	# not manipulated by the tween.
+	#
+	# When a scene is duplicated, 'ns0:duplicate-src' attribute of
+	# nodes, in the new scene, must be setted to ID of respective
+	# one in the duplicated scene.
+	#
+	start_node = start_scene_group.firstChild()
+	while start_node:
+	    start_node_id = start_node.getAttribute('id')
+	    try:
+		stop_node = stop_nodes[start_node_id]
+	    except KeyError:
+		start_node = start_node.next()
+		continue
+	    
+	    dup_node = dup_nodes.setdefault(start_node_id, None)
+	    
+	    self.updateTweenObject(duplicate_group, tween_type,
+				   start_node, stop_node,
+				   percent, dup_node)
+	    start_node = start_node.next()
+	    pass
+	pass
 
     def parseTransform(self,obj):
 	"""
@@ -171,7 +161,7 @@ class TweenObject:
 	    Generate tweened object in the @obj by using s and d in the @p percent
 	    http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
 	"""
-	if typ == 1:
+	if typ == self.TWEEN_TYPE_RELOCATE:
 	    if s.name() == 'svg:g':
 		if not newobj:
 		    newobj = s.duplicate(self.document)
@@ -207,10 +197,10 @@ class TweenObject:
 		    traceback.print_exc()
 		    pass
 	    pass
-	elif typ == 2:
+	elif typ == self.TWEEN_TYPE_SCALE:
 	    self.updateTweenObjectScale(obj,s,d,p,newobj)
 	    pass
-	elif typ == 0:
+	elif typ == self.TWEEN_TYPE_NORMAL:
 	    newobj = s.duplicate(self.document)
 	    newobj.setAttribute("ref", s.getAttribute("id"))
 	    top = self.document.createElement("svg:g")

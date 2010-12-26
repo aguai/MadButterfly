@@ -141,10 +141,26 @@ class LayerAddRemoveWatcher(pybInkscape.PYNodeObserver):
         self.ui.updateUI()
 	pass
 
+def _travel_DOM(node):
+    nodes = [node]
+    while nodes:
+	node = nodes.pop(0)
+	child = node.firstChild()
+	while child:
+	    nodes.append(child)
+	    child = child.next()
+	    pass
+	yield node
+	pass
+    pass
+
 class MBScene():
-    _tween_types = (frameline.TWEEN_TYPE_NONE,
-		    frameline.TWEEN_TYPE_MOVE,
-		    frameline.TWEEN_TYPE_SHAPE)
+    _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
+			      frameline.TWEEN_TYPE_MOVE,
+			      frameline.TWEEN_TYPE_SHAPE)
+    _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
+			      TweenObject.TWEEN_TYPE_RELOCATE,
+			      TweenObject.TWEEN_TYPE_SCALE)
     _tween_type_names = ('normal', 'relocate', 'scale')
     
     def __init__(self, desktop, win, root=None):
@@ -550,6 +566,7 @@ class MBScene():
 	"""
 	self.current = nth
 	self.tween.updateMapping()
+	idx = nth - 1
 	for layer in self._framelines:
 	    i=0
 
@@ -565,37 +582,38 @@ class MBScene():
 	        layer.layer.node.appendChild(layer.duplicateGroup)
 	        pass
 	    # Create a new group
-#layer.duplicateGroup = None
-	    while i < len(layer._keys):
-	        s = layer._keys[i]
-		print s.ref.getAttribute("id"),s.idx,s.left_tween,s.right_tween
-		if s.right_tween is False:
-		    if nth == s.idx+1:
-		        s.ref.setAttribute("style","")
+	    for start_idx, stop_idx, tween_type in layer.get_frame_blocks():
+		if start_idx == stop_idx:
+		    scene_group = layer.get_frame_data(start_idx)
+		    if idx == start_idx:
+			scene_group.setAttribute('style', '')
 		    else:
-		        s.ref.setAttribute("style","display:none")
-		    i = i + 1
-		    continue
-		
-		if nth == s.idx + 1:
-		    s.ref.setAttribute("style","")
+			scene_group.setAttribute('style', 'display: none')
+			pass
+		elif start_idx <= idx and stop_idx >= idx:
+		    scene_group = layer.get_frame_data(start_idx)
+		    scene_group.setAttribute("style","display:none")
+		    layer.duplicateGroup.setAttribute("style","")
+		    tween_type_idx = \
+			self._frameline_tween_types.index(tween_type)
+		    tween_obj_tween_type = \
+			self._tween_obj_tween_types[tween_type_idx]
+		    
+		    next_idx, next_stop_idx, next_tween_type = \
+			layer.get_frame_block(stop_idx + 1)
+		    next_scene_group = layer.get_frame_data(next_idx)
+		    
+		    nframes = next_idx - start_idx + 1
+		    percent = float(idx - start_idx) / nframes
+		    self.tween.updateTweenContent(layer.duplicateGroup,
+						  tween_obj_tween_type,
+						  scene_group,
+						  next_scene_group,
+						  percent)
 		else:
-		    if nth > (s.idx+1) and nth <= (layer._keys[i+1].idx+1):
-			if i+2 < len(layer._keys):
-			    s.ref.setAttribute("style","display:none")
-	                    layer.duplicateGroup.setAttribute("style","")
-			    d = layer._keys[i + 2]
-			    self.tween.\
-				updateTweenContent(layer.duplicateGroup,
-						   layer.get_tween_type(s.idx),
-						   s, d, nth)
-			else:
-	                    layer.duplicateGroup.setAttribute("style","")
-			    s.ref.setAttribute("style","display:none")
-			    pass
-		    else:
-		        s.ref.setAttribute("style","display:none")
-		i = i + 2
+		    scene_group = layer.get_frame_data(start_idx)
+		    scene_group.setAttribute("style","display:none")
+		    pass
 		pass
 	    pass
 	pass
@@ -635,7 +653,7 @@ class MBScene():
         pass
 
     def setTweenType(self, tween_type):
-	sel_type = MBScene._tween_types.index(tween_type)
+	sel_type = MBScene._frameline_tween_types.index(tween_type)
 	self._disable_tween_type_selector = True
 	self.tweenTypeSelector.set_active(sel_type)
 	self._disable_tween_type_selector = False
@@ -729,7 +747,7 @@ class MBScene():
 		if scene.start != scene.end:
 		    frameline.add_keyframe(scene.end-1,scene.node)
 		    tween_type_idx = self._tween_type_names.index(scene.type)
-		    tween_type = self._tween_types[tween_type_idx]
+		    tween_type = self._frameline_tween_types[tween_type_idx]
 		    frameline.tween(scene.start-1, tween_type)
 		pass
 	    pass
@@ -787,6 +805,15 @@ class MBScene():
 	if orig == None:
 	    return None
 	ns = orig.duplicate(rdoc)
+
+	old_nodes = _travel_DOM(orig)
+	new_nodes = _travel_DOM(ns)
+	for old_node in old_nodes:
+	    old_node_id = old_node.getAttribute('id')
+	    new_node = new_nodes.next()
+	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
+	    pass
+
 	gid = self.last_line.node.getAttribute("inkscape:label")+self.newID()
 	self.ID[gid]=1
 	ns.setAttribute("id",gid)
@@ -893,7 +920,7 @@ class MBScene():
 	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
 	    if start_idx < stop_idx:
 		n = self.tweenTypeSelector.get_active()
-		new_tween_type = MBScene._tween_types[n]
+		new_tween_type = MBScene._frameline_tween_types[n]
 		self.last_line.set_tween_type(start_idx, new_tween_type)
 		self.update()
 		break
@@ -929,7 +956,7 @@ class MBScene():
 	doc = self.document
 	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
 	    ref = frameline.get_frame_data(start_idx)
-	    tween_type_idx = self._tween_types.index(tween_type)
+	    tween_type_idx = self._frameline_tween_types.index(tween_type)
 	    tween_type_name = self._tween_type_names[tween_type_idx]
 	    
 	    scene_node = doc.createElement("ns0:scene")
