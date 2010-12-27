@@ -271,162 +271,31 @@ class frameline_draw(gtk.DrawingArea):
         pass
     pass
 
-## Show frame status of a layer
+
+## \brief Drawing frameline according state of a frameline.
 #
-# \section frameline_sigs Signals
-# - 'frame-button-pree' for user press on a frame.
-#   - callback(widget, frame_idx, button)
+# Thsi class calls methods of class frameline_draw to drawing frameline.  But,
+# this class is state awared.  It according states of an instance to determines
+# calling methods and arguments.  This class decorates methods of
+# frameline_draw class according states of an instance.
 #
-# All methos that change state of the frameline, must call methods to update
-# the screen.
+# This classs reading state of a frameline, but it does not change and control
+# states.  The deriving classes are responsible to change and control states.
 #
-class frameline(frameline_draw):
-    _sig_frame_but_press = None
-    
+class frameline_draw_state(frameline_draw):
     # tween types
     TWEEN_TYPE_NONE = 0
     TWEEN_TYPE_MOVE = 1
     TWEEN_TYPE_SHAPE = 2    
 
-    FRAME_BUT_PRESS = 'frame-button-press'
-    
-    def __new__(clz, *args):
-	fl_obj = frameline_draw.__new__(clz, *args)
+    def __init__(self, num_frames):
+	frameline_draw.__init__(self)
 	
-        if not clz._sig_frame_but_press:
-            but_press = gobject.signal_new(frameline.FRAME_BUT_PRESS,
-                                           frameline._type,
-                                           gobject.SIGNAL_RUN_FIRST,
-                                           gobject.TYPE_NONE,
-                                           (gobject.TYPE_INT,
-                                            gobject.TYPE_INT))
-            clz._sig_frame_but_press = but_press
-            pass
-        return fl_obj
-    
-    def __init__(self, num_frames=20):
-        self.connect('button-press-event', self._press_hdl)
-        self.connect('expose-event', self._fl_expose)
-        self.connect('motion-notify-event', self._motion_hdl)
         self._num_frames = num_frames
         self._keys = []
         self._active_frame = -1
-        self._last_hover = -1   # frame index of last hover
         self._drawing = False
-        pass
-
-    def __len__(self):
-        return self._num_frames
-    
-    def _find_keyframe(self, idx):
-	key_indic = [key.idx for key in self._keys]
-	key_pos = key_indic.index(idx)
-	return key_pos
-
-    def _find_keyframe_floor(self, frame_idx):
-	pos = 0
-        keys = [key.idx for key in self._keys]
-	keys.append(frame_idx)
-	keys.sort()
-	keys.reverse()
-	pos = (len(keys) - 1) - keys.index(frame_idx) - 1
-	return pos
-
-    ## \brief Find the range a continous tween.
-    #
-    def _find_tween_range(self, key_pos):
-	key = self._keys[key_pos]
-	if not (key.left_tween or key.right_tween):
-	    raise ValueError, 'the keyframe is not in a tween'
-	
-	#
-	# Initialize tween type and first_pos
-	#
-	if key.right_tween:
-	    tween_type = key.right_tween_type
-	    first_pos = key_pos
-	else:
-	    # key.left_tween is True since the key is in a tween.
-	    first_pos = key_pos -1
-	    key = self._keys[first_pos]
-	    tween_type = key.right_tween_type
-	    pass
-	
-	#
-	# Find first_pos
-	#
-        while first_pos and key.left_tween:
-	    right_pos = first_pos - 1
-	    right_key = self._keys[right_pos]
-	    if right_key.right_tween_type != tween_type:
-		break
-            first_pos = right_pos
-	    key = right_key
-            pass
-        
-	#
-	# Find last_pos
-	#
-        max_pos = len(self._keys) - 1
-        last_pos = key_pos
-	key = self._keys[last_pos]
-        while last_pos < max_pos and self._keys[last_pos].right_tween:
-	    if key.right_tween_type != tween_type:
-		break
-            last_pos = last_pos + 1
-	    key = self._keys[last_pos]
-            pass
-        
-        return first_pos, last_pos
-
-    def _press_hdl(self, widget, event):
-        frame = event.x / self._frame_width
-        but = event.button
-        self.emit(frameline.FRAME_BUT_PRESS, frame, but)
-        pass
-    
-    def hide_hover(self):
-        if self._active_frame != self._last_hover:
-            self._draw_normal_frame(self._last_hover)
-	    pass
 	pass
-    
-    def _motion_hdl(self, widget, event):
-        frame_idx = int(event.x / self._frame_width)
-        if self._last_hover != -1:
-            self._draw_frame(self._last_hover)
-	    if self._last_hover == self._active_frame:
-		self._draw_active_frame()
-		pass
-            pass
-	
-        if frame_idx < self._num_frames and frame_idx >= 0:
-            self._draw_hover_frame(frame_idx)
-	    if self._last_hover == self._active_frame:
-		self._draw_active_frame()
-		pass
-	    self._last_hover = frame_idx
-	else:
-	    self._last_hover = -1
-	    pass
-        pass
-
-    def _fl_expose(self, widget, event):
-        win = self.window
-        x, y, w, h, depth = win.get_geometry()
-        if not hasattr(self, '_gc'):
-            self._gc = gtk.gdk.GC(win)
-            #
-            # register for button press event
-            #
-            emask = win.get_events()
-            emask = emask | gtk.gdk.BUTTON_PRESS_MASK | \
-                gtk.gdk.POINTER_MOTION_MASK
-            win.set_events(emask)
-            self._drawing = True
-            pass
-        self.update()
-        pass
 
     def _draw_keyframe(self, frame_idx):
 	# Only keyframes that is not right-side of NONE type tween should be
@@ -557,6 +426,174 @@ class frameline(frameline_draw):
 	    return
 	self._draw_hover(frame_idx)
 	pass
+    
+    ## \brief Start future drawing actions
+    #
+    def start_drawing(self):
+        if not hasattr(self, '_gc'):
+	    win = self.window
+            self._gc = gtk.gdk.GC(win)
+            #
+            # register for button press event
+            #
+            emask = win.get_events()
+            emask = emask | gtk.gdk.BUTTON_PRESS_MASK | \
+                gtk.gdk.POINTER_MOTION_MASK
+            win.set_events(emask)
+            pass
+        self._drawing = True
+        pass
+    
+    ## \brief Stop any future drawing actions
+    #
+    # When doing massive udpate, to stop drawing the screen make
+    # application more effecient.  The screen is updated by calling
+    # update() method after massive update and calliing start_drawing().
+    #
+    def stop_drawing(self):
+        self._drawing = False
+        pass
+    pass
+
+
+## Show frame status of a layer
+#
+# \section frameline_sigs Signals
+# - 'frame-button-pree' for user press on a frame.
+#   - callback(widget, frame_idx, button)
+#
+# All methos that change state of the frameline, must call methods to update
+# the screen.
+#
+class frameline(frameline_draw_state):
+    _sig_frame_but_press = None
+    
+    FRAME_BUT_PRESS = 'frame-button-press'
+    
+    def __new__(clz, *args):
+	fl_obj = frameline_draw_state.__new__(clz, *args)
+	
+        if not clz._sig_frame_but_press:
+            but_press = gobject.signal_new(frameline.FRAME_BUT_PRESS,
+                                           frameline._type,
+                                           gobject.SIGNAL_RUN_FIRST,
+                                           gobject.TYPE_NONE,
+                                           (gobject.TYPE_INT,
+                                            gobject.TYPE_INT))
+            clz._sig_frame_but_press = but_press
+            pass
+        return fl_obj
+    
+    def __init__(self, num_frames=20):
+	frameline_draw_state.__init__(self, num_frames)
+	
+        self.connect('button-press-event', self._press_hdl)
+        self.connect('expose-event', self._fl_expose)
+        self.connect('motion-notify-event', self._motion_hdl)
+        self._last_hover = -1   # frame index of last hover
+        pass
+
+    def __len__(self):
+        return self._num_frames
+    
+    def _find_keyframe(self, idx):
+	key_indic = [key.idx for key in self._keys]
+	key_pos = key_indic.index(idx)
+	return key_pos
+
+    def _find_keyframe_floor(self, frame_idx):
+	pos = 0
+        keys = [key.idx for key in self._keys]
+	keys.append(frame_idx)
+	keys.sort()
+	keys.reverse()
+	pos = (len(keys) - 1) - keys.index(frame_idx) - 1
+	return pos
+
+    ## \brief Find the range a continous tween.
+    #
+    def _find_tween_range(self, key_pos):
+	key = self._keys[key_pos]
+	if not (key.left_tween or key.right_tween):
+	    raise ValueError, 'the keyframe is not in a tween'
+	
+	#
+	# Initialize tween type and first_pos
+	#
+	if key.right_tween:
+	    tween_type = key.right_tween_type
+	    first_pos = key_pos
+	else:
+	    # key.left_tween is True since the key is in a tween.
+	    first_pos = key_pos -1
+	    key = self._keys[first_pos]
+	    tween_type = key.right_tween_type
+	    pass
+	
+	#
+	# Find first_pos
+	#
+        while first_pos and key.left_tween:
+	    right_pos = first_pos - 1
+	    right_key = self._keys[right_pos]
+	    if right_key.right_tween_type != tween_type:
+		break
+            first_pos = right_pos
+	    key = right_key
+            pass
+        
+	#
+	# Find last_pos
+	#
+        max_pos = len(self._keys) - 1
+        last_pos = key_pos
+	key = self._keys[last_pos]
+        while last_pos < max_pos and self._keys[last_pos].right_tween:
+	    if key.right_tween_type != tween_type:
+		break
+            last_pos = last_pos + 1
+	    key = self._keys[last_pos]
+            pass
+        
+        return first_pos, last_pos
+
+    def _press_hdl(self, widget, event):
+        frame = event.x / self._frame_width
+        but = event.button
+        self.emit(frameline.FRAME_BUT_PRESS, frame, but)
+        pass
+    
+    def hide_hover(self):
+        if self._active_frame != self._last_hover:
+            self._draw_normal_frame(self._last_hover)
+	    pass
+	pass
+    
+    def _motion_hdl(self, widget, event):
+        frame_idx = int(event.x / self._frame_width)
+        if self._last_hover != -1:
+            self._draw_frame(self._last_hover)
+	    if self._last_hover == self._active_frame:
+		self._draw_active_frame()
+		pass
+            pass
+	
+        if frame_idx < self._num_frames and frame_idx >= 0:
+            self._draw_hover_frame(frame_idx)
+	    if self._last_hover == self._active_frame:
+		self._draw_active_frame()
+		pass
+	    self._last_hover = frame_idx
+	else:
+	    self._last_hover = -1
+	    pass
+        pass
+
+    def _fl_expose(self, widget, event):
+        win = self.window
+	self.start_drawing()
+        self.update()
+        pass
 
     def set_tween_type(self, frame_idx, tween_type):
 	pos = self._find_keyframe(frame_idx)
@@ -570,11 +607,6 @@ class frameline(frameline_draw):
 	pass
 
     def update(self):
-        if not self._drawing:
-            return
-        
-        win = self.window
-        x, y, w, h, depth = win.get_geometry()
         self._draw_all_frames()
 	self._draw_active_frame()
         pass
@@ -643,7 +675,7 @@ class frameline(frameline_draw):
     ## Tween the key frame specified by an index and the key frame at right.
     #
     # \see http://www.entheosweb.com/Flash/shape_tween.asp
-    def tween(self, idx, tween_type=TWEEN_TYPE_NONE):
+    def tween(self, idx, tween_type=frameline_draw_state.TWEEN_TYPE_NONE):
 	pos = self._find_keyframe(idx)
         key = self._keys[pos]
         
@@ -722,29 +754,12 @@ class frameline(frameline_draw):
 
     def set_num_frames(self, num):
         self._num_frames = num
-	self._
         pass
 
     def reset(self):
         self._keys = []
 	self._active_frame = -1
 	self._draw_all_frames()
-        pass
-
-    ## \brief Start future drawing actions
-    #
-    def start_drawing(self):
-        self._drawing = True
-        pass
-    
-    ## \brief Stop any future drawing actions
-    #
-    # When doing massive udpate, to stop drawing the screen make
-    # application more effecient.  The screen is updated by calling
-    # update() method after massive update and calliing start_drawing().
-    #
-    def stop_drawing(self):
-        self._drawing = False
         pass
     pass
 
