@@ -156,12 +156,10 @@ def _travel_DOM(node):
 
 class MBScene():
     _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
-			      frameline.TWEEN_TYPE_MOVE,
 			      frameline.TWEEN_TYPE_SHAPE)
     _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
-			      TweenObject.TWEEN_TYPE_RELOCATE,
 			      TweenObject.TWEEN_TYPE_SCALE)
-    _tween_type_names = ('normal', 'relocate', 'scale')
+    _tween_type_names = ('normal', 'scale')
     
     def __init__(self, desktop, win, root=None):
 	self.desktop = desktop
@@ -938,7 +936,7 @@ class MBScene():
 	
         self.tweenTypeSelector = gtk.combo_box_new_text()
 	self.tweenTypeSelector.append_text('normal')
-	self.tweenTypeSelector.append_text('relocate')
+	#self.tweenTypeSelector.append_text('relocate')
 	self.tweenTypeSelector.append_text('scale')
 	self.tweenTypeSelector.set_active(0)
 	tweenbox.pack_start(self.tweenTypeSelector, expand=False,fill=False)

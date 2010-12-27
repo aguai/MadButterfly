@@ -26,17 +26,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35"
-     inkscape:cx="375"
-     inkscape:cy="862.85714"
+     inkscape:zoom="0.7"
+     inkscape:cx="481.6562"
+     inkscape:cy="910.80426"
      inkscape:document-units="px"
-     inkscape:current-layer="Layer 1s1983"
+     inkscape:current-layer="Layer 1s6197"
      showgrid="false"
-     inkscape:window-width="778"
-     inkscape:window-height="639"
-     inkscape:window-x="512"
-     inkscape:window-y="118"
-     inkscape:window-maximized="0" />
+     inkscape:window-width="1680"
+     inkscape:window-height="975"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -51,12 +51,17 @@
     <ns0:scenes>
       <ns0:scene
          start="1"
-         ref="Layer 1s1983"
          end="19"
+         ref="Layer 1s1983"
+         type="scale" />
+      <ns0:scene
+         start="1"
+         end="19"
+         ref="Layer 1s1983"
          type="scale" />
       <ns0:scene
          start="20"
-         ref="layer1s4140"
+         ref="Layer 1s6197"
          type="normal" />
     </ns0:scenes>
   </metadata>
@@ -93,53 +98,65 @@
            id="rect3229"
            style="fill:#ff0000;fill-opacity:1" />
       </g>
+      <rect
+         style="fill:#808000;fill-opacity:1"
+         id="rect3098"
+         width="57.142857"
+         height="61.42857"
+         x="21.428572"
+         y="153.79076" />
     </g>
     <g
-       style="display:none"
+       style=""
        inkscape:groupmode="layer"
-       id="layer1s4140">
+       id="Layer 1s6197"
+       ns0:duplicate-src="Layer 1s1983">
       <g
-         id="g3083"
-         transform="translate(360,334.28571)">
+         id="g3087"
+         ns0:duplicate-src="g3077"
+         transform="translate(265.71429,167.14286)">
         <path
            sodipodi:type="arc"
            style="fill:#ff0000;fill-opacity:1"
-           id="path3085"
+           id="path3089"
            sodipodi:cx="102.85714"
            sodipodi:cy="168.07646"
            sodipodi:rx="42.857143"
            sodipodi:ry="47.142857"
-           d="m 145.71428,168.07646 c 0,26.03628 -19.18779,47.14286 -42.85714,47.14286 -23.669347,0 -42.857144,-21.10658 -42.857144,-47.14286 0,-26.03628 19.187797,-47.14285 42.857144,-47.14285 23.66935,0 42.85714,21.10657 42.85714,47.14285 z"
-           transform="translate(-48.571429,-100)" />
+           d="m 145.71428,168.07646 a 42.857143,47.142857 0 1 1 -85.714284,0 42.857143,47.142857 0 1 1 85.714284,0 z"
+           transform="translate(-48.571429,-100)"
+           ns0:duplicate-src="path3237" />
       </g>
       <g
-         id="g3087"
-         transform="translate(151.42857,191.42857)">
+         id="g3091"
+         ns0:duplicate-src="g3072"
+         transform="translate(58.571429,51.428571)">
         <rect
            style="fill:#ff0000;fill-opacity:1"
-           id="rect3089"
+           id="rect3093"
            width="25.714285"
            height="160"
            x="171.42537"
            y="-68.432068"
-           transform="matrix(0.8189798,0.57382236,-0.57382236,0.8189798,0,0)" />
+           transform="matrix(0.8189798,0.57382236,-0.57382236,0.8189798,0,0)"
+           ns0:duplicate-src="rect3229" />
       </g>
     </g>
     <g
        inkscape:label="dup"
        sodipodi:insensitive="1"
-       style=""
-       id="g3084">
+       style="display:none"
+       id="g3086">
       <g
          ref="g3077"
-         id="g3086"
-         transform="matrix(1,0,0,1,360,334.286)">
+         id="g3088"
+         transform="matrix(1,0,0,1,225.857,142.071)">
         <g
-           id="g3088">
+           id="g3090">
           <path
              sodipodi:type="arc"
              style="fill:#ff0000;fill-opacity:1"
-             id="path3090"
+             id="path3092"
              sodipodi:cx="102.85714"
              sodipodi:cy="168.07646"
              sodipodi:rx="42.857143"
@@ -150,19 +167,31 @@
       </g>
       <g
          ref="g3072"
-         id="g3092"
-         transform="matrix(1,0,0,1,151.429,191.429)">
+         id="g3094"
+         transform="matrix(1,0,0,1,0,0)">
         <g
-           id="g3094">
+           id="g3096">
           <rect
              style="fill:#ff0000;fill-opacity:1"
-             id="rect3096"
+             id="rect3099"
              width="25.714285"
              height="160"
              x="171.42537"
              y="-68.432068"
              transform="matrix(0.8189798,0.57382236,-0.57382236,0.8189798,0,0)" />
         </g>
+      </g>
+      <g
+         ref="rect3098"
+         id="g3101"
+         transform="matrix(1,0,0,1,0,0)">
+        <rect
+           y="153.79076"
+           x="21.428572"
+           height="61.42857"
+           width="57.142857"
+           id="rect3103"
+           style="fill:#808000;fill-opacity:1" />
       </g>
     </g>
   </g>

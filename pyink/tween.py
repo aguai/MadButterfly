@@ -5,8 +5,8 @@ import math
 
 class TweenObject:
     TWEEN_TYPE_NORMAL = 0
-    TWEEN_TYPE_RELOCATE = 1
-    TWEEN_TYPE_SCALE = 2
+    #TWEEN_TYPE_RELOCATE = 1
+    TWEEN_TYPE_SCALE = 1
 
     def __init__(self,doc,dom):
         self.document = doc
@@ -164,43 +164,7 @@ class TweenObject:
 	    Generate tweened object in the @obj by using s and d in the @p percent
 	    http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
 	"""
-	if typ == self.TWEEN_TYPE_RELOCATE:
-	    if s.name() == 'svg:g':
-		if not newobj:
-		    newobj = s.duplicate(self.document)
-		    top = self.document.createElement("svg:g")
-		    top.setAttribute("ref", s.getAttribute("id"))
-		    top.appendChild(newobj)
-		    obj.appendChild(top)
-		else:
-		    top = newobj
-		    pass
-		# Parse the translate or matrix
-		sm = self.parseTransform(s)
-		dm = self.parseTransform(d)
-		top.setAttribute("transform","translate(%g,%g)" % ((dm[2]-sm[2])*p,(dm[5]-sm[5])*p))
-	    else:
-		if not newobj:
-		    top = s.duplicate(self.document)
-		    top.setAttribute('ref', s.getAttribute('id'))
-		    obj.appendChild(top)
-		else:
-		    top = newobj
-		    pass
-		try:
-		    sx = float(s.getAttribute("x"))
-		    sy = float(s.getAttribute("y"))
-		    dx = float(d.getAttribute("x"))
-		    dy = float(d.getAttribute("y"))
-		    tx = (dx-sx)*p
-		    ty = (dy-sy)*p
-		    print tx,ty
-		    top.setAttribute("transform","translate(%g,%g)" % (tx,ty))
-		except:
-		    traceback.print_exc()
-		    pass
-	    pass
-	elif typ == self.TWEEN_TYPE_SCALE:
+	if typ == self.TWEEN_TYPE_SCALE:
 	    self.updateTweenObjectScale(obj,s,d,p,newobj)
 	    pass
 	elif typ == self.TWEEN_TYPE_NORMAL:
