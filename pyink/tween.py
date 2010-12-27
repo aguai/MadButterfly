@@ -7,7 +7,7 @@ class TweenObject:
     TWEEN_TYPE_NORMAL = 0
     TWEEN_TYPE_RELOCATE = 1
     TWEEN_TYPE_SCALE = 2
-    
+
     def __init__(self,doc,dom):
         self.document = doc
 	self.dom = dom
@@ -78,6 +78,9 @@ class TweenObject:
 	    try:
 		stop_node = stop_nodes[start_node_id]
 	    except KeyError:
+		self.updateTweenObject(duplicate_group, tween_type,
+				       start_node, start_node,
+				       percent, dup_node)
 		start_node = start_node.next()
 		continue
 	    
