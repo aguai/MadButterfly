@@ -105,16 +105,18 @@ class frameruler(gtk.DrawingArea):
         pass
     pass
 
-## Show frame status of a layer
+## \brief Drawing on the screen for a frameline.
 #
-# \section frameline_sigs Signals
-# - 'frame-button-pree' for user press on a frame.
-#   - callback(widget, frame_idx, button)
+# This class contain all functions that drawing thing on the screen for a
+# frameline.  It is used by descendants to drawing a frameline.  This class is
+# only responsible to draw screen, the logical part is the responsible of
+# deriving classes.
 #
-# All methos that change state of the frameline, must call methods to update
-# the screen.
+# This class should only include functions about drawing, no any control, logic
+# function, and state should be implemented here.  This class should change/or
+# read states of instances.  It is stateless.
 #
-class frameline(gtk.DrawingArea):
+class frameline_draw(gtk.DrawingArea):
     _type = 0
     _frame_width = 10           # Width for each frame is 10 pixels
     _select_color = 0xee2222    # color of border of selected frame
@@ -129,6 +131,158 @@ class frameline(gtk.DrawingArea):
     _active_border = 0xff3030   # border color of an active frame
     _hover_border_color = 0xa0a0a0 # border when the pointer over a frame
     
+    def __new__(clz, *args):
+        if not clz._type:
+            clz._type = gobject.type_register(clz)
+            pass
+        fl_obj = gobject.new(clz._type)
+        return fl_obj
+    
+    def _draw_tween(self, first_idx, last_idx, tween_type):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        
+        #
+        # Get background color of a tween
+        #
+        bg_idx = tween_type
+        bg_color_v = self._tween_bgcolors[bg_idx]
+        bg_color_rgb = color_to_rgb(bg_color_v)
+        bg_color = gtk.gdk.Color(*bg_color_rgb)
+        
+        gc = self._gc
+	gc.set_rgb_fg_color(bg_color)
+	
+        draw_x = first_idx * self._frame_width + 1
+        draw_w = (last_idx -  first_idx + 1) * self._frame_width - 1
+
+        win.draw_rectangle(gc, True, draw_x, 0, draw_w, w_h)
+
+        #
+        # Set color of tween line
+        #
+        line_v = self._tween_color
+        line_rgb = color_to_rgb(line_v)
+        line_color = gtk.gdk.Color(*line_rgb)
+        gc.set_rgb_fg_color(line_color)
+        
+        #
+        # Draw tween line
+        #
+        line_x1 = int((first_idx + 0.5) * self._frame_width)
+        line_x2 = line_x1 + (last_idx - first_idx) * self._frame_width
+        line_y = int(w_h * 2 / 3)
+        win.draw_line(gc, line_x1, line_y, line_x2, line_y)
+        pass
+
+    def _draw_normal_frame(self, idx):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        
+        gc = self._gc
+        bg_idx = idx % len(self._normal_bgcolors)
+        rgb = color_to_rgb(self._normal_bgcolors[bg_idx])
+        color = gtk.gdk.Color(*rgb)
+        gc.set_rgb_fg_color(color)
+        
+        f_x = self._frame_width * idx
+        win.draw_rectangle(gc, True, f_x + 1, 0, self._frame_width - 1, w_h)
+        next_f_x = f_x + self._frame_width
+        
+        border_rgb = color_to_rgb(self._normal_border)
+        border_color = gtk.gdk.Color(*border_rgb)
+        gc.set_rgb_fg_color(border_color)
+        gc.set_line_attributes(1, gtk.gdk.LINE_SOLID,
+                               gtk.gdk.CAP_BUTT, gtk.gdk.JOIN_MITER)
+        win.draw_line(gc, next_f_x, 0, next_f_x, w_h)
+        pass
+
+    ## \brief Draw a bottom line from start to the point before stop frame.
+    #
+    def _draw_bottom_line(self, start_idx, stop_idx):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        gc = self._gc
+        
+        border_rgb = color_to_rgb(self._normal_border)
+        border_color = gtk.gdk.Color(*border_rgb)
+        gc.set_rgb_fg_color(border_color)
+        start_x = start_idx * self._frame_width
+        stop_x = stop_idx * self._frame_width
+        win.draw_line(gc, start_x, w_h - 1, stop_x, w_h - 1)
+        pass
+    
+    def _draw_active(self, idx):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+
+        color_v = self._active_border
+        color_rgb = color_to_rgb(color_v)
+        color = gtk.gdk.Color(*color_rgb)
+
+        gc = self._gc
+        gc.set_rgb_fg_color(color)
+        
+        line_x1 = idx * self._frame_width
+        line_x2 = line_x1 + self._frame_width
+
+        win.draw_line(gc, line_x1, 0, line_x1, w_h)
+        win.draw_line(gc, line_x2, 0, line_x2, w_h)
+        win.draw_line(gc, line_x1, w_h - 1, line_x2, w_h - 1)
+        win.draw_line(gc, line_x1, 0, line_x2, 0)
+	pass
+
+    def _draw_keyframe_(self, frame_idx):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        
+        color_v = self._key_mark_color
+        color_rgb = color_to_rgb(color_v)
+        color = gtk.gdk.Color(*color_rgb)
+        
+        gc = self._gc
+        gc.set_rgb_fg_color(color)
+        
+        mark_sz = self._key_mark_sz
+        mark_x = int((frame_idx + 0.5) * self._frame_width - mark_sz / 2)
+        mark_y = w_h * 2 / 3 - mark_sz / 2
+        
+        win.draw_rectangle(gc, True, mark_x, mark_y, mark_sz, mark_sz)
+        pass
+
+    ## \brief Show a mark for the pointer for a frame.
+    #
+    def _draw_hover(self, frame_idx):
+        win = self.window
+        w_x, w_y, w_w, w_h, depth = win.get_geometry()
+        gc = self._gc
+        
+        color_rgb = color_to_rgb(self._hover_border_color)
+        color = gtk.gdk.Color(*color_rgb)
+        gc.set_rgb_fg_color(color)
+
+        line_x1 = frame_idx * self._frame_width + 1
+        line_x2 = line_x1 + self._frame_width - 2
+        
+        win.draw_line(gc, line_x1, 1, line_x1, w_h - 2)
+        win.draw_line(gc, line_x2, 1, line_x2, w_h - 2)
+        win.draw_line(gc, line_x1, 1, line_x2, 1)
+        win.draw_line(gc, line_x1, w_h - 2, line_x2, w_h - 2)
+        pass
+    pass
+
+## Show frame status of a layer
+#
+# \section frameline_sigs Signals
+# - 'frame-button-pree' for user press on a frame.
+#   - callback(widget, frame_idx, button)
+#
+# All methos that change state of the frameline, must call methods to update
+# the screen.
+#
+class frameline(frameline_draw):
+    _sig_frame_but_press = None
+    
     # tween types
     TWEEN_TYPE_NONE = 0
     TWEEN_TYPE_MOVE = 1
@@ -137,17 +291,17 @@ class frameline(gtk.DrawingArea):
     FRAME_BUT_PRESS = 'frame-button-press'
     
     def __new__(clz, *args):
-        if not frameline._type:
-            frameline._type = gobject.type_register(frameline)
+	fl_obj = frameline_draw.__new__(clz, *args)
+	
+        if not clz._sig_frame_but_press:
             but_press = gobject.signal_new(frameline.FRAME_BUT_PRESS,
                                            frameline._type,
                                            gobject.SIGNAL_RUN_FIRST,
                                            gobject.TYPE_NONE,
                                            (gobject.TYPE_INT,
                                             gobject.TYPE_INT))
-            frameline._sig_frame_but_press = but_press
+            clz._sig_frame_but_press = but_press
             pass
-        fl_obj = gobject.new(frameline._type)
         return fl_obj
     
     def __init__(self, num_frames=20):
@@ -274,102 +428,6 @@ class frameline(gtk.DrawingArea):
         self.update()
         pass
 
-    def _draw_tween(self, first_pos, last_pos):
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-	first_key = self._keys[first_pos]
-	last_key = self._keys[last_pos]
-        
-        #
-        # Get background color of a tween
-        #
-        bg_idx = first_key.right_tween_type
-        bg_color_v = self._tween_bgcolors[bg_idx]
-        bg_color_rgb = color_to_rgb(bg_color_v)
-        bg_color = gtk.gdk.Color(*bg_color_rgb)
-        
-        gc = self._gc
-        gc.set_rgb_fg_color(bg_color)
-
-        draw_x = first_key.idx * self._frame_width + 1
-        draw_w = (last_key.idx -  first_key.idx + 1) * self._frame_width - 1
-
-        win.draw_rectangle(gc, True, draw_x, 0, draw_w, w_h)
-
-        #
-        # Set color of tween line
-        #
-        line_v = self._tween_color
-        line_rgb = color_to_rgb(line_v)
-        line_color = gtk.gdk.Color(*line_rgb)
-        gc.set_rgb_fg_color(line_color)
-        
-        #
-        # Draw tween line
-        #
-        line_x1 = int((first_key.idx + 0.5) * self._frame_width)
-        line_x2 = line_x1 + (last_key.idx - first_key.idx) * self._frame_width
-        line_y = int(w_h * 2 / 3)
-        win.draw_line(gc, line_x1, line_y, line_x2, line_y)
-        pass
-
-    def _draw_normal_frame(self, idx):
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-        
-        gc = self._gc
-        bg_idx = idx % len(self._normal_bgcolors)
-        rgb = color_to_rgb(self._normal_bgcolors[bg_idx])
-        color = gtk.gdk.Color(*rgb)
-        gc.set_rgb_fg_color(color)
-        
-        f_x = self._frame_width * idx
-        win.draw_rectangle(gc, True, f_x + 1, 0, self._frame_width - 1, w_h)
-        next_f_x = f_x + self._frame_width
-        
-        border_rgb = color_to_rgb(self._normal_border)
-        border_color = gtk.gdk.Color(*border_rgb)
-        gc.set_rgb_fg_color(border_color)
-        gc.set_line_attributes(1, gtk.gdk.LINE_SOLID,
-                               gtk.gdk.CAP_BUTT, gtk.gdk.JOIN_MITER)
-        win.draw_line(gc, next_f_x, 0, next_f_x, w_h)
-        pass
-
-    ## \brief Draw a bottom line from start to the point before stop frame.
-    #
-    def _draw_bottom_line(self, start_idx, stop_idx):
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-        gc = self._gc
-        
-        border_rgb = color_to_rgb(self._normal_border)
-        border_color = gtk.gdk.Color(*border_rgb)
-        gc.set_rgb_fg_color(border_color)
-        start_x = start_idx * self._frame_width
-        stop_x = stop_idx * self._frame_width
-        win.draw_line(gc, start_x, w_h - 1, stop_x, w_h - 1)
-        pass
-    
-    def _draw_active(self, idx):
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-
-        color_v = self._active_border
-        color_rgb = color_to_rgb(color_v)
-        color = gtk.gdk.Color(*color_rgb)
-
-        gc = self._gc
-        gc.set_rgb_fg_color(color)
-        
-        line_x1 = idx * self._frame_width
-        line_x2 = line_x1 + self._frame_width
-
-        win.draw_line(gc, line_x1, 0, line_x1, w_h)
-        win.draw_line(gc, line_x2, 0, line_x2, w_h)
-        win.draw_line(gc, line_x1, w_h - 1, line_x2, w_h - 1)
-        win.draw_line(gc, line_x1, 0, line_x2, 0)
-	pass
-
     def _draw_keyframe(self, frame_idx):
 	# Only keyframes that is not right-side of NONE type tween should be
 	# draw.
@@ -380,23 +438,9 @@ class frameline(gtk.DrawingArea):
 	    if left_key.right_tween_type == 0:
 		return
 	    pass
-        
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-        
-        color_v = self._key_mark_color
-        color_rgb = color_to_rgb(color_v)
-        color = gtk.gdk.Color(*color_rgb)
-        
-        gc = self._gc
-        gc.set_rgb_fg_color(color)
-        
-        mark_sz = self._key_mark_sz
-        mark_x = int((frame_idx + 0.5) * self._frame_width - mark_sz / 2)
-        mark_y = w_h * 2 / 3 - mark_sz / 2
-        
-        win.draw_rectangle(gc, True, mark_x, mark_y, mark_sz, mark_sz)
-        pass
+	
+	self._draw_keyframe_(frame_idx)
+	pass
 
     def _draw_keyframes(self):
         for key in self._keys:
@@ -404,26 +448,6 @@ class frameline(gtk.DrawingArea):
             pass
         pass
 
-    ## \brief Show a mark for the pointer for a frame.
-    #
-    def _draw_hover(self, frame_idx):
-        win = self.window
-        w_x, w_y, w_w, w_h, depth = win.get_geometry()
-        gc = self._gc
-        
-        color_rgb = color_to_rgb(self._hover_border_color)
-        color = gtk.gdk.Color(*color_rgb)
-        gc.set_rgb_fg_color(color)
-
-        line_x1 = frame_idx * self._frame_width + 1
-        line_x2 = line_x1 + self._frame_width - 2
-        
-        win.draw_line(gc, line_x1, 1, line_x1, w_h - 2)
-        win.draw_line(gc, line_x2, 1, line_x2, w_h - 2)
-        win.draw_line(gc, line_x1, 1, line_x2, 1)
-        win.draw_line(gc, line_x1, w_h - 2, line_x2, w_h - 2)
-        pass
-    
     ## \brief Redraw a frame specified by an index.
     #
     def _draw_frame(self, frame_idx):
@@ -475,7 +499,10 @@ class frameline(gtk.DrawingArea):
                 #
 		first_tween_pos, last_tween_pos = \
 		    self._find_tween_range(key_pos)
-		self._draw_tween(first_tween_pos, last_tween_pos)
+		first_tween_key = self._keys[first_tween_pos]
+		last_tween_key = self._keys[last_tween_pos]
+		self._draw_tween(first_tween_key.idx, last_tween_key.idx,
+				 first_tween_key.right_tween_type)
 		last_tween_key = self._keys[last_tween_pos]
                 i = last_tween_key.idx + 1
 	    else:
@@ -505,7 +532,8 @@ class frameline(gtk.DrawingArea):
 	first_key = self._keys[first_pos]
 	last_key = self._keys[last_pos]
 	
-	self._draw_tween(first_pos, last_pos)
+	self._draw_tween(first_key.idx, last_key.idx,
+			 first_key.right_tween_type)
 	self._draw_bottom_line(first_key.idx, last_key.idx + 1)
 
 	for i in range(first_pos, last_pos + 1):
