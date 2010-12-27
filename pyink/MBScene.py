@@ -590,6 +590,10 @@ class MBScene():
 		    else:
 			scene_group.setAttribute('style', 'display: none')
 			pass
+		elif idx == start_idx:
+		    layer.duplicateGroup.setAttribute("style","display:none")
+		    scene_group = layer.get_frame_data(start_idx)
+		    scene_group.setAttribute("style","")
 		elif start_idx <= idx and stop_idx >= idx:
 		    scene_group = layer.get_frame_data(start_idx)
 		    scene_group.setAttribute("style","display:none")
