@@ -303,10 +303,7 @@ class frameline_draw_state(frameline_draw):
 	pos = self._find_keyframe(frame_idx)
 	key = self._keys[pos]
 	if key.left_tween and not key.right_tween:
-	    left_key = self._keys[pos - 1]
-	    if left_key.right_tween_type == 0:
-		return
-	    pass
+	    return
 	
 	self._draw_keyframe_(frame_idx)
 	pass
@@ -633,10 +630,8 @@ class frameline(frameline_draw_state):
         self._keys[insert_pos:insert_pos] = [key]
         if insert_pos > 0 and self._keys[insert_pos - 1].right_tween:
             key.left_tween = True
-            pass
-        if insert_pos < (len(self._keys) - 1) and \
-                self._keys[insert_pos + 1].left_tween:
-            key.right_tween = True
+	    key.right_tween = True
+	    key.right_tween_type = self._keys[insert_pos - 1].right_tween_type
             pass
 
 	if self._drawing:
@@ -659,7 +654,7 @@ class frameline(frameline_draw_state):
                 redraw_range = (right_key.idx, idx + 1)
             else:
                 left_key = self._keys[key_pos - 1]
-                left_key.right_key = False
+                left_key.right_tween = False
                 redraw_range = (idx, left_key.idx + 1)
                 pass
             for i in range(*redraw_range):
