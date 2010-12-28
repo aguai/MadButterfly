@@ -917,10 +917,11 @@ class MBScene():
 	if self.last_line == None:
 	    return
 	frameline = self.last_line
+	idx = self.last_frame
         i = 0
 	found = -1
 	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
-	    if start_idx < stop_idx:
+	    if start_idx <= idx and stop_idx >= idx:
 		n = self.tweenTypeSelector.get_active()
 		new_tween_type = MBScene._frameline_tween_types[n]
 		self.last_line.set_tween_type(start_idx, new_tween_type)
