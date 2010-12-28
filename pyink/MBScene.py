@@ -418,13 +418,30 @@ class MBScene():
 	y = self.last_line
 	rdoc = self.document
 	ns = rdoc.createElement("svg:g")
-	txt = rdoc.createElement("svg:rect")
-	txt.setAttribute("x","0")
-	txt.setAttribute("y","0")
-	txt.setAttribute("width","100")
-	txt.setAttribute("height","100")
-	txt.setAttribute("style","fill:#ff00")
-	ns.appendChild(txt)
+	found = False
+	for node in self.last_line.node.childList():
+	    try:
+		label = node.getAttribute("inkscape:label")
+	    except:
+		continue
+	    if label == "dup":
+		for n in node.childList():
+		    ns.appendChild(n.duplicate(self.document))
+		found = True
+		node.setAttribute("style","display:none")
+		break
+	    pass
+	pass
+
+	if found == False:
+	    txt = rdoc.createElement("svg:rect")
+	    txt.setAttribute("x","0")
+	    txt.setAttribute("y","0")
+	    txt.setAttribute("width","100")
+	    txt.setAttribute("height","100")
+	    txt.setAttribute("style","fill:#ff00")
+	    ns.appendChild(txt)
+
 	gid = self.last_line.node.getAttribute('inkscape:label')+self.newID()
 	self.ID[gid]=1
 	ns.setAttribute("id",gid)
@@ -749,8 +766,13 @@ class MBScene():
 	        frameline.label.set_text('???')
 	    else:
 	        frameline.label.set_text(frameline.node.getAttribute("inkscape:label"))
+	    last_scene = None
 	    for scene in layer.scenes:
-		frameline.add_keyframe(scene.start-1,scene.node)
+		if last_scene and last_scene.end == scene.start:
+		    frameline.setRightTween(last_scene.end)
+		else:
+		    frameline.add_keyframe(scene.start-1,scene.node)
+		last_scene = scene
 		if scene.start != scene.end:
 		    frameline.add_keyframe(scene.end-1,scene.node)
 		    tween_type_idx = self._tween_type_names.index(scene.type)
@@ -816,6 +838,7 @@ class MBScene():
 	old_nodes = _travel_DOM(orig)
 	new_nodes = _travel_DOM(ns)
 	for old_node in old_nodes:
+	    print old_node
 	    old_node_id = old_node.getAttribute('id')
 	    new_node = new_nodes.next()
 	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
