@@ -605,7 +605,7 @@ class MBScene():
 			layer.get_frame_block(stop_idx + 1)
 		    next_scene_group = layer.get_frame_data(next_idx)
 		    
-		    nframes = next_idx - start_idx + 1
+		    nframes = stop_idx - start_idx + 1
 		    percent = float(idx - start_idx) / nframes
 		    self.tween.updateTweenContent(layer.duplicateGroup,
 						  tween_obj_tween_type,
