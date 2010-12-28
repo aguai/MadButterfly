@@ -720,11 +720,14 @@ class frameline(frameline_draw_state):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
 	    key = self._keys[pos]
+	    print key.right_tween, key.left_tween
 	    if key.idx == idx:
 		return key.idx, key.idx, 0
 	    elif key.right_tween:
 		next_key = self._keys[pos + 1]
 		return key.idx, next_key.idx, key.right_tween_type
+	    else:
+		return -1,-1,-1
 	    pass
 	raise ValueError, \
 	    'the frame specified by idx is not in any tween or a key frame'

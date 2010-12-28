@@ -605,7 +605,10 @@ class MBScene():
 		    
 		    next_idx, next_stop_idx, next_tween_type = \
 			layer.get_frame_block(stop_idx + 1)
-		    next_scene_group = layer.get_frame_data(next_idx)
+		    if next_idx == -1:
+			next_scene_group = scene_group
+		    else:
+			next_scene_group = layer.get_frame_data(next_idx)
 		    
 		    nframes = stop_idx - start_idx + 1
 		    percent = float(idx - start_idx) / nframes
