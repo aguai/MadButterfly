@@ -633,17 +633,32 @@ class frameline(frameline_draw_state):
         
         key = keyframe(idx)
 	key.ref = ref
-        self._keys[insert_pos:insert_pos] = [key]
         if insert_pos > 0 and self._keys[insert_pos - 1].right_tween:
-            key.left_tween = True
-	    key.right_tween = True
-	    key.right_tween_type = self._keys[insert_pos - 1].right_tween_type
+	    if self._keys[insert_pos-1].idx == idx-1:
+		self._keys[insert_pos-1].right_tween = False
+                self._keys[insert_pos:insert_pos] = [key]
+		return
+	    else:
+		key2 = keyframe(idx-1)
+		key2.ref = self._keys[insert_pos-1].ref
+		key2.left_tween = True
+		self._keys[insert_pos:insert_pos] = [key2,key]
+		key.left_tween = False
+		key.right_tween = True
+		key.right_tween_type = self._keys[insert_pos - 1].right_tween_type
             pass
+	else:
+            self._keys[insert_pos:insert_pos] = [key]
 
 	if self._drawing:
 	    self._draw_keyframe(idx)
 	    pass
         pass
+
+    ## Set the frame @idx as the right of a tween
+    def set_right_tween(self,idx):
+	pos = self._find_keyframe(idx)
+	self._keys[pos].right_tween = TRue
 
     def rm_keyframe(self, idx):
 	key_pos = self._find_keyframe(idx)
