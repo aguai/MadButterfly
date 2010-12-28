@@ -62,6 +62,14 @@ class TweenObject:
 	    node = node.next()
 	    pass
 
+	# Remove duplicate nodes that is not in the set of stop nodes
+	for node_ref in dup_nodes:
+	    if node_ref not in stop_nodes:
+		node = dup_nodes[node_ref]
+		duplicate_group.removeChild(node)
+		pass
+	    pass
+
 	#
 	# Node ID of a node of start scene must be mapped to
 	# 'ns0:duplicate-src' attribute of a node of stop scene.  The
