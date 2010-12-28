@@ -370,6 +370,12 @@ class frameline_draw_state(frameline_draw):
 		self._draw_tween(first_tween_key.idx, last_tween_key.idx,
 				 first_tween_key.right_tween_type)
 		last_tween_key = self._keys[last_tween_pos]
+		key_pos = last_tween_pos + 1
+		try:
+		    key = self._keys[key_pos]
+		except:
+		    key = keyframe(self._num_frames)
+		    pass
                 i = last_tween_key.idx + 1
 	    else:
                 self._draw_normal_frame(i)
