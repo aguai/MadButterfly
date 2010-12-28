@@ -83,6 +83,7 @@ class TweenObject:
 	start_node = start_scene_group.firstChild()
 	while start_node:
 	    start_node_id = start_node.getAttribute('id')
+	    dup_node = dup_nodes.setdefault(start_node_id, None)
 	    try:
 		stop_node = stop_nodes[start_node_id]
 	    except KeyError:
@@ -92,7 +93,6 @@ class TweenObject:
 		start_node = start_node.next()
 		continue
 	    
-	    dup_node = dup_nodes.setdefault(start_node_id, None)
 	    
 	    self.updateTweenObject(duplicate_group, tween_type,
 				   start_node, stop_node,
