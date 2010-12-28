@@ -710,7 +710,8 @@ class frameline(frameline_draw_state):
 		block = (key.idx, next_key.idx, key.right_tween_type)
 	    elif not key.left_tween:
 		block = (key.idx, key.idx, 0)
-		pass
+	    else:
+		continue
 	    blocks.append(block)
 	    pass
 	return blocks

@@ -86,7 +86,7 @@ class ObjectWatcher(pybInkscape.PYNodeObserver):
         if self.type == 'DOMSubtreeModified':
 	    self.func(node)
     def notifyAttributeChanged(self,node, name, old_value, new_value):
-        print 'attr',node,name,old_value,new_value
+        # print 'attr',node,name,old_value,new_value
         if self.type == 'DOMAttrModified':
 	    self.func(node,name)
 
@@ -336,6 +336,8 @@ class MBScene():
 		        try:
 			    label = scene.getAttribute('inkscape:label')
 			    if label == 'dup':
+				# XXX: This would stop animation.
+				# This function is called by updateUI()
 			        node.removeChild(scene)
 			except:
 			    pass
@@ -873,16 +875,22 @@ class MBScene():
 	"""
 	if self.btnRun.get_label() == "Run":
 	    self.btnRun.set_label("Stop")
+	    self.lockui = True
             self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
 	else:
 	    self.btnRun.set_label("Run")
 	    glib.source_remove(self.last_update)
+	    self.lockui = False
+	    pass
 
     def doRunNext(self):
 	if self.current >= self.maxframe:
 	    self.current = 0
-	print self.current,self.maxframe
-	self.setCurrentScene(self.current+1)
+	try:
+	    self.setCurrentScene(self.current+1)
+	except:
+	    traceback.print_exc()
+	    raise
         self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
         
     
