@@ -714,15 +714,24 @@ class MBScene():
 	pass
 	    
     def _create_framelines(self):
-	self.scrollwin = gtk.ScrolledWindow()
-	self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-	self.scrollwin.set_size_request(-1,150)
+	if not hasattr(self, 'scrollwin'):
+	    self.scrollwin = gtk.ScrolledWindow()
+	    self.scrollwin.set_policy(gtk.POLICY_AUTOMATIC,
+				      gtk.POLICY_AUTOMATIC)
+	    self.scrollwin.set_size_request(-1,150)
+	    vbox = gtk.VBox()
+	    vbox.show()
+	    self.scrollwin.add_with_viewport(vbox)
+	    self.scrollwin_vbox = vbox
+	else:
+	    self.scrollwin.remove(self.scrollwin_vbox)
+	    vbox = gtk.VBox()
+	    vbox.show()
+	    self.scrollwin.add_with_viewport(vbox)
+	    self.scrollwin_vbox = vbox
+	    pass
 	
 	nframes = 100
-	
-	vbox = gtk.VBox()
-	vbox.show()
-	self.scrollwin.add_with_viewport(vbox)
 	
 	ruler = frameruler(nframes)
 	ruler.set_size_request(nframes * 10, 20)
@@ -807,7 +816,7 @@ class MBScene():
 		node = self.duplicateSceneGroup(last_key.ref.getAttribute("id"))
 	        key.ref = node
 		self.update()
-		self.show()
+		self.updateUI()
 	        self.doEditScene(None)
 		return
 	    last_key = key
@@ -1009,15 +1018,17 @@ class MBScene():
 
     def updateUI(self,node=None,arg=None):
         if self.lockui: return
-        self.lockui = True
-	self._updateUI()
-	self.lockui = False
+	
+        if self.last_update!= None:
+            glib.source_remove(self.last_update)
+        self.last_update = glib.timeout_add(300,self._updateUI)
+	
 	pass
     
     def _updateUI(self,node=None,arg=None):
-        if self.last_update!= None:
-            glib.source_remove(self.last_update)
-        self.last_update = glib.timeout_add(300,self.show)
+	self.parseScene()
+	self._create_framelines()
+	self._update_framelines()
 	pass
     
     def show(self):
@@ -1028,9 +1039,7 @@ class MBScene():
 	
 	self.document = self.desktop.doc().rdoc
 	self.tween = TweenObject(self.document, self.root)
-	self.parseScene()
-	self._create_framelines()
-	self._update_framelines()
+	self._updateUI()
 	if self.top == None:
 	    self.top = gtk.VBox(False,0)
 	    self.desktop.getToplevel().child.child.pack_end(self.top,expand=False)
