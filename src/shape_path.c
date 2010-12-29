@@ -1190,7 +1190,7 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     }
 
     path->dev_data = path->user_data + msz;
-    memcpy(path->user_data, commands, strlen(commands));
+    memcpy(path->user_data, commands, strlen(commands) + 1);
     memcpy(path->user_data + cmd_cnt, pnts, sizeof(co_aix) * pnt_cnt);
     memcpy(path->user_data + cmd_cnt + pnt_cnt * sizeof(co_aix),
 	   float_args, sizeof(co_aix) * float_arg_cnt);
