@@ -87,9 +87,9 @@ class TweenObject:
 	    try:
 		stop_node = stop_nodes[start_node_id]
 	    except KeyError:
-		self.updateTweenObject(duplicate_group, tween_type,
-				       start_node, start_node,
-				       percent, dup_node)
+		#self.updateTweenObject(duplicate_group, tween_type,
+		#		       start_node, start_node,
+		#		       percent, dup_node)
 		start_node = start_node.next()
 		continue
 	    
@@ -196,6 +196,7 @@ class TweenObject:
             newobj = s.duplicate(self.document)
             top = self.document.createElement("svg:g")
 	    top.setAttribute("ref",s.getAttribute("id"))
+	    top.setAttribute("inkscape:label","dup")
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
 	else:
