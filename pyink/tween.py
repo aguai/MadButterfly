@@ -63,12 +63,12 @@ class TweenObject:
 	    pass
 
 	# Remove duplicate nodes that is not in the set of stop nodes
-	for node_ref in dup_nodes:
-	    if node_ref not in stop_nodes:
-		node = dup_nodes[node_ref]
-		duplicate_group.removeChild(node)
-		pass
-	    pass
+	#for node_ref in dup_nodes:
+	#    if node_ref not in stop_nodes:
+	#	node = dup_nodes[node_ref]
+	#	duplicate_group.removeChild(node)
+	#	pass
+	#   pass
 
 	#
 	# Node ID of a node of start scene must be mapped to
@@ -87,9 +87,9 @@ class TweenObject:
 	    try:
 		stop_node = stop_nodes[start_node_id]
 	    except KeyError:
-		#self.updateTweenObject(duplicate_group, tween_type,
-		#		       start_node, start_node,
-		#		       percent, dup_node)
+		self.updateTweenObject(duplicate_group, tween_type,
+				       start_node, start_node,
+				       percent, dup_node)
 		start_node = start_node.next()
 		continue
 	    
@@ -176,11 +176,10 @@ class TweenObject:
 	    self.updateTweenObjectScale(obj,s,d,p,newobj)
 	    pass
 	elif typ == self.TWEEN_TYPE_NORMAL:
-	    newobj = s.duplicate(self.document)
-	    newobj.setAttribute("ref", s.getAttribute("id"))
-	    top = self.document.createElement("svg:g")
-	    top.appendChild(newobj)
-	    obj.appendChild(top)
+	    if newobj == None:
+	        newobj = s.duplicate(self.document)
+	        newobj.setAttribute("ref", s.getAttribute("id"))
+	        obj.appendChild(newobj)
 	pass
 
     def updateTweenObjectScale(self,obj,s,d,p,newobj):
@@ -196,9 +195,9 @@ class TweenObject:
             newobj = s.duplicate(self.document)
             top = self.document.createElement("svg:g")
 	    top.setAttribute("ref",s.getAttribute("id"))
-	    top.setAttribute("inkscape:label","dup")
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
+	    print "aaa"
 	else:
 	    top = newobj
 	    newobj = top.firstChild()
