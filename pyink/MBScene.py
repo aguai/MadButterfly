@@ -425,6 +425,9 @@ class MBScene():
 	    except:
 		continue
 	    if label == "dup":
+		#FIXME: The duplication here is not perfect. We should
+		#       get the element inside the group and apply the
+		#       transformation matrix to it directly.
 		for n in node.childList():
 		    ns.appendChild(n.duplicate(self.document))
 		found = True
