@@ -660,6 +660,55 @@ class frameline(frameline_draw_state):
 	pos = self._find_keyframe(idx)
 	self._keys[pos].right_tween = TRue
 
+    def remove_frame(self, idx):
+	pos = self._find_keyframe_floor(idx)
+	if pos != -1:
+	    key = self._keys[pos]
+	    if key.idx == idx:
+		if key.left_tween:
+		    self._keys[pos-1].right_tween = False
+    		    del self._keys[pos]
+		    while pos < len(self._keys):
+			self._keys[pos].idx = self._keys[pos].idx - 1
+			pos = pos+1
+		    self.update()
+		# Use remove key frame to remove the key frame
+		return
+	    elif key.right_tween:
+		pos = pos + 1
+		while pos < len(self._keys):
+		    self._keys[pos].idx = self._keys[pos].idx - 1
+		    pos = pos + 1
+		if self._drawing:
+		    self.update()
+	    else:
+		return 
+	    pass
+	pass
+
+    def insert_frame(self,idx):
+	pos = self._find_keyframe_floor(idx)
+	if pos != -1:
+	    key = self._keys[pos]
+	    if key.idx == idx:
+		while pos < len(self._keys):
+		    self._keys[pos].idx = self._keys[pos].idx + 1
+		    pos = pos + 1
+		if self._drawing:
+		    self.update()
+		return
+	    elif key.right_tween:
+		pos = pos + 1
+		while pos < len(self._keys):
+		    self._keys[pos].idx = self._keys[pos].idx + 1
+		    pos = pos + 1
+		if self._drawing:
+		    self.update()
+	    else:
+		return 
+	    pass
+	pass
+        pass
     def rm_keyframe(self, idx):
 	key_pos = self._find_keyframe(idx)
         key = self._keys[key_pos]
@@ -678,7 +727,6 @@ class frameline(frameline_draw_state):
                 left_key.right_tween = False
                 redraw_range = (idx, left_key.idx + 1)
                 pass
-            for i in range(*redraw_range):
                 self._draw_frame(i)
                 pass
         else:

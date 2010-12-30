@@ -82,7 +82,6 @@ class ObjectWatcher(pybInkscape.PYNodeObserver):
     def notifyChildOrderChanged(self,node,child,prev):
         pass
     def notifyContentChanged(self,node,old_content,new_content):
-        print 'cont'
         if self.type == 'DOMSubtreeModified':
 	    self.func(node)
     def notifyAttributeChanged(self,node, name, old_value, new_value):
@@ -450,7 +449,6 @@ class MBScene():
 	ns.setAttribute("id",gid)
 	ns.setAttribute("inkscape:groupmode","layer")
 	self.last_line.node.appendChild(ns)
-	print 'Add key ', x
 	self.last_line.add_keyframe(x,ns)
 	self.update()
 	pass
@@ -727,11 +725,9 @@ class MBScene():
 	    self.scrollwin.add_with_viewport(vbox)
 	    self.scrollwin_vbox = vbox
 	else:
-	    self.scrollwin.remove(self.scrollwin_vbox)
-	    vbox = gtk.VBox()
-	    vbox.show()
-	    self.scrollwin.add_with_viewport(vbox)
-	    self.scrollwin_vbox = vbox
+	    for c in self.scrollwin_vbox.get_children():
+	    	self.scrollwin_vbox.remove(c)
+	    vbox = self.scrollwin_vbox
 	    pass
 	
 	nframes = 100
@@ -767,6 +763,7 @@ class MBScene():
 	    line.layer = self.layers[i]
 	    line.connect('motion-notify-event', self._remove_active_frame)
 	    pass
+	vbox.show_all()
 	pass
 
     ## \brief Update conetent of frameliens according layers.
@@ -930,28 +927,57 @@ class MBScene():
 	    traceback.print_exc()
 	    raise
         self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
-        
+
+    def doInsertScene(self,w):
+	self.lockui=True
+	self.last_line.insert_frame(self.last_frame)
+	self.update()
+	self.lockui=False
+
+    def doRemoveScene(self,w):
+	self.lockui=True
+	self.last_line.remove_frame(self.last_frame)
+	self.update()
+	self.lockui=False
     
     def addButtons(self,hbox):
 	#btn = gtk.Button('Edit')
 	#btn.connect('clicked', self.doEditScene)
 	#hbox.pack_start(btn,expand=False,fill=False)
+
 	btn = gtk.Button('Insert Key')
 	btn.connect('clicked',self.doInsertKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
+
 	btn=gtk.Button('Remove Key')
 	btn.connect('clicked', self.doRemoveScene)
 	hbox.pack_start(btn,expand=False,fill=False)
+
 	btn=gtk.Button('Extend scene')
 	btn.connect('clicked', self.doExtendScene)
 	hbox.pack_start(btn,expand=False,fill=False)
+
 	btn=gtk.Button('Duplicate Key')
 	btn.connect('clicked', self.doDuplicateKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
+
+	btn=gtk.Button('Duplicate Key')
+	btn.connect('clicked', self.doDuplicateKeyScene)
+	hbox.pack_start(btn,expand=False,fill=False)
+
+	btn=gtk.Button('Insert')
+	btn.connect('clicked', self.doInsertScene)
+	hbox.pack_start(btn,expand=False,fill=False)
+
+	btn=gtk.Button('Remove')
+	btn.connect('clicked', self.doRemoveScene)
+	hbox.pack_start(btn,expand=False,fill=False)
+
 	btn=gtk.Button('Run')
 	btn.connect('clicked', self.doRun)
 	self.btnRun = btn
 	hbox.pack_start(btn,expand=False,fill=False)
+
 	self.addNameEditor(hbox)
 	self.addTweenTypeSelector(hbox)
 	pass
