@@ -61,14 +61,26 @@ class TweenObject:
 		pass
 	    node = node.next()
 	    pass
+	# Collect all nodes in start scene
+	start_nodes = {}
+	node = start_scene_group.firstChild()
+	while node:
+	    try:
+		node_label = node.getAttribute("id")
+		start_nodes[node_label] = node
+	    except:
+		pass
+	    node = node.next()
+	    pass
 
-	# Remove duplicate nodes that is not in the set of stop nodes
-	#for node_ref in dup_nodes:
-	#    if node_ref not in stop_nodes:
-	#	node = dup_nodes[node_ref]
-	#	duplicate_group.removeChild(node)
-	#	pass
-	#   pass
+
+	# Remove duplicate nodes that is not in the set of start nodes
+	for node_ref in dup_nodes:
+	    if node_ref not in start_nodes:
+		node = dup_nodes[node_ref]
+		duplicate_group.removeChild(node)
+		pass
+	    pass
 
 	#
 	# Node ID of a node of start scene must be mapped to
@@ -176,6 +188,7 @@ class TweenObject:
 	    self.updateTweenObjectScale(obj,s,d,p,newobj)
 	    pass
 	elif typ == self.TWEEN_TYPE_NORMAL:
+	    print "newobj=",newobj
 	    if newobj == None:
 	        newobj = s.duplicate(self.document)
 	        newobj.setAttribute("ref", s.getAttribute("id"))
@@ -197,7 +210,6 @@ class TweenObject:
 	    top.setAttribute("ref",s.getAttribute("id"))
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
-	    print "aaa"
 	else:
 	    top = newobj
 	    newobj = top.firstChild()
