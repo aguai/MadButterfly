@@ -660,29 +660,16 @@ class MBScene(MBScene_dom):
 	    pass
 	pass
     
-    def selectSceneObject(self,frameline, nth):
-        i = 0
-        while i < len(frameline._keys):
-	    s = frameline._keys[i]
-	    if s.right_tween is False:
-	        if nth == s.idx+1:
-		    self.enterGroup(s.ref)
-	            self.setTweenType(frameline.get_tween_type(s.idx))
-		    return
-		else:
-		    pass
-		i = i + 1
-		continue
+    def selectSceneObject(self, frameline, nth):
+	try:
+	    start, stop, tween_type = frameline.get_frame_block(nth - 1)
+	except:
+	    return
 
-	    if nth >= (s.idx+1) and nth <= (frameline._keys[i+1].idx+1):
-	        self.enterGroup(s.ref)
-	        self.setTweenType(frameline.get_tween_type(s.idx))
-		return
-	    else:
-	        pass
-	    i = i + 2
-	    pass
-        pass
+	scene_group = frameline.get_frame_data(start)
+	self.enterGroup(scene_group)
+	self.setTweenType(tween_type)
+	pass
 
     def setTweenType(self, tween_type):
 	sel_type = MBScene._frameline_tween_types.index(tween_type)
