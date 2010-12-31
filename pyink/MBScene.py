@@ -411,7 +411,7 @@ class MBScene(MBScene_dom):
 	return None
     
     
-    def insertKeyScene(self):
+    def insertKeyScene(self, line, frame):
 	"""
 	Insert a new key scene into the stage. If the nth is always a
 	key scene, we will return without changing anything.  If the
@@ -420,12 +420,10 @@ class MBScene(MBScene_dom):
 	new scene.
 
 	"""
-	x = self.last_frame
-	y = self.last_line
 	rdoc = self.document
 	ns = rdoc.createElement("svg:g")
 	found = False
-	for node in self.last_line.node.childList():
+	for node in line.node.childList():
 	    try:
 		label = node.getAttribute("inkscape:label")
 	    except:
@@ -451,12 +449,12 @@ class MBScene(MBScene_dom):
 	    txt.setAttribute("style","fill:#ff00")
 	    ns.appendChild(txt)
 
-	gid = self.last_line.node.getAttribute('inkscape:label')+self.newID()
+	gid = line.node.getAttribute('inkscape:label')+self.newID()
 	self.ID[gid]=1
 	ns.setAttribute("id",gid)
 	ns.setAttribute("inkscape:groupmode","layer")
-	self.last_line.node.appendChild(ns)
-	self.last_line.add_keyframe(x,ns)
+	line.node.appendChild(ns)
+	line.add_keyframe(frame, ns)
 	self.update()
 	pass
 
@@ -687,12 +685,12 @@ class MBScene(MBScene_dom):
 	btn.modify_bg(gtk.STATE_NORMAL, btn.get_colormap().alloc_color("gray"))
 	return btn
     
-    def onCellClick(self,line,frame,but):
+    def onCellClick(self, line, frame, but):
 	self.last_line = line
 	self.last_frame = frame
 	self.last_line.active_frame(frame)
 	self.lockui = True
-        self.doEditScene(frame)
+        self.doEditScene(None)
 	self.lockui = False
         pass
         
@@ -856,12 +854,12 @@ class MBScene(MBScene_dom):
     
     def doEditScene(self, w):
 	self.setCurrentScene(self.last_frame+1)
-	self.selectSceneObject(self.last_line,self.last_frame)
+	self.selectSceneObject(self.last_line, self.last_frame)
 	pass
     
     def doInsertKeyScene(self,w):
 	self.lockui=True
-	self.insertKeyScene()
+	self.insertKeyScene(self.last_line, self.last_frame)
 	self.selectSceneObject(self.last_line, self.last_frame)
 	self.lockui=False
 	# self.grid.show_all()
@@ -936,10 +934,6 @@ class MBScene(MBScene_dom):
 	self.lockui=False
     
     def addButtons(self,hbox):
-	#btn = gtk.Button('Edit')
-	#btn.connect('clicked', self.doEditScene)
-	#hbox.pack_start(btn,expand=False,fill=False)
-
 	btn = gtk.Button('Insert Key')
 	btn.connect('clicked',self.doInsertKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
