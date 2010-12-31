@@ -660,9 +660,9 @@ class MBScene(MBScene_dom):
 	    pass
 	pass
     
-    def selectSceneObject(self, frameline, nth):
+    def selectSceneObject(self, frameline, frame_idx):
 	try:
-	    start, stop, tween_type = frameline.get_frame_block(nth - 1)
+	    start, stop, tween_type = frameline.get_frame_block(frame_idx)
 	except:
 	    return
 
@@ -854,14 +854,15 @@ class MBScene(MBScene_dom):
 	self.last_line.node.appendChild(ns)
 	return ns
     
-    def doEditScene(self,w):
+    def doEditScene(self, w):
 	self.setCurrentScene(self.last_frame+1)
-	self.selectSceneObject(self.last_line,self.last_frame+1)
+	self.selectSceneObject(self.last_line,self.last_frame)
 	pass
     
     def doInsertKeyScene(self,w):
 	self.lockui=True
 	self.insertKeyScene()
+	self.selectSceneObject(self.last_line, self.last_frame)
 	self.lockui=False
 	# self.grid.show_all()
 	return
