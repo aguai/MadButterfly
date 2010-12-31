@@ -626,12 +626,14 @@ class MBScene(MBScene_dom):
 		    tween_obj_tween_type = \
 			self._tween_obj_tween_types[tween_type_idx]
 		    
-		    next_idx, next_stop_idx, next_tween_type = \
-			layer.get_frame_block(stop_idx + 1)
-		    if next_idx == -1:
+		    try:
+			next_idx, next_stop_idx, next_tween_type = \
+			    layer.get_frame_block(stop_idx + 1)
+		    except:
 			next_scene_group = scene_group
 		    else:
 			next_scene_group = layer.get_frame_data(next_idx)
+			pass
 		    
 		    nframes = stop_idx - start_idx + 1
 		    percent = float(idx - start_idx) / nframes
