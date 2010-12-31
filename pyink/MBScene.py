@@ -87,7 +87,7 @@ class ObjectWatcher(pybInkscape.PYNodeObserver):
     def notifyAttributeChanged(self,node, name, old_value, new_value):
         # print 'attr',node,name,old_value,new_value
         if self.type == 'DOMAttrModified':
-	    self.func(node,name)
+	    self.func(node, name, old_value, new_value)
 
 def addEventListener(obj, type, func,arg):
     obs = ObjectWatcher(obj,type,func,arg)
@@ -153,23 +153,108 @@ def _travel_DOM(node):
 	pass
     pass
 
+
+## \brief Monitor changes of DOM-tree.
+#
+class MBScene_dom_monitor(object):
+    def __init__(self, *args, **kws):
+	super(MBScene_dom_monitor, self).__init__()
+
+	self._id2node = {}	# map ID to the node in the DOM tree.
+	pass
+    
+    def _start_monitor(self):
+	self._collect_node_ids()
+	
+	doc = self._doc
+	addEventListener(doc,'DOMNodeInserted', self._on_insert_node, None)
+	addEventListener(doc,'DOMNodeRemoved', self._on_remove_node, None)
+	addEventListener(doc, 'DOMAttrModified', self._on_attr_modified, None)
+	pass
+
+    def _on_insert_node(self, node):
+	try:
+	    node_id = node.getAttribute('id')
+	except:
+	    return
+	self._id2node[node_id] = node
+	pass
+
+    def _on_remove_node(self, node):
+	try:
+	    node_id = node.getAttribute('id')
+	except:
+	    return
+	if node_id not in self._id2node:
+	    raise ValueError, \
+		'remove a node that is never known (%s)' % (node_id)
+	del self._id2node[node_id]
+	pass
+
+    def _on_attr_modified(self, node, name, old_value, new_value):
+	if name != 'id' or old_value == new_value:
+	    return
+
+	if old_value and (old_value not in self._id2node):
+	    raise ValueError, \
+		'old ID value of passed node is valid one (%s)' % (old_value)
+	if (new_value in self._id2node):
+	    raise ValueError, \
+		'new ID value of passed node is valid one (%s)' % (new_value)
+
+	if old_value:
+	    del self._id2node[old_value]
+	    pass
+	self._id2node[new_value] = node
+	pass
+    
+    def _collect_node_ids(self):
+	self._id2node = {}
+	root = self._root
+	for n in root.childList():
+	    self._collect_node_ids_recursive(n)
+	    pass
+	pass
+    
+    def _collect_node_ids_recursive(self, node):
+	try:
+	    node_id = node.getAttribute('id')
+	except:
+	    return
+	
+	self._id2node[node_id] = node
+	for n in node.childList():
+	    self._collect_node_ids_recursive(n)
+	    pass
+	pass
+    
+    def get_node(self, node_id):
+	return self._id2node[node_id]
+
+    def new_id(self):
+	while True:
+	    candidate = 's%d' % int(random.random()*100000)
+	    if candidate not in self._id2node:
+		return candidate
+	    pass
+	pass
+    pass
+
+
 ## \brief Layer of MBScene to manipulate DOM tree.
 #
-class MBScene_dom(object):
-    def newID(self):
-	while True:
-	    n = 's%d' % int(random.random()*10000)
-			#print "try %s" % n
-	    if self.ID.has_key(n) == False:
-		return n
-	    pass
+class MBScene_dom(MBScene_dom_monitor):
+    def __init__(self, *args, **kws):
+	super(MBScene_dom, self).__init__()
 	pass
-    
-    def dumpID(self):
-	for a,v in self.ID.items():
-	    pass
+
+    def handle_doc_root(self, doc, root):
+	self._doc = doc
+	self._root = root
+	
+	self._start_monitor()	# start MBScene_dom_monitor
 	pass
-    
+   
     def dumpattr(self, n):
 	s = ""
 	for a,v in n.attrib.items():
@@ -237,8 +322,8 @@ class MBScene_dom(object):
 	    pass
 	else:
 	    ns = "http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
-	    self.root.setAttribute("xmlns:ns0", ns)
-	    scenes = self.document.createElement("ns0:scenes")
+	    self._root.setAttribute("xmlns:ns0", ns)
+	    scenes = self._doc.createElement("ns0:scenes")
 	    node.appendChild(scenes)
 	    pass
 	pass
@@ -252,7 +337,7 @@ class MBScene_dom(object):
 	new scene.
 
 	"""
-	rdoc = self.document
+	rdoc = self._doc
 	ns = rdoc.createElement("svg:g")
 	found = False
 	for node in line.node.childList():
@@ -265,7 +350,7 @@ class MBScene_dom(object):
 		#       get the element inside the group and apply the
 		#       transformation matrix to it directly.
 		for n in node.childList():
-		    ns.appendChild(n.duplicate(self.document))
+		    ns.appendChild(n.duplicate(self._doc))
 		found = True
 		node.setAttribute("style","display:none")
 		break
@@ -281,8 +366,7 @@ class MBScene_dom(object):
 	    txt.setAttribute("style","fill:#ff00")
 	    ns.appendChild(txt)
 
-	gid = line.node.getAttribute('inkscape:label')+self.newID()
-	self.ID[gid]=1
+	gid = line.node.getAttribute('inkscape:label')+self.new_id()
 	ns.setAttribute("id",gid)
 	ns.setAttribute("inkscape:groupmode","layer")
 	line.node.appendChild(ns)
@@ -291,7 +375,7 @@ class MBScene_dom(object):
 	pass
     
     def add_scene_on_dom(self, frameline, scenes_node):
-	doc = self.document
+	doc = self._doc
 	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
 	    ref = frameline.get_frame_data(start_idx)
 	    tween_type_idx = self._frameline_tween_types.index(tween_type)
@@ -309,8 +393,8 @@ class MBScene_dom(object):
 	pass
 
     def update_scenes_of_dom(self):
-        doc = self.root
-	rdoc = self.document
+        doc = self._root
+	rdoc = self._doc
 	for node in doc.childList():
 	    if node.name() == 'svg:metadata':
 	        for t in node.childList():
@@ -327,61 +411,6 @@ class MBScene_dom(object):
 		pass
 	    pass
 	pass
-    pass
-
-class MBScene(MBScene_dom):
-    _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
-			      frameline.TWEEN_TYPE_SHAPE)
-    _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
-			      TweenObject.TWEEN_TYPE_SCALE)
-    _tween_type_names = ('normal', 'scale')
-    
-    def __init__(self, desktop, win, root=None):
-	self.desktop = desktop
-	self.window = win
-	self.layers = []
-	self.layers.append(Layer(None))
-	self.scenemap = None
-	self.top = None
-	self.last_update = None
-	pybInkscape.inkscape.connect('change_selection', self.show_selection)
-	self.last_select = None
-	self.lockui=False
-	self.tween=None
-	self.document = None
-	self.root = root
-	self.framerate=12
-	self.maxframe=0
-	self._disable_tween_type_selector = False
-	pass
-
-    def show_selection(self,w,obj):
-	objs =  self.desktop.selection.list()
-	try:
-	    o = objs[0]
-	    print o.getCenter()
-	    if o == self.last_select: 
-	        return
-	except:
-	    self.nameEditor.set_text('')
-	    self.last_select = None
-	    return
-	self.last_select = o
-	try:
-	    self.nameEditor.set_text(o.getAttribute("inkscape:label"))
-	except:
-	    self.nameEditor.set_text('')
-	    pass
-	pass
-
-    def confirm(self,msg):
-	vbox = gtk.VBox()
-	vbox.pack_start(gtk.Label(msg))
-	self.button = gtk.Button('OK')
-	vbox.pack_start(self.button)
-	self.button.connect("clicked", self.onQuit)
-	self.window.add(vbox)
-	pass
     
     def parseScene(self):
 	"""
@@ -391,7 +420,7 @@ class MBScene(MBScene_dom):
 	"""
 	self.layers = []
 	self.scenemap = None
-	doc = self.root
+	doc = self._root
 
 	# TODO: Remove following code sicne this function is for parsing.
 	#       Why do this here?
@@ -445,37 +474,71 @@ class MBScene(MBScene_dom):
 		    pass
 		pass
 	    pass
-
-	# TODO: Remove following code, too.  It is unreasonable.
-	self.collectID()
-	self.dumpID()
 	pass
 
-    def collectID(self):
-	self.ID = {}
-	root = self.root
-	for n in root.childList():
-	    self.collectID_recursive(n)
-	    pass
-	pass
-    
-    def collectID_recursive(self,node):
-	try:
-	    self.ID[node.getAttribute('id')] = 1
-	except:
-	    pass
-	for n in node.childList():
-	    self.collectID_recursive(n)
-	    pass
-	pass
-    
     def getLayer(self, layer):
 	for l in self.layers:
 	    if l.node.getAttribute('id') == layer:
 		return l
 	    pass
 	return None
+    pass
+
+class MBScene(MBScene_dom):
+    _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
+			      frameline.TWEEN_TYPE_SHAPE)
+    _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
+			      TweenObject.TWEEN_TYPE_SCALE)
+    _tween_type_names = ('normal', 'scale')
     
+    def __init__(self, desktop, win, root=None):
+	super(MBScene, self).__init__()
+
+	self.desktop = desktop
+	self.window = win
+	self.layers = []
+	self.layers.append(Layer(None))
+	self.scenemap = None
+	self.top = None
+	self.last_update = None
+	pybInkscape.inkscape.connect('change_selection', self.show_selection)
+	self.last_select = None
+	self.lockui=False
+	self.tween=None
+	self.document = None
+	self.root = root
+	self.framerate=12
+	self.maxframe=0
+	self._disable_tween_type_selector = False
+	pass
+
+    def show_selection(self,w,obj):
+	objs =  self.desktop.selection.list()
+	try:
+	    o = objs[0]
+	    print o.getCenter()
+	    if o == self.last_select: 
+	        return
+	except:
+	    self.nameEditor.set_text('')
+	    self.last_select = None
+	    return
+	self.last_select = o
+	try:
+	    self.nameEditor.set_text(o.getAttribute("inkscape:label"))
+	except:
+	    self.nameEditor.set_text('')
+	    pass
+	pass
+
+    def confirm(self,msg):
+	vbox = gtk.VBox()
+	vbox.pack_start(gtk.Label(msg))
+	self.button = gtk.Button('OK')
+	vbox.pack_start(self.button)
+	self.button.connect("clicked", self.onQuit)
+	self.window.add(vbox)
+	pass
     
     def removeKeyScene(self):
 	nth = self.last_frame
@@ -584,8 +647,6 @@ class MBScene(MBScene_dom):
 		pass
 	    pass
 	pass
-
-
     
     def setCurrentScene(self,nth):
 	"""
@@ -866,8 +927,7 @@ class MBScene(MBScene_dom):
 	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
 	    pass
 
-	gid = self.last_line.node.getAttribute("inkscape:label")+self.newID()
-	self.ID[gid]=1
+	gid = self.last_line.node.getAttribute("inkscape:label")+self.new_id()
 	ns.setAttribute("id",gid)
 	ns.setAttribute("inkscape:groupmode","layer")
 	self.last_line.node.appendChild(ns)
@@ -1059,6 +1119,7 @@ class MBScene(MBScene_dom):
 	    pass
 	
 	self.document = self.desktop.doc().rdoc
+	self.handle_doc_root(self.document, self.root)
 	self.tween = TweenObject(self.document, self.root)
 	self._updateUI()
 	if self.top == None:
