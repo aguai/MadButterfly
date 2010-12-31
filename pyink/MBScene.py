@@ -222,7 +222,7 @@ class MBScene_dom(object):
 		scene_type = 'normal'
 		pass
 	    link = scene.getAttribute("ref")
-	    self.scenemap[link] = [int(start), int(end), scene_type]
+	    self.scenemap[link] = (int(start), int(end), scene_type)
 	    if cur >= start and cur <= end:
 		self.currentscene = link
 		pass
@@ -393,8 +393,11 @@ class MBScene(MBScene_dom):
 	self.scenemap = None
 	doc = self.root
 
+	# TODO: Remove following code sicne this function is for parsing.
+	#       Why do this here?
 	addEventListener(doc,'DOMNodeInserted',self.updateUI,None)
 	addEventListener(doc,'DOMNodeRemoved',self.updateUI,None)
+	
 	doc.childList()
 	try:
 	    self.width = float(doc.getAttribute("width"))
@@ -411,9 +414,6 @@ class MBScene(MBScene_dom):
 		pass
 	    elif node.name() == 'svg:g':
 		oldscene = None
-	        #obs = LayerAttributeWatcher(self)
-	        #addEventListener(doc,'DOMAttrModified',self.updateUI,None)
-	        #node.addObserver(obs)
 		lyobj = Layer(node)
 		self.layers.append(lyobj)
 		lyobj.current_scene = []
@@ -423,14 +423,15 @@ class MBScene(MBScene_dom):
 		        try:
 			    label = scene.getAttribute('inkscape:label')
 			    if label == 'dup':
-				# XXX: This would stop animation.
-				# This function is called by updateUI()
+				# TODO: remove this since this functio is for
+				#       parsing.  Why do this here?
 			        node.removeChild(scene)
 			except:
 			    pass
 
 			try:
-			    scmap = self.scenemap[scene.getAttribute('id')]
+			    scene_id = scene.getAttribute('id')
+			    start, stop, tween_type = self.scenemap[scene_id]
 			    if scmap == None:
 				lyobj.current_scene.append(scene)
 				continue
@@ -438,7 +439,8 @@ class MBScene(MBScene_dom):
 			    lyobj.current_scene.append(scene)
 			    continue
 
-			lyobj.scenes.append(Scene(scene,scmap[0],scmap[1],scmap[2]))
+			lyobj.scenes.append(Scene(scene, start, stop,
+						  tween_type))
 			pass
 		    else:
 			lyobj.current_scene.append(scene)
@@ -447,7 +449,7 @@ class MBScene(MBScene_dom):
 		pass
 	    pass
 
-
+	# TODO: Remove following code, too.  It is unreasonable.
 	self.collectID()
 	self.dumpID()
 	pass
