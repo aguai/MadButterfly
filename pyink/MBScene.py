@@ -273,7 +273,7 @@ class MBScene_dom(object):
 	ns.setAttribute("inkscape:groupmode","layer")
 	line.node.appendChild(ns)
 	line.add_keyframe(frame, ns)
-	self.update()
+	self.update_scenes_of_dom()
 	pass
     pass
 
@@ -331,7 +331,7 @@ class MBScene(MBScene_dom):
 	self.window.add(vbox)
 	pass
     
-    def update(self):
+    def update_scenes_of_dom(self):
         doc = self.root
 	rdoc = self.document
 	for node in doc.childList():
@@ -339,11 +339,11 @@ class MBScene(MBScene_dom):
 	        for t in node.childList():
 		    if t.name() == "ns0:scenes":
 		        node.removeChild(t)
-			ns = rdoc.createElement("ns0:scenes")
-			node.appendChild(ns)
-			for layer in range(0,len(self._framelines)):
+			scenes = rdoc.createElement("ns0:scenes")
+			node.appendChild(scenes)
+			for layer in range(0, len(self._framelines)):
 			    lobj = self._framelines[layer]
-			    self.addScenes(lobj, ns)
+			    self.add_scene_on_dom(lobj, scenes)
 			    pass
 			pass
 		    pass
@@ -489,7 +489,7 @@ class MBScene(MBScene_dom):
 		    else:
 	                self.last_line.rm_keyframe(nth)
 
-		self.update()
+		self.update_scenes_of_dom()
 		self.last_line._draw_all_frames()
 	        self.last_line.update()
 		return
@@ -511,7 +511,7 @@ class MBScene(MBScene_dom):
 		        if nth <= layer._keys[i+2].idx:
 			    layer._keys[i+1].idx = nth
 			    layer.draw_all_frames()
-			    self.update()
+			    self.update_scenes_of_dom()
 			    self.setCurrentScene(nth)
 			    self.last_line.update()
 			    return
@@ -524,7 +524,7 @@ class MBScene(MBScene_dom):
 			# relocate the location of the keyframe
 			layer._keys[i+1].idx = nth
 			layer._draw_all_frames()
-			self.update()
+			self.update_scenes_of_dom()
 			self.last_line.update()
 			self.setCurrentScene(nth)
 			return
@@ -545,7 +545,7 @@ class MBScene(MBScene_dom):
 			layer.add_keyframe(nth,layer._keys[i].ref)
 			layer.tween(idx)
 		        layer._draw_all_frames()
-			self.update()
+			self.update_scenes_of_dom()
 			self.setCurrentScene(nth)
 			self.last_line.update()
 			return
@@ -560,7 +560,7 @@ class MBScene(MBScene_dom):
 		    layer.add_keyframe(nth,layer._keys[i].ref)
 		    layer.tween(idx)
 		    layer._draw_all_frames()
-		    self.update()
+		    self.update_scenes_of_dom()
 		    self.setCurrentScene(nth)
 		    self.last_line.update()
 		    return
@@ -811,7 +811,7 @@ class MBScene(MBScene_dom):
 		    return
 		node = self.duplicateSceneGroup(last_key.ref.getAttribute("id"))
 	        key.ref = node
-		self.update()
+		self.update_scenes_of_dom()
 		self.updateUI()
 	        self.doEditScene(None)
 		return
@@ -928,13 +928,13 @@ class MBScene(MBScene_dom):
     def doInsertScene(self,w):
 	self.lockui=True
 	self.last_line.insert_frame(self.last_frame)
-	self.update()
+	self.update_scenes_of_dom()
 	self.lockui=False
 
     def doRemoveScene(self,w):
 	self.lockui=True
 	self.last_line.remove_frame(self.last_frame)
-	self.update()
+	self.update_scenes_of_dom()
 	self.lockui=False
     
     def addButtons(self,hbox):
@@ -990,7 +990,7 @@ class MBScene(MBScene_dom):
 		n = self.tweenTypeSelector.get_active()
 		new_tween_type = MBScene._frameline_tween_types[n]
 		self.last_line.set_tween_type(start_idx, new_tween_type)
-		self.update()
+		self.update_scenes_of_dom()
 		break
 	    pass
 	pass
@@ -1020,7 +1020,7 @@ class MBScene(MBScene_dom):
 	gtk.main_quit()
 	pass
 
-    def addScenes(self, frameline, scenes_node):
+    def add_scene_on_dom(self, frameline, scenes_node):
 	doc = self.document
 	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
 	    ref = frameline.get_frame_data(start_idx)
