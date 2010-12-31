@@ -708,7 +708,7 @@ class frameline(frameline_draw_state):
 		return 
 	    pass
 	pass
-        pass
+    
     def rm_keyframe(self, idx):
 	key_pos = self._find_keyframe(idx)
         key = self._keys[key_pos]
@@ -765,6 +765,10 @@ class frameline(frameline_draw_state):
 	    pass
 	pass
 
+    ## \bref Return range of blocks of conesequence frames (tweens).
+    #
+    # Return range and type of tweens and key frames that is not start or stop
+    # of a tween.
     def get_frame_blocks(self):
 	blocks = []
 	for pos, key in enumerate(self._keys):
@@ -779,18 +783,27 @@ class frameline(frameline_draw_state):
 	    pass
 	return blocks
 
+    ## \brief Return the range of a block of consequence frames (tween).
+    # 
+    # - If the index frame is in a tween, it returns the range of the tween.
+    #
+    # - If the indexed frame is a key frame with no right_tween, returns the
+    #   range that start and stop are both equivalent to idx.
+    #
+    # - Otherwise, raise an exception.
+    #
+    # \param idx is the index number of a frame.
+    # \return A tuple of (start, stop, tween_type)
+    #
     def get_frame_block(self, idx):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
 	    key = self._keys[pos]
-	    print key.right_tween, key.left_tween
-	    if key.idx == idx:
-		return key.idx, key.idx, 0
-	    elif key.right_tween:
+	    if key.right_tween:
 		next_key = self._keys[pos + 1]
 		return key.idx, next_key.idx, key.right_tween_type
-	    else:
-		return -1,-1,-1
+	    elif key.idx == idx:
+		return key.idx, key.idx, 0
 	    pass
 	raise ValueError, \
 	    'the frame specified by idx is not in any tween or a key frame'
