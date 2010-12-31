@@ -153,7 +153,82 @@ def _travel_DOM(node):
 	pass
     pass
 
-class MBScene():
+class MBScene_dom(object):
+    def dumpattr(self, n):
+	s = ""
+	for a,v in n.attrib.items():
+	    s = s + ("%s=%s"  % (a,v))
+	    pass
+	return s
+	
+    def dump(self, node, l=0):
+	print " " * l*2,"<", node.tag, self.dumpattr(node),">"
+	for n in node:
+	    self.dump(n, l+1)
+	    pass
+	print " " * l * 2,"/>"
+	pass
+
+    def _parse_one_scenes(self, scenes):
+	self.scenemap = {}
+	try:
+	    cur = int(n.getAttribute("current"))
+	except:
+	    cur = 1
+	    pass
+	self.current = cur
+	
+	for scene in scenes.childList():
+	    if scene.name() != 'ns0:scene':
+		continue
+	    
+	    try:
+		start = int(scene.getAttribute("start"))
+	    except:
+		traceback.print_exc()
+		continue
+	    try:
+		end = int(scene.getAttribute("end"))
+	    except:
+		end = start
+		pass
+	    
+	    if end > self.maxframe:
+		self.maxframe = end
+		pass
+	    try:
+		scene_type = scene.getAttribute('type')
+		if scene_type == None:
+		    scene_type = 'normal'
+		    pass
+	    except:
+		traceback.print_exc()
+		scene_type = 'normal'
+		pass
+	    link = scene.getAttribute("ref")
+	    self.scenemap[link] = [int(start), int(end), scene_type]
+	    if cur >= start and cur <= end:
+		self.currentscene = link
+		pass
+	    pass
+	pass
+    
+    def parseMetadata(self, node):
+	for n in node.childList():
+	    if n.name() == 'ns0:scenes':
+		self._parse_one_scenes(n)
+		break
+	    pass
+	else:
+	    ns = "http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
+	    self.root.setAttribute("xmlns:ns0", ns)
+	    scenes = self.document.createElement("ns0:scenes")
+	    node.appendChild(scenes)
+	    pass
+	pass
+    pass
+
+class MBScene(MBScene_dom):
     _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
 			      frameline.TWEEN_TYPE_SHAPE)
     _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
@@ -205,74 +280,6 @@ class MBScene():
 	vbox.pack_start(self.button)
 	self.button.connect("clicked", self.onQuit)
 	self.window.add(vbox)
-	pass
-    
-    def dumpattr(self,n):
-	s = ""
-	for a,v in n.attrib.items():
-	    s = s + ("%s=%s"  % (a,v))
-	    pass
-	return s
-	
-    def dump(self,node,l=0):
-	print " " * l*2,"<", node.tag, self.dumpattr(node),">"
-	for n in node:
-	    self.dump(n,l+1)
-	    pass
-	print " " * l * 2,"/>"
-	pass
-    
-    def parseMetadata(self,node):
-	self.current = 1
-	for n in node.childList():
-	    if n.name() == 'ns0:scenes':
-		self.scenemap={}
-		try:
-		    cur = int(n.getAttribute("current"))
-		except:
-		    cur = 1
-		self.current = cur
-
-		for s in n.childList():
-		    if s.name() == 'ns0:scene':
-			try:
-			    start = int(s.getAttribute("start"))
-			except:
-			    traceback.print_exc()
-			    continue
-			try:
-			    end = int(s.getAttribute("end"))
-			    if end == None:
-				end = start
-				pass
-			except:
-			    end = start
-			    pass
-			if end > self.maxframe:
-			    self.maxframe = end
-			try:
-			    typ = s.getAttribute('type')
-			    if typ == None:
-				typ = 'normal'
-			except:
-			    traceback.print_exc()
-			    typ = 'normal'
-			link = s.getAttribute("ref")
-			self.scenemap[link] = [int(start),int(end),typ]
-			if cur >= start and cur <= end:
-			    self.currentscene = link
-			    pass
-			pass
-		    pass
-		pass
-	    pass
-	pass
-	if self.scenemap==None:
-	    #self.desktop.doc().root().repr.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
-	    self.root.setAttribute("xmlns:ns0","http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd")
-	    scenes = self.document.createElement("ns0:scenes")
-	    node.appendChild(scenes)
-	    pass
 	pass
     
     def update(self):
