@@ -153,6 +153,8 @@ def _travel_DOM(node):
 	pass
     pass
 
+## \brief Layer of MBScene to manipulate DOM tree.
+#
 class MBScene_dom(object):
     def dumpattr(self, n):
 	s = ""
@@ -225,6 +227,53 @@ class MBScene_dom(object):
 	    scenes = self.document.createElement("ns0:scenes")
 	    node.appendChild(scenes)
 	    pass
+	pass
+    
+    def insertKeyScene(self, line, frame):
+	"""
+	Insert a new key scene into the stage. If the nth is always a
+	key scene, we will return without changing anything.  If the
+	nth is a filled scene, we will break the original scene into
+	two parts. If the nth is out of any scene, we will append a
+	new scene.
+
+	"""
+	rdoc = self.document
+	ns = rdoc.createElement("svg:g")
+	found = False
+	for node in line.node.childList():
+	    try:
+		label = node.getAttribute("inkscape:label")
+	    except:
+		continue
+	    if label == "dup":
+		#FIXME: The duplication here is not perfect. We should
+		#       get the element inside the group and apply the
+		#       transformation matrix to it directly.
+		for n in node.childList():
+		    ns.appendChild(n.duplicate(self.document))
+		found = True
+		node.setAttribute("style","display:none")
+		break
+	    pass
+	pass
+
+	if found == False:
+	    txt = rdoc.createElement("svg:rect")
+	    txt.setAttribute("x","0")
+	    txt.setAttribute("y","0")
+	    txt.setAttribute("width","100")
+	    txt.setAttribute("height","100")
+	    txt.setAttribute("style","fill:#ff00")
+	    ns.appendChild(txt)
+
+	gid = line.node.getAttribute('inkscape:label')+self.newID()
+	self.ID[gid]=1
+	ns.setAttribute("id",gid)
+	ns.setAttribute("inkscape:groupmode","layer")
+	line.node.appendChild(ns)
+	line.add_keyframe(frame, ns)
+	self.update()
 	pass
     pass
 
@@ -411,53 +460,6 @@ class MBScene(MBScene_dom):
 	return None
     
     
-    def insertKeyScene(self, line, frame):
-	"""
-	Insert a new key scene into the stage. If the nth is always a
-	key scene, we will return without changing anything.  If the
-	nth is a filled scene, we will break the original scene into
-	two parts. If the nth is out of any scene, we will append a
-	new scene.
-
-	"""
-	rdoc = self.document
-	ns = rdoc.createElement("svg:g")
-	found = False
-	for node in line.node.childList():
-	    try:
-		label = node.getAttribute("inkscape:label")
-	    except:
-		continue
-	    if label == "dup":
-		#FIXME: The duplication here is not perfect. We should
-		#       get the element inside the group and apply the
-		#       transformation matrix to it directly.
-		for n in node.childList():
-		    ns.appendChild(n.duplicate(self.document))
-		found = True
-		node.setAttribute("style","display:none")
-		break
-	    pass
-	pass
-
-	if found == False:
-	    txt = rdoc.createElement("svg:rect")
-	    txt.setAttribute("x","0")
-	    txt.setAttribute("y","0")
-	    txt.setAttribute("width","100")
-	    txt.setAttribute("height","100")
-	    txt.setAttribute("style","fill:#ff00")
-	    ns.appendChild(txt)
-
-	gid = line.node.getAttribute('inkscape:label')+self.newID()
-	self.ID[gid]=1
-	ns.setAttribute("id",gid)
-	ns.setAttribute("inkscape:groupmode","layer")
-	line.node.appendChild(ns)
-	line.add_keyframe(frame, ns)
-	self.update()
-	pass
-
     def removeKeyScene(self):
 	nth = self.last_frame
 	y = self.last_line
