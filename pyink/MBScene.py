@@ -432,9 +432,6 @@ class MBScene(MBScene_dom):
 			try:
 			    scene_id = scene.getAttribute('id')
 			    start, stop, tween_type = self.scenemap[scene_id]
-			    if scmap == None:
-				lyobj.current_scene.append(scene)
-				continue
 			except:
 			    lyobj.current_scene.append(scene)
 			    continue
