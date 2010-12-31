@@ -156,6 +156,20 @@ def _travel_DOM(node):
 ## \brief Layer of MBScene to manipulate DOM tree.
 #
 class MBScene_dom(object):
+    def newID(self):
+	while True:
+	    n = 's%d' % int(random.random()*10000)
+			#print "try %s" % n
+	    if self.ID.has_key(n) == False:
+		return n
+	    pass
+	pass
+    
+    def dumpID(self):
+	for a,v in self.ID.items():
+	    pass
+	pass
+    
     def dumpattr(self, n):
 	s = ""
 	for a,v in n.attrib.items():
@@ -275,6 +289,44 @@ class MBScene_dom(object):
 	line.add_keyframe(frame, ns)
 	self.update_scenes_of_dom()
 	pass
+    
+    def add_scene_on_dom(self, frameline, scenes_node):
+	doc = self.document
+	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
+	    ref = frameline.get_frame_data(start_idx)
+	    tween_type_idx = self._frameline_tween_types.index(tween_type)
+	    tween_type_name = self._tween_type_names[tween_type_idx]
+	    
+	    scene_node = doc.createElement("ns0:scene")
+	    scenes_node.appendChild(scene_node)
+	    scene_node.setAttribute("start", str(start_idx + 1))
+	    if start_idx != stop_idx:
+		scene_node.setAttribute("end", str(stop_idx + 1))
+		pass
+	    scene_node.setAttribute("ref", ref.attribute("id"))
+	    scene_node.setAttribute("type", tween_type_name)
+	    pass
+	pass
+
+    def update_scenes_of_dom(self):
+        doc = self.root
+	rdoc = self.document
+	for node in doc.childList():
+	    if node.name() == 'svg:metadata':
+	        for t in node.childList():
+		    if t.name() == "ns0:scenes":
+		        node.removeChild(t)
+			scenes = rdoc.createElement("ns0:scenes")
+			node.appendChild(scenes)
+			for layer in range(0, len(self._framelines)):
+			    lobj = self._framelines[layer]
+			    self.add_scene_on_dom(lobj, scenes)
+			    pass
+			pass
+		    pass
+		pass
+	    pass
+	pass
     pass
 
 class MBScene(MBScene_dom):
@@ -329,26 +381,6 @@ class MBScene(MBScene_dom):
 	vbox.pack_start(self.button)
 	self.button.connect("clicked", self.onQuit)
 	self.window.add(vbox)
-	pass
-    
-    def update_scenes_of_dom(self):
-        doc = self.root
-	rdoc = self.document
-	for node in doc.childList():
-	    if node.name() == 'svg:metadata':
-	        for t in node.childList():
-		    if t.name() == "ns0:scenes":
-		        node.removeChild(t)
-			scenes = rdoc.createElement("ns0:scenes")
-			node.appendChild(scenes)
-			for layer in range(0, len(self._framelines)):
-			    lobj = self._framelines[layer]
-			    self.add_scene_on_dom(lobj, scenes)
-			    pass
-			pass
-		    pass
-		pass
-	    pass
 	pass
     
     def parseScene(self):
@@ -435,20 +467,6 @@ class MBScene(MBScene_dom):
 	    pass
 	for n in node.childList():
 	    self.collectID_recursive(n)
-	    pass
-	pass
-    
-    def newID(self):
-	while True:
-	    n = 's%d' % int(random.random()*10000)
-			#print "try %s" % n
-	    if self.ID.has_key(n) == False:
-		return n
-	    pass
-	pass
-    
-    def dumpID(self):
-	for a,v in self.ID.items():
 	    pass
 	pass
     
@@ -1018,24 +1036,6 @@ class MBScene(MBScene_dom):
     def onOK(self,event):
 	self.OK = True
 	gtk.main_quit()
-	pass
-
-    def add_scene_on_dom(self, frameline, scenes_node):
-	doc = self.document
-	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
-	    ref = frameline.get_frame_data(start_idx)
-	    tween_type_idx = self._frameline_tween_types.index(tween_type)
-	    tween_type_name = self._tween_type_names[tween_type_idx]
-	    
-	    scene_node = doc.createElement("ns0:scene")
-	    scenes_node.appendChild(scene_node)
-	    scene_node.setAttribute("start", str(start_idx + 1))
-	    if start_idx != stop_idx:
-		scene_node.setAttribute("end", str(stop_idx + 1))
-		pass
-	    scene_node.setAttribute("ref", ref.attribute("id"))
-	    scene_node.setAttribute("type", tween_type_name)
-	    pass
 	pass
 
     def updateUI(self,node=None,arg=None):
