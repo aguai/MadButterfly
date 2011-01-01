@@ -161,6 +161,7 @@ class MBScene_dom_monitor(object):
 	super(MBScene_dom_monitor, self).__init__()
 
 	self._id2node = {}	# map ID to the node in the DOM tree.
+	self._group2scene = {}	# map ID of a group to associated scene node.
 	pass
     
     def _start_monitor(self):
@@ -176,36 +177,81 @@ class MBScene_dom_monitor(object):
 	try:
 	    node_id = node.getAttribute('id')
 	except:
-	    return
-	self._id2node[node_id] = node
+	    pass
+	else:
+	    if node_id not in self._id2node:
+		self._id2node[node_id] = node
+		pass
+	    pass
+
+	if node.name() == 'ns0:scene':
+	    try:
+		ref = node.getAttribute('ref')
+	    except:
+		pass
+	    else:
+		print 'scene %s' % (ref)
+		if ref not in self._group2scene:
+		    self._group2scene[ref] = node
+		    pass
+		pass
+	    pass
 	pass
 
     def _on_remove_node(self, node):
 	try:
 	    node_id = node.getAttribute('id')
 	except:
-	    return
-	if node_id not in self._id2node:
-	    raise ValueError, \
-		'remove a node that is never known (%s)' % (node_id)
-	del self._id2node[node_id]
+	    pass
+	else:
+	    if node_id not in self._id2node:
+		raise ValueError, \
+		    'remove a node that is never known (%s)' % (node_id)
+	    del self._id2node[node_id]
+	    pass
+	
+	if node.name() == 'ns0:scene':
+	    try:
+		ref = node.getAttribute('ref')
+	    except:
+		pass
+	    else:
+		del self._group2scene[ref]
+		pass
+	    pass
 	pass
 
     def _on_attr_modified(self, node, name, old_value, new_value):
-	if name != 'id' or old_value == new_value:
-	    return
-
-	if old_value and (old_value not in self._id2node):
-	    raise ValueError, \
-		'old ID value of passed node is valid one (%s)' % (old_value)
-	if (new_value in self._id2node):
-	    raise ValueError, \
-		'new ID value of passed node is valid one (%s)' % (new_value)
-
-	if old_value:
-	    del self._id2node[old_value]
+	print 'chg attr %s' % (name)
+	if name == 'id' and old_value != new_value:
+	    if old_value and (old_value not in self._id2node):
+		raise ValueError, \
+		    'old ID value of passed node is valid one (%s)' % \
+		    (old_value)
+	    if (new_value in self._id2node):
+		raise ValueError, \
+		    'new ID value of passed node is valid one (%s)' % \
+		    (new_value)
+	    
+	    if old_value:
+		del self._id2node[old_value]
+		pass
+	    self._id2node[new_value] = node
 	    pass
-	self._id2node[new_value] = node
+	elif name == 'ref' and node.name() == 'ns0:scene':
+	    print 'change ref %s' % (new_value)
+	    if old_value == new_value:
+		return
+	    if old_value:
+		node = self._group2scene[old_value] # use old node.  Binding
+						    # may generate a new
+						    # wrapper.
+		del self._group2scene[old_value]
+		pass
+	    if new_value:
+		self._group2scene[new_value] = node
+		pass
+	    return
 	pass
     
     def _collect_node_ids(self):
@@ -231,6 +277,10 @@ class MBScene_dom_monitor(object):
     def get_node(self, node_id):
 	return self._id2node[node_id]
 
+    def get_scene(self, group_id):
+	print 'get_scene %s' % (group_id)
+	return self._group2scene[group_id]
+
     def new_id(self):
 	while True:
 	    candidate = 's%d' % int(random.random()*100000)
@@ -253,6 +303,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	self._root = root
 	
 	self._start_monitor()	# start MBScene_dom_monitor
+	self._init_metadata()
 	pass
    
     def dumpattr(self, n):
@@ -270,6 +321,27 @@ class MBScene_dom(MBScene_dom_monitor):
 	print " " * l * 2,"/>"
 	pass
 
+    def _parse_one_scene(self, scene):
+	assert scene.name() == 'ns0:scene'
+	
+	start = int(scene.getAttribute("start"))
+	try:
+	    end = int(scene.getAttribute("end"))
+	except:
+	    end = start
+	    pass
+	
+	try:
+	    scene_type = scene.getAttribute('type')
+	    if scene_type == None:
+		scene_type = 'normal'
+		pass
+	except:
+	    scene_type = 'normal'
+	    pass
+
+	return start, end, scene_type
+
     def _parse_one_scenes(self, scenes):
 	self.scenemap = {}
 	try:
@@ -282,42 +354,35 @@ class MBScene_dom(MBScene_dom_monitor):
 	for scene in scenes.childList():
 	    if scene.name() != 'ns0:scene':
 		continue
-	    
+
 	    try:
-		start = int(scene.getAttribute("start"))
+		start, end, scene_type = self._parse_one_scene(scene)
 	    except:
-		traceback.print_exc()
 		continue
-	    try:
-		end = int(scene.getAttribute("end"))
-	    except:
-		end = start
-		pass
 	    
 	    if end > self.maxframe:
 		self.maxframe = end
 		pass
-	    try:
-		scene_type = scene.getAttribute('type')
-		if scene_type == None:
-		    scene_type = 'normal'
-		    pass
-	    except:
-		traceback.print_exc()
-		scene_type = 'normal'
-		pass
+	    
 	    link = scene.getAttribute("ref")
-	    self.scenemap[link] = (int(start), int(end), scene_type)
+	    self.scenemap[link] = (start, end, scene_type)
 	    if cur >= start and cur <= end:
 		self.currentscene = link
 		pass
 	    pass
 	pass
     
-    def parseMetadata(self, node):
+    def _init_metadata(self):
+	for node in self._root.childList():
+	    if node.name() == 'svg:metadata':
+		break
+	    pass
+	else:
+	    raise RuntimeError, \
+		'can not find <svg:metadata> node in the document'
+	
 	for n in node.childList():
 	    if n.name() == 'ns0:scenes':
-		self._parse_one_scenes(n)
 		break
 	    pass
 	else:
@@ -327,7 +392,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	    node.appendChild(scenes)
 	    pass
 	pass
-    
+
     def insertKeyScene(self, line, frame):
 	"""
 	Insert a new key scene into the stage. If the nth is always a
@@ -338,7 +403,7 @@ class MBScene_dom(MBScene_dom_monitor):
 
 	"""
 	rdoc = self._doc
-	ns = rdoc.createElement("svg:g")
+	scene_group = rdoc.createElement("svg:g")
 	found = False
 	for node in line.node.childList():
 	    try:
@@ -350,7 +415,7 @@ class MBScene_dom(MBScene_dom_monitor):
 		#       get the element inside the group and apply the
 		#       transformation matrix to it directly.
 		for n in node.childList():
-		    ns.appendChild(n.duplicate(self._doc))
+		    scene_group.appendChild(n.duplicate(self._doc))
 		found = True
 		node.setAttribute("style","display:none")
 		break
@@ -364,13 +429,13 @@ class MBScene_dom(MBScene_dom_monitor):
 	    txt.setAttribute("width","100")
 	    txt.setAttribute("height","100")
 	    txt.setAttribute("style","fill:#ff00")
-	    ns.appendChild(txt)
+	    scene_group.appendChild(txt)
 
 	gid = line.node.getAttribute('inkscape:label')+self.new_id()
-	ns.setAttribute("id",gid)
-	ns.setAttribute("inkscape:groupmode","layer")
-	line.node.appendChild(ns)
-	line.add_keyframe(frame, ns)
+	scene_group.setAttribute("id",gid)
+	scene_group.setAttribute("inkscape:groupmode","layer")
+	line.node.appendChild(scene_group)
+	line.add_keyframe(frame, scene_group)
 	self.update_scenes_of_dom()
 	pass
     
@@ -387,7 +452,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	    if start_idx != stop_idx:
 		scene_node.setAttribute("end", str(stop_idx + 1))
 		pass
-	    scene_node.setAttribute("ref", ref.attribute("id"))
+	    scene_node.setAttribute("ref", ref.getAttribute("id"))
 	    scene_node.setAttribute("type", tween_type_name)
 	    pass
 	pass
@@ -419,7 +484,6 @@ class MBScene_dom(MBScene_dom_monitor):
 	object.
 	"""
 	self.layers = []
-	self.scenemap = None
 	doc = self._root
 
 	# TODO: Remove following code sicne this function is for parsing.
@@ -437,11 +501,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	    pass
 	    
 	for node in doc.childList():
-	    print node.name()
-	    if node.name() == 'svg:metadata':
-		self.parseMetadata(node)
-		pass
-	    elif node.name() == 'svg:g':
+	    if node.name() == 'svg:g':
 		oldscene = None
 		lyobj = Layer(node)
 		self.layers.append(lyobj)
@@ -460,7 +520,9 @@ class MBScene_dom(MBScene_dom_monitor):
 
 			try:
 			    scene_id = scene.getAttribute('id')
-			    start, stop, tween_type = self.scenemap[scene_id]
+			    scene = self.get_scene(scene_id)
+			    start, stop, tween_type = \
+				self._parse_one_scene(scene)
 			except:
 			    lyobj.current_scene.append(scene)
 			    continue
@@ -498,12 +560,11 @@ class MBScene(MBScene_dom):
 	self.window = win
 	self.layers = []
 	self.layers.append(Layer(None))
-	self.scenemap = None
 	self.top = None
 	self.last_update = None
 	pybInkscape.inkscape.connect('change_selection', self.show_selection)
 	self.last_select = None
-	self.lockui=False
+	self._lockui=False
 	self.tween=None
 	self.document = None
 	self.root = root
@@ -771,9 +832,9 @@ class MBScene(MBScene_dom):
 	self.last_line = line
 	self.last_frame = frame
 	self.last_line.active_frame(frame)
-	self.lockui = True
+	self._lockui = True
         self.doEditScene(None)
-	self.lockui = False
+	self._lockui = False
         pass
         
     def _remove_active_frame(self,widget,event):
@@ -939,29 +1000,29 @@ class MBScene(MBScene_dom):
 	pass
     
     def doInsertKeyScene(self,w):
-	self.lockui=True
+	self._lockui=True
 	self.insertKeyScene(self.last_line, self.last_frame)
 	self.selectSceneObject(self.last_line, self.last_frame)
-	self.lockui=False
+	self._lockui=False
 	# self.grid.show_all()
 	return
     
     def doDuplicateKeyScene(self,w):
-	self.lockui = True
+	self._lockui = True
         self.duplicateKeyScene()
-	self.lockui = False
+	self._lockui = False
 
     def doRemoveScene(self,w):
-	self.lockui = True
+	self._lockui = True
 	self.removeKeyScene()
-	self.lockui = False
+	self._lockui = False
 	return
 
     
     def doExtendScene(self,w):
-	self.lockui = True
+	self._lockui = True
 	self.extendScene()
-	self.lockui = False
+	self._lockui = False
 	#self.grid.show_all()
 	pass
 
@@ -984,12 +1045,12 @@ class MBScene(MBScene_dom):
 	"""
 	if self.btnRun.get_label() == "Run":
 	    self.btnRun.set_label("Stop")
-	    self.lockui = True
+	    self._lockui = True
             self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
 	else:
 	    self.btnRun.set_label("Run")
 	    glib.source_remove(self.last_update)
-	    self.lockui = False
+	    self._lockui = False
 	    pass
 
     def doRunNext(self):
@@ -1003,16 +1064,16 @@ class MBScene(MBScene_dom):
         self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
 
     def doInsertScene(self,w):
-	self.lockui=True
+	self._lockui=True
 	self.last_line.insert_frame(self.last_frame)
 	self.update_scenes_of_dom()
-	self.lockui=False
+	self._lockui=False
 
     def doRemoveScene(self,w):
-	self.lockui=True
+	self._lockui=True
 	self.last_line.remove_frame(self.last_frame)
 	self.update_scenes_of_dom()
-	self.lockui=False
+	self._lockui=False
     
     def addButtons(self,hbox):
 	btn = gtk.Button('Insert Key')
@@ -1098,7 +1159,7 @@ class MBScene(MBScene_dom):
 	pass
 
     def updateUI(self,node=None,arg=None):
-        if self.lockui: return
+        if self._lockui: return
 	
         if self.last_update!= None:
             glib.source_remove(self.last_update)
@@ -1107,9 +1168,11 @@ class MBScene(MBScene_dom):
 	pass
     
     def _updateUI(self,node=None,arg=None):
+	self._lockui = True
 	self.parseScene()
 	self._create_framelines()
 	self._update_framelines()
+	self._lockui = False
 	pass
     
     def show(self):
