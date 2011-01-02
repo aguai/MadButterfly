@@ -474,7 +474,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	    if start_idx != stop_idx:
 		scene_node.setAttribute("end", str(stop_idx + 1))
 		pass
-	    scene_node.setAttribute("ref", scene_node.getAttribute("id"))
+	    scene_node.setAttribute("ref", scene_node.getAttribute("ref"))
 	    scene_node.setAttribute("type", tween_type_name)
 	    pass
 	pass
@@ -659,74 +659,19 @@ class MBScene(MBScene_dom):
     def extendScene(self):
 	frame_idx = self.last_frame
 	frameline = self.last_line
-	i = 0
-	while i < len(frameline._keys):
-	    s = frameline._keys[i]
-	    if s.right_tween:
-	        if frame_idx > s.idx:
-		    if frame_idx <= frameline._keys[i+1].idx:
-		        return
-		    try:
-		        if frame_idx <= frameline._keys[i+2].idx:
-			    frameline._keys[i+1].idx = frame_idx
-			    frameline.draw_all_frames()
-			    self.update_scenes_of_dom()
-			    self.setCurrentScene(frame_idx)
-			    self.last_line.update()
-			    return
-			else:
-			    # We may in the next scene
-			    i = i + 2
-			    pass
-		    except:
-		        # This is the last keyframe, extend the keyframe by 
-			# relocate the location of the keyframe
-			frameline._keys[i+1].idx = frame_idx
-			frameline._draw_all_frames()
-			self.update_scenes_of_dom()
-			self.last_line.update()
-			self.setCurrentScene(frame_idx)
-			return
-		else:
-		    # We are in the front of all keyframes
-		    return
-	    else:
-		# This is a single keyframe
-		if frame_idx < s.idx:
-		    return
-		if frame_idx == s.idx:
-		    return
-		try:
-		    if frame_idx < frameline._keys[i+1].idx:
-			# We are after a single keyframe and no scene is 
-			# available here. Create a new tween here
-			idx = frameline._keys[i].idx
-			scene_node = frameline._keys[i].ref
-			frameline.add_keyframe(frame_idx, scene_node)
-			frameline.tween(idx)
-		        frameline._draw_all_frames()
-			self.update_scenes_of_dom()
-			self.setCurrentScene(frame_idx)
-			self.last_line.update()
-			return
-		    else:
-			# We may in the next scene
-			i = i + 1
-			pass
-		    pass
-		except:
-		    # This is the last scene, create a new one
-		    idx = frameline._keys[i].idx
-		    scene_node = frameline._keys[i].ref
-		    frameline.add_keyframe(frame_idx, scene_node)
-		    frameline.tween(idx)
-		    frameline._draw_all_frames()
-		    self.update_scenes_of_dom()
-		    self.setCurrentScene(frame_idx)
-		    self.last_line.update()
-		    return
-		pass
+
+	start, end, scene_type = frameline.get_frame_block_floor(frame_idx)
+	if frame_idx <= end:
+	   return
+
+	if start < end:
+	    frameline.rm_keyframe(end)
 	    pass
+	
+	scene_node = frameline.get_frame_data(start)
+	scene_node.setAttribute('end', str(frame_idx))
+	frameline.add_keyframe(frame_idx)
+	frameline.tween(start, scene_type)
 	pass
     
     def setCurrentScene(self,nth):
@@ -937,10 +882,10 @@ class MBScene(MBScene_dom):
 		if last_scene and last_scene.end == scene.start:
 		    frameline.setRightTween(last_scene.end)
 		else:
-		    frameline.add_keyframe(scene.start-1, scene.node)
+		    frameline.add_keyframe(scene.start, scene.node)
 		last_scene = scene
 		if scene.start != scene.end:
-		    frameline.add_keyframe(scene.end-1, scene.node)
+		    frameline.add_keyframe(scene.end, scene.node)
 		    tween_type_idx = self._tween_type_names.index(scene.type)
 		    tween_type = self._frameline_tween_types[tween_type_idx]
 		    frameline.tween(scene.start-1, tween_type)
@@ -960,7 +905,6 @@ class MBScene(MBScene_dom):
 	pass
 
     def duplicateKeyScene(self):
-        self.last_line.add_keyframe(self.last_frame)
         # Search for the current scene
 	i = 0
 	while i < len(self.last_line._keys):
@@ -968,12 +912,15 @@ class MBScene(MBScene_dom):
 	    if key.idx == self.last_frame:
 	        if i == 0:
 		    # This is the first frame, we can not duplicate it
-		    self.last_line.rm_keyframe(self.last_frame)
 		    return
-		node = self.duplicateSceneGroup(last_key.ref.getAttribute("id"))
-	        key.ref = node
-		self.update_scenes_of_dom()
-		self.updateUI()
+		self.last_line.add_keyframe(self.last_frame)
+		last_scene_node = last_key.ref
+		last_scene_group_id = last_scene_node.getAttribute('ref')
+		scene_group = self.duplicateSceneGroup(last_scene_group_id)
+		scene_node = self._add_scene_node(self.last_frame,
+						  self.last_frame,
+						  ref=last_scene_group_id)
+	        key.ref = scene_node
 	        self.doEditScene(None)
 		return
 	    last_key = key
@@ -1014,7 +961,7 @@ class MBScene(MBScene_dom):
 	scene_group.setAttribute("id",gid)
 	scene_group.setAttribute("inkscape:groupmode","layer")
 	self.last_line.layer_group.appendChild(scene_group)
-	return ns
+	return scene_group
     
     def doEditScene(self, w):
 	self.setCurrentScene(self.last_frame+1)
@@ -1045,7 +992,6 @@ class MBScene(MBScene_dom):
 	self._lockui = True
 	self.extendScene()
 	self._lockui = False
-	#self.grid.show_all()
 	pass
 
     def changeObjectLabel(self,w):
