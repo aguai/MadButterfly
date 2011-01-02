@@ -532,12 +532,12 @@ class MBScene_dom(MBScene_dom_monitor):
 			continue
 		    
 		    try:
-			label = scene.getAttribute('inkscape:label')
+			label = scene_group.getAttribute('inkscape:label')
 			if label == 'dup':
 			    # TODO: remove this since this functio is for
 			    #       parsing.  Why do this here?
 			    node.removeChild(scene_group)
-			    pass
+			    continue
 		    except:
 			pass
 
