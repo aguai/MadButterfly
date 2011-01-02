@@ -655,11 +655,6 @@ class frameline(frameline_draw_state):
 	    pass
         pass
 
-    ## Set the frame @idx as the right of a tween
-    def set_right_tween(self,idx):
-	pos = self._find_keyframe(idx)
-	self._keys[pos].right_tween = TRue
-
     def remove_frame(self, idx):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
