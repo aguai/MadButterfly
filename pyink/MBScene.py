@@ -72,19 +72,18 @@ class ObjectWatcher(pybInkscape.PYNodeObserver):
 	self.func = func
 	self.arg = arg
 
-    def notifyChildAdded(self,node,child,prev):
+    def notifyChildAdded(self, node, child, prev):
         if self.type == 'DOMNodeInserted':
-	    self.func(node)
-    def notifyChildRemoved(self,node,child,prev):
+	    self.func(node, child)
+    def notifyChildRemoved(self, node, child, prev):
         if self.type == 'DOMNodeRemoved':
-	    self.func(node)
+	    self.func(node, child)
     def notifyChildOrderChanged(self,node,child,prev):
         pass
     def notifyContentChanged(self,node,old_content,new_content):
         if self.type == 'DOMSubtreeModified':
 	    self.func(node)
     def notifyAttributeChanged(self,node, name, old_value, new_value):
-        # print 'attr',node,name,old_value,new_value
         if self.type == 'DOMAttrModified':
 	    self.func(node, name, old_value, new_value)
 
@@ -172,46 +171,45 @@ class MBScene_dom_monitor(object):
 	addEventListener(doc, 'DOMAttrModified', self._on_attr_modified, None)
 	pass
 
-    def _on_insert_node(self, node):
+    def _on_insert_node(self, node, child):
 	try:
-	    node_id = node.getAttribute('id')
+	    child_id = child.getAttribute('id')
 	except:
 	    pass
 	else:
-	    if node_id not in self._id2node:
-		self._id2node[node_id] = node
+	    if child_id not in self._id2node:
+		self._id2node[child_id] = child
 		pass
 	    pass
 
-	if node.name() == 'ns0:scene':
+	if child.name() == 'ns0:scene':
 	    try:
-		ref = node.getAttribute('ref')
+		ref = child.getAttribute('ref')
 	    except:
 		pass
 	    else:
-		print 'scene %s' % (ref)
 		if ref not in self._group2scene:
-		    self._group2scene[ref] = node
+		    self._group2scene[ref] = child
 		    pass
 		pass
 	    pass
 	pass
 
-    def _on_remove_node(self, node):
+    def _on_remove_node(self, node, child):
 	try:
-	    node_id = node.getAttribute('id')
+	    child_id = child.getAttribute('id')
 	except:
 	    pass
 	else:
-	    if node_id not in self._id2node:
+	    if child_id not in self._id2node:
 		raise ValueError, \
-		    'remove a node that is never known (%s)' % (node_id)
-	    del self._id2node[node_id]
+		    'remove a node that is never known (%s)' % (child_id)
+	    del self._id2node[child_id]
 	    pass
 	
-	if node.name() == 'ns0:scene':
+	if child.name() == 'ns0:scene':
 	    try:
-		ref = node.getAttribute('ref')
+		ref = child.getAttribute('ref')
 	    except:
 		pass
 	    else:
@@ -221,7 +219,6 @@ class MBScene_dom_monitor(object):
 	pass
 
     def _on_attr_modified(self, node, name, old_value, new_value):
-	print 'chg attr %s' % (name)
 	if name == 'id' and old_value != new_value:
 	    if old_value and (old_value not in self._id2node):
 		raise ValueError, \
@@ -238,7 +235,6 @@ class MBScene_dom_monitor(object):
 	    self._id2node[new_value] = node
 	    pass
 	elif name == 'ref' and node.name() == 'ns0:scene':
-	    print 'change ref %s' % (new_value)
 	    if old_value == new_value:
 		return
 	    if old_value:
@@ -277,7 +273,6 @@ class MBScene_dom_monitor(object):
 	return self._id2node[node_id]
 
     def get_scene(self, group_id):
-	print 'get_scene %s' % (group_id)
 	return self._group2scene[group_id]
 
     def new_id(self):
@@ -293,6 +288,11 @@ class MBScene_dom_monitor(object):
 ## \brief Layer of MBScene to manipulate DOM tree.
 #
 class MBScene_dom(MBScene_dom_monitor):
+    # Declare variables, here, for keeping tracking
+    _doc = None
+    _root = None
+    _scenes_group = None
+    
     def __init__(self, *args, **kws):
 	super(MBScene_dom, self).__init__()
 	pass
@@ -382,6 +382,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	
 	for n in node.childList():
 	    if n.name() == 'ns0:scenes':
+		self._scenes_node = n
 		break
 	    pass
 	else:
@@ -389,9 +390,49 @@ class MBScene_dom(MBScene_dom_monitor):
 	    self._root.setAttribute("xmlns:ns0", ns)
 	    scenes_node = self._doc.createElement("ns0:scenes")
 	    node.appendChild(scenes_node)
+	    self._scenes_node = scenes_node
 	    pass
 	pass
 
+    ## \brief Create and add a ns0:scene node under ns0:scenes subtree.
+    #
+    def _add_scene_node(self, start, end,
+			frame_type=TweenObject.TWEEN_TYPE_NORMAL,
+			ref=None):
+	type_names = ('normal', 'scale')
+	scenes_node = self._scenes_node
+	doc = self._doc
+	
+	scene_node = doc.createElement('ns0:scene')
+	scene_node.setAttribute('start', str(start))
+	if start != end:
+	    scene_node.setAttribute('end', str(end))
+	    pass
+	type_name = type_names[frame_type]
+	scene_node.setAttribute('type', type_name)
+	if ref:
+	    scene_node.setAttribute('ref', ref)
+	    pass
+	
+	scenes_node.appendChild(scene_node)
+	
+	return scene_node
+
+    ## \brief Create and add a svg:g for a scene under a group for a layer.
+    #
+    def _add_scene_group(self, layer_idx):
+	layer = self.layers[layer_idx]
+	doc = self._doc
+	
+	scene_group = doc.createElement('svg:g')
+	gid = self.new_id()
+	scene_group.setAttribute("id", gid)
+	scene_group.setAttribute("inkscape:groupmode", "layer")
+
+	layer.group.appendChild(scene_group)
+	
+	return scene_group
+    
     def insertKeyScene(self, line, frame):
 	"""
 	Insert a new key scene into the stage. If the nth is always a
@@ -401,43 +442,25 @@ class MBScene_dom(MBScene_dom_monitor):
 	new scene.
 
 	"""
-	rdoc = self._doc
-	scene_group = rdoc.createElement("svg:g")
-	found = False
-	for node in line.layer_group.childList():
+	doc = self._doc
+	layer_idx = self._framelines.index(line)
+	
+	scene_group = self._add_scene_group(layer_idx)
+	scene_group_id = scene_group.getAttribute('id')
+	scene_node = self._add_scene_node(frame, frame, ref=scene_group_id)
+	line.add_keyframe(frame, scene_node)
+
+	for node in self.layers[layer_idx].group.childList():
 	    try:
-		label = node.getAttribute("inkscape:label")
+		label = node.getAttribute('inkscape:label')
 	    except:
 		continue
-	    if label == "dup":
-		#FIXME: The duplication here is not perfect. We should
-		#       get the element inside the group and apply the
-		#       transformation matrix to it directly.
-		for n in node.childList():
-		    scene_group.appendChild(n.duplicate(self._doc))
-		found = True
-		node.setAttribute("style","display:none")
-		break
+	    if label == 'dup':
+		node.setAttribute('style', 'display: none')
+		pass
 	    pass
 	pass
 
-	if found == False:
-	    txt = rdoc.createElement("svg:rect")
-	    txt.setAttribute("x","0")
-	    txt.setAttribute("y","0")
-	    txt.setAttribute("width","100")
-	    txt.setAttribute("height","100")
-	    txt.setAttribute("style","fill:#ff00")
-	    scene_group.appendChild(txt)
-
-	gid = line.layer_group.getAttribute('inkscape:label')+self.new_id()
-	scene_group.setAttribute("id",gid)
-	scene_group.setAttribute("inkscape:groupmode","layer")
-	line.layer_group.appendChild(scene_group)
-	line.add_keyframe(frame, scene_group)
-	self.update_scenes_of_dom()
-	pass
-    
     def add_scene_on_dom(self, frameline, scenes_node):
 	doc = self._doc
 	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
@@ -788,7 +811,7 @@ class MBScene(MBScene_dom):
 	    pass
 	pass
 
-    def enterGroup(self,obj):
+    def enterGroup(self, obj):
         for l in self.layers:
 	    for s in l.group.childList():
 	        if s.getAttribute('id') == obj.getAttribute("id"):
@@ -805,7 +828,9 @@ class MBScene(MBScene_dom):
 	    return
 
 	scene_node = frameline.get_frame_data(start)
-	self.enterGroup(scene_node)
+	scene_group_id = scene_node.getAttribute('ref')
+	scene_group = self.get_node(scene_group_id)
+	self.enterGroup(scene_group)
 	self.setTweenType(tween_type)
 	pass
 
@@ -898,7 +923,7 @@ class MBScene(MBScene_dom):
 	vbox.show_all()
 	pass
 
-    ## \brief Update conetent of frameliens according layers.
+    ## \brief Update conetent of framelines according layers.
     #
     def _update_framelines(self):
 	for frameline in self._framelines:
@@ -1155,7 +1180,7 @@ class MBScene(MBScene_dom):
 	gtk.main_quit()
 	pass
 
-    def updateUI(self,node=None,arg=None):
+    def updateUI(self, node=None, child=None, arg=None):
         if self._lockui: return
 	
         if self.last_update!= None:
