@@ -723,7 +723,9 @@ class MBScene(MBScene_dom):
 		elif idx == start_idx:
 		    frameline.duplicateGroup.setAttribute("style","display:none")
 		    scene_node = frameline.get_frame_data(start_idx)
-		    scene_node.setAttribute("style","")
+		    scene_group_id = scene_node.getAttribute('ref')
+		    scene_group = self.get_node(scene_group_id)
+		    scene_group.setAttribute("style","")
 		elif start_idx <= idx and stop_idx >= idx:
 		    scene_node = frameline.get_frame_data(start_idx)
 		    scene_group_id = scene_node.getAttribute('ref')
