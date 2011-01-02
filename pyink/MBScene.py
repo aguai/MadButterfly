@@ -899,7 +899,7 @@ class MBScene(MBScene_dom):
 		    frameline.add_keyframe(scene.end, scene.node)
 		    tween_type_idx = self._tween_type_names.index(scene.type)
 		    tween_type = self._frameline_tween_types[tween_type_idx]
-		    frameline.tween(scene.start-1, tween_type)
+		    frameline.tween(scene.start, tween_type)
 		pass
 	    pass
 	pass
