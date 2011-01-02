@@ -479,6 +479,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	    pass
 	pass
 
+    # TODO: this function should be removed.
     def update_scenes_of_dom(self):
         doc = self._root
 	rdoc = self._doc
@@ -1095,17 +1096,16 @@ class MBScene(MBScene_dom):
 	if self.last_line == None:
 	    return
 	frameline = self.last_line
-	idx = self.last_frame
-        i = 0
-	found = -1
-	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
-	    if start_idx <= idx and stop_idx >= idx:
-		n = self.tweenTypeSelector.get_active()
-		new_tween_type = MBScene._frameline_tween_types[n]
-		self.last_line.set_tween_type(start_idx, new_tween_type)
-		self.update_scenes_of_dom()
-		break
-	    pass
+	start, end, old_tween_type = frameline.get_frame_block(self.last_frame)
+
+	type_idx = self.tweenTypeSelector.get_active()
+	tween_type = MBScene._frameline_tween_types[type_idx]
+	type_name = self._tween_type_names[type_idx]
+	
+	frameline.tween(start, tween_type)
+	
+	scene_node = frameline.get_frame_data(start)
+	scene_node.setAttribute('type', type_name)
 	pass
 
     def addTweenTypeSelector(self,hbox):
