@@ -346,7 +346,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	try:
 	    cur = int(n.getAttribute("current"))
 	except:
-	    cur = 1
+	    cur = 0
 	    pass
 	self.current = cur
 	
@@ -674,7 +674,7 @@ class MBScene(MBScene_dom):
 	frameline.tween(start, scene_type)
 	pass
     
-    def setCurrentScene(self,nth):
+    def setCurrentScene(self, idx):
 	"""
 	    Update the scene group according to the curretn scene
 	    data. There are a couple of cases.
@@ -693,9 +693,8 @@ class MBScene(MBScene_dom):
 	    create this group if it is not
 	    available.
 	"""
-	self.current = nth
+	self.current = idx
 	self.tween.updateMapping()
-	idx = nth - 1
 	for frameline in self._framelines:
 	    i=0
 
@@ -714,10 +713,12 @@ class MBScene(MBScene_dom):
 	    for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
 		if start_idx == stop_idx:
 		    scene_node = frameline.get_frame_data(start_idx)
+		    scene_group_id = scene_node.getAttribute('ref')
+		    scene_group = self.get_node(scene_group_id)
 		    if idx == start_idx:
-			scene_node.setAttribute('style', '')
+			scene_group.setAttribute('style', '')
 		    else:
-			scene_node.setAttribute('style', 'display: none')
+			scene_group.setAttribute('style', 'display: none')
 			pass
 		elif idx == start_idx:
 		    frameline.duplicateGroup.setAttribute("style","display:none")
@@ -725,7 +726,9 @@ class MBScene(MBScene_dom):
 		    scene_node.setAttribute("style","")
 		elif start_idx <= idx and stop_idx >= idx:
 		    scene_node = frameline.get_frame_data(start_idx)
-		    scene_node.setAttribute("style","display:none")
+		    scene_group_id = scene_node.getAttribute('ref')
+		    scene_group = self.get_node(scene_group_id)
+		    scene_group.setAttribute("style","display:none")
 		    frameline.duplicateGroup.setAttribute("style","")
 		    tween_type_idx = \
 			self._frameline_tween_types.index(tween_type)
@@ -740,17 +743,22 @@ class MBScene(MBScene_dom):
 		    else:
 			next_scene_node = frameline.get_frame_data(next_idx)
 			pass
+
+		    next_scene_group_id = next_scene_node.getAttribute('ref')
+		    next_scene_group = self.get_node(next_scene_group_id)
 		    
 		    nframes = stop_idx - start_idx + 1
 		    percent = float(idx - start_idx) / nframes
 		    self.tween.updateTweenContent(frameline.duplicateGroup,
 						  tween_obj_tween_type,
-						  scene_node,
+						  scene_group,
 						  next_scene_node,
 						  percent)
 		else:
 		    scene_node = frameline.get_frame_data(start_idx)
-		    scene_node.setAttribute("style","display:none")
+		    scene_group_id = scene_node.getAttribute('ref')
+		    scene_group = self.get_node(scene_group_id)
+		    scene_group.setAttribute("style","display:none")
 		    pass
 		pass
 	    pass
@@ -964,7 +972,7 @@ class MBScene(MBScene_dom):
 	return scene_group
     
     def doEditScene(self, w):
-	self.setCurrentScene(self.last_frame+1)
+	self.setCurrentScene(self.last_frame)
 	self.selectSceneObject(self.last_line, self.last_frame)
 	pass
     
@@ -1025,7 +1033,7 @@ class MBScene(MBScene_dom):
 	if self.current >= self.maxframe:
 	    self.current = 0
 	try:
-	    self.setCurrentScene(self.current+1)
+	    self.setCurrentScene(self.current)
 	except:
 	    traceback.print_exc()
 	    raise
