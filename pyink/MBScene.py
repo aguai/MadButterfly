@@ -45,8 +45,7 @@ from frameline import frameline, frameruler
 class Layer:
     def __init__(self,node):
 	self.scenes = []
-	self.node = node
-	self.nodes=[]
+	self.group = node
 	pass
     pass
 
@@ -321,18 +320,18 @@ class MBScene_dom(MBScene_dom_monitor):
 	print " " * l * 2,"/>"
 	pass
 
-    def _parse_one_scene(self, scene):
-	assert scene.name() == 'ns0:scene'
+    def _parse_one_scene(self, scene_node):
+	assert scene_node.name() == 'ns0:scene'
 	
-	start = int(scene.getAttribute("start"))
+	start = int(scene_node.getAttribute("start"))
 	try:
-	    end = int(scene.getAttribute("end"))
+	    end = int(scene_node.getAttribute("end"))
 	except:
 	    end = start
 	    pass
 	
 	try:
-	    scene_type = scene.getAttribute('type')
+	    scene_type = scene_node.getAttribute('type')
 	    if scene_type == None:
 		scene_type = 'normal'
 		pass
@@ -342,7 +341,7 @@ class MBScene_dom(MBScene_dom_monitor):
 
 	return start, end, scene_type
 
-    def _parse_one_scenes(self, scenes):
+    def _parse_one_scenes(self, scenes_node):
 	self.scenemap = {}
 	try:
 	    cur = int(n.getAttribute("current"))
@@ -351,12 +350,12 @@ class MBScene_dom(MBScene_dom_monitor):
 	    pass
 	self.current = cur
 	
-	for scene in scenes.childList():
-	    if scene.name() != 'ns0:scene':
+	for scene_node in scenes_node.childList():
+	    if scene_node.name() != 'ns0:scene':
 		continue
 
 	    try:
-		start, end, scene_type = self._parse_one_scene(scene)
+		start, end, scene_type = self._parse_one_scene(scene_node)
 	    except:
 		continue
 	    
@@ -364,7 +363,7 @@ class MBScene_dom(MBScene_dom_monitor):
 		self.maxframe = end
 		pass
 	    
-	    link = scene.getAttribute("ref")
+	    link = scene_node.getAttribute("ref")
 	    self.scenemap[link] = (start, end, scene_type)
 	    if cur >= start and cur <= end:
 		self.currentscene = link
@@ -388,8 +387,8 @@ class MBScene_dom(MBScene_dom_monitor):
 	else:
 	    ns = "http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
 	    self._root.setAttribute("xmlns:ns0", ns)
-	    scenes = self._doc.createElement("ns0:scenes")
-	    node.appendChild(scenes)
+	    scenes_node = self._doc.createElement("ns0:scenes")
+	    node.appendChild(scenes_node)
 	    pass
 	pass
 
@@ -405,7 +404,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	rdoc = self._doc
 	scene_group = rdoc.createElement("svg:g")
 	found = False
-	for node in line.node.childList():
+	for node in line.layer_group.childList():
 	    try:
 		label = node.getAttribute("inkscape:label")
 	    except:
@@ -431,10 +430,10 @@ class MBScene_dom(MBScene_dom_monitor):
 	    txt.setAttribute("style","fill:#ff00")
 	    scene_group.appendChild(txt)
 
-	gid = line.node.getAttribute('inkscape:label')+self.new_id()
+	gid = line.layer_group.getAttribute('inkscape:label')+self.new_id()
 	scene_group.setAttribute("id",gid)
 	scene_group.setAttribute("inkscape:groupmode","layer")
-	line.node.appendChild(scene_group)
+	line.layer_group.appendChild(scene_group)
 	line.add_keyframe(frame, scene_group)
 	self.update_scenes_of_dom()
 	pass
@@ -442,7 +441,7 @@ class MBScene_dom(MBScene_dom_monitor):
     def add_scene_on_dom(self, frameline, scenes_node):
 	doc = self._doc
 	for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
-	    ref = frameline.get_frame_data(start_idx)
+	    scene_node = frameline.get_frame_data(start_idx)
 	    tween_type_idx = self._frameline_tween_types.index(tween_type)
 	    tween_type_name = self._tween_type_names[tween_type_idx]
 	    
@@ -452,7 +451,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	    if start_idx != stop_idx:
 		scene_node.setAttribute("end", str(stop_idx + 1))
 		pass
-	    scene_node.setAttribute("ref", ref.getAttribute("id"))
+	    scene_node.setAttribute("ref", scene_node.getAttribute("id"))
 	    scene_node.setAttribute("type", tween_type_name)
 	    pass
 	pass
@@ -465,11 +464,11 @@ class MBScene_dom(MBScene_dom_monitor):
 	        for t in node.childList():
 		    if t.name() == "ns0:scenes":
 		        node.removeChild(t)
-			scenes = rdoc.createElement("ns0:scenes")
-			node.appendChild(scenes)
+			scenes_node = rdoc.createElement("ns0:scenes")
+			node.appendChild(scenes_node)
 			for layer in range(0, len(self._framelines)):
 			    lobj = self._framelines[layer]
-			    self.add_scene_on_dom(lobj, scenes)
+			    self.add_scene_on_dom(lobj, scenes_node)
 			    pass
 			pass
 		    pass
@@ -505,34 +504,30 @@ class MBScene_dom(MBScene_dom_monitor):
 		oldscene = None
 		lyobj = Layer(node)
 		self.layers.append(lyobj)
-		lyobj.current_scene = []
-		for scene in node.childList():
-		    print scene.getCenter()
-		    if scene.name() == 'svg:g':
-		        try:
-			    label = scene.getAttribute('inkscape:label')
-			    if label == 'dup':
-				# TODO: remove this since this functio is for
-				#       parsing.  Why do this here?
-			        node.removeChild(scene)
-			except:
+		for scene_group in node.childList():
+		    if scene_group.name() != 'svg:g':
+			continue
+		    
+		    try:
+			label = scene.getAttribute('inkscape:label')
+			if label == 'dup':
+			    # TODO: remove this since this functio is for
+			    #       parsing.  Why do this here?
+			    node.removeChild(scene_group)
 			    pass
-
-			try:
-			    scene_id = scene.getAttribute('id')
-			    scene = self.get_scene(scene_id)
-			    start, stop, tween_type = \
-				self._parse_one_scene(scene)
-			except:
-			    lyobj.current_scene.append(scene)
-			    continue
-
-			lyobj.scenes.append(Scene(scene, start, stop,
-						  tween_type))
+		    except:
 			pass
-		    else:
-			lyobj.current_scene.append(scene)
-			pass
+
+		    try:
+			scene_group_id = scene_group.getAttribute('id')
+			scene_node = self.get_scene(scene_group_id)
+			start, stop, tween_type = \
+			    self._parse_one_scene(scene_node)
+		    except:
+			continue
+		    
+		    lyobj.scenes.append(Scene(scene_node, start, stop,
+					      tween_type))
 		    pass
 		pass
 	    pass
@@ -540,7 +535,7 @@ class MBScene_dom(MBScene_dom_monitor):
 
     def getLayer(self, layer):
 	for l in self.layers:
-	    if l.node.getAttribute('id') == layer:
+	    if l.group.getAttribute('id') == layer:
 		return l
 	    pass
 	return None
@@ -639,21 +634,21 @@ class MBScene(MBScene_dom):
 	pass
     
     def extendScene(self):
-	nth = self.last_frame
-	layer = self.last_line
+	frame_idx = self.last_frame
+	frameline = self.last_line
 	i = 0
-	while i < len(layer._keys):
-	    s = layer._keys[i]
+	while i < len(frameline._keys):
+	    s = frameline._keys[i]
 	    if s.right_tween:
-	        if nth > s.idx:
-		    if nth <= layer._keys[i+1].idx:
+	        if frame_idx > s.idx:
+		    if frame_idx <= frameline._keys[i+1].idx:
 		        return
 		    try:
-		        if nth <= layer._keys[i+2].idx:
-			    layer._keys[i+1].idx = nth
-			    layer.draw_all_frames()
+		        if frame_idx <= frameline._keys[i+2].idx:
+			    frameline._keys[i+1].idx = frame_idx
+			    frameline.draw_all_frames()
 			    self.update_scenes_of_dom()
-			    self.setCurrentScene(nth)
+			    self.setCurrentScene(frame_idx)
 			    self.last_line.update()
 			    return
 			else:
@@ -663,31 +658,32 @@ class MBScene(MBScene_dom):
 		    except:
 		        # This is the last keyframe, extend the keyframe by 
 			# relocate the location of the keyframe
-			layer._keys[i+1].idx = nth
-			layer._draw_all_frames()
+			frameline._keys[i+1].idx = frame_idx
+			frameline._draw_all_frames()
 			self.update_scenes_of_dom()
 			self.last_line.update()
-			self.setCurrentScene(nth)
+			self.setCurrentScene(frame_idx)
 			return
 		else:
 		    # We are in the front of all keyframes
 		    return
 	    else:
 		# This is a single keyframe
-		if nth < s.idx:
+		if frame_idx < s.idx:
 		    return
-		if nth == s.idx:
+		if frame_idx == s.idx:
 		    return
 		try:
-		    if nth < layer._keys[i+1].idx:
+		    if frame_idx < frameline._keys[i+1].idx:
 			# We are after a single keyframe and no scene is 
 			# available here. Create a new tween here
-			idx = layer._keys[i].idx
-			layer.add_keyframe(nth,layer._keys[i].ref)
-			layer.tween(idx)
-		        layer._draw_all_frames()
+			idx = frameline._keys[i].idx
+			scene_node = frameline._keys[i].ref
+			frameline.add_keyframe(frame_idx, scene_node)
+			frameline.tween(idx)
+		        frameline._draw_all_frames()
 			self.update_scenes_of_dom()
-			self.setCurrentScene(nth)
+			self.setCurrentScene(frame_idx)
 			self.last_line.update()
 			return
 		    else:
@@ -697,12 +693,13 @@ class MBScene(MBScene_dom):
 		    pass
 		except:
 		    # This is the last scene, create a new one
-		    idx = layer._keys[i].idx
-		    layer.add_keyframe(nth,layer._keys[i].ref)
-		    layer.tween(idx)
-		    layer._draw_all_frames()
+		    idx = frameline._keys[i].idx
+		    scene_node = frameline._keys[i].ref
+		    frameline.add_keyframe(frame_idx, scene_node)
+		    frameline.tween(idx)
+		    frameline._draw_all_frames()
 		    self.update_scenes_of_dom()
-		    self.setCurrentScene(nth)
+		    self.setCurrentScene(frame_idx)
 		    self.last_line.update()
 		    return
 		pass
@@ -731,37 +728,37 @@ class MBScene(MBScene_dom):
 	self.current = nth
 	self.tween.updateMapping()
 	idx = nth - 1
-	for layer in self._framelines:
+	for frameline in self._framelines:
 	    i=0
 
 	    # Check the duplicated scene group and create it if it is not available
 	    try:
-		layer.duplicateGroup.setAttribute("style","display:none")
+		frameline.duplicateGroup.setAttribute("style","display:none")
 	    except:
 	        print "*"*40
-	        layer.duplicateGroup = self.document.createElement("svg:g")
-	        layer.duplicateGroup.setAttribute("inkscape:label","dup")
-	        layer.duplicateGroup.setAttribute("sodipodi:insensitive","1")
-	        layer.duplicateGroup.setAttribute("style","")
-	        layer.layer.node.appendChild(layer.duplicateGroup)
+	        frameline.duplicateGroup = self.document.createElement("svg:g")
+	        frameline.duplicateGroup.setAttribute("inkscape:label","dup")
+	        frameline.duplicateGroup.setAttribute("sodipodi:insensitive","1")
+	        frameline.duplicateGroup.setAttribute("style","")
+	        frameline.layer.group.appendChild(frameline.duplicateGroup)
 	        pass
 	    # Create a new group
-	    for start_idx, stop_idx, tween_type in layer.get_frame_blocks():
+	    for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
 		if start_idx == stop_idx:
-		    scene_group = layer.get_frame_data(start_idx)
+		    scene_node = frameline.get_frame_data(start_idx)
 		    if idx == start_idx:
-			scene_group.setAttribute('style', '')
+			scene_node.setAttribute('style', '')
 		    else:
-			scene_group.setAttribute('style', 'display: none')
+			scene_node.setAttribute('style', 'display: none')
 			pass
 		elif idx == start_idx:
-		    layer.duplicateGroup.setAttribute("style","display:none")
-		    scene_group = layer.get_frame_data(start_idx)
-		    scene_group.setAttribute("style","")
+		    frameline.duplicateGroup.setAttribute("style","display:none")
+		    scene_node = frameline.get_frame_data(start_idx)
+		    scene_node.setAttribute("style","")
 		elif start_idx <= idx and stop_idx >= idx:
-		    scene_group = layer.get_frame_data(start_idx)
-		    scene_group.setAttribute("style","display:none")
-		    layer.duplicateGroup.setAttribute("style","")
+		    scene_node = frameline.get_frame_data(start_idx)
+		    scene_node.setAttribute("style","display:none")
+		    frameline.duplicateGroup.setAttribute("style","")
 		    tween_type_idx = \
 			self._frameline_tween_types.index(tween_type)
 		    tween_obj_tween_type = \
@@ -769,23 +766,23 @@ class MBScene(MBScene_dom):
 		    
 		    try:
 			next_idx, next_stop_idx, next_tween_type = \
-			    layer.get_frame_block(stop_idx + 1)
+			    frameline.get_frame_block(stop_idx + 1)
 		    except:
-			next_scene_group = scene_group
+			next_scene_node = scene_node
 		    else:
-			next_scene_group = layer.get_frame_data(next_idx)
+			next_scene_node = frameline.get_frame_data(next_idx)
 			pass
 		    
 		    nframes = stop_idx - start_idx + 1
 		    percent = float(idx - start_idx) / nframes
-		    self.tween.updateTweenContent(layer.duplicateGroup,
+		    self.tween.updateTweenContent(frameline.duplicateGroup,
 						  tween_obj_tween_type,
-						  scene_group,
-						  next_scene_group,
+						  scene_node,
+						  next_scene_node,
 						  percent)
 		else:
-		    scene_group = layer.get_frame_data(start_idx)
-		    scene_group.setAttribute("style","display:none")
+		    scene_node = frameline.get_frame_data(start_idx)
+		    scene_node.setAttribute("style","display:none")
 		    pass
 		pass
 	    pass
@@ -793,7 +790,7 @@ class MBScene(MBScene_dom):
 
     def enterGroup(self,obj):
         for l in self.layers:
-	    for s in l.node.childList():
+	    for s in l.group.childList():
 	        if s.getAttribute('id') == obj.getAttribute("id"):
 		    self.desktop.setCurrentLayer(s.spitem)
 		    pass
@@ -807,8 +804,8 @@ class MBScene(MBScene_dom):
 	except:
 	    return
 
-	scene_group = frameline.get_frame_data(start)
-	self.enterGroup(scene_group)
+	scene_node = frameline.get_frame_data(start)
+	self.enterGroup(scene_node)
 	self.setTweenType(tween_type)
 	pass
 
@@ -884,7 +881,7 @@ class MBScene(MBScene_dom):
 	for i in range(len(self.layers)-1,-1,-1):
 	    line = frameline(nframes)
 	    hbox = gtk.HBox()
-	    label = gtk.Label(self.layers[i].node.getAttribute("inkscape:label"))
+	    label = gtk.Label(self.layers[i].group.getAttribute("inkscape:label"))
 	    label.set_size_request(100,0)
 	    hbox.pack_start(label,expand=False,fill=True)
 	    hbox.pack_start(line)
@@ -894,7 +891,7 @@ class MBScene(MBScene_dom):
 	    self._framelines.append(line)
 	    line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
 	    line.nLayer = i
-	    line.node = self.layers[i].node
+	    line.layer_group = self.layers[i].group
 	    line.layer = self.layers[i]
 	    line.connect('motion-notify-event', self._remove_active_frame)
 	    pass
@@ -906,19 +903,19 @@ class MBScene(MBScene_dom):
     def _update_framelines(self):
 	for frameline in self._framelines:
 	    layer = frameline.layer
-	    if frameline.node.getAttribute("inkscape:label")==None:
+	    if frameline.layer_group.getAttribute("inkscape:label")==None:
 	        frameline.label.set_text('???')
 	    else:
-	        frameline.label.set_text(frameline.node.getAttribute("inkscape:label"))
+	        frameline.label.set_text(frameline.layer_group.getAttribute("inkscape:label"))
 	    last_scene = None
 	    for scene in layer.scenes:
 		if last_scene and last_scene.end == scene.start:
 		    frameline.setRightTween(last_scene.end)
 		else:
-		    frameline.add_keyframe(scene.start-1,scene.node)
+		    frameline.add_keyframe(scene.start-1, scene.node)
 		last_scene = scene
 		if scene.start != scene.end:
-		    frameline.add_keyframe(scene.end-1,scene.node)
+		    frameline.add_keyframe(scene.end-1, scene.node)
 		    tween_type_idx = self._tween_type_names.index(scene.type)
 		    tween_type = self._frameline_tween_types[tween_type_idx]
 		    frameline.tween(scene.start-1, tween_type)
@@ -977,10 +974,10 @@ class MBScene(MBScene_dom):
 	    pass
 	if orig == None:
 	    return None
-	ns = orig.duplicate(rdoc)
+	scene_group = orig.duplicate(rdoc)
 
 	old_nodes = _travel_DOM(orig)
-	new_nodes = _travel_DOM(ns)
+	new_nodes = _travel_DOM(scene_group)
 	for old_node in old_nodes:
 	    print old_node
 	    old_node_id = old_node.getAttribute('id')
@@ -988,10 +985,10 @@ class MBScene(MBScene_dom):
 	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
 	    pass
 
-	gid = self.last_line.node.getAttribute("inkscape:label")+self.new_id()
-	ns.setAttribute("id",gid)
-	ns.setAttribute("inkscape:groupmode","layer")
-	self.last_line.node.appendChild(ns)
+	gid = self.last_line.layer_group.getAttribute("inkscape:label")+self.new_id()
+	scene_group.setAttribute("id",gid)
+	scene_group.setAttribute("inkscape:groupmode","layer")
+	self.last_line.layer_group.appendChild(scene_group)
 	return ns
     
     def doEditScene(self, w):
