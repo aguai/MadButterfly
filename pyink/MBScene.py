@@ -572,13 +572,6 @@ class MBScene_dom(MBScene_dom_monitor):
 		pass
 	    pass
 	pass
-
-    def getLayer(self, layer):
-	for l in self.layers:
-	    if l.group.getAttribute('id') == layer:
-		return l
-	    pass
-	return None
     pass
 
 class MBScene(MBScene_dom):
@@ -627,15 +620,6 @@ class MBScene(MBScene_dom):
 	    pass
 	pass
 
-    def confirm(self,msg):
-	vbox = gtk.VBox()
-	vbox.pack_start(gtk.Label(msg))
-	self.button = gtk.Button('OK')
-	vbox.pack_start(self.button)
-	self.button.connect("clicked", self.onQuit)
-	self.window.add(vbox)
-	pass
-    
     def removeKeyScene(self, frameline, frame_idx):
 	start, end, scene_type = frameline.get_frame_block(frame_idx)
 	scene_node = frameline.get_frame_data(start)
@@ -1056,13 +1040,6 @@ class MBScene(MBScene_dom):
 	self.current = self.current + 1
         self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
 
-    def doInsertScene(self,w):
-	self._lockui=True
-	self.last_line.insert_frame(self.last_frame)
-	self.update_scenes_of_dom()
-	self._lockui=False
-	pass
-
     def addButtons(self,hbox):
 	btn = gtk.Button('Insert Key')
 	btn.connect('clicked',self.doInsertKeyScene)
@@ -1078,14 +1055,6 @@ class MBScene(MBScene_dom):
 
 	btn=gtk.Button('Duplicate Key')
 	btn.connect('clicked', self.doDuplicateKeyScene)
-	hbox.pack_start(btn,expand=False,fill=False)
-
-	btn=gtk.Button('Insert')
-	btn.connect('clicked', self.doInsertScene)
-	hbox.pack_start(btn,expand=False,fill=False)
-
-	btn=gtk.Button('Remove')
-	btn.connect('clicked', self.doRemoveScene)
 	hbox.pack_start(btn,expand=False,fill=False)
 
 	btn=gtk.Button('Run')
