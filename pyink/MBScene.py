@@ -249,6 +249,10 @@ class MBScene_dom_monitor(object):
 	    return
 	pass
     
+    ## \brief Collect ID of nodes in the document.
+    #
+    # It is used to implement a fast mapping from an ID to the respective node.
+    #
     def _collect_node_ids(self):
 	self._id2node = {}
 	root = self._root
@@ -269,9 +273,13 @@ class MBScene_dom_monitor(object):
 	    pass
 	pass
     
+    ## \brief Return the node with given ID.
+    #
     def get_node(self, node_id):
 	return self._id2node[node_id]
 
+    ## \brief Return a scene node corresponding to a scene group of given ID.
+    #
     def get_scene(self, group_id):
 	return self._group2scene[group_id]
 
