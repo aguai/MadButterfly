@@ -764,6 +764,11 @@ class frameline(frameline_draw_state):
 		return key.right_tween_type
 	    pass
 	pass
+    ## Get the maximum frame number in a layer(frameline)
+    # Return the frame number
+    def max_frame(self):
+	if len(self._keys) == 0: return 0
+        return self._keys[len(self._keys)-1].idx
 
     ## \bref Return range of blocks of conesequence frames (tweens).
     #
