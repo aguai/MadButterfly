@@ -318,9 +318,13 @@ class MBScene_dom(object):
 		        node.removeChild(t)
 			scenes = rdoc.createElement("ns0:scenes")
 			node.appendChild(scenes)
+			self.maxframe = 0
 			for layer in range(0, len(self._framelines)):
 			    lobj = self._framelines[layer]
 			    self.add_scene_on_dom(lobj, scenes)
+			    maxframe = lobj.max_frame()+1
+			    if self.maxframe < maxframe:
+				self.maxframe = maxframe
 			    pass
 			pass
 		    pass
