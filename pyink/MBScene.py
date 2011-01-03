@@ -465,6 +465,10 @@ class MBScene_dom(MBScene_dom_monitor):
 	    pass
 	pass
 
+    def _rm_scene_node(self, scene_node):
+	self._scenes_node.removeChild(scene_node)
+	pass
+
     ## \brief Create and add a svg:g for a scene under a group for a layer.
     #
     def _add_scene_group(self, layer_idx):
@@ -609,6 +613,8 @@ class MBScene(MBScene_dom):
 			      TweenObject.TWEEN_TYPE_SCALE)
     _tween_type_names = ('normal', 'scale')
     
+    _num_frames_of_line = 100
+    
     def __init__(self, desktop, win, root=None):
 	super(MBScene, self).__init__()
 
@@ -728,7 +734,8 @@ class MBScene(MBScene_dom):
 		    duplicateGroup.setAttribute("inkscape:label","dup")
 		    duplicateGroup.setAttribute("sodipodi:insensitive","1")
 		    duplicateGroup.setAttribute("style","")
-		    frameline.layer.group.appendChild(duplicateGroup)
+		    
+		    layer.group.appendChild(duplicateGroup)
 		    frameline.duplicateGroup = duplicateGroup
 		    pass
 	        pass
@@ -850,6 +857,101 @@ class MBScene(MBScene_dom):
 		pass
 	    pass
 	pass
+
+    ## \brief Add a frameline into the frameline box for the given layer.
+    #
+    def _add_frameline(self, layer_idx):
+	if layer_idx > len(self._framelines):
+	    raise ValueError, 'layer number should be a consequence'
+
+	vbox = self.scrollwin_vbox
+	
+	line = frameline(self._num_frames_of_line)
+	line.set_size_request(self._num_frames_of_line * 10, 20)
+	
+	hbox = gtk.HBox()
+	label = gtk.Label('')
+	label.set_size_request(100,0)
+	hbox.pack_start(label,expand=False, fill=True)
+	hbox.pack_start(line)
+	vbox.pack_start(hbox, False)
+	
+	if layer_idx != len(self._framelines):
+	    vbox.reorder_child(hbox, layer_idx + 1) # there is ruler at pos 0
+	    pass
+	
+	self._framelines[layer_idx: layer_idx] = [line]
+	
+	line.label = label
+	line.layer_idx = layer_idx
+	line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
+	line.connect('motion-notify-event', self._remove_active_frame)
+	pass
+    
+    ## \brief Remove the given frameline from the frameline box.
+    #
+    def _remove_frameline(self, layer_idx):
+	vbox = self.scrollwin_vbox
+	line = self._framelines[layer_idx]
+	
+	hbox = line.parent
+	vbox.remove(hbox)
+	del self._framelines[layer_idx]
+	pass
+
+    def _remove_lost_group_layer(self, layer_idx):
+	layer = self.layers[layer_idx]
+	frameline = self._framelines[layer_idx]
+	for start, end, tween_type in frameline.get_frame_blocks():
+	    scene_node = frameline.get_frame_data(start)
+	    self._rm_scene_node(scene_node)
+	    pass
+
+	self._remove_frameline(layer_idx) # TODO
+	del self.layers[layer_idx]
+	pass
+
+    def _make_layers_integral(self):
+	root = self._root
+	root_id = root.getAttribute('id')
+	
+	# Remove group of removed scenes
+	layer_idx = 0
+	while layer_idx < len(self.layers):
+	    layer = self.layers[layer_idx]
+	    
+	    if layer.group.name() != 'svg:g':
+		self._remove_lost_group_layer(layer.layer_idx) # TODO
+		continue
+
+	    parent = layer.group.parent()
+	    if parent.name() != 'svg:g':
+		self._remove_lost_group_layer(layer.layer_idx)
+		continue
+
+	    if parent.getAttribute('id') != root_id:
+		self._remove_lost_group_layer(layer.layer_idx)
+		continue
+
+	    layer_idx = layer_idx + 1
+	    pass
+
+	# Add new scenes
+	layer_idx = 0
+	for child in root.childList():
+	    if child.name() != 'svg:g':
+		continue
+
+	    layer = self.layers[layer_idx]
+	    layer_id = layer.group.getAttribute('id')
+	    child_id = child.getAttribute('id')
+	    if layer_id != child_id:
+		self._add_frameline(layer_id)
+		pass
+	    
+	    layer_idx = layer_idx + 1
+	    pass
+	pass
 	    
     def _create_framelines(self):
 	if not hasattr(self, 'scrollwin'):
@@ -869,6 +971,9 @@ class MBScene(MBScene_dom):
 	
 	nframes = 100
 	
+	#
+	# Set up a ruler
+	#
 	ruler = frameruler(nframes)
 	ruler.set_size_request(nframes * 10, 20)
 	ruler.show()
@@ -883,22 +988,8 @@ class MBScene(MBScene_dom):
 	# Add a frameline for each layer
 	#
 	self._framelines = []
-	for i in range(len(self.layers)-1,-1,-1):
-	    line = frameline(nframes)
-	    hbox = gtk.HBox()
-	    label = gtk.Label(self.layers[i].group.getAttribute("inkscape:label"))
-	    label.set_size_request(100,0)
-	    hbox.pack_start(label,expand=False,fill=True)
-	    hbox.pack_start(line)
-	    line.set_size_request(nframes * 10, 20)
-	    vbox.pack_start(hbox, False)
-	    line.label = label
-	    self._framelines.append(line)
-	    line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
-	    line.layer_idx = i
-	    line.layer_group = self.layers[i].group
-	    line.layer = self.layers[i]
-	    line.connect('motion-notify-event', self._remove_active_frame)
+	for i in range(len(self.layers)):
+	    self._add_frameline(i)
 	    pass
 	vbox.show_all()
 	pass
@@ -907,11 +998,12 @@ class MBScene(MBScene_dom):
     #
     def _update_framelines(self):
 	for frameline in self._framelines:
-	    layer = frameline.layer
-	    if frameline.layer_group.getAttribute("inkscape:label")==None:
+	    layer_idx = frameline.layer_idx
+	    layer = self.layers[layer_idx]
+	    if layer.group.getAttribute("inkscape:label")==None:
 	        frameline.label.set_text('???')
 	    else:
-	        frameline.label.set_text(frameline.layer_group.getAttribute("inkscape:label"))
+	        frameline.label.set_text(layer.group.getAttribute("inkscape:label"))
 	    last_scene = None
 	    for scene in layer.scenes:
 		if last_scene and last_scene.end == scene.start:
@@ -993,10 +1085,11 @@ class MBScene(MBScene_dom):
 	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
 	    pass
 
-	gid = self.last_line.layer_group.getAttribute("inkscape:label")+self.new_id()
+	layer = self.layers[self.last_line.layer_idx]
+	gid = layer.group.getAttribute("inkscape:label")+self.new_id()
 	scene_group.setAttribute("id",gid)
 	scene_group.setAttribute("inkscape:groupmode","layer")
-	self.last_line.layer_group.appendChild(scene_group)
+	layer.group.appendChild(scene_group)
 	return scene_group
     
     def doEditScene(self, w):
