@@ -406,7 +406,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	scene_node = doc.createElement('ns0:scene')
 	scene_node.setAttribute('start', str(start))
 	if start != end:
-	    scene_node.setAttribute('end', str(end))
+	    self._chg_scene_node(scene_node, end=end)
 	    pass
 	type_name = type_names[frame_type]
 	scene_node.setAttribute('type', type_name)
@@ -417,6 +417,25 @@ class MBScene_dom(MBScene_dom_monitor):
 	scenes_node.appendChild(scene_node)
 	
 	return scene_node
+
+    def _chg_scene_node(self, scene_node, start=None, end=None,
+			tween_type=None, ref=None):
+	if start:
+	    scene_node.setAttribute('start', str(start))
+	    pass
+	if end:
+	    scene_node.setAttribute('end', str(end))
+	    if int(end) > self.maxframe:
+		self.maxframe = int(end)
+		pass
+	    pass
+	if tween_type:
+	    scene_node.setAttribute('type', tween_type)
+	    pass
+	if ref:
+	    scene_node.setAttribute('ref', ref)
+	    pass
+	pass
 
     ## \brief Create and add a svg:g for a scene under a group for a layer.
     #
@@ -535,9 +554,6 @@ class MBScene_dom(MBScene_dom_monitor):
 		    try:
 			label = scene_group.getAttribute('inkscape:label')
 			if label == 'dup':
-			    # TODO: remove this since this functio is for
-			    #       parsing.  Why do this here?
-			    node.removeChild(scene_group)
 			    continue
 		    except:
 			pass
@@ -670,7 +686,7 @@ class MBScene(MBScene_dom):
 	    pass
 	
 	scene_node = frameline.get_frame_data(start)
-	scene_node.setAttribute('end', str(frame_idx))
+	self._chg_scene_node(scene_node, end=frame_idx)
 	frameline.add_keyframe(frame_idx)
 	frameline.tween(start, scene_type)
 	pass
@@ -703,13 +719,25 @@ class MBScene(MBScene_dom):
 	    try:
 		frameline.duplicateGroup.setAttribute("style","display:none")
 	    except:
-	        print "*"*40
-	        frameline.duplicateGroup = self.document.createElement("svg:g")
-	        frameline.duplicateGroup.setAttribute("inkscape:label","dup")
-	        frameline.duplicateGroup.setAttribute("sodipodi:insensitive","1")
-	        frameline.duplicateGroup.setAttribute("style","")
-	        frameline.layer.group.appendChild(frameline.duplicateGroup)
+	        print "*" * 40
+		layer_idx = frameline.layer_idx
+		layer = self.layers[layer_idx]
+		for child in layer.group.childList():
+		    label = child.getAttribute('inkscape:label')
+		    if label == 'dup':
+			frameline.duplicateGroup = child
+			break
+		    pass
+		else:
+		    duplicateGroup = self.document.createElement("svg:g")
+		    duplicateGroup.setAttribute("inkscape:label","dup")
+		    duplicateGroup.setAttribute("sodipodi:insensitive","1")
+		    duplicateGroup.setAttribute("style","")
+		    frameline.layer.group.appendChild(duplicateGroup)
+		    frameline.duplicateGroup = duplicateGroup
+		    pass
 	        pass
+	    
 	    # Create a new group
 	    for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
 		if start_idx == stop_idx:
@@ -727,7 +755,7 @@ class MBScene(MBScene_dom):
 		    scene_group_id = scene_node.getAttribute('ref')
 		    scene_group = self.get_node(scene_group_id)
 		    scene_group.setAttribute("style","")
-		elif start_idx <= idx and stop_idx >= idx:
+		elif start_idx < idx and stop_idx >= idx:
 		    scene_node = frameline.get_frame_data(start_idx)
 		    scene_group_id = scene_node.getAttribute('ref')
 		    scene_group = self.get_node(scene_group_id)
@@ -752,10 +780,11 @@ class MBScene(MBScene_dom):
 		    
 		    nframes = stop_idx - start_idx + 1
 		    percent = float(idx - start_idx) / nframes
+		    print tween_obj_tween_type
 		    self.tween.updateTweenContent(frameline.duplicateGroup,
 						  tween_obj_tween_type,
 						  scene_group,
-						  next_scene_node,
+						  next_scene_group,
 						  percent)
 		else:
 		    scene_node = frameline.get_frame_data(start_idx)
@@ -871,7 +900,7 @@ class MBScene(MBScene_dom):
 	    line.label = label
 	    self._framelines.append(line)
 	    line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
-	    line.nLayer = i
+	    line.layer_idx = i
 	    line.layer_group = self.layers[i].group
 	    line.layer = self.layers[i]
 	    line.connect('motion-notify-event', self._remove_active_frame)
@@ -1034,13 +1063,14 @@ class MBScene(MBScene_dom):
 	    pass
 
     def doRunNext(self):
-	if self.current >= self.maxframe:
+	if self.current > self.maxframe:
 	    self.current = 0
 	try:
 	    self.setCurrentScene(self.current)
 	except:
 	    traceback.print_exc()
 	    raise
+	self.current = self.current + 1
         self.last_update = glib.timeout_add(1000/self.framerate,self.doRunNext)
 
     def doInsertScene(self,w):
@@ -1105,7 +1135,7 @@ class MBScene(MBScene_dom):
 	frameline.tween(start, tween_type)
 	
 	scene_node = frameline.get_frame_data(start)
-	scene_node.setAttribute('type', type_name)
+	self._chg_scene_node(scene_node, tween_type=type_name)
 	pass
 
     def addTweenTypeSelector(self,hbox):
