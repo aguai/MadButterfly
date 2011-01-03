@@ -716,14 +716,16 @@ class frameline(frameline_draw_state):
             if key.right_tween:
 		right_key = self._keys[key_pos]
                 right_key.left_tween = False
-                redraw_range = (right_key.idx, idx + 1)
+                redraw_range = (key.idx, right_key.idx + 1)
             else:
                 left_key = self._keys[key_pos - 1]
                 left_key.right_tween = False
-                redraw_range = (idx, left_key.idx + 1)
+                redraw_range = (left_key.idx, key.idx + 1)
                 pass
-                self._draw_frame(i)
-                pass
+	    for i in range(*redraw_range):
+		self._draw_frame(i)
+		pass
+	    pass
         else:
             self._draw_frame(idx)
             pass
