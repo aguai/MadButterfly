@@ -303,6 +303,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	
 	self._start_monitor()	# start MBScene_dom_monitor
 	self._init_metadata()
+	self._parse_all_scenes()
 	pass
    
     def dumpattr(self, n):
@@ -370,7 +371,26 @@ class MBScene_dom(MBScene_dom_monitor):
 		pass
 	    pass
 	pass
+
+    ## \brief Parse all scenes node in svg:metadata subtree.
+    #
+    def _parse_all_scenes(self):
+	root = self._root
+	for child in root.childList():
+	    if child.name() != 'svg:metadata':
+		continue
+
+	    metadata_node = child
+	    for metachild in metadata_node.childList():
+		if metachild.name() == 'ns0:scenes':
+		    self._parse_one_scenes(metachild)
+		    pass
+		pass
+	    pass
+	pass
     
+    ## \brief Create a scenes node if not existed.
+    #
     def _init_metadata(self):
 	for node in self._root.childList():
 	    if node.name() == 'svg:metadata':
