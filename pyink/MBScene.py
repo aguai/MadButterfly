@@ -636,40 +636,23 @@ class MBScene(MBScene_dom):
 	self.window.add(vbox)
 	pass
     
-    def removeKeyScene(self):
-	nth = self.last_frame
-	y = self.last_line
-	rdoc = self.document
-	i = 0
-	layer = self.last_line
-	while i < len(layer._keys):
-	    s = layer._keys[i]
-	    print "nth:%d idx %d" % (nth,s.idx)
-	    if nth > s.idx:
-	        if i == len(layer._keys)-1:
-	            return
-	    if nth == s.idx:
-	        if s.left_tween:
-		    # This is left tween, we move the keyframe one frame ahead
-		    if s.idx == layer._keys[i-1].idx:
-			layer._keys[i].ref.parent().removeChild(layer._keys[i].ref)
-	                self.last_line.rm_keyframe(nth)
-	                self.last_line.rm_keyframe(nth-1)
-		    else:
-		        s.idx = s.idx-1
-		else:
-		    layer._keys[i].ref.parent().removeChild(layer._keys[i].ref)
-		    if s.right_tween:
-		        self.last_line.rm_keyframe(layer._keys[i+1].idx)
-	                self.last_line.rm_keyframe(nth)
-		    else:
-	                self.last_line.rm_keyframe(nth)
+    def removeKeyScene(self, frameline, frame_idx):
+	start, end, scene_type = frameline.get_frame_block(frame_idx)
+	scene_node = frameline.get_frame_data(start)
+	
+	frameline.rm_keyframe(start)
+	if start != end:
+	    frameline.rm_keyframe(end)
+	    pass
+	
+	scene_group_id = scene_node.getAttribute('ref')
+	scene_group = self.get_node(scene_group_id)
+	scene_group.parent().removeChild(scene_group)
+	scene_node.parent().removeChild(scene_node)
 
-		self.update_scenes_of_dom()
-		self.last_line._draw_all_frames()
-	        self.last_line.update()
-		return
-	    i = i + 1
+	try:
+	    frameline.duplicateGroup.setAttribute('style', 'display: none')
+	except AttributeError:
 	    pass
 	pass
     
@@ -1024,7 +1007,7 @@ class MBScene(MBScene_dom):
 
     def doRemoveScene(self,w):
 	self._lockui = True
-	self.removeKeyScene()
+	self.removeKeyScene(self.last_line, self.last_frame)
 	self._lockui = False
 	return
 
@@ -1078,13 +1061,8 @@ class MBScene(MBScene_dom):
 	self.last_line.insert_frame(self.last_frame)
 	self.update_scenes_of_dom()
 	self._lockui=False
+	pass
 
-    def doRemoveScene(self,w):
-	self._lockui=True
-	self.last_line.remove_frame(self.last_frame)
-	self.update_scenes_of_dom()
-	self._lockui=False
-    
     def addButtons(self,hbox):
 	btn = gtk.Button('Insert Key')
 	btn.connect('clicked',self.doInsertKeyScene)
