@@ -530,6 +530,12 @@ class MBScene_dom(MBScene_dom_monitor):
 	pass
     pass
 
+## \brief MBScene connect GUI and DOM-tree
+#
+# This class connect behavior of GUI to the DOM-tree.  All about GUI is
+# implemented by this class.  It use API provided by MBScene_dom to reflect
+# actions to the DOM-tree.
+#
 class MBScene(MBScene_dom):
     _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
 			      frameline.TWEEN_TYPE_SHAPE)
