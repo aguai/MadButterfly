@@ -530,15 +530,115 @@ class MBScene_dom(MBScene_dom_monitor):
 	pass
     pass
 
+## \brief Maintain frameline list for MBScene.
+#
+class MBScene_framelines(object):
+    _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
+			      frameline.TWEEN_TYPE_SHAPE)
+
+    _framelines = None
+    
+    def __init__(self, *args, **kws):
+	super(MBScene_framelines, self).__init__(*args, **kws)
+	pass
+    
+    def _remove_active_frame(self,widget,event):
+        """
+	Hide all hover frames. This is a hack. We should use the lost focus
+	event instead in the future to reduce the overhead.
+	"""
+        for f in self._framelines:
+	    if f != widget:
+	        f.hide_hover()
+		pass
+	    pass
+	pass
+
+    ## \brief Add a frameline into the frameline box for the given layer.
+    #
+    def _add_frameline(self, layer_idx):
+	if layer_idx > len(self._framelines):
+	    raise ValueError, 'layer number should be a consequence'
+
+	vbox = self._frameline_vbox
+	
+	line = frameline(self._num_frames_of_line)
+	line.set_size_request(self._num_frames_of_line * 10, 20)
+	
+	hbox = gtk.HBox()
+	label = gtk.Label('')
+	label.set_size_request(100,0)
+	hbox.pack_start(label,expand=False, fill=True)
+	hbox.pack_start(line)
+	vbox.pack_start(hbox, False)
+	
+	if layer_idx != len(self._framelines):
+	    vbox.reorder_child(hbox, layer_idx + 1) # there is ruler at pos 0
+	    pass
+	
+	self._framelines[layer_idx: layer_idx] = [line]
+	
+	line.label = label
+	line.layer_idx = layer_idx
+	line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
+	line.connect('motion-notify-event', self._remove_active_frame)
+	pass
+    
+    ## \brief Remove the given frameline from the frameline box.
+    #
+    def _remove_frameline(self, layer_idx):
+	vbox = self._frameline_vbox
+	line = self._framelines[layer_idx]
+	
+	hbox = line.parent
+	vbox.remove(hbox)
+	del self._framelines[layer_idx]
+	pass
+
+    def _init_framelines(self):
+	self._framelines = []
+	
+	box = gtk.ScrolledWindow()
+	self._frameline_box = box
+	box.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+	box.set_size_request(-1, 150)
+	vbox = gtk.VBox()
+	self._frameline_vbox = vbox
+	box.add_with_viewport(vbox)
+	
+	nframes = self._num_frames_of_line
+	
+	#
+	# Set up a ruler
+	#
+	ruler = frameruler(nframes)
+	ruler.set_size_request(nframes * 10, 20)
+	ruler.show()
+	hbox = gtk.HBox()
+	label=gtk.Label('')
+	label.set_size_request(100,0)
+	hbox.pack_start(label,expand=False,fill=True)
+	hbox.pack_start(ruler)
+	vbox.pack_start(hbox, False)
+	pass
+
+    ## \brief Show framelines on the screen.
+    #
+    # When a frameline was inserted or removed, it would not be showed
+    # immediately.  This function is used to notify toolkit to update the
+    # screen and drawing framelines.
+    def _show_framelines(self):
+	self._frameline_vbox.show_all()
+	pass
+    pass
+
 ## \brief MBScene connect GUI and DOM-tree
 #
 # This class connect behavior of GUI to the DOM-tree.  All about GUI is
 # implemented by this class.  It use API provided by MBScene_dom to reflect
 # actions to the DOM-tree.
 #
-class MBScene(MBScene_dom):
-    _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
-			      frameline.TWEEN_TYPE_SHAPE)
+class MBScene(MBScene_dom, MBScene_framelines):
     _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
 			      TweenObject.TWEEN_TYPE_SCALE)
     _tween_type_names = ('normal', 'scale')
@@ -778,65 +878,12 @@ class MBScene(MBScene_dom):
 	pass
 
     def setTweenType(self, tween_type):
-	sel_type = MBScene._frameline_tween_types.index(tween_type)
+	sel_type = self._frameline_tween_types.index(tween_type)
 	self._disable_tween_type_selector = True
 	self.tweenTypeSelector.set_active(sel_type)
 	self._disable_tween_type_selector = False
 	pass
 	
-    def _remove_active_frame(self,widget,event):
-        """
-	Hide all hover frames. This is a hack. We should use the lost focus
-	event instead in the future to reduce the overhead.
-	"""
-        for f in self._framelines:
-	    if f != widget:
-	        f.hide_hover()
-		pass
-	    pass
-	pass
-
-    ## \brief Add a frameline into the frameline box for the given layer.
-    #
-    def _add_frameline(self, layer_idx):
-	if layer_idx > len(self._framelines):
-	    raise ValueError, 'layer number should be a consequence'
-
-	vbox = self._frameline_vbox
-	
-	line = frameline(self._num_frames_of_line)
-	line.set_size_request(self._num_frames_of_line * 10, 20)
-	
-	hbox = gtk.HBox()
-	label = gtk.Label('')
-	label.set_size_request(100,0)
-	hbox.pack_start(label,expand=False, fill=True)
-	hbox.pack_start(line)
-	vbox.pack_start(hbox, False)
-	
-	if layer_idx != len(self._framelines):
-	    vbox.reorder_child(hbox, layer_idx + 1) # there is ruler at pos 0
-	    pass
-	
-	self._framelines[layer_idx: layer_idx] = [line]
-	
-	line.label = label
-	line.layer_idx = layer_idx
-	line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
-	line.connect('motion-notify-event', self._remove_active_frame)
-	pass
-    
-    ## \brief Remove the given frameline from the frameline box.
-    #
-    def _remove_frameline(self, layer_idx):
-	vbox = self._frameline_vbox
-	line = self._framelines[layer_idx]
-	
-	hbox = line.parent
-	vbox.remove(hbox)
-	del self._framelines[layer_idx]
-	pass
-
     ## \brief Remove the layer that lost the layer group.
     #
     # This function is called when a layer group being removed from the
@@ -850,6 +897,7 @@ class MBScene(MBScene_dom):
 	    pass
 
 	self._remove_frameline(layer_idx) # TODO
+	self._show_framelines()
 	del self._layers[layer_idx]
 	pass
 
@@ -871,6 +919,12 @@ class MBScene(MBScene_dom):
 		continue
 
 	    parent = layer.group.parent()
+
+	    if not parent:	# parent is None when a node being removed from
+				# DOM-tree.
+		self._remove_lost_group_layer(layer_idx)
+		continue
+
 	    if parent.name() != 'svg:svg':
 		self._remove_lost_group_layer(layer_idx)
 		continue
@@ -888,46 +942,24 @@ class MBScene(MBScene_dom):
 	    if child.name() != 'svg:g':
 		continue
 	    
-	    layer = self._layers[layer_idx]
-	    layer_group_id = layer.group.getAttribute('id')
+	    try:
+		layer = self._layers[layer_idx]
+	    except IndexError:
+		layer = None
+	    else:
+		layer_group_id = layer.group.getAttribute('id')
+		pass
+	    
 	    child_id = child.getAttribute('id')
-	    if layer_group_id != child_id:
+	    if (not layer) or layer_group_id != child_id:
 		self.add_layer(layer_idx, child)
 		self.parse_layer(layer_idx)
 		self._add_frameline(layer_idx)
+		self._show_framelines()
 		pass
 	    
 	    layer_idx = layer_idx + 1
 	    pass
-	pass
-
-    def _init_framelines(self):
-	self._framelines = []
-	
-	box = gtk.ScrolledWindow()
-	self._frameline_box = box
-	box.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-	box.set_size_request(-1, 150)
-	vbox = gtk.VBox()
-	self._frameline_vbox = vbox
-	box.add_with_viewport(vbox)
-	
-	nframes = self._num_frames_of_line
-	
-	#
-	# Set up a ruler
-	#
-	ruler = frameruler(nframes)
-	ruler.set_size_request(nframes * 10, 20)
-	ruler.show()
-	hbox = gtk.HBox()
-	label=gtk.Label('')
-	label.set_size_request(100,0)
-	hbox.pack_start(label,expand=False,fill=True)
-	hbox.pack_start(ruler)
-	vbox.pack_start(hbox, False)
-	
-	vbox.show_all()
 	pass
 
     def _add_frameline_for_layers(self):
@@ -997,7 +1029,7 @@ class MBScene(MBScene_dom):
 	self.editDone.connect('clicked', self.changeObjectLabel)
 	pass
 
-    def updateUI(self, node=None, child=None, arg=None):
+    def updateUI(self, *args):
         if self._lockui: return
 	
         if self.last_update!= None:
@@ -1118,7 +1150,7 @@ class MBScene(MBScene_dom):
 	start, end, old_tween_type = frameline.get_frame_block(self.last_frame)
 
 	type_idx = self.tweenTypeSelector.get_active()
-	tween_type = MBScene._frameline_tween_types[type_idx]
+	tween_type = self._frameline_tween_types[type_idx]
 	type_name = self._tween_type_names[type_idx]
 	
 	frameline.tween(start, tween_type)
@@ -1163,6 +1195,7 @@ class MBScene(MBScene_dom):
 	self.tween = TweenObject(self.document, self.root)
 	self._init_framelines()
 	self._add_frameline_for_layers()
+	self._show_framelines()
 	
 	if self.top == None:
 	    self.top = gtk.VBox(False,0)
@@ -1180,6 +1213,11 @@ class MBScene(MBScene_dom):
 	self.addButtons(hbox)
 	vbox.pack_start(hbox,expand=False)
 
+	doc = self.document
+	addEventListener(doc,'DOMNodeInserted', self.updateUI, None)
+	addEventListener(doc,'DOMNodeRemoved', self.updateUI, None)
+	addEventListener(doc, 'DOMAttrModified', self.updateUI, None)
+	
 	self.top.show_all()
 	self.last_update = None
 	return False
