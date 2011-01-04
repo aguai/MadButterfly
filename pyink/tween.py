@@ -61,6 +61,7 @@ class TweenObject:
 		pass
 	    node = node.next()
 	    pass
+	
 	# Collect all nodes in start scene
 	start_nodes = {}
 	node = start_scene_group.firstChild()
@@ -72,7 +73,6 @@ class TweenObject:
 		pass
 	    node = node.next()
 	    pass
-
 
 	# Remove duplicate nodes that is not in the set of start nodes
 	for node_ref in dup_nodes:

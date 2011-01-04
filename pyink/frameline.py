@@ -655,11 +655,6 @@ class frameline(frameline_draw_state):
 	    pass
         pass
 
-    ## Set the frame @idx as the right of a tween
-    def set_right_tween(self,idx):
-	pos = self._find_keyframe(idx)
-	self._keys[pos].right_tween = TRue
-
     def remove_frame(self, idx):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
@@ -721,14 +716,16 @@ class frameline(frameline_draw_state):
             if key.right_tween:
 		right_key = self._keys[key_pos]
                 right_key.left_tween = False
-                redraw_range = (right_key.idx, idx + 1)
+                redraw_range = (key.idx, right_key.idx + 1)
             else:
                 left_key = self._keys[key_pos - 1]
                 left_key.right_tween = False
-                redraw_range = (idx, left_key.idx + 1)
+                redraw_range = (left_key.idx, key.idx + 1)
                 pass
-                self._draw_frame(i)
-                pass
+	    for i in range(*redraw_range):
+		self._draw_frame(i)
+		pass
+	    pass
         else:
             self._draw_frame(idx)
             pass
@@ -764,11 +761,14 @@ class frameline(frameline_draw_state):
 		return key.right_tween_type
 	    pass
 	pass
+    
     ## Get the maximum frame number in a layer(frameline)
     # Return the frame number
     def max_frame(self):
-	if len(self._keys) == 0: return 0
-        return self._keys[len(self._keys)-1].idx
+	keys = self._keys
+	if not keys:
+	    return 0
+        return keys[-1].idx
 
     ## \bref Return range of blocks of conesequence frames (tweens).
     #
@@ -795,23 +795,46 @@ class frameline(frameline_draw_state):
     # - If the indexed frame is a key frame with no right_tween, returns the
     #   range that start and stop are both equivalent to idx.
     #
+    # - If both earlier two are not meat, the previesou keyframe or tween is
+    #   returned.
+    #
     # - Otherwise, raise an exception.
     #
     # \param idx is the index number of a frame.
     # \return A tuple of (start, stop, tween_type)
     #
-    def get_frame_block(self, idx):
+    def get_frame_block_floor(self, idx):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
 	    key = self._keys[pos]
 	    if key.right_tween:
 		next_key = self._keys[pos + 1]
 		return key.idx, next_key.idx, key.right_tween_type
-	    elif key.idx == idx:
-		return key.idx, key.idx, 0
-	    pass
+	    if key.left_tween:
+		prev_key = self._keys[pos - 1]
+		return prev_key.idx, key.idx, prev_key.right_tween_type
+	    return key.idx, key.idx, 0
 	raise ValueError, \
 	    'the frame specified by idx is not in any tween or a key frame'
+
+    ## \brief Return the range of a block of consequence frames (tween).
+    # 
+    # - If the index frame is in a tween, it returns the range of the tween.
+    #
+    # - If the indexed frame is a key frame with no right_tween, returns the
+    #   range that start and stop are both equivalent to idx.
+    #
+    # - Otherwise, raise an exception.
+    #
+    # \param idx is the index number of a frame.
+    # \return A tuple of (start, stop, tween_type)
+    #
+    def get_frame_block(self, idx):
+	start, stop, tween_type = self.get_frame_block_floor(idx)
+	if stop < idx:
+	    raise ValueError, \
+		'the frame specified by idx is not in any tween or a key frame'
+	return start, stop, tween_type
     
     def get_frame_data(self, idx):
 	pos = self._find_keyframe(idx)
