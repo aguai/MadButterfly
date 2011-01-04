@@ -49,22 +49,6 @@ class Layer:
 	pass
     pass
 
-class Scene:
-    def __init__(self, node, start,end,typ):
-	self.node = node
-	self.start = int(start)
-	self.end = int(end)
-	self.type = typ
-	pass
-    pass
-class DOM(pybInkscape.PYSPObject):
-    def __init__(self,obj=None):
-        self.proxy = obj
-	pass
-    
-    def duplicate(self,doc):
-	return DOM(self.repr.duplicate(doc))
-
 class ObjectWatcher(pybInkscape.PYNodeObserver):
     def __init__(self,obj,type,func,arg):
         self.obj = obj
@@ -94,49 +78,6 @@ def addEventListener(obj, type, func,arg):
 
 _scenes = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes'
 _scene = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene'
-class LayerAttributeWatcher(pybInkscape.PYNodeObserver):
-    def __init__(self,ui):
-        self.ui = ui
-    def notifyChildAdded(self,node,child,prev):
-        pass
-
-    def notifyChildRemoved(self,node,child,prev):
-        pass
-
-    def notifyChildOrderChanged(self,node,child,prev):
-        pass
-
-    def notifyContentChanged(self,node,old_content,new_content):
-        pass
-
-    def notifyAttributeChanged(self,node, name, old_value, new_value):
-        self.ui.updateUI()
-	pass
-
-class LayerAddRemoveWatcher(pybInkscape.PYNodeObserver):
-    def __init__(self,ui):
-        self.ui = ui
-	pass
-
-    def notifyChildAdded(self,node,child,prev):
-        self.ui.updateUI()
-	pass
-
-    def notifyChildRemoved(self,node,child,prev):
-        self.ui.updateUI()
-	pass
-
-    def notifyChildOrderChanged(self,node,child,prev):
-        self.ui.updateUI()
-	pass
-
-    def notifyContentChanged(self,node,old_content,new_content):
-        self.ui.updateUI()
-	pass
-
-    def notifyAttributeChanged(self,node, name, old_value, new_value):
-        self.ui.updateUI()
-	pass
 
 def _travel_DOM(node):
     nodes = [node]
