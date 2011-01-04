@@ -76,9 +76,6 @@ def addEventListener(obj, type, func,arg):
     obj.addSubtreeObserver(obs)
     
 
-_scenes = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scenes'
-_scene = '{http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd}scene'
-
 def _travel_DOM(node):
     nodes = [node]
     while nodes:
