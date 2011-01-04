@@ -154,6 +154,8 @@ def _travel_DOM(node):
 
 ## \brief Monitor changes of DOM-tree.
 #
+# This class monitors DOM-tree to maintain _maxframe and maps for node ID to
+# node and scene group ID to scene node.
 class MBScene_dom_monitor(object):
     def __init__(self, *args, **kws):
 	super(MBScene_dom_monitor, self).__init__()
@@ -400,6 +402,10 @@ class MBScene_dom_monitor(object):
 
 ## \brief Layer of MBScene to manipulate DOM tree.
 #
+# This class maintains layers information, and provides functions to create,
+# change and destroy scene node and scene group.  A scene node is a 'ns0:scene'
+# in 'ns0:scenes' tag.  A scene group is respective 'svg:g' for a scene.
+#
 class MBScene_dom(MBScene_dom_monitor):
     # Declare variables, here, for keeping tracking
     _doc = None
@@ -407,31 +413,6 @@ class MBScene_dom(MBScene_dom_monitor):
     
     def __init__(self, *args, **kws):
 	super(MBScene_dom, self).__init__()
-	pass
-
-    def handle_doc_root(self, doc, root):
-	self._doc = doc
-	self._root = root
-	self._layers = []
-	
-	self._start_monitor()	# start MBScene_dom_monitor
-	self._init_metadata()
-	self._parse_all_layers()
-	pass
-   
-    def dumpattr(self, n):
-	s = ""
-	for a,v in n.attrib.items():
-	    s = s + ("%s=%s"  % (a,v))
-	    pass
-	return s
-	
-    def dump(self, node, l=0):
-	print " " * l*2,"<", node.tag, self.dumpattr(node),">"
-	for n in node:
-	    self.dump(n, l+1)
-	    pass
-	print " " * l * 2,"/>"
 	pass
 
     ## \brief Create a scenes node if not existed.
@@ -459,24 +440,65 @@ class MBScene_dom(MBScene_dom_monitor):
 	    pass
 	pass
 
+    def _parse_all_layers(self):
+	root = self._root
+	layers = self._layers
+	
+	for child in root.childList():
+	    if child.name() != 'svg:g':
+		continue
+
+	    layer_group = child
+	    layer = Layer(layer_group)
+	    layer.idx = len(layers)
+	    layers.append(layer)
+	    self.parse_layer(layer.idx)
+	    pass
+	pass
+
+    def handle_doc_root(self, doc, root):
+	self._doc = doc
+	self._root = root
+	self._layers = []
+	
+	self._start_monitor()	# start MBScene_dom_monitor
+	self._init_metadata()
+	self._parse_all_layers()
+	pass
+   
+    def dumpattr(self, n):
+	s = ""
+	for a,v in n.attrib.items():
+	    s = s + ("%s=%s"  % (a,v))
+	    pass
+	return s
+	
+    def dump(self, node, l=0):
+	print " " * l*2,"<", node.tag, self.dumpattr(node),">"
+	for n in node:
+	    self.dump(n, l+1)
+	    pass
+	print " " * l * 2,"/>"
+	pass
+
     ## \brief Create and add a ns0:scene node under ns0:scenes subtree.
     #
-    def _add_scene_node(self, start, end,
-			frame_type=TweenObject.TWEEN_TYPE_NORMAL,
-			ref=None):
+    def add_scene_node(self, start, end,
+		       frame_type=TweenObject.TWEEN_TYPE_NORMAL,
+		       ref=None):
 	type_names = ('normal', 'scale')
 	scenes_node = self._scenes_node
 	doc = self._doc
 	
 	scene_node = doc.createElement('ns0:scene')
-	self._chg_scene_node(scene_node, start=start)
+	self.chg_scene_node(scene_node, start=start)
 	if start != end:
-	    self._chg_scene_node(scene_node, end=end)
+	    self.chg_scene_node(scene_node, end=end)
 	    pass
 	type_name = type_names[frame_type]
-	self._chg_scene_node(scene_node, tween_type=type_name)
+	self.chg_scene_node(scene_node, tween_type=type_name)
 	if ref:
-	    self._chg_scene_node(scene_node, ref=ref)
+	    self.chg_scene_node(scene_node, ref=ref)
 	    pass
 	
 	scenes_node.appendChild(scene_node)
@@ -486,7 +508,7 @@ class MBScene_dom(MBScene_dom_monitor):
     ## \brief Change attributes of a scene node.
     #
     # This is here to monitor changes of scene node.
-    def _chg_scene_node(self, scene_node, start=None, end=None,
+    def chg_scene_node(self, scene_node, start=None, end=None,
 			tween_type=None, ref=None):
 	if start:
 	    scene_node.setAttribute('start', str(start))
@@ -502,13 +524,13 @@ class MBScene_dom(MBScene_dom_monitor):
 	    pass
 	pass
 
-    def _rm_scene_node(self, scene_node):
+    def rm_scene_node(self, scene_node):
 	self._scenes_node.removeChild(scene_node)
 	pass
 
     ## \brief Create and add a svg:g for a scene under a group for a layer.
     #
-    def _add_scene_group(self, layer_idx):
+    def add_scene_group(self, layer_idx):
 	layer = self._layers[layer_idx]
 	doc = self._doc
 	
@@ -521,34 +543,6 @@ class MBScene_dom(MBScene_dom_monitor):
 	
 	return scene_group
     
-    def insertKeyScene(self, line, frame):
-	"""
-	Insert a new key scene into the stage. If the nth is always a
-	key scene, we will return without changing anything.  If the
-	nth is a filled scene, we will break the original scene into
-	two parts. If the nth is out of any scene, we will append a
-	new scene.
-
-	"""
-	doc = self._doc
-	layer_idx = self._framelines.index(line)
-	
-	scene_group = self._add_scene_group(layer_idx)
-	scene_group_id = scene_group.getAttribute('id')
-	scene_node = self._add_scene_node(frame, frame, ref=scene_group_id)
-	line.add_keyframe(frame, scene_node)
-
-	for node in self._layers[layer_idx].group.childList():
-	    try:
-		label = node.getAttribute('inkscape:label')
-	    except:
-		continue
-	    if label == 'dup':
-		node.setAttribute('style', 'display: none')
-		pass
-	    pass
-	pass
-
     def parse_layer(self, layer_idx):
 	layer = self._layers[layer_idx]
 	layer_group = layer.group
@@ -563,22 +557,6 @@ class MBScene_dom(MBScene_dom_monitor):
 		continue
 	    
 	    layer.scenes.append(scene_node)
-	    pass
-	pass
-
-    def _parse_all_layers(self):
-	root = self._root
-	layers = self._layers
-	
-	for child in root.childList():
-	    if child.name() != 'svg:g':
-		continue
-
-	    layer_group = child
-	    layer = Layer(layer_group)
-	    layer.idx = len(layers)
-	    layers.append(layer)
-	    self.parse_layer(layer.idx)
 	    pass
 	pass
 
@@ -656,6 +634,34 @@ class MBScene(MBScene_dom):
 	    pass
 	pass
 
+    def insertKeyScene(self, line, frame):
+	"""
+	Insert a new key scene into the stage. If the nth is always a
+	key scene, we will return without changing anything.  If the
+	nth is a filled scene, we will break the original scene into
+	two parts. If the nth is out of any scene, we will append a
+	new scene.
+
+	"""
+	doc = self._doc
+	layer_idx = self._framelines.index(line)
+	
+	scene_group = self.add_scene_group(layer_idx)
+	scene_group_id = scene_group.getAttribute('id')
+	scene_node = self.add_scene_node(frame, frame, ref=scene_group_id)
+	line.add_keyframe(frame, scene_node)
+
+	for node in self._layers[layer_idx].group.childList():
+	    try:
+		label = node.getAttribute('inkscape:label')
+	    except:
+		continue
+	    if label == 'dup':
+		node.setAttribute('style', 'display: none')
+		pass
+	    pass
+	pass
+
     def removeKeyScene(self, frameline, frame_idx):
 	start, end, scene_type = frameline.get_frame_block(frame_idx)
 	scene_node = frameline.get_frame_data(start)
@@ -689,7 +695,7 @@ class MBScene(MBScene_dom):
 	    pass
 	
 	scene_node = frameline.get_frame_data(start)
-	self._chg_scene_node(scene_node, end=frame_idx)
+	self.chg_scene_node(scene_node, end=frame_idx)
 	frameline.add_keyframe(frame_idx)
 	frameline.tween(start, scene_type)
 	pass
@@ -718,7 +724,8 @@ class MBScene(MBScene_dom):
 	for frameline in self._framelines:
 	    i=0
 
-	    # Check the duplicated scene group and create it if it is not available
+	    # Check the duplicated scene group and create it if it is not
+	    # available
 	    try:
 		frameline.duplicateGroup.setAttribute("style","display:none")
 	    except:
@@ -830,19 +837,10 @@ class MBScene(MBScene_dom):
 	self._disable_tween_type_selector = False
 	pass
 	
-    def onCellClick(self, line, frame, but):
-	self.last_line = line
-	self.last_frame = frame
-	self.last_line.active_frame(frame)
-	self._lockui = True
-        self.doEditScene(None)
-	self._lockui = False
-        pass
-        
     def _remove_active_frame(self,widget,event):
         """
-	Hide all hover frames. This is a hack. We should use the lost focus event 
-	instead in the future to reduce the overhead.
+	Hide all hover frames. This is a hack. We should use the lost focus
+	event instead in the future to reduce the overhead.
 	"""
         for f in self._framelines:
 	    if f != widget:
@@ -901,7 +899,7 @@ class MBScene(MBScene_dom):
 	frameline = self._framelines[layer_idx]
 	for start, end, tween_type in frameline.get_frame_blocks():
 	    scene_node = frameline.get_frame_data(start)
-	    self._rm_scene_node(scene_node)
+	    self.rm_scene_node(scene_node)
 	    pass
 
 	self._remove_frameline(layer_idx) # TODO
@@ -991,17 +989,6 @@ class MBScene(MBScene_dom):
 	    pass
 	pass
     
-    def cellSelect(self, cell, data):
-	if self.last_cell:
-	    color = self.last_cell.get_colormap().alloc_color("gray")
-	    self.last_cell.modify_bg(gtk.STATE_NORMAL, color)
-	    pass
-	
-	self.last_cell = cell
-	color = cell.get_colormap().alloc_color("green")
-	cell.modify_bg(gtk.STATE_NORMAL, color)
-	pass
-
     def duplicateKeyScene(self):
         # Search for the current scene
 	frameline = self.last_line
@@ -1019,8 +1006,8 @@ class MBScene(MBScene_dom):
 	
 	scene_group = self.duplicateSceneGroup(prev_scene_group_id)
 	scene_group_id = scene_group.getAttribute('id')
-	scene_node = self._add_scene_node(frame_idx, frame_idx,
-					  ref=scene_group_id)
+	scene_node = self.add_scene_node(frame_idx, frame_idx,
+					 ref=scene_group_id)
 
 	frameline.add_keyframe(frame_idx, scene_node)
 
@@ -1029,23 +1016,10 @@ class MBScene(MBScene_dom):
 
     def duplicateSceneGroup(self,gid):
 	# Search for the duplicated group
-        doc = self.root
-	rdoc = self.document
-	orig = None
-	for node in doc.childList():
-	    if node.name() == 'svg:g':
-	        for t in node.childList():
-		    if t.name() == "svg:g":
-			if t.getAttribute("id") == gid:
-			    orig = t
-			    break
-			pass
-		    pass
-		pass
-	    pass
-	if orig == None:
-	    return None
-	scene_group = orig.duplicate(rdoc)
+        root = self._root
+	doc = self._doc
+	orig = self.get_node(gid)
+	scene_group = orig.duplicate(doc)
 
 	old_nodes = _travel_DOM(orig)
 	new_nodes = _travel_DOM(scene_group)
@@ -1063,6 +1037,43 @@ class MBScene(MBScene_dom):
 	layer.group.appendChild(scene_group)
 	return scene_group
     
+    def changeObjectLabel(self,w):
+	o = self.desktop.selection.list()[0]
+	o.setAttribute("inkscape:label", self.nameEditor.get_text())
+	pass
+
+    def addNameEditor(self,hbox):
+	self.nameEditor = gtk.Entry(max=40)
+	hbox.pack_start(self.nameEditor,expand=False,fill=False)
+	self.editDone = gtk.Button('Set')
+	hbox.pack_start(self.editDone,expand=False,fill=False)
+	self.editDone.connect('clicked', self.changeObjectLabel)
+	pass
+
+    def updateUI(self, node=None, child=None, arg=None):
+        if self._lockui: return
+	
+        if self.last_update!= None:
+            glib.source_remove(self.last_update)
+        self.last_update = glib.timeout_add(300,self._updateUI)
+	
+	pass
+    
+    def _updateUI(self,node=None,arg=None):
+	self._lockui = True
+	self._make_layers_integral()
+	self._lockui = False
+	pass
+    
+    def onCellClick(self, line, frame, but):
+	self.last_line = line
+	self.last_frame = frame
+	self.last_line.active_frame(frame)
+	self._lockui = True
+        self.doEditScene(None)
+	self._lockui = False
+        pass
+        
     def doEditScene(self, w):
 	self.setCurrentScene(self.last_frame)
 	self.selectSceneObject(self.last_line, self.last_frame)
@@ -1092,19 +1103,6 @@ class MBScene(MBScene_dom):
 	self._lockui = True
 	self.extendScene()
 	self._lockui = False
-	pass
-
-    def changeObjectLabel(self,w):
-	o = self.desktop.selection.list()[0]
-	o.setAttribute("inkscape:label", self.nameEditor.get_text())
-	pass
-
-    def addNameEditor(self,hbox):
-	self.nameEditor = gtk.Entry(max=40)
-	hbox.pack_start(self.nameEditor,expand=False,fill=False)
-	self.editDone = gtk.Button('Set')
-	hbox.pack_start(self.editDone,expand=False,fill=False)
-	self.editDone.connect('clicked', self.changeObjectLabel)
 	pass
 
     def doRun(self,arg):
@@ -1179,7 +1177,7 @@ class MBScene(MBScene_dom):
 	frameline.tween(start, tween_type)
 	
 	scene_node = frameline.get_frame_data(start)
-	self._chg_scene_node(scene_node, tween_type=type_name)
+	self.chg_scene_node(scene_node, tween_type=type_name)
 	pass
 
     def addTweenTypeSelector(self,hbox):
@@ -1207,21 +1205,6 @@ class MBScene(MBScene_dom):
 	gtk.main_quit()
 	pass
 
-    def updateUI(self, node=None, child=None, arg=None):
-        if self._lockui: return
-	
-        if self.last_update!= None:
-            glib.source_remove(self.last_update)
-        self.last_update = glib.timeout_add(300,self._updateUI)
-	
-	pass
-    
-    def _updateUI(self,node=None,arg=None):
-	self._lockui = True
-	self._make_layers_integral()
-	self._lockui = False
-	pass
-    
     def show(self):
 	self.OK = True
 	if not self.root:
