@@ -1216,7 +1216,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	doc = self.document
 	addEventListener(doc,'DOMNodeInserted', self.updateUI, None)
 	addEventListener(doc,'DOMNodeRemoved', self.updateUI, None)
-	addEventListener(doc, 'DOMAttrModified', self.updateUI, None)
 	
 	self.top.show_all()
 	self.last_update = None
