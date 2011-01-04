@@ -955,6 +955,16 @@ class MBScene(MBScene_dom, MBScene_framelines):
 		self.add_layer(layer_idx, child)
 		self.parse_layer(layer_idx)
 		self._add_frameline(layer_idx)
+		
+		layer = self._layers[layer_idx]
+		frameline = self._framelines[layer_idx]
+		try:
+		    label = layer.group.getAttribute('inkscape:label')
+		except:
+		    label = layer.group.getAttribute('id')
+		    pass
+		frameline.label.set_text(label)
+		
 		self._show_framelines()
 		pass
 	    
@@ -965,6 +975,14 @@ class MBScene(MBScene_dom, MBScene_framelines):
     def _add_frameline_for_layers(self):
 	for layer_idx in range(len(self._layers)):
 	    self._add_frameline(layer_idx)
+	    line = self._framelines[layer_idx]
+	    layer = self._layers[layer_idx]
+	    try:
+		label = layer.group.getAttribute('inkscape:label')
+	    except:
+		label = layer.group.getAttribute('id')
+		pass
+	    line.label.set_text(label)
 	    pass
 	pass
     
