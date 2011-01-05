@@ -448,16 +448,16 @@ class MBScene_dom(MBScene_dom_monitor):
     # This is here to monitor changes of scene node.
     def chg_scene_node(self, scene_node, start=None, end=None,
 			tween_type=None, ref=None):
-	if start:
+	if start is not None:
 	    scene_node.setAttribute('start', str(start))
 	    pass
-	if end:
+	if end is not None:
 	    scene_node.setAttribute('end', str(end))
 	    pass
-	if tween_type:
+	if tween_type is not None:
 	    scene_node.setAttribute('type', tween_type)
 	    pass
-	if ref:
+	if ref is not None:
 	    scene_node.setAttribute('ref', ref)
 	    pass
 	pass
@@ -537,18 +537,33 @@ class MBScene_framelines(object):
     
     def __init__(self, *args, **kws):
 	super(MBScene_framelines, self).__init__(*args, **kws)
+	
+	self._last_mouse_over_frameline = None
+	self._last_active_frameline = None
 	pass
     
-    def _remove_active_frame(self,widget,event):
+    def _change_hover_frameline(self, widget, event):
         """
 	Hide all hover frames. This is a hack. We should use the lost focus
 	event instead in the future to reduce the overhead.
 	"""
-        for f in self._framelines:
-	    if f != widget:
-	        f.hide_hover()
-		pass
+	if self._last_mouse_over_frameline and \
+		widget != self._last_mouse_over_frameline:
+	    self._last_mouse_over_frameline.mouse_leave()
 	    pass
+	self._last_mouse_over_frameline = widget
+	pass
+
+    ## \brief Called for changing of active frame.
+    #
+    # This handle deactive previous frameline that owns an active frame when a
+    # frame in another frameline is activated.
+    def _change_active_frame(self, widget, frame, button):
+	if self._last_active_frameline and \
+		self._last_active_frameline != widget:
+	    self._last_active_frameline.deactive()
+	    pass
+	self._last_active_frameline = widget
 	pass
 
     ## \brief Add a frameline into the frameline box for the given layer.
@@ -578,7 +593,8 @@ class MBScene_framelines(object):
 	line.label = label
 	line.layer_idx = layer_idx
 	line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
-	line.connect('motion-notify-event', self._remove_active_frame)
+	line.connect('motion-notify-event', self._change_hover_frameline)
+	line.connect(frameline.FRAME_BUT_PRESS, self._change_active_frame)
 	pass
     
     ## \brief Remove the given frameline from the frameline box.
