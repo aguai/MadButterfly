@@ -854,7 +854,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 		    
 		    nframes = stop_idx - start_idx + 1
 		    percent = float(idx - start_idx) / nframes
-		    print tween_obj_tween_type
 		    self.tween.updateTweenContent(frameline.duplicateGroup,
 						  tween_obj_tween_type,
 						  scene_group,
@@ -994,7 +993,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	line = self._framelines[layer_idx]
 	layer = self._layers[layer_idx]
 	for scene_node in layer.scenes:
-	    print scene_node
 	    start, end, tween_name = self._parse_one_scene(scene_node)
 	    
 	    line.add_keyframe(start)
@@ -1064,7 +1062,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	old_nodes = _travel_DOM(orig)
 	new_nodes = _travel_DOM(scene_group)
 	for old_node in old_nodes:
-	    print old_node
 	    old_node_id = old_node.getAttribute('id')
 	    new_node = new_nodes.next()
 	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
