@@ -865,6 +865,12 @@ class frameline(frameline_draw_state):
 	key = self._keys[pos]
 	return key.ref
     
+    def set_frame_data(self, idx, value):
+	pos = self._find_keyframe(idx)
+	key = self._keys[pos]
+	key.ref = value
+	pass
+    
     ## Set active frame
     #
     # The active frame is the frame that is working on.
