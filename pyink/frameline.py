@@ -223,12 +223,12 @@ class frameline_draw(gtk.DrawingArea):
         gc = self._gc
         gc.set_rgb_fg_color(color)
         
-        line_x1 = idx * self._frame_width
-        line_x2 = line_x1 + self._frame_width
+        line_x1 = idx * self._frame_width + 1
+        line_x2 = line_x1 + self._frame_width - 2
 
-        win.draw_line(gc, line_x1, 0, line_x1, w_h)
-        win.draw_line(gc, line_x2, 0, line_x2, w_h)
-        win.draw_line(gc, line_x1, w_h - 1, line_x2, w_h - 1)
+        win.draw_line(gc, line_x1, 0, line_x1, w_h - 2)
+        win.draw_line(gc, line_x2, 0, line_x2, w_h - 2)
+        win.draw_line(gc, line_x1, w_h - 2, line_x2, w_h - 2)
         win.draw_line(gc, line_x1, 0, line_x2, 0)
 	pass
 
@@ -261,13 +261,13 @@ class frameline_draw(gtk.DrawingArea):
         color = gtk.gdk.Color(*color_rgb)
         gc.set_rgb_fg_color(color)
 
-        line_x1 = frame_idx * self._frame_width + 1
-        line_x2 = line_x1 + self._frame_width - 2
+        line_x1 = frame_idx * self._frame_width + 2
+        line_x2 = line_x1 + self._frame_width - 4
         
-        win.draw_line(gc, line_x1, 1, line_x1, w_h - 2)
-        win.draw_line(gc, line_x2, 1, line_x2, w_h - 2)
+        win.draw_line(gc, line_x1, 1, line_x1, w_h - 3)
+        win.draw_line(gc, line_x2, 1, line_x2, w_h - 3)
         win.draw_line(gc, line_x1, 1, line_x2, 1)
-        win.draw_line(gc, line_x1, w_h - 2, line_x2, w_h - 2)
+        win.draw_line(gc, line_x1, w_h - 3, line_x2, w_h - 3)
         pass
     pass
 
@@ -295,6 +295,7 @@ class frameline_draw_state(frameline_draw):
         self._keys = []
         self._active_frame = -1
         self._drawing = False
+        self._last_hover = -1   # frame index of last hover
 	pass
 
     def _draw_keyframe(self, frame_idx):
@@ -427,9 +428,25 @@ class frameline_draw_state(frameline_draw):
     def _draw_hover_frame(self, frame_idx):
 	if not self._drawing:
 	    return
-	self._draw_hover(frame_idx)
-	pass
-    
+	
+        if self._last_hover != -1:
+            self._draw_frame(self._last_hover)
+	    if self._last_hover == self._active_frame:
+		self._draw_active_frame()
+		pass
+            pass
+	
+        if frame_idx < self._num_frames and frame_idx >= 0:
+            self._draw_hover(frame_idx)
+	    if self._last_hover == self._active_frame:
+		self._draw_active_frame()
+		pass
+	    self._last_hover = frame_idx
+	else:
+	    self._last_hover = -1
+	    pass
+        pass
+
     ## \brief Start future drawing actions
     #
     def start_drawing(self):
@@ -492,8 +509,8 @@ class frameline(frameline_draw_state):
 	
         self.connect('button-press-event', self._press_hdl)
         self.connect('expose-event', self._fl_expose)
-        self.connect('motion-notify-event', self._motion_hdl)
-        self._last_hover = -1   # frame index of last hover
+        self.connect('motion-notify-event', self._motion_n_leave_hdl)
+        self.connect('leave-notify-event', self._motion_n_leave_hdl)
         pass
 
     def __len__(self):
@@ -566,32 +583,16 @@ class frameline(frameline_draw_state):
         self.emit(frameline.FRAME_BUT_PRESS, frame, but)
         pass
     
-    def hide_hover(self):
-        if self._active_frame != self._last_hover:
-            self._draw_normal_frame(self._last_hover)
+    def _motion_n_leave_hdl(self, widget, event):
+	if event.type == gtk.gdk.LEAVE_NOTIFY:
+	    frame_idx = -1
+	else:
+	    frame_idx = int(event.x / self._frame_width)
 	    pass
+
+	self._draw_hover_frame(frame_idx)
 	pass
     
-    def _motion_hdl(self, widget, event):
-        frame_idx = int(event.x / self._frame_width)
-        if self._last_hover != -1:
-            self._draw_frame(self._last_hover)
-	    if self._last_hover == self._active_frame:
-		self._draw_active_frame()
-		pass
-            pass
-	
-        if frame_idx < self._num_frames and frame_idx >= 0:
-            self._draw_hover_frame(frame_idx)
-	    if self._last_hover == self._active_frame:
-		self._draw_active_frame()
-		pass
-	    self._last_hover = frame_idx
-	else:
-	    self._last_hover = -1
-	    pass
-        pass
-
     def _fl_expose(self, widget, event):
         win = self.window
 	self.start_drawing()
@@ -870,6 +871,15 @@ class frameline(frameline_draw_state):
 	self._active_frame = -1
 	self._draw_all_frames()
         pass
+
+    ## \brief Called when mouse leave the widget.
+    #
+    # This is here for buggy pygtk.  It does not send leave-notify-event.  We
+    # need this to workaround.
+    #
+    def mouse_leave(self):
+	self._draw_hover_frame(-1)
+	pass
     pass
 
 if __name__ == '__main__':
