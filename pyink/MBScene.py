@@ -296,7 +296,7 @@ class MBScene_dom_monitor(object):
 		continue
 	    
 	    group_id = scene_node.getAttribute("ref")
-	    self._group2scene[group_id] = (start, end, scene_type)
+	    self._group2scene[group_id] = scene_node
 	    pass
 	pass
 
@@ -985,7 +985,32 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    pass
 	pass
 
-    def _add_frameline_for_layers(self):
+    ## \brief Update content of a frameline from scenes of respective layer.
+    #
+    def _update_frameline_content(self, layer_idx):
+	line = self._framelines[layer_idx]
+	layer = self._layers[layer_idx]
+	for scene_node in layer.scenes:
+	    print scene_node
+	    start, end, tween_name = self._parse_one_scene(scene_node)
+	    
+	    line.add_keyframe(start)
+	    if start != end:
+		line.add_keyframe(end)
+		tween_type_idx = self._tween_type_names.index(tween_name)
+		tween_type = self._frameline_tween_types[tween_type_idx]
+		line.tween(start, tween_type)
+		pass
+	    line.set_frame_data(start, scene_node)
+	    pass
+	pass
+
+    ## \brief Add a frameline for every found layer.
+    #
+    # This method is called to create a frameline for every layer found when
+    # loading a document.
+    #
+    def _add_frameline_for_every_layer(self):
 	for layer_idx in range(len(self._layers)):
 	    self._add_frameline(layer_idx)
 	    line = self._framelines[layer_idx]
@@ -996,6 +1021,8 @@ class MBScene(MBScene_dom, MBScene_framelines):
 		label = layer.group.getAttribute('id')
 		pass
 	    line.label.set_text(label)
+	    
+	    self._update_frameline_content(layer_idx)
 	    pass
 	pass
     
@@ -1225,7 +1252,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self.handle_doc_root(self.document, self.root)
 	self.tween = TweenObject(self.document, self.root)
 	self._init_framelines()
-	self._add_frameline_for_layers()
+	self._add_frameline_for_every_layer()
 	self._show_framelines()
 	
 	if self.top == None:
