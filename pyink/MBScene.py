@@ -793,10 +793,13 @@ class MBScene(MBScene_dom, MBScene_framelines):
 		layer_idx = frameline.layer_idx
 		layer = self._layers[layer_idx]
 		for child in layer.group.childList():
-		    label = child.getAttribute('inkscape:label')
-		    if label == 'dup':
-			frameline.duplicateGroup = child
-			break
+		    try:
+		        label = child.getAttribute('inkscape:label')
+		        if label == 'dup':
+			    frameline.duplicateGroup = child
+			    break
+		    except:
+		        pass
 		    pass
 		else:
 		    duplicateGroup = self.document.createElement("svg:g")
@@ -1172,6 +1175,89 @@ class MBScene(MBScene_dom, MBScene_framelines):
         self.last_update = glib.timeout_add(tmout, self.doRunNext)
 	pass
 
+    def remove_frame(self,line,frame):
+        for start, end, tween_type in line.get_frame_blocks():
+	    if frame > end: 
+		# Don't change the tween before the select frame
+	        continue
+	    elif frame == start: 
+	        # Please use remove key frame ro remove the key frame instead
+	        return
+	    elif frame < start:
+		# For all tweens after the frame, shift both key frames by one
+		scene_node = line.get_frame_data(start)
+		self.chg_scene_node(scene_node, start=start-1,end=end-1)
+		line.rm_keyframe(start)
+
+		if start != end:
+		    line.rm_keyframe(end)
+		line.add_keyframe(start-1)
+		line.set_frame_data(start-1,scene_node)
+		if start != end:
+		    line.add_keyframe(end-1)
+		    line.tween(start-1,tween_type)
+		pass
+	    else:
+		# For the tween contain the frame, remove the end keyframe
+		# and put it back one frame before. The tween is removed
+		# if the tween has one frame only. In this case, keep only
+		# the start key frame and remove the second one.
+		scene_node = line.get_frame_data(start)
+		self.chg_scene_node(scene_node,end=end-1)
+	        line.rm_keyframe(end)
+	        if start != end-1:
+		    line.add_keyframe(end-1)
+		    line.tween(start,tween_type)
+		pass
+	    pass
+	pass
+
+    def insert_frame(self,line,frame):
+        for start, end, tween_type in line.get_frame_blocks():
+	    print "start=",start
+	    print "end=",end
+	    if frame > end: 
+		# Don't change the tween before the select frame
+	        continue
+	    elif frame <= start:
+		# For all tweens after the frame, shift both key frames by one
+		scene_node = line.get_frame_data(start)
+		if scene_node==None: continue
+		self.chg_scene_node(scene_node,start=start+1,end=end+1)
+		line.rm_keyframe(start)
+		if start != end:
+		    line.rm_keyframe(end)
+		line.add_keyframe(start+1)
+		line.set_frame_data(start+1,scene_node)
+		if start != end:
+		    line.add_keyframe(end+1)
+		    line.tween(start+1,tween_type)
+		pass
+	    else:
+		# For the tween contain the frame, remove the end keyframe
+		# and put it back one frame before. The tween is removed
+		# if the tween has one frame only. In this case, keep only
+		# the start key frame and remove the second one.
+		scene_node = line.get_frame_data(start)
+		self.chg_scene_node(scene_node,end=end+1)
+	        line.rm_keyframe(end)
+		line.add_keyframe(end+1)
+		line.tween(start,tween_type)
+		pass
+	    pass
+	pass
+
+
+    def doInsertFrame(self,w):
+	self.lockui=True
+	self.insert_frame(self.last_line,self.last_frame)
+	self.lockui=False
+
+    def doRemoveFrame(self,w):
+        self.lockui=True
+	self.remove_frame(self.last_line,self.last_frame)
+	self.lockui=False
+
     def addButtons(self,hbox):
 	btn = gtk.Button('Insert Key')
 	btn.connect('clicked',self.doInsertKeyScene)
@@ -1189,6 +1275,14 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	btn.connect('clicked', self.doDuplicateKeyScene)
 	hbox.pack_start(btn,expand=False,fill=False)
 
+	btn=gtk.Button('insert')
+	btn.connect('clicked', self.doInsertFrame)
+	hbox.pack_start(btn,expand=False,fill=False)
+	
+	btn=gtk.Button('remove')
+	btn.connect('clicked', self.doRemoveFrame)
+	hbox.pack_start(btn,expand=False,fill=False)
+	
 	btn=gtk.Button('Run')
 	btn.connect('clicked', self.doRun)
 	self.btnRun = btn
