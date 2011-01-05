@@ -583,10 +583,10 @@ class MBScene_framelines(object):
 	hbox.pack_start(label,expand=False, fill=True)
 	hbox.pack_start(line)
 	vbox.pack_start(hbox, False)
-	
-	if layer_idx != len(self._framelines):
-	    vbox.reorder_child(hbox, layer_idx + 1) # there is ruler at pos 0
-	    pass
+
+	# Put later one on the top of earier one, but after the ruler.
+	position = len(self._framelines) - layer_idx + 1
+	vbox.reorder_child(hbox, position)
 	
 	self._framelines[layer_idx: layer_idx] = [line]
 	
