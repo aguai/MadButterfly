@@ -428,22 +428,45 @@ class frameline_draw_state(frameline_draw):
     def _draw_hover_frame(self, frame_idx):
 	if not self._drawing:
 	    return
+
+	last_hover = self._last_hover
 	
-        if self._last_hover != -1:
-            self._draw_frame(self._last_hover)
-	    if self._last_hover == self._active_frame:
-		self._draw_active_frame()
-		pass
+        if last_hover != -1:
+            self._draw_frame(last_hover)
             pass
 	
         if frame_idx < self._num_frames and frame_idx >= 0:
             self._draw_hover(frame_idx)
-	    if self._last_hover == self._active_frame:
-		self._draw_active_frame()
-		pass
 	    self._last_hover = frame_idx
 	else:
 	    self._last_hover = -1
+	    pass
+
+	#
+	# Redraw active frame if active frame in a tween that is same as the
+	# one that the give frame or last hover frame is in.
+	#
+	if self._active_frame in (frame_idx, last_hover):
+	    self._draw_active_frame()
+	    return
+
+	for idx in (frame_idx, last_hover):
+	    key_pos = self._find_keyframe_floor(idx)
+	    if key_pos != -1:
+		key = self._keys[key_pos]
+		if key.right_tween or \
+			(key.left_tween and key.idx == idx):
+		    # The given frame is in a tween
+		    first_pos, last_pos = self._find_tween_range(key_pos)
+		    start = self._keys[first_pos].idx
+		    end = self._keys[last_pos].idx
+		    if self._active_frame >= start and \
+			    self._active_frame <= end:
+			# The active frame is in the tween
+			self._draw_active_frame()
+			break
+		    pass
+		pass
 	    pass
         pass
 
