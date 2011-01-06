@@ -866,18 +866,6 @@ class frameline(frameline_draw_state):
 	key = self._keys[pos]
 	return key.ref
 
-    def search_by_id(self,ID):
-	for k in self._keys:
-	    try:
-		if k.ref == None: continue
-	        if k.ref.getAttribute("ref") == ID:
-		    return k.idx
-	    except:
-		traceback.print_exc()
-		pass
-	    pass
-	return -1
-    
     def set_frame_data(self, idx, value):
 	pos = self._find_keyframe(idx)
 	key = self._keys[pos]
