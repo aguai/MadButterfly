@@ -1,0 +1,65 @@
+* MadButterfly
+#MadButterfly
+MadButterfly is a [[#SVG][SVG]] browser, HTML browser (ex, Firefox) is a HTML
+respective one.  MadButterfly only understand SVG, controlling from users,
+and API for applications base on it.  It is supposed to be a GUI framework
+for applications.  The host applications can interact with MadButterfly
+like Javascript applications interacts with DOM objects.  MadButterfly
+is a GUI evnironment based on SVG technologies for desktop and mobile
+device.  It tries to make the work of programmers closed to client-side
+Javascript ones.
+
+MadButterfly is a SVG browser, it can be used to implement file manager,
+UI of commerical application for business, and even window manager for
+X Window.  We try to implement MadButterfly as a library that can be
+embedded by host programs.  It is alike Firefox been embedded by
+host programs.
+
+* SVG
+#SVG
+SVG is "Scalable Vector Graphics".  It is a standard of W3C.
+MadButterfly implements [[http://www.w3.org/TR/SVGMobile12/][SVG Tiny 1.2]], a simplified version of SVG for
+mobile devices.
+
+* Design
+Most notable of SVG, except sharps, is coordination transforms.  To make
+MadButterfly efficiency, the execution of code should highly leverage
+time locality and spartial locality.  So, we should aggregate computation
+of a function together.  The data of container and contained elements
+should also be aggregated together.
+
+Since the attributes of SVG objects will be chagned frequently,
+unnecessarily recomputing for coordination transforms should be avoided.
+A sequential number should be attached to the objects to ditinguish
+dirty transformation result and recompute it when it is needed.
+
+** Aggregate Computation
+Every update potentially invokes a function for every graphic elements.
+To be efficient, calls of a function are collected into a loop to avoid
+overhead of function calls.  It also avoid interleaving of calls of
+functions to leverage time locality of code cache.
+
+** Aggregate Relative Data
+Changes of a container usually effect contained elements.  So, it had
+better to put container together with contained elements to increase
+hit rate of cache.
+
+* Transform
+If a coordination transformation transforms (x, y) to (x', y'), then
+> x' = xa * x + xb * y + xc
+> y' = ya * x + yb * y + yc
+is equal to
+> | xa xb xc |   | x |
+> | ya yb yc | * | y |
+> | 0  0  1  |   | 1 |
+
+A transform function of a element to canvas is production of all
+transform functions of containers, it is called aggregated transform
+function.  The aggregated transform function of elements are
+computed with [[http://en.wikipedia.org/wiki/Dynamic_programming][dynamic programming]].
+
+** Use Absolute
+Since we need to tranform positions, positions are transform to
+absolute coordinations if they are specified relative.  It is
+fine when a relative position are rotated or resized.  But, it
+would be wrong when shifting.

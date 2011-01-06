@@ -1,0 +1,24 @@
+When an object change it's size, position, or components inside it,
+other objects overlaid with the object in old or new positions should
+be re-drawed.  The place that the object is resident in old or new
+position should be cleared before re-drawing.  We need a system
+to determine and track effected by the change of an object.
+
+The graphics are grouped into groups in tree-hierachy.  One group
+can be part of another group.  When a group's transformation matrix
+is chagned, all child groups should be affected.  All it's members
+should also be re-drawed.  All members of a group been changed are
+linked into update list in their order.  The one more close to
+tree root is more earier in the list.
+
+Transformations can only apply to groups.  A tree of coord_t is
+maintained to model relationships of groups.  Coord_t is coordination,
+a transfromation from user space to upper level's space or devcie space.
+
+coord_t must know graphics in respective group.  Once transformation
+matrix of a coord_t object changed, it can ask members to
+re-drawed them-self.
+
+Changes of the transformation of a coord_t should be propagated to
+child coord_t objects/groups.
+

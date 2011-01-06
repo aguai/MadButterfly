@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+
+MOZ_EXTENSION_PKG := madbuilder
+MOZ_XPI_BUILD_COMMAND = make -C inkscape/firefox madbuilder.xpi ; cp inkscape/firefox/madbuilder.xpi .
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+include /usr/share/mozilla-devscripts/xpi.mk
+
+TEMPLATE_PATH=${CURDIR}/debian/madbuilder/usr/local/share/mb
+
+install/madbuilder::
+	install -m 0755 ${CURDIR}/inkscape/firefox/helper_mb.py \
+		${CURDIR}/debian/madbuilder/usr/share/madbutterfly/inkscape/usr/bin
+		
+	mkdir -p ${TEMPLATE_PATH}
+	cp -a ${CURDIR}/inkscape/firefox/template ${TEMPLATE_PATH}
