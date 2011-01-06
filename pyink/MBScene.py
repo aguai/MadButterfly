@@ -43,14 +43,14 @@ from frameline import frameline, frameruler
 #
 
 class Layer:
-    def __init__(self,node):
+    def __init__(self, node):
 	self.scenes = []
 	self.group = node
 	pass
     pass
 
 class ObjectWatcher(pybInkscape.PYNodeObserver):
-    def __init__(self,obj,type,func,arg):
+    def __init__(self, obj, type, func, arg):
         self.obj = obj
 	self.type = type
 	self.func = func
@@ -71,10 +71,10 @@ class ObjectWatcher(pybInkscape.PYNodeObserver):
         if self.type == 'DOMAttrModified':
 	    self.func(node, name, old_value, new_value)
 
-def addEventListener(obj, type, func,arg):
-    obs = ObjectWatcher(obj,type,func,arg)
+def addEventListener(obj, type, func, arg):
+    obs = ObjectWatcher(obj, type, func, arg)
     obj.addSubtreeObserver(obs)
-    
+    pass
 
 def _travel_DOM(node):
     nodes = [node]
@@ -108,8 +108,8 @@ class MBScene_dom_monitor(object):
 	self._collect_all_scenes()
 	
 	doc = self._doc
-	addEventListener(doc,'DOMNodeInserted', self._on_insert_node, None)
-	addEventListener(doc,'DOMNodeRemoved', self._on_remove_node, None)
+	addEventListener(doc, 'DOMNodeInserted', self._on_insert_node, None)
+	addEventListener(doc, 'DOMNodeRemoved', self._on_remove_node, None)
 	addEventListener(doc, 'DOMAttrModified', self._on_attr_modified, None)
 	pass
 
@@ -709,7 +709,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self.change_active_frame(self.last_select.repr.parent())
 	pass
 
-    def change_active_frame(self,obj):
+    def change_active_frame(self, obj):
 	"""
 	    Change the active frame to the current selected object. This will
 	    tell users where the current object is.
@@ -720,17 +720,19 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    try:
 		# Search for the frameline which use @obj as one of its scene
 		# group.
-		(frameline,frame) = self.search_frameline_by_id(id)
+		(frameline, frame) = self.search_frameline_by_id(id)
 		if frameline == None:
 		    print "Error: internal structure error %s not found" % id
 		else:
-		    self._change_active_frame(frameline, 0,0)
-		    self.onCellClick(frameline,frame,0)
+		    self._change_active_frame(frameline, 0, 0)
+		    self.onCellClick(frameline, frame, 0)
 		    return
 	    except:
 		traceback.print_exc()
+		pass
 	    obj = obj.parent()
-		
+	    pass
+	pass
 
     def insertKeyScene(self, line, frame):
 	"""
@@ -1210,7 +1212,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
         self.last_update = glib.timeout_add(tmout, self.doRunNext)
 	pass
 
-    def remove_frame(self,line,frame):
+    def remove_frame(self, line, frame):
         for start, end, tween_type in line.get_frame_blocks():
 	    if frame > end: 
 		# Don't change the tween before the select frame
@@ -1221,16 +1223,16 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    elif frame < start:
 		# For all tweens after the frame, shift both key frames by one
 		scene_node = line.get_frame_data(start)
-		self.chg_scene_node(scene_node, start=start-1,end=end-1)
+		self.chg_scene_node(scene_node, start=start-1, end=end-1)
 		line.rm_keyframe(start)
 
 		if start != end:
 		    line.rm_keyframe(end)
 		line.add_keyframe(start-1)
-		line.set_frame_data(start-1,scene_node)
+		line.set_frame_data(start-1, scene_node)
 		if start != end:
 		    line.add_keyframe(end-1)
-		    line.tween(start-1,tween_type)
+		    line.tween(start-1, tween_type)
 		pass
 	    else:
 		# For the tween contain the frame, remove the end keyframe
@@ -1238,16 +1240,16 @@ class MBScene(MBScene_dom, MBScene_framelines):
 		# if the tween has one frame only. In this case, keep only
 		# the start key frame and remove the second one.
 		scene_node = line.get_frame_data(start)
-		self.chg_scene_node(scene_node,end=end-1)
+		self.chg_scene_node(scene_node, end=end-1)
 	        line.rm_keyframe(end)
 	        if start != end-1:
 		    line.add_keyframe(end-1)
-		    line.tween(start,tween_type)
+		    line.tween(start, tween_type)
 		pass
 	    pass
 	pass
 
-    def insert_frame(self,line,frame):
+    def insert_frame(self, line, frame):
         for start, end, tween_type in line.get_frame_blocks():
 	    print "start=",start
 	    print "end=",end
@@ -1258,7 +1260,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
 		# For all tweens after the frame, shift both key frames by one
 		scene_node = line.get_frame_data(start)
 		if scene_node==None: continue
-		self.chg_scene_node(scene_node,start=start+1,end=end+1)
+		self.chg_scene_node(scene_node, start=start+1, end=end+1)
 		line.rm_keyframe(start)
 		if start != end:
 		    line.rm_keyframe(end)
@@ -1274,54 +1276,54 @@ class MBScene(MBScene_dom, MBScene_framelines):
 		# if the tween has one frame only. In this case, keep only
 		# the start key frame and remove the second one.
 		scene_node = line.get_frame_data(start)
-		self.chg_scene_node(scene_node,end=end+1)
+		self.chg_scene_node(scene_node, end=end+1)
 	        line.rm_keyframe(end)
 		line.add_keyframe(end+1)
-		line.tween(start,tween_type)
+		line.tween(start, tween_type)
 		pass
 	    pass
 	pass
 
 
-    def doInsertFrame(self,w):
+    def doInsertFrame(self, w):
 	self.lockui=True
-	self.insert_frame(self.last_line,self.last_frame)
+	self.insert_frame(self.last_line, self.last_frame)
 	self.lockui=False
 
-    def doRemoveFrame(self,w):
+    def doRemoveFrame(self, w):
         self.lockui=True
-	self.remove_frame(self.last_line,self.last_frame)
+	self.remove_frame(self.last_line, self.last_frame)
 	self.lockui=False
 
-    def addButtons(self,hbox):
+    def addButtons(self, hbox):
 	btn = gtk.Button('Insert Key')
-	btn.connect('clicked',self.doInsertKeyScene)
-	hbox.pack_start(btn,expand=False,fill=False)
+	btn.connect('clicked', self.doInsertKeyScene)
+	hbox.pack_start(btn, expand=False, fill=False)
 
 	btn=gtk.Button('Remove Key')
 	btn.connect('clicked', self.doRemoveScene)
-	hbox.pack_start(btn,expand=False,fill=False)
+	hbox.pack_start(btn, expand=False, fill=False)
 
 	btn=gtk.Button('Extend scene')
 	btn.connect('clicked', self.doExtendScene)
-	hbox.pack_start(btn,expand=False,fill=False)
+	hbox.pack_start(btn, expand=False, fill=False)
 
 	btn=gtk.Button('Duplicate Key')
 	btn.connect('clicked', self.doDuplicateKeyScene)
-	hbox.pack_start(btn,expand=False,fill=False)
+	hbox.pack_start(btn, expand=False, fill=False)
 
 	btn=gtk.Button('insert')
 	btn.connect('clicked', self.doInsertFrame)
-	hbox.pack_start(btn,expand=False,fill=False)
+	hbox.pack_start(btn, expand=False, fill=False)
 	
 	btn=gtk.Button('remove')
 	btn.connect('clicked', self.doRemoveFrame)
-	hbox.pack_start(btn,expand=False,fill=False)
+	hbox.pack_start(btn, expand=False, fill=False)
 	
 	btn=gtk.Button('Run')
 	btn.connect('clicked', self.doRun)
 	self.btnRun = btn
-	hbox.pack_start(btn,expand=False,fill=False)
+	hbox.pack_start(btn, expand=False, fill=False)
 
 	self.addNameEditor(hbox)
 	self.addTweenTypeSelector(hbox)
@@ -1346,7 +1348,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self.chg_scene_node(scene_node, tween_type=type_name)
 	pass
 
-    def addTweenTypeSelector(self,hbox):
+    def addTweenTypeSelector(self, hbox):
 	tweenbox = gtk.HBox()
 	label = gtk.Label('Tween Type')
 	tweenbox.pack_start(label)
@@ -1356,8 +1358,8 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	#self.tweenTypeSelector.append_text('relocate')
 	self.tweenTypeSelector.append_text('scale')
 	self.tweenTypeSelector.set_active(0)
-	tweenbox.pack_start(self.tweenTypeSelector, expand=False,fill=False)
-	hbox.pack_start(tweenbox,expand=False,fill=False)
+	tweenbox.pack_start(self.tweenTypeSelector, expand=False, fill=False)
+	hbox.pack_start(tweenbox, expand=False, fill=False)
 	self.tweenTypeSelector.connect('changed', self.onTweenTypeChange)
 	pass
     
@@ -1366,7 +1368,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	gtk.main_quit()
 	pass
     
-    def onOK(self,event):
+    def onOK(self, event):
 	self.OK = True
 	gtk.main_quit()
 	pass
@@ -1385,20 +1387,20 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self._show_framelines()
 	
 	if self.top == None:
-	    self.top = gtk.VBox(False,0)
+	    self.top = gtk.VBox(False, 0)
 	    toplevel = self.desktop.getToplevel()
-	    toplevel.child.child.pack_end(self.top,expand=False)
+	    toplevel.child.child.pack_end(self.top, expand=False)
 	else:
 	    self.top.remove(self.startWindow)
 	    pass
 	
-	vbox = gtk.VBox(False,0)
+	vbox = gtk.VBox(False, 0)
 	self.startWindow = vbox
-	self.top.pack_start(vbox,expand=False)
-	vbox.pack_start(self._frameline_box,expand=False)
-	hbox=gtk.HBox(False,0)
+	self.top.pack_start(vbox, expand=False)
+	vbox.pack_start(self._frameline_box, expand=False)
+	hbox=gtk.HBox(False, 0)
 	self.addButtons(hbox)
-	vbox.pack_start(hbox,expand=False)
+	vbox.pack_start(hbox, expand=False)
 
 	doc = self.document
 	addEventListener(doc,'DOMNodeInserted', self.updateUI, None)
