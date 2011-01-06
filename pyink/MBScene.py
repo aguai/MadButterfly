@@ -541,6 +541,18 @@ class MBScene_framelines(object):
 	self._last_mouse_over_frameline = None
 	self._last_active_frameline = None
 	pass
+
+    def search_frameline_by_id(self, id):
+	"""
+	Search the frameline whose layer is id
+	"""
+
+	for f in self._framelines:
+	    idx = f.search_by_id(id)
+	    if idx != -1:
+	        return (f,idx)
+	    pass
+	return (None,-1)
     
     def _change_hover_frameline(self, widget, event):
         """
@@ -692,7 +704,33 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	except:
 	    self.nameEditor.set_text('')
 	    pass
+
+	# The selection is a PYSPObject. Convert it to be PYNode
+	self.change_active_frame(self.last_select.repr.parent())
 	pass
+
+    def change_active_frame(self,obj):
+	"""
+	    Change the active frame to the current selected object. This will
+	    tell users where the current object is.
+	"""
+
+	while obj:
+	    id = obj.getAttribute('id')
+	    try:
+		# Search for the frameline which use @obj as one of its scene
+		# group.
+		(frameline,frame) = self.search_frameline_by_id(id)
+		if frameline == None:
+		    print "Error: internal structure error %s not found" % id
+		else:
+		    self._change_active_frame(frameline, 0,0)
+		    self.onCellClick(frameline,frame,0)
+		    return
+	    except:
+		traceback.print_exc()
+	    obj = obj.parent()
+		
 
     def insertKeyScene(self, line, frame):
 	"""
