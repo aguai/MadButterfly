@@ -525,6 +525,16 @@ class MBScene_dom(MBScene_dom_monitor):
 	    layers[idx].idx = idx
 	    pass
 	pass
+
+    def find_layer_n_scene_of_node(self, node_id):
+	for layer_idx, layer in enumerate(self._layers):
+	    for scene_node in layer.scenes:
+		scene_group_id = scene_node.getAttribute('ref')
+		if scene_group_id == node_id:
+		    return layer_idx, scene_node
+		pass
+	    pass
+	pass
     pass
 
 ## \brief Maintain frameline list for MBScene.
@@ -542,18 +552,6 @@ class MBScene_framelines(object):
 	self._last_active_frameline = None
 	pass
 
-    def search_frameline_by_id(self, id):
-	"""
-	Search the frameline whose layer is id
-	"""
-
-	for f in self._framelines:
-	    idx = f.search_by_id(id)
-	    if idx != -1:
-	        return (f,idx)
-	    pass
-	return (None,-1)
-    
     def _change_hover_frameline(self, widget, event):
         """
 	Hide all hover frames. This is a hack. We should use the lost focus
@@ -566,16 +564,22 @@ class MBScene_framelines(object):
 	self._last_mouse_over_frameline = widget
 	pass
 
+    def _active_frameline(self, frameline):
+	last = self._last_active_frameline
+	
+	if last and last != frameline:
+	    last.deactive()
+	    pass
+	
+	self._last_active_frameline = frameline
+	pass
+
     ## \brief Called for changing of active frame.
     #
     # This handle deactive previous frameline that owns an active frame when a
     # frame in another frameline is activated.
     def _change_active_frame(self, widget, frame, button):
-	if self._last_active_frameline and \
-		self._last_active_frameline != widget:
-	    self._last_active_frameline.deactive()
-	    pass
-	self._last_active_frameline = widget
+	self._active_frameline(widget)
 	pass
 
     ## \brief Add a frameline into the frameline box for the given layer.
@@ -604,6 +608,7 @@ class MBScene_framelines(object):
 	
 	line.label = label
 	line.layer_idx = layer_idx
+	# TODO: The following line of code should be moved to MBScene.
 	line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
 	line.connect('motion-notify-event', self._change_hover_frameline)
 	line.connect(frameline.FRAME_BUT_PRESS, self._change_active_frame)
@@ -654,6 +659,12 @@ class MBScene_framelines(object):
     # screen and drawing framelines.
     def _show_framelines(self):
 	self._frameline_vbox.show_all()
+	pass
+
+    def active_frame(self, layer_idx, frame_idx):
+	frameline = self._framelines[layer_idx]
+	self._active_frameline(frameline)
+	frameline.active_frame(frame_idx)
 	pass
     pass
 
@@ -709,28 +720,36 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self.change_active_frame(self.last_select.repr.parent())
 	pass
 
-    def change_active_frame(self, obj):
+    def change_active_frame(self, node):
 	"""
-	    Change the active frame to the current selected object. This will
-	    tell users where the current object is.
+	    Change the active frame to the current selected node. This will
+	    tell users where the current node is.
 	"""
 
-	while obj:
-	    id = obj.getAttribute('id')
+	while node:
 	    try:
-		# Search for the frameline which use @obj as one of its scene
+		node_id = node.getAttribute('id')
+	    except:
+		node = node.parent()
+		continue
+	    
+	    try:
+		# Search for the frameline which use @node as one of its scene
 		# group.
-		(frameline, frame) = self.search_frameline_by_id(id)
-		if frameline == None:
-		    print "Error: internal structure error %s not found" % id
+		try:
+		    layer_idx, scene_node = \
+			self.find_layer_n_scene_of_node(node_id)
+		except:
+		    pass
 		else:
-		    self._change_active_frame(frameline, 0, 0)
-		    self.onCellClick(frameline, frame, 0)
+		    start, end, tween_type_name = \
+			self._parse_one_scene(scene_node)
+		    self.active_frame(layer_idx, start)
 		    return
 	    except:
 		traceback.print_exc()
 		pass
-	    obj = obj.parent()
+	    node = node.parent()
 	    pass
 	pass
 
