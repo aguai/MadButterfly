@@ -3,6 +3,35 @@
 import traceback
 import math
 
+def parse_opacity(obj):
+    style = obj.getAttribute("style")
+    arr = style.split(';')
+    for a in arr:
+	f = a.split(':')
+	if f[0] == 'opacity':
+	    return float(f[1])
+    return 1
+
+def change_opacity(obj,opacity):
+    style = obj.getAttribute("style")
+    arr = style.split(';')
+    s=''
+    for a in arr:
+	f = a.split(':')
+	f[0] = f[0].replace(' ','')
+	if f[0] == 'opacity':
+	    if s != '':
+		s = s + ('; opacity:%g' % opacity)
+	    else:
+		s = 'opacity:%g' % opacity
+	elif f[0] != '':
+	    if s == '':
+		s = a
+	    else:
+		s = s +';'+ a
+    obj.setAttribute("style",s)
+
+
 class TweenObject:
     TWEEN_TYPE_NORMAL = 0
     #TWEEN_TYPE_RELOCATE = 1
@@ -119,16 +148,13 @@ class TweenObject:
 	"""
 	try:
 	    t = obj.getAttribute("transform")
-	    print t
 	    if t[0:9] == 'translate':
-		print "translate"
 		fields = t[10:].split(',')
 		x = float(fields[0])
 		fields = fields[1].split(')')
 		y = float(fields[0])
 		return [1,0,0,1,x,y]
 	    elif t[0:6] == 'matrix':
-		print "matrix"
 		fields=t[7:].split(')')
 		fields = fields[0].split(',')
 		return [float(fields[0]),float(fields[1]),float(fields[2]),float(fields[3]),float(fields[4]),float(fields[5])]
@@ -188,7 +214,6 @@ class TweenObject:
 	    self.updateTweenObjectScale(obj,s,d,p,newobj)
 	    pass
 	elif typ == self.TWEEN_TYPE_NORMAL:
-	    print "newobj=",newobj
 	    if newobj == None:
 	        newobj = s.duplicate(self.document)
 	        newobj.setAttribute("ref", s.getAttribute("id"))
@@ -230,7 +255,19 @@ class TweenObject:
 	    except:
 	        dx = 0
 	        dy = 0
+	    try:
+		start_opacity = parse_opacity(s)
+	    except:
+		start_opacity = 1
+
+	    try:
+		end_opacity =parse_opacity( d)
+	    except:
+		end_opacity = 1
+
 		    
+	    cur_opacity = start_opacity*(1-p)+end_opacity*p
+	    change_opacity(newobj,cur_opacity)
 	    sm = self.parseTransform(s)
 	    ss = self.decomposition(sm)
 	    dm = self.parseTransform(d)
@@ -264,6 +301,18 @@ class TweenObject:
 		    dh = float(d.getAttribute("height"))
 		except:
 		    dh = 1
+		try:
+		    start_opacity = parse_opacity(s)
+		except:
+		    start_opacity = 1
+
+		try:
+		    end_opacity =parse_opacity( d)
+		except:
+		    end_opacity = 1
+		cur_opacity = start_opacity*(1-p)+end_opacity*p
+		change_opacity(newobj,cur_opacity)
+
 	        try:
 	            item = self.nodeToItem[s.getAttribute("id")]
 		    (ox,oy) = item.getCenter()
@@ -285,15 +334,12 @@ class TweenObject:
 		try:
 		    dm = self.parseTransform(d)
 		    dd = self.decomposition(dm)
-		    print "dd=",dd
 		except:
 		    dd = [1,1,0,0,0]
 		dd[0] = dd[0]*dw/sw
 		dd[1] = dd[1]*dh/sh
-		print "ss[0]=",ss[0],"dd[0]=",dd[0]
 		sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
 		sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
-		print "sx=",sx,"sy=",sy
 		a  = ss[2]*(1-p)+dd[2]*p-ss[2]
 		tx = ox*(1-p)+dx*p
 		ty = oy*(1-p)+dy*p
