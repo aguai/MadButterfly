@@ -12,8 +12,12 @@ def parse_opacity(obj):
 	    return float(f[1])
     return 1
 
-def change_opacity(obj,opacity):
-    style = obj.getAttribute("style")
+def change_opacity(obj, opacity):
+    try:
+        style = obj.getAttribute("style")
+    except:
+        obj.setAttribute("style","opacity:%g" % opacity)
+	return
     arr = style.split(';')
     s=''
     for a in arr:
