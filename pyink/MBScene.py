@@ -116,7 +116,6 @@ class MBScene_dom_monitor(object):
     def _on_insert_node(self, node, child):
 	try:
 	    child_id = child.getAttribute('id')
-	    print "On insert node %s" % child_id
 	except:
 	    pass
 	else:
@@ -800,7 +799,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    frameline.duplicateGroup.setAttribute('style', 'display: none')
 	except AttributeError:
 	    pass
-	self.done("remove key")
 	pass
     
     def extendScene(self):
@@ -819,7 +817,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self.chg_scene_node(scene_node, end=frame_idx)
 	frameline.add_keyframe(frame_idx)
 	frameline.tween(start, scene_type)
-	self.done("extend scene")
 	pass
     
     def setCurrentScene(self, idx):
@@ -1139,7 +1136,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
     def changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
 	o.setAttribute("inkscape:label", self.nameEditor.get_text())
-	self.done("modify name")
 	pass
 
     def addNameEditor(self,hbox):
@@ -1185,21 +1181,17 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self.selectSceneObject(self.last_line, self.last_frame)
 	self._lockui=False
 	# self.grid.show_all()
-	self.done("new key")
 	return
     
     def doDuplicateKeyScene(self,w):
 	self._lockui = True
         self.duplicateKeyScene()
 	self._lockui = False
-	self.done("dup key")
-	return
 
     def doRemoveScene(self,w):
 	self._lockui = True
 	self.removeKeyScene(self.last_line, self.last_frame)
 	self._lockui = False
-	self.done("remove key")
 	return
 
     
@@ -1207,7 +1199,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	self._lockui = True
 	self.extendScene()
 	self._lockui = False
-	self.done("extend key")
 	pass
 
     def doRun(self,arg):
@@ -1374,7 +1365,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	
 	scene_node = frameline.get_frame_data(start)
 	self.chg_scene_node(scene_node, tween_type=type_name)
-	self.done("None","change tween type")
 	pass
 
     def addTweenTypeSelector(self, hbox):
@@ -1400,11 +1390,6 @@ class MBScene(MBScene_dom, MBScene_framelines):
     def onOK(self, event):
 	self.OK = True
 	gtk.main_quit()
-	pass
-
-    def done(self, desc):
-	spdoc = self.desktop.doc()
-	spdoc.done("None",desc)
 	pass
 
     def show(self):
