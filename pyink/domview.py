@@ -41,9 +41,9 @@ def addEventListener(obj, type, func, arg):
 #
 # This class monitors DOM-tree to maintain _maxframe and maps for node ID to
 # node and scene group ID to scene node.
-class MBScene_domview_monitor(object):
+class domview_monitor(object):
     def __init__(self, *args, **kws):
-	super(MBScene_domview_monitor, self).__init__()
+	super(domview_monitor, self).__init__()
 
 	self._maxframe = 0
 	self._id2node = {}	# map ID to the node in the DOM tree.
@@ -299,13 +299,13 @@ class MBScene_domview_monitor(object):
 # change and destroy scene node and scene group.  A scene node is a 'ns0:scene'
 # in 'ns0:scenes' tag.  A scene group is respective 'svg:g' for a scene.
 #
-class MBScene_domview(MBScene_domview_monitor):
+class domview(domview_monitor):
     # Declare variables, here, for keeping tracking
     _doc = None
     _root = None
     
     def __init__(self, *args, **kws):
-	super(MBScene_domview, self).__init__()
+	super(domview, self).__init__()
 	pass
 
     ## \brief Create a scenes node if not existed.
@@ -354,7 +354,7 @@ class MBScene_domview(MBScene_domview_monitor):
 	self._root = root
 	self._layers = []
 	
-	self._start_monitor()	# start MBScene_domview_monitor
+	self._start_monitor()	# start domview_monitor
 	self._init_metadata()
 	self._parse_all_layers()
 	pass

@@ -7,7 +7,7 @@ import glib
 import traceback
 import pybInkscape
 from tween import TweenObject
-from domview_ui import MBScene_domview_ui
+from domview_ui import domview_ui
 
 # Please refer to
 # http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
@@ -55,7 +55,7 @@ def _DOM_iterator(node):
 
 ## \brief MBScene connect GUI and DOM-tree
 #
-# This method accepts user actions and involves MBScene_domview_ui to update
+# This method accepts user actions and involves domview_ui to update
 # data on the document.
 #
 class MBScene(object):
@@ -82,7 +82,7 @@ class MBScene(object):
 	self._disable_tween_type_selector = False
 	self.current = 0
 
-	self._domview = MBScene_domview_ui()
+	self._domview = domview_ui()
 	pass
 
     def change_active_frame(self, node):
