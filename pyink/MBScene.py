@@ -867,6 +867,8 @@ class MBScene_framelines(object):
 
     ## \brief Get data associated with the given key frame.
     #
+    # The given frame index must be exactly a key frame.
+    #
     def get_keyframe_data(self, layer_idx, frame_idx):
 	frameline = self._framelines[layer_idx]
 	data = frameline.get_frame_data(frame_idx)
@@ -1096,6 +1098,8 @@ class MBDOM_UI(object):
 
     ## \brief Return associated group node for a key frame.
     #
+    # The given frame index must be exactly a key frame.
+    #
     def get_keyframe_group(self, layer_idx, frame_idx):
 	scene_node = self._fl_mgr.get_keyframe_data(frame_idx)
 	scene_group_id = scene_node.getAttribute('ref')
@@ -1169,7 +1173,7 @@ class MBDOM_UI(object):
 # implemented by this class.  It use API provided by MBScene_dom to reflect
 # actions to the DOM-tree.
 #
-class MBScene(MBScene_dom, MBScene_framelines):
+class MBScene(object):
     _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
 			      TweenObject.TWEEN_TYPE_SCALE)
     _tween_type_names = ('normal', 'scale')
@@ -1231,8 +1235,11 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	"""
 	try:
 	    self._dom.add_key(layer_idx, frame_idx)
-	except ValueError:
-	    # existed key frame
+	except ValueError:	# existed key frame
+	    pass
+	else:			# new key frame
+	    scene_group = self._dom.get_keyframe_group(layer_idx, frame_idx)
+	    self._enterGroup(scene_group)
 	    pass
 	pass
 
@@ -1247,6 +1254,9 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    self._dom.get_left_key(layer_idx, frame_idx)
 	tween_len = frame_idx - start
 	self._dom.tween(layer_idx, start, tween_len, tween_type)
+	
+	scene_group = self._dom.get_keyframe_group(layer_idx, start)
+	self._enterGroup(scene_gorup)
 	pass
     
     def setCurrentScene(self, idx):
@@ -1309,7 +1319,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    pass
 	pass
     
-    def enterGroup(self, scene_group):
+    def _enterGroup(self, scene_group):
 	self.desktop.setCurrentLayer(scene_group.spitem)
 	pass
     
@@ -1328,7 +1338,7 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    return
 
 	scene_group = self._dom.get_keyframe_group(layer_idx, start)
-	self.enterGroup(scene_group)
+	self._enterGroup(scene_group)
 	self.setTweenType(tween_type)
 	pass
 
