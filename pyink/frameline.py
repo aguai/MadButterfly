@@ -680,52 +680,43 @@ class frameline(frameline_draw_state):
 	    pass
         pass
 
-    def remove_frame(self, idx):
+    ## \brief Remove a frame from the frameline.
+    #
+    # The frames after specified one would move to head in one position.  It
+    # means sub one from positions of all frame after given frame.
+    #
+    def rm_frame(self, idx):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
 	    key = self._keys[pos]
 	    if key.idx == idx:
-		if key.left_tween:
-		    self._keys[pos-1].right_tween = False
-    		    del self._keys[pos]
-		    while pos < len(self._keys):
-			self._keys[pos].idx = self._keys[pos].idx - 1
-			pos = pos+1
-		    self.update()
-		# Use remove key frame to remove the key frame
-		return
-	    elif key.right_tween:
-		pos = pos + 1
-		while pos < len(self._keys):
-		    self._keys[pos].idx = self._keys[pos].idx - 1
-		    pos = pos + 1
-		if self._drawing:
-		    self.update()
-	    else:
-		return 
+		self.rm_keyframe(idx)
+		pass
+
+	    while pos < len(self._keys):
+		self._keys[pos].idx = self._keys[pos].idx - 1
+		pos = pos+1
+		pass
 	    pass
 	pass
 
-    def insert_frame(self,idx):
+    ## \brief Inser a frame before given frame.
+    #
+    # All frame at and after given frame position move to tail in one position.
+    # It means to add one to positions of all key frames at/after given frame.
+    #
+    def add_frame(self,idx):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
 	    key = self._keys[pos]
 	    if key.idx == idx:
-		while pos < len(self._keys):
-		    self._keys[pos].idx = self._keys[pos].idx + 1
-		    pos = pos + 1
-		if self._drawing:
-		    self.update()
-		return
-	    elif key.right_tween:
 		pos = pos + 1
-		while pos < len(self._keys):
-		    self._keys[pos].idx = self._keys[pos].idx + 1
-		    pos = pos + 1
-		if self._drawing:
-		    self.update()
-	    else:
-		return 
+		pass
+	    while pos < len(self._keys):
+		key = self._keys[pos]
+		key.idx = key.idx + 1
+		pos = pos + 1
+		pass
 	    pass
 	pass
     
@@ -777,6 +768,21 @@ class frameline(frameline_draw_state):
 	self._draw_tween_of_key(pos)
 	self._draw_active_frame()
         pass
+
+    ## \brief Remove right tween for given key frame.
+    #
+    def untween(self, idx):
+	pos = self._find_keyframe(idx)
+	key = self._keys[pos]
+	right_key = self._keys[pos + 1]
+	
+	if not key.right_tween:
+	    return
+
+	key.right_tween = False
+	key.right_tween_type = frameline_draw_state.TWEEN_TYPE_NONE
+	right_key.left_tween = False
+	pass
     
     def get_tween_type(self, idx):
         for i in range(0,len(self._keys)):
@@ -840,7 +846,7 @@ class frameline(frameline_draw_state):
 		return prev_key.idx, key.idx, prev_key.right_tween_type
 	    return key.idx, key.idx, 0
 	raise ValueError, \
-	    'the frame specified by idx is not in any tween or a key frame'
+	    'no any key frame at left side (%d)' % (idx)
 
     ## \brief Return the range of a block of consequence frames (tween).
     # 
