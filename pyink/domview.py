@@ -293,6 +293,22 @@ class domview_monitor(object):
     pass
 
 
+## \brief Iterator to travel a sub-tree of DOM.
+#
+def _DOM_iterator(node):
+    nodes = [node]
+    while nodes:
+	node = nodes.pop(0)
+	child = node.firstChild()
+	while child:
+	    nodes.append(child)
+	    child = child.next()
+	    pass
+	yield node
+	pass
+    pass
+
+
 ## \brief This layer provide a data view to the DOM-tree.
 #
 # This class maintains layers information, and provides functions to create,
@@ -590,5 +606,28 @@ class domview(domview_monitor):
 
     def get_max_frame(self):
 	return self._maxframe
+    
+    ## \brief Copy children of a group.
+    #
+    # Duplicate children of a group, and append them to another group.
+    #
+    def copy_group_children(self, src_group, dst_group):
+	# Search for the duplicated group
+	doc = self._doc
+	
+	dup_group = src_group.duplicate(doc)
+	for child in dup_group.childList():
+	    dup_group.removeChild(child) # prvent from crash
+	    dst_group.appendChild(child)
+	    pass
+
+	old_nodes = _DOM_iterator(src_group)
+	new_nodes = _DOM_iterator(dst_group)
+	for old_node in old_nodes:
+	    old_node_id = old_node.getAttribute('id')
+	    new_node = new_nodes.next()
+	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
+	    pass
+	pass
     pass
 

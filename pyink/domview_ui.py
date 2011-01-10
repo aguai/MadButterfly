@@ -348,6 +348,7 @@ class frameline_stack(object):
 	pass
     pass
 
+
 ## \brief Bridge of DOM-tree to syncrhonize data-model and UI.
 #
 # This class is a wrapper
@@ -563,6 +564,17 @@ class domview_ui(object):
     def get_layer_keys(self, layer_idx):
 	key_tweens = self._fl_stack.get_all_key_tween_of_layer(layer_idx)
 	return key_tweens
+
+    ## \brief Copy content of a source key frame to a destinate.
+    #
+    # Copy content of the scene group of a source key frame to the
+    # scene group of a destinate key frame.
+    #
+    def copy_key_group(self, layer_idx, src_frame_idx, dst_frame_idx):
+        src_group = self.get_key_group(layer_idx, src_frame_idx)
+        dst_group = self.get_key_group(layer_idx, dst_frame_idx)
+        self._dom.copy_group_children(src_group, dst_group)
+        pass
 
     ## \brief Return widget showing frames and layers.
     #
