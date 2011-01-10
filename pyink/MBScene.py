@@ -1309,14 +1309,8 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	    pass
 	pass
     
-    def enterGroup(self, obj):
-        for l in self._layers:
-	    for s in l.group.childList():
-	        if s.getAttribute('id') == obj.getAttribute("id"):
-		    self.desktop.setCurrentLayer(s.spitem)
-		    pass
-		pass
-	    pass
+    def enterGroup(self, scene_group):
+	self.desktop.setCurrentLayer(scene_group.spitem)
 	pass
     
     def setTweenType(self, tween_type):
