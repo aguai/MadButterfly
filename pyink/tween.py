@@ -36,32 +36,24 @@ def change_opacity(obj, opacity):
     obj.setAttribute("style",s)
 
 
-class TweenObject:
+class TweenObject(object):
     TWEEN_TYPE_NORMAL = 0
     #TWEEN_TYPE_RELOCATE = 1
     TWEEN_TYPE_SCALE = 1
 
-    def __init__(self,doc,dom):
-        self.document = doc
-	self.dom = dom
+    def __init__(self, doc, root):
+	super(TweenObject, self).__init__()
+        self._doc = doc
+	self._root = root
 	try:
-	    self.width = float(dom.getAttribute("width"))
-	    self.height = float(dom.getAttribute("height"))
+	    self.width = float(root.getAttribute("width"))
+	    self.height = float(root.getAttribute("height"))
 	except:
 	    self.width = 640
 	    self.height = 480
-
-    def updateMapping(self):
-	self.nodeToItem={}
-	root = self.dom
-	self.updateMappingNode(root)
-    def updateMappingNode(self,node):
-	for c in node.childList():
-	    self.updateMappingNode(c)
-	    try:
-	        self.nodeToItem[c.getAttribute("id")] = c
-	    except:
-	        pass
+	    pass
+	pass
+    
     def updateTweenContent(self, duplicate_group, tween_type,
 			   start_scene_group, stop_scene_group, percent):
 	"""
@@ -219,7 +211,7 @@ class TweenObject:
 	    pass
 	elif typ == self.TWEEN_TYPE_NORMAL:
 	    if newobj == None:
-	        newobj = s.duplicate(self.document)
+	        newobj = s.duplicate(self._doc)
 	        newobj.setAttribute("ref", s.getAttribute("id"))
 	        obj.appendChild(newobj)
 	pass
@@ -244,8 +236,8 @@ class TweenObject:
 	    pass
 
 	if newobj == None:
-            newobj = s.duplicate(self.document)
-            top = self.document.createElement("svg:g")
+            newobj = s.duplicate(self._doc)
+            top = self._doc.createElement("svg:g")
 	    top.setAttribute("ref",s.getAttribute("id"))
 	    top.appendChild(newobj)
 	    obj.appendChild(top)
@@ -259,14 +251,12 @@ class TweenObject:
 	    # 
 	    # D  = B inv(A)
 	    try:
-	        item = self.nodeToItem[s.getAttribute("id")]
-	        (ox,oy) = item.getCenter()
+	        (ox,oy) = s.spitem.getCenter()
 	    except:
 	        ox = 0
    	        oy = 0
 	    try:
-	        item = self.nodeToItem[d.getAttribute("id")]
-	        (dx,dy) = item.getCenter()
+	        (dx,dy) = d.spitem.getCenter()
 	    except:
 	        dx = 0
 	        dy = 0
@@ -329,14 +319,12 @@ class TweenObject:
 		change_opacity(newobj,cur_opacity)
 
 	        try:
-	            item = self.nodeToItem[s.getAttribute("id")]
-		    (ox,oy) = item.getCenter()
+		    (ox,oy) = s.spitem.getCenter()
 	        except:
 		    ox = 0
 		    oy = 0
 	        try:
-	            item = self.nodeToItem[d.getAttribute("id")]
-		    (dx,dy) = item.getCenter()
+		    (dx,dy) = d.spitem.getCenter()
 	        except:
 		    dx = 0
 		    dy = 0
@@ -366,3 +354,86 @@ class TweenObject:
 		top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
 	    except:
 	        traceback.print_exc()
+		pass
+	    pass
+	pass
+    pass
+
+## \brief Providing capability of showing scenes.
+#
+# This class computes and shows scenes for a \ref domview_ui.  The
+# content of layers and frames are read from domview_ui to generate
+# scenes properly.  When caller requests to show a scene 'n', this
+# class compute content of frame 'n' for every layer of the
+# domview_ui.
+#
+class scenes_director(object):
+    _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
+			      TweenObject.TWEEN_TYPE_SCALE)
+    
+    def __init__(self, domview_ui):
+	super(scenes_director, self).__init__()
+	self._domview = domview_ui
+	self._tween_obj = TweenObject(domview_ui.doc, domview_ui.root)
+	pass
+    
+    def show_scene(self, idx):
+	"""
+	    Update the scene group according to the curretn scene
+	    data. There are a couple of cases.
+	    1. If the type of the scene is normal, we display it when 
+	    it contains the current frame. Otherwise hide it.
+	    2. If the type of the scene is relocate or scale, we need 
+	       to duplicate the scene group and then modify its 
+	       transform matrix according to the definition of the 
+	       scene. Then, hide the original scenr group and display 
+	       the duplciate scene group. In addition, we may need to 
+	       delete the old duplicated scene group as well.
+
+	    For each layer, we will always use the duplicated scene 
+	    group whose name as dup.
+	    We will put the duplicated scene group inside it. We will 
+	    create this group if it is not
+	    available.
+	"""
+	for layer_idx in range(self._domview.get_layer_num()):
+	    dup_group = self._domview.get_layer_dup_group(layer_idx)
+	    dup_group.setAttribute('style', 'display: none')
+
+	    all_key_tweens = self._domview.get_layer_keys(layer_idx)
+	    for start, end, tween_type in all_key_tweens:
+		if start == idx: # at key frame
+		    scene_group = \
+			self._domview.get_key_group(layer_idx, start)
+		    scene_group.setAttribute('style', '')
+		elif start < idx and end >= idx: # in Tween
+		    dup_group.setAttribute('style', '')
+		    scene_group = \
+			self._domview.get_key_group(layer_idx, start)
+		    scene_group.setAttribute('style', 'display: none')
+		    
+		    try:
+			next_scene_group = \
+			    self._domview.get_key_group(layer_idx, end + 1)
+		    except:	# no next key frame
+			next_scene_group = scene_group
+			pass
+
+		    tween_obj_type = self._tween_obj_tween_types[tween_type]
+		    nframes = end - start + 1
+		    percent = float(idx - start) / nframes
+		    self._tween_obj.updateTweenContent(dup_group,
+						       tween_obj_type,
+						       scene_group,
+						       next_scene_group,
+						       percent)
+		    pass
+		else:		# this scene should not be showed.
+		    scene_group = \
+			self._domview.get_key_group(layer_idx, start)
+		    scene_group.setAttribute('style', 'display: none')
+		    pass
+		pass
+	    pass
+	pass
+    pass

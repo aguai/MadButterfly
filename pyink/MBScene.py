@@ -6,7 +6,7 @@ import gtk
 import glib
 import traceback
 import pybInkscape
-from tween import TweenObject
+from tween import scenes_director
 from domview_ui import domview_ui
 
 # Please refer to
@@ -59,8 +59,6 @@ def _DOM_iterator(node):
 # data on the document.
 #
 class MBScene(object):
-    _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
-			      TweenObject.TWEEN_TYPE_SCALE)
     _tween_type_names = ('normal', 'scale')
     
     _num_frames_of_line = 100
@@ -75,7 +73,7 @@ class MBScene(object):
 	pybInkscape.inkscape.connect('change_selection', self.on_selection)
 	self.last_select = None
 	self._lockui = False
-	self.tween = None
+	self._director = None
 	self.document = None
 	self._root = root
 	self.framerate = 12
@@ -127,7 +125,7 @@ class MBScene(object):
 
     def removeKeyScene(self, layer_idx, frame_idx):
 	self._domview.unmark_key(layer_idx, frame_idx)
-	self.setCurrentScene(frame_idx)
+	self._director.show_scene(frame_idx)
 	pass
     
     def extendScene(self):
@@ -139,68 +137,6 @@ class MBScene(object):
 	
 	scene_group = self._domview.get_key_group(layer_idx, start)
 	self._enterGroup(scene_group)
-	pass
-    
-    def setCurrentScene(self, idx):
-	"""
-	    Update the scene group according to the curretn scene
-	    data. There are a couple of cases.
-	    1. If the type of the scene is normal, we display it when 
-	    it contains the current frame. Otherwise hide it.
-	    2. If the type of the scene is relocate or scale, we need 
-	       to duplicate the scene group and then modify its 
-	       transform matrix according to the definition of the 
-	       scene. Then, hide the original scenr group and display 
-	       the duplciate scene group. In addition, we may need to 
-	       delete the old duplicated scene group as well.
-
-	    For each layer, we will always use the duplicated scene 
-	    group whose name as dup.
-	    We will put the duplicated scene group inside it. We will 
-	    create this group if it is not
-	    available.
-	"""
-	self.current = idx
-	self.tween.updateMapping()
-	for layer_idx in range(self._domview.get_layer_num()):
-	    dup_group = self._domview.get_layer_dup_group(layer_idx)
-	    dup_group.setAttribute('style', 'display: none')
-
-	    all_key_tweens = self._domview.get_layer_keys(layer_idx)
-	    for start, end, tween_type in all_key_tweens:
-		if start == idx: # at key frame
-		    scene_group = \
-			self._domview.get_key_group(layer_idx, start)
-		    scene_group.setAttribute('style', '')
-		elif start < idx and end >= idx: # in Tween
-		    dup_group.setAttribute('style', '')
-		    scene_group = \
-			self._domview.get_key_group(layer_idx, start)
-		    scene_group.setAttribute('style', 'display: none')
-		    
-		    try:
-			next_scene_group = \
-			    self._domview.get_key_group(layer_idx, end + 1)
-		    except:	# no next key frame
-			next_scene_group = scene_group
-			pass
-
-		    tween_obj_type = self._tween_obj_tween_types[tween_type]
-		    nframes = end - start + 1
-		    percent = float(idx - start) / nframes
-		    self.tween.updateTweenContent(dup_group,
-						  tween_obj_type,
-						  scene_group,
-						  next_scene_group,
-						  percent)
-		    pass
-		else:		# this scene should not be showed.
-		    scene_group = \
-			self._domview.get_key_group(layer_idx, start)
-		    scene_group.setAttribute('style', 'display: none')
-		    pass
-		pass
-	    pass
 	pass
     
     def _enterGroup(self, scene_group):
@@ -245,7 +181,7 @@ class MBScene(object):
 	
 	dup_group = self._duplicate_group(left_scene_group, scene_group)
 
-	self.setCurrentScene(frame_idx)
+	self._director.show_scene(frame_idx)
 	pass
 
     ## \brief Duplicate children of a group.
@@ -324,7 +260,7 @@ class MBScene(object):
     def onCellClick(self, layer_idx, frame_idx):
 	self._lockui = True
 	
-	self.setCurrentScene(frame_idx)
+	self._director.show_scene(frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
 	
 	self._lockui = False
@@ -378,7 +314,7 @@ class MBScene(object):
 	    self.current = 0
 	    pass
 	try:
-	    self.setCurrentScene(self.current)
+	    self._director.show_scene(self.current)
 	except:
 	    traceback.print_exc()
 	    raise
@@ -466,9 +402,9 @@ class MBScene(object):
 	
 	self.document = self.desktop.doc().rdoc
 	
-	self.tween = TweenObject(self.document, self._root)
 	self._domview.handle_doc_root(self.document, self._root)
 	self._domview.register_active_frame_callback(self.onCellClick)
+	self._director = scenes_director(self._domview)
 
 	if self.top == None:
 	    self.top = gtk.VBox(False, 0)

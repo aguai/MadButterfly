@@ -358,6 +358,8 @@ class domview_ui(object):
 	super(domview_ui, self).__init__()
 	self._fl_stack = frameline_stack()
 	self._dom = domview()
+        self._doc = None
+        self._root = None
 	pass
 
     ## \brief Update content of a frameline from scenes of respective layer.
@@ -402,6 +404,9 @@ class domview_ui(object):
 	self._fl_stack._init_framelines()
 	self._add_frameline_for_every_layer()
 	self._fl_stack._show_framelines()
+
+        self._doc = doc
+        self._root = root
 	pass
 
     ## \brief Mark given frame as a key frame.
@@ -614,5 +619,13 @@ class domview_ui(object):
     def get_max_frame(self):
 	max_frame = self._dom.get_max_frame()
 	return max_frame
+
+    @property
+    def doc(self):
+        return self._doc
+
+    @property
+    def root(self):
+        return self._root
     pass
 
