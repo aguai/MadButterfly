@@ -864,6 +864,11 @@ class MBScene_framelines(object):
 	frameline.tween(start, fl_tween_type)
 	pass
 
+    ## \brief Remove key frame.
+    #
+    # Once a key frame was removed, the associated tween was also removed
+    # totally.
+    #
     def rm_keyframe(self, layer_idx, frame_idx):
 	frameline = self._framelines[layer_idx]
 	start, end, fl_tween_type = frameline.get_frame_block(frame_idx)
@@ -1075,7 +1080,7 @@ class MBDOM_UI(object):
 	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
 	self._dom.rm_scene_node_n_group(scene_node)
 	
-	self._fl_mgr.rm_key_n_tween(layer_idx, key_frame_idx)
+	self._fl_mgr.rm_keyframe(layer_idx, key_frame_idx)
 	pass
 
     def add_frames(self, layer_idx, frame_idx, num):
@@ -1280,10 +1285,6 @@ class MBScene(object):
 	    self._dom.add_key(layer_idx, frame_idx)
 	except ValueError:	# existed key frame
 	    pass
-	else:			# new key frame
-	    scene_group = self._dom.get_keyframe_group(layer_idx, frame_idx)
-	    self._enterGroup(scene_group)
-	    pass
 	pass
 
     def removeKeyScene(self, layer_idx, frame_idx):
@@ -1369,16 +1370,14 @@ class MBScene(object):
 	pass
     
     def setTweenType(self, tween_type):
-	tween_type_name = self._tween_type_names[tween_type]
-	
 	self._disable_tween_type_selector = True
-	self.tweenTypeSelector.set_active(tween_type_name)
+	self.tweenTypeSelector.set_active(tween_type)
 	self._disable_tween_type_selector = False
 	pass
 	
     def selectSceneObject(self, layer_idx, frame_idx):
 	try:
-	    start, stop, tween_type = self._dom.get_key(frame_idx)
+	    start, stop, tween_type = self._dom.get_key(layer_idx, frame_idx)
 	except:
 	    return
 
@@ -1627,6 +1626,7 @@ class MBScene(object):
 	    pass
 	
 	self.document = self.desktop.doc().rdoc
+	
 	self.tween = TweenObject(self.document, self._root)
 	self._dom.handle_doc_root(self.document, self._root)
 	self._dom.register_active_frame_callback(self.onCellClick)
