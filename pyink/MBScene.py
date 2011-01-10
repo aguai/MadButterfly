@@ -966,7 +966,7 @@ class MBDOM_UI(object):
     #
     def _update_frameline_content(self, layer_idx):
 	fl_mgr = self._fl_mgr
-	scene_nodes = self._fl_mgr.get_all_scene_node_of_layer(layer_idx):
+	scene_nodes = fl_mgr.get_all_scene_node_of_layer(layer_idx)
 	for scene_node in scene_nodes:
 	    start, end, tween_name = self._parse_one_scene(scene_node)
 
@@ -1342,97 +1342,6 @@ class MBScene(object):
 	self.setTweenType(tween_type)
 	pass
 
-    ## \brief Remove the layer that lost the layer group.
-    #
-    # This function is called when a layer group being removed from the
-    # DOM-tree.
-    def _remove_lost_group_layer(self, layer_idx):
-	layer = self._layers[layer_idx]
-	frameline = self._framelines[layer_idx]
-	for start, end, tween_type in frameline.get_frame_blocks():
-	    scene_node = frameline.get_frame_data(start)
-	    self.rm_scene_node(scene_node)
-	    pass
-
-	self._remove_frameline(layer_idx) # TODO
-	self._show_framelines()
-	del self._layers[layer_idx]
-	pass
-
-    ## \brief Make status of layers is updated when DOM is changed.
-    #
-    # When DOM-tree is changed, this function make sure layer information is up
-    # to date.
-    #
-    # TODO: move this to somewhere
-    #
-    def _make_layers_integral(self):
-	root = self._root
-	root_id = root.getAttribute('id')
-	
-	# Remove group of removed layers
-	layer_idx = 0
-	while layer_idx < len(self._layers):
-	    layer = self._layers[layer_idx]
-	    
-	    if layer.group.name() != 'svg:g':
-		self._remove_lost_group_layer(layer_idx) # TODO
-		continue
-
-	    parent = layer.group.parent()
-
-	    if not parent:	# parent is None when a node being removed from
-				# DOM-tree.
-		self._remove_lost_group_layer(layer_idx)
-		continue
-
-	    if parent.name() != 'svg:svg':
-		self._remove_lost_group_layer(layer_idx)
-		continue
-
-	    if parent.getAttribute('id') != root_id:
-		self._remove_lost_group_layer(layer_idx)
-		continue
-
-	    layer_idx = layer_idx + 1
-	    pass
-
-	# Add new layers
-	layer_idx = 0
-	for child in root.childList():
-	    if child.name() != 'svg:g':
-		continue
-	    
-	    try:
-		layer = self._layers[layer_idx]
-	    except IndexError:
-		layer = None
-	    else:
-		layer_group_id = layer.group.getAttribute('id')
-		pass
-	    
-	    child_id = child.getAttribute('id')
-	    if (not layer) or layer_group_id != child_id:
-		self.add_layer(layer_idx, child)
-		self.parse_layer(layer_idx)
-		self._add_frameline(layer_idx)
-		
-		layer = self._layers[layer_idx]
-		frameline = self._framelines[layer_idx]
-		try:
-		    label = layer.group.getAttribute('inkscape:label')
-		except:
-		    label = layer.group.getAttribute('id')
-		    pass
-		frameline.label.set_text(label)
-		
-		self._show_framelines()
-		pass
-	    
-	    layer_idx = layer_idx + 1
-	    pass
-	pass
-
     def duplicateKeyScene(self):
         # Search for the current scene
 	layer_idx, frame_idx = self._dom.get_active_layer_frame()
@@ -1493,21 +1402,6 @@ class MBScene(object):
 	self.editDone.connect('clicked', self.changeObjectLabel)
 	pass
 
-    def updateUI(self, *args):
-        if self._lockui: return
-	
-        if self.last_update!= None:
-            glib.source_remove(self.last_update)
-        self.last_update = glib.timeout_add(300,self._updateUI)
-	
-	pass
-    
-    def _updateUI(self,node=None,arg=None):
-	self._lockui = True
-	self._make_layers_integral()
-	self._lockui = False
-	pass
-    
     def addTweenTypeSelector(self, hbox):
 	tweenbox = gtk.HBox()
 	label = gtk.Label('Tween Type')
@@ -1709,10 +1603,6 @@ class MBScene(object):
 	self._add_buttons(hbox)
 	vbox.pack_start(hbox, expand=False)
 
-	doc = self.document
-	addEventListener(doc,'DOMNodeInserted', self.updateUI, None)
-	addEventListener(doc,'DOMNodeRemoved', self.updateUI, None)
-	
 	self.top.show_all()
 	self.last_update = None
 	return False
