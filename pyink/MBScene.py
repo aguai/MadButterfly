@@ -116,6 +116,10 @@ class MBScene_dom_monitor(object):
 	pass
 
     def _on_insert_node(self, node, child):
+	for cchild in child.childList():
+	    self._on_insert_node(child, cchild)
+	    pass
+	
 	try:
 	    child_id = child.getAttribute('id')
 	except:
@@ -170,6 +174,10 @@ class MBScene_dom_monitor(object):
 	return maxframe
 
     def _on_remove_node(self, node, child):
+	for cchild in child.childList():
+	    self._on_remove_node(child, cchild)
+	    pass
+	
 	try:
 	    child_id = child.getAttribute('id')
 	except:
@@ -634,6 +642,9 @@ class MBScene_dom(MBScene_dom_monitor):
 		pass
 	    pass
 	pass
+
+    def get_max_frame(self):
+	return self._maxframe
     pass
 
 ## \brief Maintain frameline list for MBScene.
@@ -641,7 +652,8 @@ class MBScene_dom(MBScene_dom_monitor):
 class MBScene_framelines(object):
     _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
 			      frameline.TWEEN_TYPE_SHAPE)
-
+    _num_frames_of_line = 100
+    
     _framelines = None
     
     def __init__(self, *args, **kws):
@@ -826,7 +838,10 @@ class MBScene_framelines(object):
     def get_all_key_tween_of_layer(self, layer_idx):
 	frameline = self._framelines[layer_idx]
 	info = frameline.get_frame_blocks()
-	return info
+	tweens = [(tween[0], tween[1],
+		   self._frameline_tween_types.index(tween[2]))
+		  for tween in info]
+	return tweens
     
     ## \brief Tweening key frame to a give size
     #
@@ -838,7 +853,8 @@ class MBScene_framelines(object):
 	right_frame_idx = key_frame_idx + tween_len - 1
 	fl_tween_type = self._frameline_tween_types[tween_type]
 
-	start, end, fl_tween_type = frameline.get_frame_block(frame_idx)
+	start, end, old_fl_tween_type = \
+	    frameline.get_frame_block(key_frame_idx)
 	if start != key_frame_idx:
 	    ValueError, 'invalid key frame (%d)' % (key_frame_idx)
 	if start < end:
@@ -966,15 +982,16 @@ class MBDOM_UI(object):
     #
     def _update_frameline_content(self, layer_idx):
 	fl_mgr = self._fl_mgr
-	scene_nodes = fl_mgr.get_all_scene_node_of_layer(layer_idx)
+	scene_nodes = self._dom.get_all_scene_node_of_layer(layer_idx)
 	for scene_node in scene_nodes:
-	    start, end, tween_name = self._parse_one_scene(scene_node)
+	    start, end, tween_name = self._dom._parse_one_scene(scene_node)
 
 	    fl_mgr.add_keyframe(layer_idx, start)
 	    fl_mgr.set_keyframe_data(layer_idx, start, scene_node)
 	    if start != end:
 		tween_type = self._tween_type_names.index(tween_name)
-		fl_mgr.tween(start, end, tween_type)
+		tween_len = end - start + 1
+		fl_mgr.tween(layer_idx, start, tween_len, tween_type)
 		pass
 	    pass
 	pass
@@ -1101,7 +1118,7 @@ class MBDOM_UI(object):
     # The given frame index must be exactly a key frame.
     #
     def get_keyframe_group(self, layer_idx, frame_idx):
-	scene_node = self._fl_mgr.get_keyframe_data(frame_idx)
+	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, frame_idx)
 	scene_group_id = scene_node.getAttribute('ref')
 	scene_group_node = self._dom.get_node(scene_group_id)
 	return scene_group_node
@@ -1129,13 +1146,17 @@ class MBDOM_UI(object):
 	    self._fl_mgr.get_left_key_tween(layer_idx, frame_idx)
 	return start, end, tween_type
 
+    def get_layer_keys(self, layer_idx):
+	tweens = self._fl_mgr.get_all_key_tween_of_layer(layer_idx)
+	return tweens
+
     ## \brief Return widget showing frames and layers.
     #
     def get_frame_ui_widget(self):
 	return self._fl_mgr._frameline_box
 
-    def register_active_frame_cb(self, cb):
-	self._fl_mgr.register_active_frame_cb(cb)
+    def register_active_frame_callback(self, cb):
+	self._fl_mgr.register_active_frame_callback(cb)
 	pass
 
     def set_layer_label(self, txt):
@@ -1147,24 +1168,43 @@ class MBDOM_UI(object):
     def get_layer_dup_group(self, layer_idx):
 	data = self._dom.get_layer_data(layer_idx)
 	if not data:
-	    data = object()
+	    data = dict()
 	    self._dom.set_layer_data(layer_idx, data)
 	    pass
 
-	if hasattr(data, 'dup_group_id'):
+	dup_group = None
+	if data.has_key('dup_group_id'):
 	    try:
-		dup_group = self._dom.get_node(data.dup_group_id)
+		dup_group = self._dom.get_node(data['dup_group_id'])
 	    except KeyError:
-		dup_group = None
 		pass
 	    pass
 	
 	if not dup_group:
+	    # Search dup group from children of the layer group
+	    layer_group = self._dom.get_layer_group(layer_idx)
+	    for child in layer_group.childList():
+		try:
+		    label = child.getAttribute('inkscape:label')
+		except:
+		    pass
+		else:
+		    if label == 'dup':
+			data['dup_group_id'] = child
+			return child
+		    pass
+		pass
+	    
+	    # Or create a new dup group for the layer
 	    dup_group = self._dom.add_layer_dup_group(layer_idx)
-	    data.dup_group_id = dup_group.getAttribute('id')
+	    data['dup_group_id'] = dup_group.getAttribute('id')
 	    pass
 
 	return dup_group
+
+    def get_max_frame(self):
+	max_frame = self._dom.get_max_frame()
+	return max_frame
     pass
 
 ## \brief MBScene connect GUI and DOM-tree
@@ -1195,6 +1235,7 @@ class MBScene(object):
 	self.root = root
 	self.framerate = 12
 	self._disable_tween_type_selector = False
+	self.current = 0
 
 	self._dom = MBDOM_UI()
 	pass
@@ -1252,7 +1293,7 @@ class MBScene(object):
 	layer_idx, frame_idx = self._dom.get_active_layer_frame()
 	start, end, tween_type = \
 	    self._dom.get_left_key(layer_idx, frame_idx)
-	tween_len = frame_idx - start
+	tween_len = frame_idx - start + 1
 	self._dom.tween(layer_idx, start, tween_len, tween_type)
 	
 	scene_group = self._dom.get_keyframe_group(layer_idx, start)
@@ -1282,17 +1323,19 @@ class MBScene(object):
 	self.tween.updateMapping()
 	for layer_idx in range(self._dom.get_layer_num()):
 	    dup_group = self._dom.get_layer_dup_group(layer_idx)
+	    dup_group.setAttribute('style', 'display: none')
 
-	    all_key_tweens = self._dom.get_all_key_tween_of_layer(layer_idx)
-	    for start, stop, tween_type in all_key_tweens:
+	    all_key_tweens = self._dom.get_layer_keys(layer_idx)
+	    for start, end, tween_type in all_key_tweens:
 		if start == idx: # at key frame
-		    dup_group.setAttribute('style', 'display: none')
 		    scene_group = \
-			self._dom.get_keyframe_group(layer_idx, idx)
+			self._dom.get_keyframe_group(layer_idx, start)
 		    scene_group.setAttribute('style', '')
-		elif start < idx and end  >= idx: # in Tween
+		elif start < idx and end >= idx: # in Tween
+		    dup_group.setAttribute('style', '')
 		    scene_group = \
-			self._dom.get_keyframe_group(layer_idx, idx)
+			self._dom.get_keyframe_group(layer_idx, start)
+		    scene_group.setAttribute('style', 'display: none')
 		    
 		    try:
 			next_scene_group = \
@@ -1302,7 +1345,7 @@ class MBScene(object):
 			pass
 
 		    tween_obj_type = self._tween_obj_tween_types[tween_type]
-		    nframes = stop - start + 1
+		    nframes = end - start + 1
 		    percent = float(idx - start) / nframes
 		    self.tween.updateTweenContent(dup_group,
 						  tween_obj_type,
@@ -1312,8 +1355,8 @@ class MBScene(object):
 		    pass
 		else:		# this scene should not be showed.
 		    scene_group = \
-			self._dom.get_keyframe_group(layer_idx, idx)
-		    scene_group.setAttribute('style', '')
+			self._dom.get_keyframe_group(layer_idx, start)
+		    scene_group.setAttribute('style', 'display: none')
 		    pass
 		pass
 	    pass
@@ -1491,7 +1534,7 @@ class MBScene(object):
 	pass
 
     def doRunNext(self):
-	if self.current > self._maxframe:
+	if self.current > self._dom.get_max_frame():
 	    self.current = 0
 	    pass
 	try:
@@ -1584,7 +1627,7 @@ class MBScene(object):
 	self.document = self.desktop.doc().rdoc
 	self.tween = TweenObject(self.document, self.root)
 	self._dom.handle_doc_root(self.document, self.root)
-	self._dom.register_active_frame_cb(self.onCellClick)
+	self._dom.register_active_frame_callback(self.onCellClick)
 
 	if self.top == None:
 	    self.top = gtk.VBox(False, 0)
