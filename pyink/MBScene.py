@@ -466,6 +466,14 @@ class MBScene_dom(MBScene_dom_monitor):
 	self._scenes_node.removeChild(scene_node)
 	pass
 
+    def rm_scene_node_n_group(self, scene_node):
+	scene_group_id = scene_node.getAttribute('ref')
+	scene_group_node = self.get_node(scene_group_id)
+	scene_group_node.parent.removeChild(scene_group_node)
+	
+	self._scenes_node.removeChild(scene_node)
+	pass
+
     ## \brief Create and add a svg:g for a scene under a group for a layer.
     #
     def add_scene_group(self, layer_idx):
@@ -516,9 +524,21 @@ class MBScene_dom(MBScene_dom_monitor):
 	    pass
 	pass
 
+    ## \brief Remove layer and associated scene nodes and scene groups.
+    #
     def rm_layer(self, layer_idx):
 	layers = self._layers
 
+	for layer in layers:
+	    for scene_node in layer.scenes:
+		scene_group_id = scene_node.getAttribute('ref')
+		scene_group_node = self.get_node(scene_group_id)
+		scene_group_node.parent.removeChild(scene_group_node)
+		
+		scene_node.parent.removeChild(scene_node)
+		pass
+	    pass
+	
 	del layers[layer_idx]
 
 	for idx in range(layer_idx, len(layers)):
@@ -535,6 +555,14 @@ class MBScene_dom(MBScene_dom_monitor):
 		pass
 	    pass
 	pass
+
+    def get_layer_group(self, layer_idx):
+	layer = self._layers[layer_idx]
+	return layer.group
+
+    def get_all_scene_node_of_layer(self, layer_idx):
+	layer = self._layers[layer_idx]
+	return layer.scenes
     pass
 
 ## \brief Maintain frameline list for MBScene.
@@ -606,8 +634,11 @@ class MBScene_framelines(object):
 	
 	self._framelines[layer_idx: layer_idx] = [line]
 	
+	for idx in range(layer_idx, len(self._framelines)):
+	    self._framelines[idx].layer_idx = idx
+	    pass
+	
 	line.label = label
-	line.layer_idx = layer_idx
 	# TODO: The following line of code should be moved to MBScene.
 	line.connect(line.FRAME_BUT_PRESS, self.onCellClick)
 	line.connect('motion-notify-event', self._change_hover_frameline)
@@ -623,6 +654,10 @@ class MBScene_framelines(object):
 	hbox = line.parent
 	vbox.remove(hbox)
 	del self._framelines[layer_idx]
+	
+	for idx in range(layer_idx, len(self._framelines)):
+	    self._framelines[idx].layer_idx = idx
+	    pass
 	pass
 
     def _init_framelines(self):
@@ -661,11 +696,289 @@ class MBScene_framelines(object):
 	self._frameline_vbox.show_all()
 	pass
 
+    ## \brief Make given frame as current active frame.
+    #
     def active_frame(self, layer_idx, frame_idx):
 	frameline = self._framelines[layer_idx]
 	self._active_frameline(frameline)
 	frameline.active_frame(frame_idx)
 	pass
+
+    ## \brief Get layer and frame index of current active frame.
+    #
+    # \return (-1, -1) for no active, (layer_idx, frame_idx) for current
+    #		active.
+    def get_active_frame(self):
+	if self._active_frameline:
+	    layer_idx = self._active_frameline.layer_idx
+	    frame_idx = self._active_frameline.get_active_frame()
+	    if frame_idx != -1:
+		return layer_idx, frame_idx
+	    pass
+	return -1, -1
+
+    ## \brief Get information of the key frame at left-side.
+    #
+    # The key frame, returned, is at the place of the give frame or its
+    # left-side.
+    def get_left_key_tween(self, layer_idx, frame_idx):
+	frameline = self._framelines[layer_idx]
+	start, end, fl_tween_type = frameline.get_frame_block_floor(frame_idx)
+	tween_type = self._frameline_tween_types.index(fl_tween_type)
+	return start, end, tween_type
+
+    ## \brief Return information of a key frame and its tweening.
+    #
+    # This method return the key frame that the given frame is, or is in its
+    # tween.
+    #
+    # \return (start, end, tween_type)
+    def get_key_tween(self, layer_idx, frame_idx):
+	frameline = self._framelines[layer_idx]
+	start, end, fl_tween_type = frameline.get_frame_block(frame_idx)
+
+	tween_type = self._frameline_tween_types.index(fl_tween_type)
+	return start, end, tween_type
+
+    def get_all_key_tween_of_layer(self, layer_idx):
+	frameline = self._framelines[layer_idx]
+	info = frameline.get_frame_blocks()
+	return info
+    
+    ## \brief Tweening key frame to a give size
+    #
+    # The tween can be changed by tweening it again.
+    def tween(self, layer_idx, key_frame_idx, tween_len,
+	      tween_type=TweenObject.TWEEN_TYPE_NORMAL):
+	assert tween_len > 0
+	frameline = self._framelines[layer_idx]
+	right_frame_idx = key_frame_idx + tween_len - 1
+	fl_tween_type = self._frameline_tween_types[tween_type]
+
+	start, end, fl_tween_type = frameline.get_frame_block(frame_idx)
+	if start != key_frame_idx:
+	    ValueError, 'invalid key frame (%d)' % (key_frame_idx)
+	if start < end:
+	    frameline.rm_keyframe(end)
+	    pass
+	frameline.add_keyframe(right_frame_idx)
+	frameline.tween(start, fl_tween_type)
+	pass
+
+    def rm_keyframe(self, layer_idx, frame_idx):
+	frameline = self._framelines[layer_idx]
+	start, end, fl_tween_type = frameline.get_frame_block(frame_idx)
+	if start != frame_idx:
+	    raise ValueError, 'no such key (%d, %d)' % (layer_idx, frame_idx)
+
+	frameline.rm_keyframe(frame_idx)
+	if start < end:
+	    frameline.rm_keyframe(end)
+	    pass
+	pass
+
+    def add_keyframe(self, layer_idx, frame_idx):
+	frameline = self._framelines[layer_idx]
+	frameline.add_keyframe(frame_idx)
+	pass
+
+    ## \brief Get data associated with the given key frame.
+    #
+    def get_keyframe_data(self, layer_idx, frame_idx):
+	frameline = self._framelines[layer_idx]
+	data = frameline.get_frame_data(frame_idx)
+	return data
+
+    ## \brief Set/associate data with the given key frame.
+    #
+    def set_keyframe_data(self, layer_idx, frame_idx, data):
+	frameline = self._framelines[layer_idx]
+	frameline.set_frame_data(frame_idx, data)
+	pass
+
+    def insert_frames(self, layer_idx, frame_idx, num):
+	assert num > 0
+	assert frame_idx >= 0
+	frameline = self._framelines[layer_idx]
+	for i in range(num):
+	    frameline.insert_frame(frame_idx)
+	    pass
+	pass
+
+    ## \brief Set label of a layer.
+    #
+    def set_layer_label(self, layer_idx, txt):
+	frameline = self._framelines[layer_idx]
+	frameline.label.set_text(txt)
+	pass
+    pass
+
+## \brief Gateway of DOM-tree to syncrhonize data-model and UI.
+#
+# This class is a wrapper
+class MBDOM_UI(object):
+    _tween_type_names = ('normal', 'scale')
+    
+    def __init__(self):
+	super(MBDOM_UI, self).__init__()
+	self._fl_mgr = MBScene_framelines()
+	self._dom = MBScene_dom()
+	pass
+
+    ## \brief Update content of a frameline from scenes of respective layer.
+    #
+    def _update_frameline_content(self, layer_idx):
+	fl_mgr = self._fl_mgr
+	scene_nodes = self._fl_mgr.get_all_scene_node_of_layer(layer_idx):
+	for scene_node in scene_nodes:
+	    start, end, tween_name = self._parse_one_scene(scene_node)
+
+	    fl_mgr.add_keyframe(layer_idx, start)
+	    fl_mgr.set_keyframe_data(layer_idx, start, scene_node)
+	    if start != end:
+		tween_type = self._tween_type_names.index(tween_name)
+		fl_mgr.tween(start, end, tween_type)
+		pass
+	    pass
+	pass
+    
+    ## \brief Add a frameline for every found layer.
+    #
+    # This method is called to create a frameline for every layer found when
+    # loading a document.
+    #
+    def _add_frameline_for_every_layer(self):
+	for layer_idx in range(len(self._dom._layers)):
+	    layer_group_node = self._dom.get_layer_group(layer_idx)
+	    label = layer_group_node.getAttribute('inkscape:label')
+	    
+	    self._fl_mgr._add_frameline(layer_idx)
+	    self._fl_mgr.set_layer_label(layer_idx, label)
+
+	    self._update_frameline_content(layer_idx)
+	    pass
+	pass
+    
+    def handle_doc_root(self, doc, root):
+	self._dom.handle_doc_root(doc, root)
+	self._fl_mgr._init_framelines()
+	self._add_frameline_for_every_layer()
+	self._fl_mgr._show_framelines()
+	pass
+
+    def add_key(self, layer_idx, key_idx):
+	scene_group = self._dom.add_scene_group(layer_idx)
+	scene_group_id = scene_group.getAttribute('id')
+	
+	scene_node = self._dom.add_scene_node(key_idx, key_idx)
+	scene_node.chg_scene_node(scene_node, ref=scene_group_id)
+	
+	self._fl_mgr.add_keyframe(layer_idx, key_idx)
+	self._fl_mgr.set_keyframe_data(layer_idx, key_idx, scene_node)
+	pass
+
+    ## \brief Tweening a key frame.
+    #
+    # The tween of a key frame can be changed by tweening it again.
+    #
+    def tween(self, layer_idx, key_frame_idx, tween_len,
+	      tween_type=TweenObject.TWEEN_TYPE_NORMAL):
+	self._fl_mgr.tween(layer_idx, key_frame_idx, tween_len, tween_type)
+	
+	end_frame_idx = key_frame_idx + tween_len - 1
+	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
+	tween_name = self._tween_type_names[tween_type]
+	self._dom.chg_scene_node(scene_node, end=end_frame_idx,
+				 tween_type=tween_name)
+	pass
+
+    ## \brief Change tween info of a key frame
+    #
+    def chg_tween(self, layer_idx, key_frame_idx,
+		  tween_len=None, tween_type=None):
+	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
+	start, end, old_tween_type = \
+	    self._fl_mgr.get_key_tween(layer_idx, key_frame_idx)
+	
+	if tween_len is not None:
+	    end = start + tween_len - 1	    
+	    self._dom.chg_scene_node(scene_node, end=end)
+	    pass
+	if tween_type is not None:
+	    tween_name = self._tween_type_names[tween_type]
+	    self._dom.chg_scene_node(scene_node, tween_type=tween_name)
+	    pass
+
+	if tween_type is None:
+	    tween_type = old_tween_type
+	    pass
+	self._fl_mgr.tween(layer_idx, start, end, tween_type)
+	pass
+
+    def rm_key_n_tween(self, layer_idx, key_frame_idx):
+	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
+	self._dom.rm_scene_node_n_group(scene_node)
+	
+	self._fl_mgr.rm_key_n_tween(layer_idx, key_frame_idx)
+	pass
+
+    def insert_frames(self, layer_idx, frame_idx, num):
+	self._fl_mgr.insert_frames(layer_idx, frame_idx, num)
+	
+	key_tweens = self._fl_mgr.get_all_key_tween_of_layer(layer_idx)
+	for start, end, tween_type in key_tweens:
+	    if frame_idx > end:
+		continue
+	    
+	    scene_node = self._fl_mgr.get_keyframe_data(start)
+	    self._dom.chg_scene_node(scene_node, start=start, end=end)
+	    pass
+	pass
+
+    def add_layer(self, layer_idx):
+	self._dom.add_layer(layer_idx)
+	self._fl_mgr._add_frameline(layer_idx)
+	self._fl_mgr._show_framelines()
+	pass
+
+    def set_active_layer_frame(self, layer_idx, frame_idx):
+	self._fl_mgr.active_frame(layer_idx, frame_idx)
+	pass
+    
+    ## \bref Return current active frame and its layer.
+    #
+    # \return (layer_idx, frame_idx) of active frame, or (-1, -1) when no
+    #	      active one.
+    def get_active_layer_frame(self):
+	layer_idx, frame_idx = self._fl_mgr.get_active_frame()
+	return layer_idx, frame_idx
+
+    def rm_layer(self, layer_idx):
+	self._dom.rm_layer(layer_idx)
+	self._fl_mgr._remove_frameline(layer_idx)
+	self._fl_mgr._show_framelines()
+	pass
+    
+    ## \brief Return associated group node for a key frame.
+    #
+    def get_keyframe_group(self, layer_idx, frame_idx):
+	scene_node = self._fl_mgr.get_keyframe_data(frame_idx)
+	scene_group_id = scene_node.getAttribute('ref')
+	scene_group_node = self._dom.get_node(scene_group_id)
+	return scene_group_node
+
+    ## \brief Find an associated key frame and tween info for a group ID.
+    #
+    def find_keyframe_from_group(self, scene_group_id):
+	scene_node = self._dom.get_scene(scene_group_id)
+	start, end, tween_name = self._dom._parse_one_scene(scene_node)
+	tween_type = self._tween_type_names.index(tween_name)
+	return start, end, tween_type
+
+    def get_left_key(self, layer_idx, frame_idx):
+	start, end, tween_type = \
+	    self._fl_mgr.get_left_key_tween(layer_idx, frame_idx)
+	return start, end, tween_type
     pass
 
 ## \brief MBScene connect GUI and DOM-tree
