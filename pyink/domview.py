@@ -392,7 +392,7 @@ class domview(domview_monitor):
 
     ## \brief Create and add a ns0:scene node under ns0:scenes subtree.
     #
-    def add_scene_node(self, start, end,
+    def add_scene_node(self, layer_idx, start, end,
 		       frame_type=TweenObject.TWEEN_TYPE_NORMAL,
 		       ref=None):
 	type_names = ('normal', 'scale')
@@ -411,6 +411,8 @@ class domview(domview_monitor):
 	    pass
 	
 	scenes_node.appendChild(scene_node)
+        
+        self._layers[layer_idx].scenes.append(scene_node)
 	
 	return scene_node
 
@@ -435,6 +437,14 @@ class domview(domview_monitor):
 
     def rm_scene_node(self, scene_node):
 	self._scenes_node.removeChild(scene_node)
+        for layer in self._layers:
+            try:
+                layer.scenes.remove(scene_node)
+            except ValueError:  # not in the list
+                pass
+            else:
+                break
+            pass
 	pass
 
     def rm_scene_node_n_group(self, scene_node):
@@ -442,7 +452,7 @@ class domview(domview_monitor):
 	scene_group_node = self.get_node(scene_group_id)
 	scene_group_node.parent().removeChild(scene_group_node)
 	
-	self._scenes_node.removeChild(scene_node)
+        self.rm_scene_node(scene_node)
 	pass
 
     ## \brief Create and add a svg:g for a scene under a group for a layer.
@@ -589,7 +599,7 @@ class domview(domview_monitor):
 	last_rm = frame_idx + num - 1 # last removed frame
 	for scene_node in layer.scenes:
 	    start, end, tween_type = \
-		self._dom._parse_one_scene(scene_node)
+		self._parse_one_scene(scene_node)
 	    
 	    if end < frame_idx:
 		continue
@@ -614,19 +624,35 @@ class domview(domview_monitor):
     def copy_group_children(self, src_group, dst_group):
 	# Search for the duplicated group
 	doc = self._doc
-	
-	dup_group = src_group.duplicate(doc)
-	for child in dup_group.childList():
-	    dup_group.removeChild(child) # prvent from crash
-	    dst_group.appendChild(child)
-	    pass
 
+	dup_group = src_group.duplicate(doc)
+        
 	old_nodes = _DOM_iterator(src_group)
-	new_nodes = _DOM_iterator(dst_group)
+	new_nodes = _DOM_iterator(dup_group)
+        new_gids = set()
 	for old_node in old_nodes:
 	    old_node_id = old_node.getAttribute('id')
 	    new_node = new_nodes.next()
 	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
+            
+            #
+            # Change ID here, or inkscape would insert the node with
+            # the same ID, and change it later to avoid duplication.
+            # But, our event handler would be called before changing
+            # ID.  It would confuse our code.  We change ID of nodes
+            # before inserting them into the DOM-tree.
+            #
+            gid = self.new_id()
+            while gid in new_gids:
+                gid = self.new_id()
+                pass
+            new_gids.add(gid)
+            new_node.setAttribute('id', gid)
+	    pass
+	
+	for child in dup_group.childList():
+	    dup_group.removeChild(child) # prvent from crash
+	    dst_group.appendChild(child)
 	    pass
 	pass
     pass

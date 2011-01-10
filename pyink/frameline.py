@@ -691,13 +691,19 @@ class frameline(frameline_draw_state):
 	    key = self._keys[pos]
 	    if key.idx == idx:
 		self.unmark_keyframe(idx)
+	    else:
+		pos = pos + 1
 		pass
 
 	    while pos < len(self._keys):
-		self._keys[pos].idx = self._keys[pos].idx - 1
-		pos = pos+1
+		key = self._keys[pos]
+		key.idx = key.idx - 1
+		pos = pos + 1
 		pass
 	    pass
+
+	self._draw_all_frames()
+	self._draw_active_frame()
 	pass
 
     ## \brief Inser a frame before given frame.
@@ -709,15 +715,19 @@ class frameline(frameline_draw_state):
 	pos = self._find_keyframe_floor(idx)
 	if pos != -1:
 	    key = self._keys[pos]
-	    if key.idx == idx:
+	    if key.idx != idx:
 		pos = pos + 1
 		pass
+	    
 	    while pos < len(self._keys):
 		key = self._keys[pos]
 		key.idx = key.idx + 1
 		pos = pos + 1
 		pass
 	    pass
+
+	self._draw_all_frames()
+	self._draw_active_frame()
 	pass
     
     def unmark_keyframe(self, idx):
