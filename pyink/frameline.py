@@ -902,6 +902,9 @@ class frameline(frameline_draw_state):
 	self._draw_all_frames()
         pass
 
+    def get_active_frame(self):
+	return self._active_frame
+
     ## \brief Called when mouse leave the widget.
     #
     # This is here for buggy pygtk.  It does not send leave-notify-event.  We
