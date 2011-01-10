@@ -520,7 +520,7 @@ class MBScene_dom(MBScene_dom_monitor):
     #
     # \param layer_idx is the position in the layer list.
     #
-    def add_layer(self, layer_idx, layer_group):
+    def insert_layer(self, layer_idx, layer_group):
 	layers = self._layers
 	
 	layer = Layer(layer_group)
@@ -590,7 +590,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	layer.data = data
 	pass
 
-    def add_layer_dup_group(self, layer_idx):
+    def create_layer_dup_group(self, layer_idx):
 	layer = self._layers[layer_idx]
 	
 	dup_group = self._doc.createElement('svg:g')
@@ -604,7 +604,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	
 	return dup_group
 
-    def add_frames(self, layer_idx, frame_idx, num):
+    def insert_frames(self, layer_idx, frame_idx, num):
 	layer = self._layers[layer_idx]
 	for scene_node in layer.scenes:
 	    start, end, tween_type = self._parse_one_scene(scene_node)
@@ -858,32 +858,36 @@ class MBScene_framelines(object):
 	if start != key_frame_idx:
 	    ValueError, 'invalid key frame (%d)' % (key_frame_idx)
 	if start < end:
-	    frameline.rm_keyframe(end)
+	    frameline.unmark_keyframe(end)
 	    pass
-	frameline.add_keyframe(right_frame_idx)
+	frameline.mark_keyframe(right_frame_idx)
 	frameline.tween(start, fl_tween_type)
 	pass
 
-    ## \brief Remove key frame.
+    ## \brief Unmark a key frame.
     #
-    # Once a key frame was removed, the associated tween was also removed
+    # Once a key frame was unmark, the associated tween was also removed
     # totally.
     #
-    def rm_keyframe(self, layer_idx, frame_idx):
+    def unmark_keyframe(self, layer_idx, frame_idx):
 	frameline = self._framelines[layer_idx]
 	start, end, fl_tween_type = frameline.get_frame_block(frame_idx)
 	if start != frame_idx:
 	    raise ValueError, 'no such key (%d, %d)' % (layer_idx, frame_idx)
 
-	frameline.rm_keyframe(frame_idx)
+	frameline.unmark_keyframe(frame_idx)
 	if start < end:
-	    frameline.rm_keyframe(end)
+	    frameline.unmark_keyframe(end)
 	    pass
 	pass
 
-    def add_keyframe(self, layer_idx, frame_idx):
+    ## \brief Makr a key frame.
+    #
+    # Make a frame as a key frame.
+    #
+    def mark_keyframe(self, layer_idx, frame_idx):
 	frameline = self._framelines[layer_idx]
-	frameline.add_keyframe(frame_idx)
+	frameline.mark_keyframe(frame_idx)
 	pass
 
     ## \brief Get data associated with the given key frame.
@@ -902,7 +906,12 @@ class MBScene_framelines(object):
 	frameline.set_frame_data(frame_idx, data)
 	pass
 
-    def add_frames(self, layer_idx, frame_idx, num):
+    ## \brief Insert frames before specified frame.
+    #
+    # Specified frame and frames after it are shift right for \ref num
+    # positions to make a space for new frames.
+    #
+    def insert_frames(self, layer_idx, frame_idx, num):
 	assert num > 0
 	assert frame_idx >= 0
 	frameline = self._framelines[layer_idx]
@@ -913,7 +922,8 @@ class MBScene_framelines(object):
 
     ## \brief Remove a number of frames from the frameline.
     #
-    # All key frames and tweens covered by removing range would be removed.
+    # All key frames and associated tween info covered by removing range would
+    # be removed.
     #
     def rm_frames(self, layer_idx, frame_idx, num):
 	assert num > 0
@@ -933,7 +943,7 @@ class MBScene_framelines(object):
 	    if start >= frame_idx and end > last_rm:
 		# Left key frame of the tween was removed, but not right one.
 		frameline.untween(start)
-		frameline.rm_keyframe(end)
+		frameline.unmark_keyframe(end)
 		pass
 	    pass
 
@@ -949,8 +959,8 @@ class MBScene_framelines(object):
 	    if start < frame_idx and end <= last_rm:
 		# right key frame is in removing range but left one.
 		frameline.untween(start)
-		frameline.rm_keyframe(start)
-		frameline.rm_keyframe(end)
+		frameline.unmark_keyframe(start)
+		frameline.unmark_keyframe(end)
 		pass
 	    pass
 	
@@ -959,19 +969,23 @@ class MBScene_framelines(object):
 	    pass
 	pass
 
-    ## \brief Set label of a layer.
+    ## \brief Set label for a layer.
     #
     def set_layer_label(self, layer_idx, txt):
 	frameline = self._framelines[layer_idx]
 	frameline.label.set_text(txt)
 	pass
 
+    ## \brief Register a callback for active frame event.
+    #
+    # The callback would be called when a frame is activated.
+    #
     def register_active_frame_callback(self, cb):
 	self._active_frame_callback = cb
 	pass
     pass
 
-## \brief Gateway of DOM-tree to syncrhonize data-model and UI.
+## \brief Bridge of DOM-tree to syncrhonize data-model and UI.
 #
 # This class is a wrapper
 class MBDOM_UI(object):
@@ -991,7 +1005,7 @@ class MBDOM_UI(object):
 	for scene_node in scene_nodes:
 	    start, end, tween_name = self._dom._parse_one_scene(scene_node)
 
-	    fl_mgr.add_keyframe(layer_idx, start)
+	    fl_mgr.mark_keyframe(layer_idx, start)
 	    fl_mgr.set_keyframe_data(layer_idx, start, scene_node)
 	    if start != end:
 		tween_type = self._tween_type_names.index(tween_name)
@@ -1018,6 +1032,8 @@ class MBDOM_UI(object):
 	    pass
 	pass
     
+    ## \brief This method is called to handle a new document.
+    #
     def handle_doc_root(self, doc, root):
 	self._dom.handle_doc_root(doc, root)
 	self._fl_mgr._init_framelines()
@@ -1025,19 +1041,22 @@ class MBDOM_UI(object):
 	self._fl_mgr._show_framelines()
 	pass
 
-    def add_key(self, layer_idx, key_idx):
+    ## \brief Mark given frame as a key frame.
+    #
+    def mark_key(self, layer_idx, key_idx):
 	scene_group = self._dom.add_scene_group(layer_idx)
 	scene_group_id = scene_group.getAttribute('id')
 	
 	scene_node = self._dom.add_scene_node(key_idx, key_idx)
 	self._dom.chg_scene_node(scene_node, ref=scene_group_id)
 	
-	self._fl_mgr.add_keyframe(layer_idx, key_idx)
+	self._fl_mgr.mark_keyframe(layer_idx, key_idx)
 	self._fl_mgr.set_keyframe_data(layer_idx, key_idx, scene_node)
 	pass
 
     ## \brief Tweening a key frame.
     #
+    # To tween a key spanning several frames at right-side.
     # The tween of a key frame can be changed by tweening it again.
     #
     def tween(self, layer_idx, key_frame_idx, tween_len,
@@ -1076,29 +1095,53 @@ class MBDOM_UI(object):
 	self._fl_mgr.tween(layer_idx, start, tween_len, tween_type)
 	pass
 
-    def rm_key_n_tween(self, layer_idx, key_frame_idx):
+    ## \brief Unmark a frame from a key frame.
+    #
+    def unmark_key(self, layer_idx, key_frame_idx):
 	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
 	self._dom.rm_scene_node_n_group(scene_node)
 	
-	self._fl_mgr.rm_keyframe(layer_idx, key_frame_idx)
+	self._fl_mgr.unmark_keyframe(layer_idx, key_frame_idx)
 	pass
 
-    def add_frames(self, layer_idx, frame_idx, num):
-	self._fl_mgr.add_frames(layer_idx, frame_idx, num)
-	self._dom.add_frames(layer_idx, frame_idx, num)
+    ## \brief Insert frames at specified position.
+    #
+    # All frame at and after given position will shift right.
+    #
+    def insert_frames(self, layer_idx, frame_idx, num):
+	self._fl_mgr.insert_frames(layer_idx, frame_idx, num)
+	self._dom.insert_frames(layer_idx, frame_idx, num)
 	pass
 
+    ## \brief Insert frames at specified position.
+    #
+    # All frame at and after given position will shift left, except nearest
+    # \ref num frames are removed.
+    #
     def rm_frames(self, layer_idx, frame_idx, num):
-	self._fl_mgr.add_frames(layer_idx, frame_idx, num)
+	self._fl_mgr.insert_frames(layer_idx, frame_idx, num)
 	self._dom.rm_frames(layer_idx, frame_idx, num)
 	pass
 
-    def add_layer(self, layer_idx):
-	self._dom.add_layer(layer_idx)
+    ## \brief Insert a layer at given position.
+    #
+    # Original layer \ref layer_idx and later ones would be shifted to make a
+    # space for the new layer.
+    #
+    def insert_layer(self, layer_idx):
+	self._dom.insert_layer(layer_idx)
 	self._fl_mgr._add_frameline(layer_idx)
 	self._fl_mgr._show_framelines()
 	pass
 
+    ## \brief Remove given layer.
+    #
+    def rm_layer(self, layer_idx):
+	self._dom.rm_layer(layer_idx)
+	self._fl_mgr._remove_frameline(layer_idx)
+	self._fl_mgr._show_framelines()
+	pass
+    
     def set_active_layer_frame(self, layer_idx, frame_idx):
 	self._fl_mgr.active_frame(layer_idx, frame_idx)
 	pass
@@ -1111,12 +1154,6 @@ class MBDOM_UI(object):
 	layer_idx, frame_idx = self._fl_mgr.get_active_layer_frame()
 	return layer_idx, frame_idx
 
-    def rm_layer(self, layer_idx):
-	self._dom.rm_layer(layer_idx)
-	self._fl_mgr._remove_frameline(layer_idx)
-	self._fl_mgr._show_framelines()
-	pass
-    
     def get_layer_num(self):
 	return self._dom.get_layer_num()
 
@@ -1124,7 +1161,7 @@ class MBDOM_UI(object):
     #
     # The given frame index must be exactly a key frame.
     #
-    def get_keyframe_group(self, layer_idx, frame_idx):
+    def get_key_group(self, layer_idx, frame_idx):
 	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, frame_idx)
 	scene_group_id = scene_node.getAttribute('ref')
 	scene_group_node = self._dom.get_node(scene_group_id)
@@ -1132,7 +1169,7 @@ class MBDOM_UI(object):
 
     ## \brief Find an associated key frame and tween info for a group ID.
     #
-    def find_keyframe_from_group(self, scene_group_id):
+    def find_key_from_group(self, scene_group_id):
 	layer_idx, scene_node = \
 	    self._dom.find_layer_n_scene_of_node(scene_group_id)
 	start, end, tween_name = self._dom._parse_one_scene(scene_node)
@@ -1153,21 +1190,23 @@ class MBDOM_UI(object):
 	    self._fl_mgr.get_left_key_tween(layer_idx, frame_idx)
 	return start, end, tween_type
 
+    ## \brief Return information of key frames in the given layer.
+    #
     def get_layer_keys(self, layer_idx):
-	tweens = self._fl_mgr.get_all_key_tween_of_layer(layer_idx)
-	return tweens
+	key_tweens = self._fl_mgr.get_all_key_tween_of_layer(layer_idx)
+	return key_tweens
 
     ## \brief Return widget showing frames and layers.
     #
     def get_frame_ui_widget(self):
 	return self._fl_mgr._frameline_box
 
+    ## \brief Register a callback for activating a frame event.
+    #
+    # The callback function is called when a frame is activated.
+    #
     def register_active_frame_callback(self, cb):
 	self._fl_mgr.register_active_frame_callback(cb)
-	pass
-
-    def set_layer_label(self, txt):
-	self._fl_mgr.set_layer_label(txt)
 	pass
 
     ## \brief Get duplicate group of a layer.
@@ -1203,7 +1242,7 @@ class MBDOM_UI(object):
 		pass
 	    
 	    # Or create a new dup group for the layer
-	    dup_group = self._dom.add_layer_dup_group(layer_idx)
+	    dup_group = self._dom.create_layer_dup_group(layer_idx)
 	    data['dup_group_id'] = dup_group.getAttribute('id')
 	    pass
 
@@ -1261,7 +1300,7 @@ class MBScene(object):
 	    
 	    try:
 		layer_idx, (start, end, tween_type) = \
-		    self._dom.find_keyframe_from_group(node_id)
+		    self._dom.find_key_from_group(node_id)
 	    except:
 		pass
 	    else:
@@ -1282,13 +1321,13 @@ class MBScene(object):
 
 	"""
 	try:
-	    self._dom.add_key(layer_idx, frame_idx)
+	    self._dom.mark_key(layer_idx, frame_idx)
 	except ValueError:	# existed key frame
 	    pass
 	pass
 
     def removeKeyScene(self, layer_idx, frame_idx):
-	self._dom.rm_key_n_tween(layer_idx, frame_idx)
+	self._dom.unmark_key(layer_idx, frame_idx)
 	self.setCurrentScene(frame_idx)
 	pass
     
@@ -1299,7 +1338,7 @@ class MBScene(object):
 	tween_len = frame_idx - start + 1
 	self._dom.tween(layer_idx, start, tween_len, tween_type)
 	
-	scene_group = self._dom.get_keyframe_group(layer_idx, start)
+	scene_group = self._dom.get_key_group(layer_idx, start)
 	self._enterGroup(scene_group)
 	pass
     
@@ -1332,17 +1371,17 @@ class MBScene(object):
 	    for start, end, tween_type in all_key_tweens:
 		if start == idx: # at key frame
 		    scene_group = \
-			self._dom.get_keyframe_group(layer_idx, start)
+			self._dom.get_key_group(layer_idx, start)
 		    scene_group.setAttribute('style', '')
 		elif start < idx and end >= idx: # in Tween
 		    dup_group.setAttribute('style', '')
 		    scene_group = \
-			self._dom.get_keyframe_group(layer_idx, start)
+			self._dom.get_key_group(layer_idx, start)
 		    scene_group.setAttribute('style', 'display: none')
 		    
 		    try:
 			next_scene_group = \
-			    self._dom.get_keyframe_group(layer_idx, end + 1)
+			    self._dom.get_key_group(layer_idx, end + 1)
 		    except:	# no next key frame
 			next_scene_group = scene_group
 			pass
@@ -1358,7 +1397,7 @@ class MBScene(object):
 		    pass
 		else:		# this scene should not be showed.
 		    scene_group = \
-			self._dom.get_keyframe_group(layer_idx, start)
+			self._dom.get_key_group(layer_idx, start)
 		    scene_group.setAttribute('style', 'display: none')
 		    pass
 		pass
@@ -1381,7 +1420,7 @@ class MBScene(object):
 	except:
 	    return
 
-	scene_group = self._dom.get_keyframe_group(layer_idx, start)
+	scene_group = self._dom.get_key_group(layer_idx, start)
 	self._enterGroup(scene_group)
 	self.setTweenType(tween_type)
 	pass
@@ -1398,11 +1437,11 @@ class MBScene(object):
 	if left_end >= frame_idx:
 	    return
 
-	self._dom.add_key(layer_idx, frame_idx)
+	self._dom.mark_key(layer_idx, frame_idx)
 	
-	scene_group = self._dom.get_keyframe_group(layer_idx, frame_idx)
+	scene_group = self._dom.get_key_group(layer_idx, frame_idx)
 	left_scene_group = \
-	    self._dom.get_keyframe_group(layer_idx, left_start)
+	    self._dom.get_key_group(layer_idx, left_start)
 	
 	dup_group = self._duplicate_group(left_scene_group, scene_group)
 
@@ -1551,7 +1590,7 @@ class MBScene(object):
     def doInsertFrame(self, w):
 	self.lockui=True
 	layer_idx, frame_idx = self._dom.get_active_layer_frame()
-	self._dom.add_frames(layer_idx, frame_idx, 1)
+	self._dom.insert_frames(layer_idx, frame_idx, 1)
 	self.lockui=False
 
     def doRemoveFrame(self, w):
