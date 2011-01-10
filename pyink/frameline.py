@@ -643,7 +643,7 @@ class frameline(frameline_draw_state):
     #
     # A key frame is the frame that user specify actions.  For
     # example, move a object or add new objects at the frame.
-    def add_keyframe(self, idx, ref=None):
+    def mark_keyframe(self, idx, ref=None):
 	try:
 	    pos = self._find_keyframe(idx) # it is not already a keyframe.
 	except ValueError:
@@ -690,7 +690,7 @@ class frameline(frameline_draw_state):
 	if pos != -1:
 	    key = self._keys[pos]
 	    if key.idx == idx:
-		self.rm_keyframe(idx)
+		self.unmark_keyframe(idx)
 		pass
 
 	    while pos < len(self._keys):
@@ -720,7 +720,7 @@ class frameline(frameline_draw_state):
 	    pass
 	pass
     
-    def rm_keyframe(self, idx):
+    def unmark_keyframe(self, idx):
 	key_pos = self._find_keyframe(idx)
         key = self._keys[key_pos]
 	del self._keys[key_pos]
@@ -928,14 +928,14 @@ if __name__ == '__main__':
     
     fl = frameline(40)
     fl.set_size_request(300, 20)
-    fl.add_keyframe(15)
-    fl.add_keyframe(3)
+    fl.mark_keyframe(15)
+    fl.mark_keyframe(3)
     fl.tween(3)
-    fl.add_keyframe(9)
-    fl.add_keyframe(20)
+    fl.mark_keyframe(9)
+    fl.mark_keyframe(20)
     fl.tween(9)
     fl.active_frame(1)
-    fl.rm_keyframe(15)
+    fl.unmark_keyframe(15)
     print 'num of frames: %d' % (len(fl))
 
     def press_sig(fl, frame, but):
