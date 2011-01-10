@@ -96,9 +96,9 @@ def _DOM_iterator(node):
 #
 # This class monitors DOM-tree to maintain _maxframe and maps for node ID to
 # node and scene group ID to scene node.
-class MBScene_dom_monitor(object):
+class MBScene_domview_monitor(object):
     def __init__(self, *args, **kws):
-	super(MBScene_dom_monitor, self).__init__()
+	super(MBScene_domview_monitor, self).__init__()
 
 	self._maxframe = 0
 	self._id2node = {}	# map ID to the node in the DOM tree.
@@ -348,19 +348,19 @@ class MBScene_dom_monitor(object):
     pass
 
 
-## \brief Layer of MBScene to manipulate DOM tree.
+## \brief This layer provide a data view to the DOM-tree.
 #
 # This class maintains layers information, and provides functions to create,
 # change and destroy scene node and scene group.  A scene node is a 'ns0:scene'
 # in 'ns0:scenes' tag.  A scene group is respective 'svg:g' for a scene.
 #
-class MBScene_dom(MBScene_dom_monitor):
+class MBScene_domview(MBScene_domview_monitor):
     # Declare variables, here, for keeping tracking
     _doc = None
     _root = None
     
     def __init__(self, *args, **kws):
-	super(MBScene_dom, self).__init__()
+	super(MBScene_domview, self).__init__()
 	pass
 
     ## \brief Create a scenes node if not existed.
@@ -409,7 +409,7 @@ class MBScene_dom(MBScene_dom_monitor):
 	self._root = root
 	self._layers = []
 	
-	self._start_monitor()	# start MBScene_dom_monitor
+	self._start_monitor()	# start MBScene_domview_monitor
 	self._init_metadata()
 	self._parse_all_layers()
 	pass
@@ -647,9 +647,15 @@ class MBScene_dom(MBScene_dom_monitor):
 	return self._maxframe
     pass
 
-## \brief Maintain frameline list for MBScene.
+## \brief Maintain a stack of frameline UI component.
 #
-class MBScene_framelines(object):
+# Every layer is assocated with a frameline.  Framelines are showed/stacked in
+# virtical.  Framelines of lower layers are placed at lower position on the
+# screen.  This class provide a set of API to access framelines with layer and
+# frame index number.  You access/set content of frameline by specifing layer
+# index and frame index.
+#
+class MBScene_frameline_stack(object):
     _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
 			      frameline.TWEEN_TYPE_SHAPE)
     _num_frames_of_line = 100
@@ -657,7 +663,7 @@ class MBScene_framelines(object):
     _framelines = None
     
     def __init__(self, *args, **kws):
-	super(MBScene_framelines, self).__init__(*args, **kws)
+	super(MBScene_frameline_stack, self).__init__(*args, **kws)
 	
 	self._last_mouse_over_frameline = None
 	self._last_active_frameline = None
@@ -988,29 +994,29 @@ class MBScene_framelines(object):
 ## \brief Bridge of DOM-tree to syncrhonize data-model and UI.
 #
 # This class is a wrapper
-class MBDOM_UI(object):
+class MBScene_domview_ui(object):
     _tween_type_names = ('normal', 'scale')
     
     def __init__(self):
-	super(MBDOM_UI, self).__init__()
-	self._fl_mgr = MBScene_framelines()
-	self._dom = MBScene_dom()
+	super(MBScene_domview_ui, self).__init__()
+	self._fl_stack = MBScene_frameline_stack()
+	self._dom = MBScene_domview()
 	pass
 
     ## \brief Update content of a frameline from scenes of respective layer.
     #
     def _update_frameline_content(self, layer_idx):
-	fl_mgr = self._fl_mgr
+	fl_stack = self._fl_stack
 	scene_nodes = self._dom.get_all_scene_node_of_layer(layer_idx)
 	for scene_node in scene_nodes:
 	    start, end, tween_name = self._dom._parse_one_scene(scene_node)
 
-	    fl_mgr.mark_keyframe(layer_idx, start)
-	    fl_mgr.set_keyframe_data(layer_idx, start, scene_node)
+	    fl_stack.mark_keyframe(layer_idx, start)
+	    fl_stack.set_keyframe_data(layer_idx, start, scene_node)
 	    if start != end:
 		tween_type = self._tween_type_names.index(tween_name)
 		tween_len = end - start + 1
-		fl_mgr.tween(layer_idx, start, tween_len, tween_type)
+		fl_stack.tween(layer_idx, start, tween_len, tween_type)
 		pass
 	    pass
 	pass
@@ -1025,8 +1031,8 @@ class MBDOM_UI(object):
 	    layer_group_node = self._dom.get_layer_group(layer_idx)
 	    label = layer_group_node.getAttribute('inkscape:label')
 	    
-	    self._fl_mgr._add_frameline(layer_idx)
-	    self._fl_mgr.set_layer_label(layer_idx, label)
+	    self._fl_stack._add_frameline(layer_idx)
+	    self._fl_stack.set_layer_label(layer_idx, label)
 
 	    self._update_frameline_content(layer_idx)
 	    pass
@@ -1036,9 +1042,9 @@ class MBDOM_UI(object):
     #
     def handle_doc_root(self, doc, root):
 	self._dom.handle_doc_root(doc, root)
-	self._fl_mgr._init_framelines()
+	self._fl_stack._init_framelines()
 	self._add_frameline_for_every_layer()
-	self._fl_mgr._show_framelines()
+	self._fl_stack._show_framelines()
 	pass
 
     ## \brief Mark given frame as a key frame.
@@ -1050,8 +1056,8 @@ class MBDOM_UI(object):
 	scene_node = self._dom.add_scene_node(key_idx, key_idx)
 	self._dom.chg_scene_node(scene_node, ref=scene_group_id)
 	
-	self._fl_mgr.mark_keyframe(layer_idx, key_idx)
-	self._fl_mgr.set_keyframe_data(layer_idx, key_idx, scene_node)
+	self._fl_stack.mark_keyframe(layer_idx, key_idx)
+	self._fl_stack.set_keyframe_data(layer_idx, key_idx, scene_node)
 	pass
 
     ## \brief Tweening a key frame.
@@ -1061,10 +1067,10 @@ class MBDOM_UI(object):
     #
     def tween(self, layer_idx, key_frame_idx, tween_len,
 	      tween_type=TweenObject.TWEEN_TYPE_NORMAL):
-	self._fl_mgr.tween(layer_idx, key_frame_idx, tween_len, tween_type)
+	self._fl_stack.tween(layer_idx, key_frame_idx, tween_len, tween_type)
 	
 	end_frame_idx = key_frame_idx + tween_len - 1
-	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
+	scene_node = self._fl_stack.get_keyframe_data(layer_idx, key_frame_idx)
 	tween_name = self._tween_type_names[tween_type]
 	self._dom.chg_scene_node(scene_node, end=end_frame_idx,
 				 tween_type=tween_name)
@@ -1074,9 +1080,9 @@ class MBDOM_UI(object):
     #
     def chg_tween(self, layer_idx, key_frame_idx,
 		  tween_len=None, tween_type=None):
-	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
+	scene_node = self._fl_stack.get_keyframe_data(layer_idx, key_frame_idx)
 	start, end, old_tween_type = \
-	    self._fl_mgr.get_key_tween(layer_idx, key_frame_idx)
+	    self._fl_stack.get_key_tween(layer_idx, key_frame_idx)
 	
 	if tween_len is not None:
 	    end = start + tween_len - 1	    
@@ -1092,16 +1098,16 @@ class MBDOM_UI(object):
 	    pass
 
 	tween_len = end - start + 1
-	self._fl_mgr.tween(layer_idx, start, tween_len, tween_type)
+	self._fl_stack.tween(layer_idx, start, tween_len, tween_type)
 	pass
 
     ## \brief Unmark a frame from a key frame.
     #
     def unmark_key(self, layer_idx, key_frame_idx):
-	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, key_frame_idx)
+	scene_node = self._fl_stack.get_keyframe_data(layer_idx, key_frame_idx)
 	self._dom.rm_scene_node_n_group(scene_node)
 	
-	self._fl_mgr.unmark_keyframe(layer_idx, key_frame_idx)
+	self._fl_stack.unmark_keyframe(layer_idx, key_frame_idx)
 	pass
 
     ## \brief Insert frames at specified position.
@@ -1109,7 +1115,7 @@ class MBDOM_UI(object):
     # All frame at and after given position will shift right.
     #
     def insert_frames(self, layer_idx, frame_idx, num):
-	self._fl_mgr.insert_frames(layer_idx, frame_idx, num)
+	self._fl_stack.insert_frames(layer_idx, frame_idx, num)
 	self._dom.insert_frames(layer_idx, frame_idx, num)
 	pass
 
@@ -1119,7 +1125,7 @@ class MBDOM_UI(object):
     # \ref num frames are removed.
     #
     def rm_frames(self, layer_idx, frame_idx, num):
-	self._fl_mgr.insert_frames(layer_idx, frame_idx, num)
+	self._fl_stack.insert_frames(layer_idx, frame_idx, num)
 	self._dom.rm_frames(layer_idx, frame_idx, num)
 	pass
 
@@ -1130,20 +1136,20 @@ class MBDOM_UI(object):
     #
     def insert_layer(self, layer_idx):
 	self._dom.insert_layer(layer_idx)
-	self._fl_mgr._add_frameline(layer_idx)
-	self._fl_mgr._show_framelines()
+	self._fl_stack._add_frameline(layer_idx)
+	self._fl_stack._show_framelines()
 	pass
 
     ## \brief Remove given layer.
     #
     def rm_layer(self, layer_idx):
 	self._dom.rm_layer(layer_idx)
-	self._fl_mgr._remove_frameline(layer_idx)
-	self._fl_mgr._show_framelines()
+	self._fl_stack._remove_frameline(layer_idx)
+	self._fl_stack._show_framelines()
 	pass
     
     def set_active_layer_frame(self, layer_idx, frame_idx):
-	self._fl_mgr.active_frame(layer_idx, frame_idx)
+	self._fl_stack.active_frame(layer_idx, frame_idx)
 	pass
     
     ## \bref Return current active frame and its layer.
@@ -1151,7 +1157,7 @@ class MBDOM_UI(object):
     # \return (layer_idx, frame_idx) of active frame, or (-1, -1) when no
     #	      active one.
     def get_active_layer_frame(self):
-	layer_idx, frame_idx = self._fl_mgr.get_active_layer_frame()
+	layer_idx, frame_idx = self._fl_stack.get_active_layer_frame()
 	return layer_idx, frame_idx
 
     def get_layer_num(self):
@@ -1162,7 +1168,7 @@ class MBDOM_UI(object):
     # The given frame index must be exactly a key frame.
     #
     def get_key_group(self, layer_idx, frame_idx):
-	scene_node = self._fl_mgr.get_keyframe_data(layer_idx, frame_idx)
+	scene_node = self._fl_stack.get_keyframe_data(layer_idx, frame_idx)
 	scene_group_id = scene_node.getAttribute('ref')
 	scene_group_node = self._dom.get_node(scene_group_id)
 	return scene_group_node
@@ -1182,31 +1188,31 @@ class MBDOM_UI(object):
     #
     def get_key(self, layer_idx, frame_idx):
 	start, end, tween_type = \
-	    self._fl_mgr.get_key_tween(layer_idx, frame_idx)
+	    self._fl_stack.get_key_tween(layer_idx, frame_idx)
 	return start, end, tween_type
 
     def get_left_key(self, layer_idx, frame_idx):
 	start, end, tween_type = \
-	    self._fl_mgr.get_left_key_tween(layer_idx, frame_idx)
+	    self._fl_stack.get_left_key_tween(layer_idx, frame_idx)
 	return start, end, tween_type
 
     ## \brief Return information of key frames in the given layer.
     #
     def get_layer_keys(self, layer_idx):
-	key_tweens = self._fl_mgr.get_all_key_tween_of_layer(layer_idx)
+	key_tweens = self._fl_stack.get_all_key_tween_of_layer(layer_idx)
 	return key_tweens
 
     ## \brief Return widget showing frames and layers.
     #
     def get_frame_ui_widget(self):
-	return self._fl_mgr._frameline_box
+	return self._fl_stack._frameline_box
 
     ## \brief Register a callback for activating a frame event.
     #
     # The callback function is called when a frame is activated.
     #
     def register_active_frame_callback(self, cb):
-	self._fl_mgr.register_active_frame_callback(cb)
+	self._fl_stack.register_active_frame_callback(cb)
 	pass
 
     ## \brief Get duplicate group of a layer.
@@ -1255,9 +1261,8 @@ class MBDOM_UI(object):
 
 ## \brief MBScene connect GUI and DOM-tree
 #
-# This class connect behavior of GUI to the DOM-tree.  All about GUI is
-# implemented by this class.  It use API provided by MBScene_dom to reflect
-# actions to the DOM-tree.
+# This method accepts user actions and involves MBScene_domview_ui to update
+# data on the document.
 #
 class MBScene(object):
     _tween_obj_tween_types = (TweenObject.TWEEN_TYPE_NORMAL,
@@ -1283,7 +1288,7 @@ class MBScene(object):
 	self._disable_tween_type_selector = False
 	self.current = 0
 
-	self._dom = MBDOM_UI()
+	self._domview = MBScene_domview_ui()
 	pass
 
     def change_active_frame(self, node):
@@ -1300,11 +1305,11 @@ class MBScene(object):
 	    
 	    try:
 		layer_idx, (start, end, tween_type) = \
-		    self._dom.find_key_from_group(node_id)
+		    self._domview.find_key_from_group(node_id)
 	    except:
 		pass
 	    else:
-		self._dom.set_active_layer_frame(layer_idx, start)
+		self._domview.set_active_layer_frame(layer_idx, start)
 		break
 	    
 	    node = node.parent()
@@ -1321,24 +1326,24 @@ class MBScene(object):
 
 	"""
 	try:
-	    self._dom.mark_key(layer_idx, frame_idx)
+	    self._domview.mark_key(layer_idx, frame_idx)
 	except ValueError:	# existed key frame
 	    pass
 	pass
 
     def removeKeyScene(self, layer_idx, frame_idx):
-	self._dom.unmark_key(layer_idx, frame_idx)
+	self._domview.unmark_key(layer_idx, frame_idx)
 	self.setCurrentScene(frame_idx)
 	pass
     
     def extendScene(self):
-	layer_idx, frame_idx = self._dom.get_active_layer_frame()
+	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	start, end, tween_type = \
-	    self._dom.get_left_key(layer_idx, frame_idx)
+	    self._domview.get_left_key(layer_idx, frame_idx)
 	tween_len = frame_idx - start + 1
-	self._dom.tween(layer_idx, start, tween_len, tween_type)
+	self._domview.tween(layer_idx, start, tween_len, tween_type)
 	
-	scene_group = self._dom.get_key_group(layer_idx, start)
+	scene_group = self._domview.get_key_group(layer_idx, start)
 	self._enterGroup(scene_group)
 	pass
     
@@ -1363,25 +1368,25 @@ class MBScene(object):
 	"""
 	self.current = idx
 	self.tween.updateMapping()
-	for layer_idx in range(self._dom.get_layer_num()):
-	    dup_group = self._dom.get_layer_dup_group(layer_idx)
+	for layer_idx in range(self._domview.get_layer_num()):
+	    dup_group = self._domview.get_layer_dup_group(layer_idx)
 	    dup_group.setAttribute('style', 'display: none')
 
-	    all_key_tweens = self._dom.get_layer_keys(layer_idx)
+	    all_key_tweens = self._domview.get_layer_keys(layer_idx)
 	    for start, end, tween_type in all_key_tweens:
 		if start == idx: # at key frame
 		    scene_group = \
-			self._dom.get_key_group(layer_idx, start)
+			self._domview.get_key_group(layer_idx, start)
 		    scene_group.setAttribute('style', '')
 		elif start < idx and end >= idx: # in Tween
 		    dup_group.setAttribute('style', '')
 		    scene_group = \
-			self._dom.get_key_group(layer_idx, start)
+			self._domview.get_key_group(layer_idx, start)
 		    scene_group.setAttribute('style', 'display: none')
 		    
 		    try:
 			next_scene_group = \
-			    self._dom.get_key_group(layer_idx, end + 1)
+			    self._domview.get_key_group(layer_idx, end + 1)
 		    except:	# no next key frame
 			next_scene_group = scene_group
 			pass
@@ -1397,7 +1402,7 @@ class MBScene(object):
 		    pass
 		else:		# this scene should not be showed.
 		    scene_group = \
-			self._dom.get_key_group(layer_idx, start)
+			self._domview.get_key_group(layer_idx, start)
 		    scene_group.setAttribute('style', 'display: none')
 		    pass
 		pass
@@ -1416,32 +1421,33 @@ class MBScene(object):
 	
     def selectSceneObject(self, layer_idx, frame_idx):
 	try:
-	    start, stop, tween_type = self._dom.get_key(layer_idx, frame_idx)
+	    start, stop, tween_type = \
+		self._domview.get_key(layer_idx, frame_idx)
 	except:
 	    return
 
-	scene_group = self._dom.get_key_group(layer_idx, start)
+	scene_group = self._domview.get_key_group(layer_idx, start)
 	self._enterGroup(scene_group)
 	self.setTweenType(tween_type)
 	pass
 
     def duplicateKeyScene(self):
         # Search for the current scene
-	layer_idx, frame_idx = self._dom.get_active_layer_frame()
+	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 
 	try:
 	    left_start, left_end, left_tween_type = \
-		self._dom.get_left_key(layer_idx, frame_idx)
+		self._domview.get_left_key(layer_idx, frame_idx)
 	except:
 	    return
 	if left_end >= frame_idx:
 	    return
 
-	self._dom.mark_key(layer_idx, frame_idx)
+	self._domview.mark_key(layer_idx, frame_idx)
 	
-	scene_group = self._dom.get_key_group(layer_idx, frame_idx)
+	scene_group = self._domview.get_key_group(layer_idx, frame_idx)
 	left_scene_group = \
-	    self._dom.get_key_group(layer_idx, left_start)
+	    self._domview.get_key_group(layer_idx, left_start)
 	
 	dup_group = self._duplicate_group(left_scene_group, scene_group)
 
@@ -1532,7 +1538,7 @@ class MBScene(object):
     
     def doInsertKeyScene(self,w):
 	self._lockui=True
-	layer_idx, frame_idx = self._dom.get_active_layer_frame()
+	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	self.insertKeyScene(layer_idx, frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
 	self._lockui=False
@@ -1545,7 +1551,7 @@ class MBScene(object):
 
     def doRemoveScene(self,w):
 	self._lockui = True
-	layer_idx, frame_idx = self._dom.get_active_layer_frame()
+	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	self.removeKeyScene(layer_idx, frame_idx)
 	self._lockui = False
 	return
@@ -1574,7 +1580,7 @@ class MBScene(object):
 	pass
 
     def doRunNext(self):
-	if self.current > self._dom.get_max_frame():
+	if self.current > self._domview.get_max_frame():
 	    self.current = 0
 	    pass
 	try:
@@ -1589,28 +1595,28 @@ class MBScene(object):
 
     def doInsertFrame(self, w):
 	self.lockui=True
-	layer_idx, frame_idx = self._dom.get_active_layer_frame()
-	self._dom.insert_frames(layer_idx, frame_idx, 1)
+	layer_idx, frame_idx = self._domview.get_active_layer_frame()
+	self._domview.insert_frames(layer_idx, frame_idx, 1)
 	self.lockui=False
 
     def doRemoveFrame(self, w):
         self.lockui=True
-	layer_idx, frame_idx = self._dom.get_active_layer_frame()
-	self._dom.rm_frames(layer_idx, frame_idx, 1)
+	layer_idx, frame_idx = self._domview.get_active_layer_frame()
+	self._domview.rm_frames(layer_idx, frame_idx, 1)
 	self.lockui=False
 
     def onTweenTypeChange(self, w):
 	if self._disable_tween_type_selector:
 	    return
 
-	layer_idx, frame_idx = self._dom.get_active_layer_frame()
+	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	tween_type = self.tweenTypeSelector.get_active()
 	
 	start, end, old_tween_type = \
-	    self._dom.get_left_key(layer_idx, frame_idx)
+	    self._domview.get_left_key(layer_idx, frame_idx)
 	if end >= frame_idx and start != end:
 	    # Length of tween > 1 and cover this frame
-	    self._dom.chg_tween(layer_idx, start, tween_type=tween_type)
+	    self._domview.chg_tween(layer_idx, start, tween_type=tween_type)
 	    pass
 	pass
     
@@ -1667,8 +1673,8 @@ class MBScene(object):
 	self.document = self.desktop.doc().rdoc
 	
 	self.tween = TweenObject(self.document, self._root)
-	self._dom.handle_doc_root(self.document, self._root)
-	self._dom.register_active_frame_callback(self.onCellClick)
+	self._domview.handle_doc_root(self.document, self._root)
+	self._domview.register_active_frame_callback(self.onCellClick)
 
 	if self.top == None:
 	    self.top = gtk.VBox(False, 0)
@@ -1681,7 +1687,7 @@ class MBScene(object):
 	vbox = gtk.VBox(False, 0)
 	self.startWindow = vbox
 	self.top.pack_start(vbox, expand=False)
-	frame_ui = self._dom.get_frame_ui_widget()
+	frame_ui = self._domview.get_frame_ui_widget()
 	vbox.pack_start(frame_ui, expand=False)
 	hbox=gtk.HBox(False, 0)
 	self._add_buttons(hbox)
