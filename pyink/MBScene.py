@@ -1066,7 +1066,9 @@ class MBDOM_UI(object):
 	if tween_type is None:
 	    tween_type = old_tween_type
 	    pass
-	self._fl_mgr.tween(layer_idx, start, end, tween_type)
+
+	tween_len = end - start + 1
+	self._fl_mgr.tween(layer_idx, start, tween_len, tween_type)
 	pass
 
     def rm_key_n_tween(self, layer_idx, key_frame_idx):
@@ -1570,7 +1572,7 @@ class MBScene(object):
 	    self._dom.get_left_key(layer_idx, frame_idx)
 	if end >= frame_idx and start != end:
 	    # Length of tween > 1 and cover this frame
-	    self._dom.chg_tween(tween_type)
+	    self._dom.chg_tween(layer_idx, start, tween_type=tween_type)
 	    pass
 	pass
     
