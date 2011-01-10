@@ -804,9 +804,9 @@ class MBScene_framelines(object):
     # \return (-1, -1) for no active, (layer_idx, frame_idx) for current
     #		active.
     def get_active_layer_frame(self):
-	if self._active_frameline:
-	    layer_idx = self._active_frameline.layer_idx
-	    frame_idx = self._active_frameline.get_active_frame()
+	if self._last_active_frameline:
+	    layer_idx = self._last_active_frameline.layer_idx
+	    frame_idx = self._last_active_frameline.get_active_frame()
 	    if frame_idx != -1:
 		return layer_idx, frame_idx
 	    pass
@@ -1025,7 +1025,7 @@ class MBDOM_UI(object):
 	scene_group_id = scene_group.getAttribute('id')
 	
 	scene_node = self._dom.add_scene_node(key_idx, key_idx)
-	scene_node.chg_scene_node(scene_node, ref=scene_group_id)
+	self._dom.chg_scene_node(scene_node, ref=scene_group_id)
 	
 	self._fl_mgr.add_keyframe(layer_idx, key_idx)
 	self._fl_mgr.set_keyframe_data(layer_idx, key_idx, scene_node)
@@ -1232,7 +1232,7 @@ class MBScene(object):
 	self._lockui = False
 	self.tween = None
 	self.document = None
-	self.root = root
+	self._root = root
 	self.framerate = 12
 	self._disable_tween_type_selector = False
 	self.current = 0
@@ -1297,7 +1297,7 @@ class MBScene(object):
 	self._dom.tween(layer_idx, start, tween_len, tween_type)
 	
 	scene_group = self._dom.get_keyframe_group(layer_idx, start)
-	self._enterGroup(scene_gorup)
+	self._enterGroup(scene_group)
 	pass
     
     def setCurrentScene(self, idx):
@@ -1401,10 +1401,9 @@ class MBScene(object):
 	
 	scene_group = self._dom.get_keyframe_group(layer_idx, frame_idx)
 	left_scene_group = \
-	    self._dom.get_keyframe_group(layer_idx, left_frame_idx)
+	    self._dom.get_keyframe_group(layer_idx, left_start)
 	
-	left_scene_group_id = left_scene_group.getAttribute('id')
-	dup_group = self._duplicate_group(left_scene_group_id, scene_group)
+	dup_group = self._duplicate_group(left_scene_group, scene_group)
 
 	self.setCurrentScene(frame_idx)
 	pass
@@ -1416,10 +1415,11 @@ class MBScene(object):
     def _duplicate_group(self, src_group, dst_group):
 	# Search for the duplicated group
         root = self._root
-	doc = self._doc
+	doc = self.document
 	
-	dup_group = orig.duplicate(doc)
+	dup_group = src_group.duplicate(doc)
 	for child in dup_group.childList():
+	    dup_group.removeChild(child) # prvent from crash
 	    dst_group.appendChild(child)
 	    pass
 
@@ -1620,13 +1620,13 @@ class MBScene(object):
 
     def show(self):
 	self.OK = True
-	if not self.root:
-	    self.root = self.desktop.doc().root().repr
+	if not self._root:
+	    self._root = self.desktop.doc().root().repr
 	    pass
 	
 	self.document = self.desktop.doc().rdoc
-	self.tween = TweenObject(self.document, self.root)
-	self._dom.handle_doc_root(self.document, self.root)
+	self.tween = TweenObject(self.document, self._root)
+	self._dom.handle_doc_root(self.document, self._root)
 	self._dom.register_active_frame_callback(self.onCellClick)
 
 	if self.top == None:
