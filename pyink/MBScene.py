@@ -569,6 +569,33 @@ class MBScene_dom(MBScene_dom_monitor):
 	layer = self._layers[layer_idx]
 	return layer.scenes
 
+    def get_layer_data(self, layer_idx):
+	layer = self._layers[layer_idx]
+	try:
+	    data = layer.data
+	except:
+	    return None
+	return data
+
+    def set_layer_data(self, layer_idx, data):
+	layer = self._layers[layer_idx]
+	layer.data = data
+	pass
+
+    def add_layer_dup_group(self, layer_idx):
+	layer = self._layers[layer_idx]
+	
+	dup_group = self._doc.createElement('svg:g')
+	gid = self.new_id()
+	dup_group.setAttribute('id', gid)
+	dup_group.setAttribute('inkscape:label', 'dup')
+	dup_group.setAttribute('sodipodi:insensitive', '1')
+	dup_group.setAttribute('style', '')
+
+	layer.group.appendChild(dup_group)
+	
+	return dup_group
+
     def add_frames(self, layer_idx, frame_idx, num):
 	layer = self._layers[layer_idx]
 	for scene_node in layer.scenes:
@@ -1110,6 +1137,30 @@ class MBDOM_UI(object):
     def set_layer_label(self, txt):
 	self._fl_mgr.set_layer_label(txt)
 	pass
+
+    ## \brief Get duplicate group of a layer.
+    #
+    def get_layer_dup_group(self, layer_idx):
+	data = self._dom.get_layer_data(layer_idx)
+	if not data:
+	    data = object()
+	    self._dom.set_layer_data(layer_idx, data)
+	    pass
+
+	if hasattr(data, 'dup_group_id'):
+	    try:
+		dup_group = self._dom.get_node(data.dup_group_id)
+	    except KeyError:
+		dup_group = None
+		pass
+	    pass
+	
+	if not dup_group:
+	    dup_group = self._dom.add_layer_dup_group(layer_idx)
+	    data.dup_group_id = dup_group.getAttribute('id')
+	    pass
+
+	return dup_group
     pass
 
 ## \brief MBScene connect GUI and DOM-tree
@@ -1219,94 +1270,45 @@ class MBScene(MBScene_dom, MBScene_framelines):
 	"""
 	self.current = idx
 	self.tween.updateMapping()
-	for frameline in self._framelines:
-	    i=0
+	for layer_idx in range(self._dom.get_layer_num()):
+	    dup_group = self._dom.get_layer_dup_group(layer_idx)
 
-	    # Check the duplicated scene group and create it if it is not
-	    # available
-	    try:
-		frameline.duplicateGroup.setAttribute("style","display:none")
-	    except:
-	        print "*" * 40
-		layer_idx = frameline.layer_idx
-		layer = self._layers[layer_idx]
-		for child in layer.group.childList():
-		    try:
-		        label = child.getAttribute('inkscape:label')
-		        if label == 'dup':
-			    frameline.duplicateGroup = child
-			    break
-		    except:
-		        pass
-		    pass
-		else:
-		    duplicateGroup = self.document.createElement("svg:g")
-		    duplicateGroup.setAttribute("inkscape:label","dup")
-		    duplicateGroup.setAttribute("sodipodi:insensitive","1")
-		    duplicateGroup.setAttribute("style","")
-		    
-		    layer.group.appendChild(duplicateGroup)
-		    frameline.duplicateGroup = duplicateGroup
-		    pass
-	        pass
-	    
-	    # Create a new group
-	    for start_idx, stop_idx, tween_type in frameline.get_frame_blocks():
-		if start_idx == stop_idx:
-		    scene_node = frameline.get_frame_data(start_idx)
-		    scene_group_id = scene_node.getAttribute('ref')
-		    scene_group = self.get_node(scene_group_id)
-		    if idx == start_idx:
-			scene_group.setAttribute('style', '')
-		    else:
-			scene_group.setAttribute('style', 'display: none')
-			pass
-		elif idx == start_idx:
-		    frameline.duplicateGroup.setAttribute("style","display:none")
-		    scene_node = frameline.get_frame_data(start_idx)
-		    scene_group_id = scene_node.getAttribute('ref')
-		    scene_group = self.get_node(scene_group_id)
-		    scene_group.setAttribute("style","")
-		elif start_idx < idx and stop_idx >= idx:
-		    scene_node = frameline.get_frame_data(start_idx)
-		    scene_group_id = scene_node.getAttribute('ref')
-		    scene_group = self.get_node(scene_group_id)
-		    scene_group.setAttribute("style","display:none")
-		    frameline.duplicateGroup.setAttribute("style","")
-		    tween_type_idx = \
-			self._frameline_tween_types.index(tween_type)
-		    tween_obj_tween_type = \
-			self._tween_obj_tween_types[tween_type_idx]
+	    all_key_tweens = self._dom.get_all_key_tween_of_layer(layer_idx)
+	    for start, stop, tween_type in all_key_tweens:
+		if start == idx: # at key frame
+		    dup_group.setAttribute('style', 'display: none')
+		    scene_group = \
+			self._dom.get_keyframe_group(layer_idx, idx)
+		    scene_group.setAttribute('style', '')
+		elif start < idx and end  >= idx: # in Tween
+		    scene_group = \
+			self._dom.get_keyframe_group(layer_idx, idx)
 		    
 		    try:
-			next_idx, next_stop_idx, next_tween_type = \
-			    frameline.get_frame_block(stop_idx + 1)
-		    except:
-			next_scene_node = scene_node
-		    else:
-			next_scene_node = frameline.get_frame_data(next_idx)
+			next_scene_group = \
+			    self._dom.get_keyframe_group(layer_idx, end + 1)
+		    except:	# no next key frame
+			next_scene_group = scene_group
 			pass
 
-		    next_scene_group_id = next_scene_node.getAttribute('ref')
-		    next_scene_group = self.get_node(next_scene_group_id)
-		    
-		    nframes = stop_idx - start_idx + 1
-		    percent = float(idx - start_idx) / nframes
-		    self.tween.updateTweenContent(frameline.duplicateGroup,
-						  tween_obj_tween_type,
+		    tween_obj_type = self._tween_obj_tween_types[tween_type]
+		    nframes = stop - start + 1
+		    percent = float(idx - start) / nframes
+		    self.tween.updateTweenContent(dup_group,
+						  tween_obj_type,
 						  scene_group,
 						  next_scene_group,
 						  percent)
-		else:
-		    scene_node = frameline.get_frame_data(start_idx)
-		    scene_group_id = scene_node.getAttribute('ref')
-		    scene_group = self.get_node(scene_group_id)
-		    scene_group.setAttribute("style","display:none")
+		    pass
+		else:		# this scene should not be showed.
+		    scene_group = \
+			self._dom.get_keyframe_group(layer_idx, idx)
+		    scene_group.setAttribute('style', '')
 		    pass
 		pass
 	    pass
 	pass
-
+    
     def enterGroup(self, obj):
         for l in self._layers:
 	    for s in l.group.childList():
@@ -1357,6 +1359,9 @@ class MBScene(MBScene_dom, MBScene_framelines):
     #
     # When DOM-tree is changed, this function make sure layer information is up
     # to date.
+    #
+    # TODO: move this to somewhere
+    #
     def _make_layers_integral(self):
 	root = self._root
 	root_id = root.getAttribute('id')
