@@ -416,7 +416,7 @@ class domview_ui(object):
 	scene_group = self._dom.add_scene_group(layer_idx)
 	scene_group_id = scene_group.getAttribute('id')
 	
-	scene_node = self._dom.add_scene_node(key_idx, key_idx)
+	scene_node = self._dom.add_scene_node(layer_idx, key_idx, key_idx)
 	self._dom.chg_scene_node(scene_node, ref=scene_group_id)
 	
 	self._fl_stack.mark_keyframe(layer_idx, key_idx)
@@ -488,7 +488,7 @@ class domview_ui(object):
     # \ref num frames are removed.
     #
     def rm_frames(self, layer_idx, frame_idx, num):
-	self._fl_stack.insert_frames(layer_idx, frame_idx, num)
+	self._fl_stack.rm_frames(layer_idx, frame_idx, num)
 	self._dom.rm_frames(layer_idx, frame_idx, num)
 	pass
 
