@@ -233,6 +233,16 @@ class TweenObject:
 	    We will parse the transform matrix of the @s and @d and then 
 	    generate the matrix which is (1-p) of @s and p percent of @d.
 	"""
+	if newobj and not newobj.firstChild():
+	    # newobj is not with expect structure.
+	    #
+	    # When a user change tween type of a scene, the structure
+	    # of dup group created by old tween type may not satisfy
+	    # the requirement of current tween type.
+	    newobj.parent().removeChild(newobj)
+	    newobj = None
+	    pass
+
 	if newobj == None:
             newobj = s.duplicate(self.document)
             top = self.document.createElement("svg:g")
@@ -241,7 +251,8 @@ class TweenObject:
 	    obj.appendChild(top)
 	else:
 	    top = newobj
-	    newobj = top.firstChild()
+	    newobj = newobj.firstChild()
+	    pass
 	        
 	if s.name() == 'svg:g':
 	    # Parse the translate or matrix

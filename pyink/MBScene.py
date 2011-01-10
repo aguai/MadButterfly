@@ -479,7 +479,7 @@ class MBScene_dom(MBScene_dom_monitor):
     def rm_scene_node_n_group(self, scene_node):
 	scene_group_id = scene_node.getAttribute('ref')
 	scene_group_node = self.get_node(scene_group_id)
-	scene_group_node.parent.removeChild(scene_group_node)
+	scene_group_node.parent().removeChild(scene_group_node)
 	
 	self._scenes_node.removeChild(scene_node)
 	pass
@@ -543,9 +543,9 @@ class MBScene_dom(MBScene_dom_monitor):
 	    for scene_node in layer.scenes:
 		scene_group_id = scene_node.getAttribute('ref')
 		scene_group_node = self.get_node(scene_group_id)
-		scene_group_node.parent.removeChild(scene_group_node)
+		scene_group_node.parent().removeChild(scene_group_node)
 		
-		scene_node.parent.removeChild(scene_node)
+		scene_node.parent().removeChild(scene_node)
 		pass
 	    pass
 	
