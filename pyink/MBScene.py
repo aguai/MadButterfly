@@ -37,22 +37,6 @@ from domview_ui import domview_ui
 #       scene into two scenes with the same content.
 #
 
-## \brief Iterator to travel a sub-tree of DOM.
-#
-def _DOM_iterator(node):
-    nodes = [node]
-    while nodes:
-	node = nodes.pop(0)
-	child = node.firstChild()
-	while child:
-	    nodes.append(child)
-	    child = child.next()
-	    pass
-	yield node
-	pass
-    pass
-
-
 ## \brief MBScene connect GUI and DOM-tree
 #
 # This method accepts user actions and involves domview_ui to update
@@ -174,40 +158,11 @@ class MBScene(object):
 	    return
 
 	self._domview.mark_key(layer_idx, frame_idx)
-	
-	scene_group = self._domview.get_key_group(layer_idx, frame_idx)
-	left_scene_group = \
-	    self._domview.get_key_group(layer_idx, left_start)
-	
-	dup_group = self._duplicate_group(left_scene_group, scene_group)
+	self._domview.copy_key_group(layer_idx, left_start, frame_idx)
 
 	self._director.show_scene(frame_idx)
 	pass
 
-    ## \brief Duplicate children of a group.
-    #
-    # Duplicate children of a group, and append them to another group.
-    #
-    def _duplicate_group(self, src_group, dst_group):
-	# Search for the duplicated group
-        root = self._root
-	doc = self.document
-	
-	dup_group = src_group.duplicate(doc)
-	for child in dup_group.childList():
-	    dup_group.removeChild(child) # prvent from crash
-	    dst_group.appendChild(child)
-	    pass
-
-	old_nodes = _DOM_iterator(src_group)
-	new_nodes = _DOM_iterator(dst_group)
-	for old_node in old_nodes:
-	    old_node_id = old_node.getAttribute('id')
-	    new_node = new_nodes.next()
-	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
-	    pass
-	pass
-    
     def changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
 	o.setAttribute("inkscape:label", self.nameEditor.get_text())
