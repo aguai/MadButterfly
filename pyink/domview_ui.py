@@ -1,7 +1,7 @@
 import gtk
 from tween import TweenObject
 from frameline import frameline, frameruler
-from domview import MBScene_domview
+from domview import domview
 
 
 ## \brief Maintain a stack of frameline UI component.
@@ -12,7 +12,7 @@ from domview import MBScene_domview
 # frame index number.  You access/set content of frameline by specifing layer
 # index and frame index.
 #
-class MBScene_frameline_stack(object):
+class frameline_stack(object):
     _frameline_tween_types = (frameline.TWEEN_TYPE_NONE,
 			      frameline.TWEEN_TYPE_SHAPE)
     _num_frames_of_line = 100
@@ -20,7 +20,7 @@ class MBScene_frameline_stack(object):
     _framelines = None
     
     def __init__(self, *args, **kws):
-	super(MBScene_frameline_stack, self).__init__(*args, **kws)
+	super(frameline_stack, self).__init__(*args, **kws)
 	
 	self._last_mouse_over_frameline = None
 	self._last_active_frameline = None
@@ -351,13 +351,13 @@ class MBScene_frameline_stack(object):
 ## \brief Bridge of DOM-tree to syncrhonize data-model and UI.
 #
 # This class is a wrapper
-class MBScene_domview_ui(object):
+class domview_ui(object):
     _tween_type_names = ('normal', 'scale')
     
     def __init__(self):
-	super(MBScene_domview_ui, self).__init__()
-	self._fl_stack = MBScene_frameline_stack()
-	self._dom = MBScene_domview()
+	super(domview_ui, self).__init__()
+	self._fl_stack = frameline_stack()
+	self._dom = domview()
 	pass
 
     ## \brief Update content of a frameline from scenes of respective layer.
