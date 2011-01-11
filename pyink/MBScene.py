@@ -43,6 +43,8 @@ from data_monitor import data_monitor
 # This method accepts user actions and involves domview_ui to update
 # data on the document.
 #
+# This class is protected by \ref data_monitor, meta-class.
+#
 class MBScene(object):
     __metaclass__ = data_monitor
 
