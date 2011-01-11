@@ -5,6 +5,12 @@ import os
 # This class is a meta-class that monitor data accessing for its instance
 # classes.
 #
+# It is a monitor with a small modification.  The calling would be
+# rejected when the domview_ui was locked.  It will not waiting for a
+# lock.
+#
+# \see http://en.wikipedia.org/wiki/Monitor_%28synchronization%29
+#
 # All methods, of instance classes, who's name is prefixed with 'do' are
 # monitored.  When a monitored method was called, monitor will try to lock
 # _domview of the object.  The method is only called if successfully acquiring
