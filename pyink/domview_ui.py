@@ -596,7 +596,7 @@ class domview_ui(object):
     ## \brief Find the layer index associated with a given layer group.
     #
     def find_layer_from_group(self, group_id):
-        layer_idx = self._domview.find_layer_from_group(group_id)
+        layer_idx = self._dom.find_layer_of_group(group_id)
         if layer_idx == -1:
             raise ValueError, \
                 'can not find the layer for group %s' % (group_id)

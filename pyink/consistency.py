@@ -83,6 +83,19 @@ class consistency_checker(object):
             pass
         else:               # We have found the key frame.
             self._domview.unmark_key(layer_idx, start)
+            return
+
+        #
+        # Remove layers
+        #
+        if child_name == 'svg:g':
+            try:
+                layer_idx = self._domview.find_layer_from_group(group_id)
+            except ValueError:
+                pass
+            else:               # It is a layer group
+                self._domview.rm_layer(layer_idx)
+                pass
             pass
         pass
 
