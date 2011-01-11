@@ -524,6 +524,10 @@ class domview(domview_monitor):
     def get_layer_num(self):
 	return len(self._layers)
 
+    ## \brief Find layer index and scene info for a given scene node.
+    #
+    # \return (-1, None) for error.
+    #
     def find_layer_n_scene_of_node(self, node_id):
 	for layer_idx, layer in enumerate(self._layers):
 	    for scene_node in layer.scenes:
@@ -568,6 +572,17 @@ class domview(domview_monitor):
 	layer.group.appendChild(dup_group)
 	
 	return dup_group
+
+    ## \brief Return associated layer index of given layer group.
+    #
+    # \return -1 for error.
+    #
+    def find_layer_of_group(self, group_id):
+        for layer_idx, layer in enumerate(self._layers):
+            if layer.group.getAttribute('id') == group_id:
+                return layer_idx
+            pass
+        return -1
 
     def insert_frames(self, layer_idx, frame_idx, num):
 	layer = self._layers[layer_idx]

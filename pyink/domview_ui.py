@@ -542,6 +542,9 @@ class domview_ui(object):
     def find_key_from_group(self, scene_group_id):
 	layer_idx, scene_node = \
 	    self._dom.find_layer_n_scene_of_node(scene_group_id)
+        if layer_idx == -1:
+            raise ValueError, \
+                'can not find the key for group %s' % (scene_group_id)
 	start, end, tween_name = self._dom._parse_one_scene(scene_node)
 	tween_type = self._tween_type_names.index(tween_name)
 	return layer_idx, (start, end, tween_type)
@@ -589,6 +592,15 @@ class domview_ui(object):
     def register_active_frame_callback(self, cb):
 	self._fl_stack.register_active_frame_callback(cb)
 	pass
+    
+    ## \brief Find the layer index associated with a given layer group.
+    #
+    def find_layer_from_group(self, group_id):
+        layer_idx = self._domview.find_layer_from_group(group_id)
+        if layer_idx == -1:
+            raise ValueError, \
+                'can not find the layer for group %s' % (group_id)
+        return layer_idx
 
     ## \brief Get duplicate group of a layer.
     #
