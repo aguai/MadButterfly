@@ -271,7 +271,7 @@ class MBScene(object):
 	self.change_active_frame(self.last_select.repr.parent())
 	pass
 
-    def onCellClick(self, layer_idx, frame_idx):
+    def do_CellClick(self, layer_idx, frame_idx):
 	self._lockui = True
 	
 	self._director.show_scene(frame_idx)
@@ -417,7 +417,7 @@ class MBScene(object):
 	self.document = self.desktop.doc().rdoc
 	
 	self._domview.handle_doc_root(self.document, self._root)
-	self._domview.register_active_frame_callback(self.onCellClick)
+	self._domview.register_active_frame_callback(self.do_CellClick)
 	self._director = scenes_director(self._domview)
 
 	if self.top == None:
