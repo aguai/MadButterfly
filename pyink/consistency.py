@@ -51,6 +51,29 @@ class consistency_checker(object):
         self._start_check()
         pass
 
+    def _insert_node_recursive(self, node, child):
+        child_name = child.name()
+        
+        if child_name == 'ns0:scene':
+            scene_group_id = child.getAttribute('ref')
+            try:
+                scene_group = self._domview.get_node(scene_group_id)
+            except KeyError:    # can not find associated scene group.
+                pass
+            else:
+                self._domview.manage_scene_node(child, scene_group)
+                pass
+        elif child_name == 'svg:g':
+            if node.name() == 'svg:svg':
+                self._domview.manage_layer_group(child)
+                pass
+            pass
+        
+        for cchild in child.childList():
+            self._remove_node_recursive(child, cchild)
+            pass
+        pass
+
     def _remove_node_recursive(self, node, child):
         for cchild in child.childList():
             self._remove_node_recursive(child, cchild)
@@ -100,6 +123,7 @@ class consistency_checker(object):
         pass
 
     def do_insert_node(self, node, child):
+        self._insert_node_recursive(node, child)
         pass
 
     def do_remove_node(self, node, child):

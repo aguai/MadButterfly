@@ -665,9 +665,69 @@ class domview_ui(object):
     pass
 
 
+## \brief Expose some internal interface.
+#
+# This is a mix-in to provide API for internal using, for example,
+# consistency_checker.
+#
+class domview_internal(object):
+    ## \brief Search a node by a ID.
+    #
+    def get_node(self, node_id):
+        node = self._dom.get_node(node_id)
+        return node
+
+    ## \brief Search scene node by scene group ID.
+    #
+    def get_scene_by_group(self, scene_group_id):
+        scene_node = self._dom.get_scene(scene_group_id)
+        return scene_node
+
+    ## \brief Manage a scene node that is unknown by domview_ui before.
+    #
+    def manage_scene_node(self, scene_node, scene_group):
+        layer_group = scene_group.parent()
+        layer_group_id = layer_group.getAttribute('id')
+        layer_idx = self.find_layer_from_group(layer_group_id)
+        self._dom.manage_scene_node(layer_idx, scene_node)
+
+        start, end, tween_name = \
+            self._dom._parse_one_scene(scene_node)
+        tween_type = self._tween_type_names.index(tween_name)
+
+        tween_len = end - start + 1
+        self._fl_stack.mark_keyframe(layer_idx, start)
+        self._fl_stack.set_keyframe_data(layer_idx, start, scene_node)
+        self._fl_stack.tween(layer_idx, start, tween_len, tween_type)
+        pass
+
+    ## \brief Manage a layer group that is unknown by domview_ui before.
+    #
+    def manage_layer_group(self, layer_group):
+        try:
+            layer_group_id = layer_group.getAttribute('id')
+        except:
+            return
+        
+        layer_idx = self._dom.manage_layer_group(layer_group_id)
+        if layer_idx == -1:
+            return
+        
+        self._fl_stack._add_frameline(layer_idx)
+        self._fl_stack._show_framelines()
+        try:
+            label = layer_group.getAttribute('inkscape:label')
+        except:
+            label = layer_group.getAttribute('id')
+            pass
+        self._fl_stack.set_layer_label(layer_idx, label)
+        pass
+    pass
+
+
 ## \brief A mix-in to enable workers for a domview_ui.
 #
-class domview_ui_with_workers(domview_ui):
+class domview_ui_with_workers(domview_ui, domview_internal):
     def __init__(self):
         super(domview_ui_with_workers, self).__init__()
         
