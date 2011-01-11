@@ -410,7 +410,12 @@ class domview(domview_monitor):
 	    pass
 	pass
 
+    ## \brief Remove scene node from DOM-tree.
+    #
     def rm_scene_node(self, scene_node):
+        if not scene_node.parent():
+            return              # without this, may crash the Inkscape.
+        
 	self._scenes_node.removeChild(scene_node)
         for layer in self._layers:
             try:
@@ -422,12 +427,26 @@ class domview(domview_monitor):
             pass
 	pass
 
+    ## \brief Remove scene node and asssociated scene group from DOM.
+    #
+    # It will remove as many as possible.  Does not complain about
+    # error in the procedure of removing.
+    #
     def rm_scene_node_n_group(self, scene_node):
 	scene_group_id = scene_node.getAttribute('ref')
-	scene_group_node = self.get_node(scene_group_id)
-	scene_group_node.parent().removeChild(scene_group_node)
+        try:
+            scene_group_node = self.get_node(scene_group_id)
+            if scene_group_node.parent(): # Check it, or crash the
+                                          # Inkscape.
+                scene_group_node.parent().removeChild(scene_group_node)
+                pass
+        except:
+            pass
 	
-        self.rm_scene_node(scene_node)
+        try:
+            self.rm_scene_node(scene_node)
+        except:
+            pass
 	pass
 
     ## \brief Create and add a svg:g for a scene under a group for a layer.
