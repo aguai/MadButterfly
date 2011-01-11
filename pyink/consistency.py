@@ -51,10 +51,46 @@ class consistency_checker(object):
         self._start_check()
         pass
 
+    def _remove_node_recursive(self, node, child):
+        for cchild in child.childList():
+            self._remove_node_recursive(child, cchild)
+            pass
+        
+        child_name = child.name()
+        if child_name not in ('ns0:scene', 'svg:g'):
+            return
+
+        #
+        # Remove the key frame assocated with a removed scene node or
+        # scene group if we can find the key frame.
+        #
+        if child_name == 'ns0:scene':
+            try:
+                group_id = child.getAttribute('ref')
+            except:
+                return
+        elif child_name == 'svg:g':
+            try:
+                group_id = child.getAttribute('id')
+            except:
+                return
+            pass
+            
+        try:
+            layer_idx, (start, end, tween_type) = \
+                self._domview.find_key_from_group(group_id)
+        except ValueError:
+            pass
+        else:               # We have found the key frame.
+            self._domview.unmark_key(layer_idx, start)
+            pass
+        pass
+
     def do_insert_node(self, node, child):
         pass
 
     def do_remove_node(self, node, child):
+        self._remove_node_recursive(node, child)
         pass
 
     def do_attr_modified(self, node, name, old_value, new_value):
