@@ -2,7 +2,7 @@ import gtk
 from tween import TweenObject
 from frameline import frameline, frameruler
 from domview import domview
-
+import consistency
 
 ## \brief Maintain a stack of frameline UI component.
 #
@@ -361,6 +361,7 @@ class domview_ui(object):
 	self._dom = domview()
         self._doc = None
         self._root = None
+        self._consistency_checker = consistency.consistency_checker(self)
         self._lock = False
 	pass
 
@@ -409,6 +410,7 @@ class domview_ui(object):
 
         self._doc = doc
         self._root = root
+        self._consistency_checker.handle_doc_root(doc, root)
 	pass
 
     ## \brief Mark given frame as a key frame.
