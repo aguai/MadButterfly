@@ -361,6 +361,7 @@ class domview_ui(object):
 	self._dom = domview()
         self._doc = None
         self._root = None
+        self._lock = False
 	pass
 
     ## \brief Update content of a frameline from scenes of respective layer.
@@ -641,9 +642,13 @@ class domview_ui(object):
         return self._root
 
     def lock(self):
+        if self._lock:
+            return False
+        self._lock = True
         return True
 
     def unlock(self):
+        self._lock = False
         return True
     pass
 
