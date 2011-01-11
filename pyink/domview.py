@@ -504,13 +504,19 @@ class domview(domview_monitor):
     def rm_layer(self, layer_idx):
 	layers = self._layers
 
-	for layer in layers:
-	    for scene_node in layer.scenes:
-		scene_group_id = scene_node.getAttribute('ref')
-		scene_group_node = self.get_node(scene_group_id)
-		scene_group_node.parent().removeChild(scene_group_node)
-		
-		scene_node.parent().removeChild(scene_node)
+        layer = self._layers[layer_idx]
+        for scene_node in layer.scenes:
+            scene_group_id = scene_node.getAttribute('ref')
+            try:
+                scene_group_node = self.get_node(scene_group_id)
+                if scene_group_node.parent(): # keep from crashing
+                    scene_group_node.parent().removeChild(scene_group_node)
+                    pass
+            except:
+                pass
+            
+            if scene_node.parent(): # keep from crashing
+                scene_node.parent().removeChild(scene_node)
 		pass
 	    pass
 	
