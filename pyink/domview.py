@@ -391,6 +391,12 @@ class domview(domview_monitor):
 	
 	return scene_node
 
+    ## \brief Manage a existed scene node at given layer.
+    #
+    def manage_scene_node(self, layer_idx, scene_node):
+        self._layers[layer_idx].scenes.append(scene_node)
+        pass
+
     ## \brief Change attributes of a scene node.
     #
     # This is here to monitor changes of scene node.
@@ -499,6 +505,62 @@ class domview(domview_monitor):
 	    pass
 	pass
 
+    ## \brief Manage a existed layer group
+    #
+    # This method scan layer groups of all managed layers, and find a
+    # proper place to insert it.
+    #
+    # \return -1 for error, or layer index.
+    #
+    def manage_layer_group(self, layer_group_id):
+        layer_group = self.get_node(layer_group_id)
+        new_layer = Layer(layer_group)
+
+        if not self._layers:
+            new_layer.idx = 0
+            self._layers.append(new_layer)
+            return 0
+        
+        #
+        # Scan who is after the given group
+        #
+        next_group = layer_group.next()
+        while next_group:
+            next_group_id = next_group.getAttribute('id')
+            
+            for vlayer in self._layers:
+                vlayer_group_id = vlayer.group.getAttribute('id')
+                if vlayer_group_id == next_group_id:
+                    # This layer group is after given one.
+                    self._layers.insert(vlayer.idx, new_layer)
+                    
+                    for idx in range(vlayer.idx, len(self._layers)):
+                        self._layers[idx].idx = idx
+                        pass
+                    return new_layer.idx
+                pass
+            
+            next_group = next_group.next()
+            pass
+        
+        #
+        # Is the given group after last layer group?
+        #
+        tail_group = self._layers[-1].group.next()
+        while tail_group:
+            tail_group_id = tail_group.getAttribute('id')
+            
+            if tail_group_id == layer_group_id:
+                # it is after last layer group.
+                new_layer.idx = len(self._layers)
+                self._layers.append(new_layer)
+                return new_layer.idx
+            
+            tail_group = tail_group.next()
+            pass
+
+        return -1             # error, can not determinze the position
+    
     ## \brief Remove layer and associated scene nodes and scene groups.
     #
     def rm_layer(self, layer_idx):
