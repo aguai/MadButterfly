@@ -639,5 +639,11 @@ class domview_ui(object):
     @property
     def root(self):
         return self._root
+
+    def lock(self):
+        return True
+
+    def unlock(self):
+        return True
     pass
 
