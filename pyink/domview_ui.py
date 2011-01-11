@@ -361,7 +361,6 @@ class domview_ui(object):
 	self._dom = domview()
         self._doc = None
         self._root = None
-        self._consistency_checker = consistency.consistency_checker(self)
         self._lock = False
 	pass
 
@@ -410,7 +409,6 @@ class domview_ui(object):
 
         self._doc = doc
         self._root = root
-        self._consistency_checker.handle_doc_root(doc, root)
 	pass
 
     ## \brief Mark given frame as a key frame.
@@ -653,4 +651,28 @@ class domview_ui(object):
         self._lock = False
         return True
     pass
+
+
+## \brief A mix-in to enable workers for a domview_ui.
+#
+class domview_ui_with_workers(domview_ui):
+    def __init__(self):
+        super(domview_ui_with_workers, self).__init__()
+        
+        self._consistency_checker = consistency.consistency_checker(self)
+        pass
+
+    def handle_doc_root(self, doc, root):
+        super(domview_ui_with_workers, self).handle_doc_root(doc, root)
+        
+        self._consistency_checker.handle_doc_root(doc, root)
+        pass
+    pass
+
+
+## \brief Factory function of domview_ui.
+#
+def create_domview_ui():
+    domview = domview_ui_with_workers()
+    return domview
 
