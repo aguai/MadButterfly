@@ -7,7 +7,7 @@ import glib
 import traceback
 import pybInkscape
 from tween import scenes_director
-from domview_ui import domview_ui
+from domview_ui import create_domview_ui
 from data_monitor import data_monitor
 
 # Please refer to
@@ -69,7 +69,7 @@ class MBScene(object):
 	self._disable_tween_type_selector = False
 	self.current = 0
 
-	self._domview = domview_ui()
+	self._domview = create_domview_ui()
 	pass
 
     def change_active_frame(self, node):
