@@ -68,6 +68,9 @@ class data_monitor(type):
 		    pass
 		
 		if not self._domview.lock(): # can not lock
+		    if debug_level >= 1:
+			print '  fault to lock'
+			pass
 		    return
 		
 		try:
