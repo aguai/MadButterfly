@@ -110,7 +110,7 @@ class MBScene(object):
 	self.window = win
 	self.top = None
 	self.last_update = None
-	pybInkscape.inkscape.connect('change_selection', self.on_selection)
+	pybInkscape.inkscape.connect('change_selection', self.do_selection)
 	self.last_select = None
 	self._lockui = False
 	self._director = None
@@ -219,7 +219,7 @@ class MBScene(object):
 	self._director.show_scene(frame_idx)
 	pass
 
-    def changeObjectLabel(self,w):
+    def do_changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
 	o.setAttribute("inkscape:label", self.nameEditor.get_text())
 	pass
@@ -229,7 +229,7 @@ class MBScene(object):
 	hbox.pack_start(self.nameEditor,expand=False,fill=False)
 	self.editDone = gtk.Button('Set')
 	hbox.pack_start(self.editDone,expand=False,fill=False)
-	self.editDone.connect('clicked', self.changeObjectLabel)
+	self.editDone.connect('clicked', self.do_changeObjectLabel)
 	pass
 
     def addTweenTypeSelector(self, hbox):
@@ -243,10 +243,10 @@ class MBScene(object):
 	self.tweenTypeSelector.set_active(0)
 	tweenbox.pack_start(self.tweenTypeSelector, expand=False, fill=False)
 	hbox.pack_start(tweenbox, expand=False, fill=False)
-	self.tweenTypeSelector.connect('changed', self.onTweenTypeChange)
+	self.tweenTypeSelector.connect('changed', self.do_TweenTypeChange)
 	pass
     
-    def on_selection(self,w,obj):
+    def do_selection(self,w,obj):
 	objs =  self.desktop.selection.list()
 	try:
 	    o = objs[0]
@@ -346,7 +346,7 @@ class MBScene(object):
 	self._domview.rm_frames(layer_idx, frame_idx, 1)
 	self.lockui=False
 
-    def onTweenTypeChange(self, w):
+    def do_TweenTypeChange(self, w):
 	if self._disable_tween_type_selector:
 	    return
 
