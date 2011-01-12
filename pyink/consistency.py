@@ -144,11 +144,3 @@ class consistency_checker(object):
 	    pass
         pass
     pass
-
-    def lock(self):
-        self._domview.lock()
-	pass
-
-    def unlock(self):
-        self._domview.unlock()
-	pass

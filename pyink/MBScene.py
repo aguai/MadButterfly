@@ -196,15 +196,6 @@ class MBScene(object):
 	self.tweenTypeSelector.connect('changed', self.do_TweenTypeChange)
 	pass
     
-    def lock(self):
-        self._domviewui.lock()
-	pass
-
-    def unlock(self):
-        self._domviewui.unlock()
-	pass
-
-    
     def do_changeObjectLabel(self,w):
 	o = self.desktop.selection.list()[0]
 	o.setAttribute("inkscape:label", self.nameEditor.get_text())
@@ -289,18 +280,14 @@ class MBScene(object):
 	pass
 
     def doInsertFrame(self, w):
-	self.lockui=True
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self._domviewui.insert_frames(layer_idx, frame_idx, 1)
 	self.markUndo("insert frame")
-	self.lockui=False
 
     def doRemoveFrame(self, w):
-        self.lockui=True
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self._domviewui.rm_frames(layer_idx, frame_idx, 1)
 	self.markUndo("remove frame")
-	self.lockui=False
 
     def do_TweenTypeChange(self, w):
 	if self._disable_tween_type_selector:
