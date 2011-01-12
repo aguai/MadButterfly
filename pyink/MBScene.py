@@ -225,24 +225,33 @@ class MBScene(object):
 	
 	self._lockui = False
         pass
+
+    def markUndo(self, msg):
+	#self._domview.mark_undo(msg)
+	# FIXME: move into domview latter when the inkscpae-pybind is modified
+	#        to support the sp_document_done.
+	self.desktop.doc().done("None",msg)
     
     def doInsertKeyScene(self,w):
 	self._lockui=True
 	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	self.insertKeyScene(layer_idx, frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
+	self.markUndo("insert key")
 	self._lockui=False
 	return
     
     def doDuplicateKeyScene(self,w):
 	self._lockui = True
         self.duplicateKeyScene()
+	self.markUndo("dup key")
 	self._lockui = False
 
     def doRemoveScene(self,w):
 	self._lockui = True
 	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	self.removeKeyScene(layer_idx, frame_idx)
+	self.markUndo("remove key")
 	self._lockui = False
 	return
 
@@ -250,6 +259,7 @@ class MBScene(object):
     def doExtendScene(self,w):
 	self._lockui = True
 	self.extendScene()
+	self.markUndo("extend key")
 	self._lockui = False
 	pass
 
@@ -287,12 +297,14 @@ class MBScene(object):
 	self.lockui=True
 	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	self._domview.insert_frames(layer_idx, frame_idx, 1)
+	self.markUndo("insert frame")
 	self.lockui=False
 
     def doRemoveFrame(self, w):
         self.lockui=True
 	layer_idx, frame_idx = self._domview.get_active_layer_frame()
 	self._domview.rm_frames(layer_idx, frame_idx, 1)
+	self.markUndo("remove frame")
 	self.lockui=False
 
     def do_TweenTypeChange(self, w):
@@ -308,6 +320,7 @@ class MBScene(object):
 	    # Length of tween > 1 and cover this frame
 	    self._domview.chg_tween(layer_idx, start, tween_type=tween_type)
 	    pass
+	self.markUndo("change type")
 	pass
     
     def onQuit(self, event):
