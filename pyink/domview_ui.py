@@ -110,7 +110,6 @@ class frameline_stack(object):
 	
 	hbox = line.parent
 	vbox.remove(hbox)
-	hbox.remove(line)
 	del self._framelines[layer_idx]
 	
 	for idx in range(layer_idx, len(self._framelines)):
@@ -131,7 +130,6 @@ class frameline_stack(object):
 	self._last_mouse_over_frameline = None
 	self._last_active_frameline = None
 	self._active_frame_callback = None
-
 	pass
 
     def _init_framelines(self):
