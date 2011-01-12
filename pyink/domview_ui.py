@@ -72,7 +72,7 @@ class frameline_stack(object):
 
     ## \brief Add a frameline into the frameline box for the given layer.
     #
-    def _add_frameline(self, layer_idx):
+    def add_frameline(self, layer_idx):
 	if layer_idx > len(self._framelines):
 	    raise ValueError, 'layer number should be a consequence'
 	vbox = self._frameline_vbox
@@ -104,7 +104,7 @@ class frameline_stack(object):
     
     ## \brief Remove the given frameline from the frameline box.
     #
-    def _remove_frameline(self, layer_idx):
+    def remove_frameline(self, layer_idx):
 	vbox = self._frameline_vbox
 	line = self._framelines[layer_idx]
 	
@@ -117,7 +117,7 @@ class frameline_stack(object):
 	    pass
 	pass
 
-    def _remove_all_framelines(self):
+    def remove_all_framelines(self):
         num = len(self._framelines)
 	
         for idx in range(0, num):
@@ -132,13 +132,13 @@ class frameline_stack(object):
 	self._active_frame_callback = None
 	pass
 
-    def _init_framelines(self):
+    def init_framelines(self):
         if self._framelines!= None: 
 	    return
 	self._framelines = []
 	
 	box = gtk.ScrolledWindow()
-	self._frameline_box = box
+	self.frameline_box = box
 	box.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	box.set_size_request(-1, 150)
 	vbox = gtk.VBox()
@@ -166,7 +166,7 @@ class frameline_stack(object):
     # When a frameline was inserted or removed, it would not be showed
     # immediately.  This function is used to notify toolkit to update the
     # screen and drawing framelines.
-    def _show_framelines(self):
+    def show_framelines(self):
 	self._frameline_vbox.show_all()
 	pass
 
@@ -408,7 +408,7 @@ class domview_ui(object):
 	    layer_group_node = self._dom.get_layer_group(layer_idx)
 	    label = layer_group_node.getAttribute('inkscape:label')
 	    
-	    self._fl_stack._add_frameline(layer_idx)
+	    self._fl_stack.add_frameline(layer_idx)
 	    self._fl_stack.set_layer_label(layer_idx, label)
 
 	    self._update_frameline_content(layer_idx)
@@ -419,9 +419,9 @@ class domview_ui(object):
     #
     def handle_doc_root(self, doc, root):
 	self._dom.handle_doc_root(doc, root)
-	self._fl_stack._init_framelines()
+	self._fl_stack.init_framelines()
 	self._add_frameline_for_every_layer()
-	self._fl_stack._show_framelines()
+	self._fl_stack.show_framelines()
 
         self._doc = doc
         self._root = root
@@ -430,7 +430,7 @@ class domview_ui(object):
     ## \brief Reload the document.
     #
     def reset(self):
-        self._fl_stack._remove_all_framelines()
+        self._fl_stack.remove_all_framelines()
         self.handle_doc_root(self._doc, self._root)
 	pass
 
@@ -523,16 +523,16 @@ class domview_ui(object):
     #
     def insert_layer(self, layer_idx):
 	self._dom.insert_layer(layer_idx)
-	self._fl_stack._add_frameline(layer_idx)
-	self._fl_stack._show_framelines()
+	self._fl_stack.add_frameline(layer_idx)
+	self._fl_stack.show_framelines()
 	pass
 
     ## \brief Remove given layer.
     #
     def rm_layer(self, layer_idx):
 	self._dom.rm_layer(layer_idx)
-	self._fl_stack._remove_frameline(layer_idx)
-	self._fl_stack._show_framelines()
+	self._fl_stack.remove_frameline(layer_idx)
+	self._fl_stack.show_framelines()
 	pass
     
     def set_active_layer_frame(self, layer_idx, frame_idx):
@@ -606,7 +606,7 @@ class domview_ui(object):
     ## \brief Return widget showing frames and layers.
     #
     def get_frame_ui_widget(self):
-	return self._fl_stack._frameline_box
+	return self._fl_stack.frameline_box
 
     ## \brief Register a callback for activating a frame event.
     #
@@ -743,8 +743,8 @@ class domview_internal(object):
         if layer_idx == -1:
             return
         
-        self._fl_stack._add_frameline(layer_idx)
-        self._fl_stack._show_framelines()
+        self._fl_stack.add_frameline(layer_idx)
+        self._fl_stack.show_framelines()
         try:
             label = layer_group.getAttribute('inkscape:label')
         except:
