@@ -351,7 +351,8 @@ class domview(domview_monitor):
 	pass
 
     def reset(self):
-        self.handle_doc_root( self._doc, self._root)
+        self._layers = []
+        self._parse_all_layers()
 	pass
    
     def dumpattr(self, n):
