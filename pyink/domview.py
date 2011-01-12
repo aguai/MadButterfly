@@ -104,7 +104,8 @@ class domview_monitor(object):
 	    pass
 	else:
 	    if child_id not in self._id2node:
-	        return
+                raise ValueError, \
+                    'remove a node that is never known (%s)' % (child_id)
 	    del self._id2node[child_id]
 	    pass
 	
