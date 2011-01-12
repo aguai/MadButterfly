@@ -168,11 +168,12 @@ class MBScene(object):
 	self._director.show_scene(frame_idx)
 	pass
 
-    def do_changeObjectLabel(self,w):
-	o = self.desktop.selection.list()[0]
-	o.setAttribute("inkscape:label", self.nameEditor.get_text())
-	pass
-
+    def markUndo(self, msg):
+	#self._domviewui.mark_undo(msg)
+	# FIXME: move into domview latter when the inkscpae-pybind is modified
+	#        to support the sp_document_done.
+	self.desktop.doc().done("None",msg)
+    
     def addNameEditor(self,hbox):
 	self.nameEditor = gtk.Entry(max=40)
 	hbox.pack_start(self.nameEditor,expand=False,fill=False)
@@ -195,6 +196,20 @@ class MBScene(object):
 	self.tweenTypeSelector.connect('changed', self.do_TweenTypeChange)
 	pass
     
+    def lock(self):
+        self._domviewui.lock()
+	pass
+
+    def unlock(self):
+        self._domviewui.unlock()
+	pass
+
+    
+    def do_changeObjectLabel(self,w):
+	o = self.desktop.selection.list()[0]
+	o.setAttribute("inkscape:label", self.nameEditor.get_text())
+	pass
+
     def do_selection(self,w,obj):
 	objs =  self.desktop.selection.list()
 	try:
@@ -222,12 +237,6 @@ class MBScene(object):
 	self.selectSceneObject(layer_idx, frame_idx)
         pass
 
-    def markUndo(self, msg):
-	#self._domviewui.mark_undo(msg)
-	# FIXME: move into domview latter when the inkscpae-pybind is modified
-	#        to support the sp_document_done.
-	self.desktop.doc().done("None",msg)
-    
     def doInsertKeyScene(self,w):
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.insertKeyScene(layer_idx, frame_idx)
@@ -246,15 +255,6 @@ class MBScene(object):
 	self.markUndo("remove key")
 	return
 
-    def lock(self):
-        self._domviewui.lock()
-	pass
-
-    def unlock(self):
-        self._domviewui.unlock()
-	pass
-
-    
     def doExtendScene(self,w):
 	self.extendScene()
 	self.markUndo("extend key")
