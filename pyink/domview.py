@@ -187,7 +187,7 @@ class domview_monitor(object):
 	    pass
 	pass
     
-    def _parse_one_scene(self, scene_node):
+    def parse_one_scene(self, scene_node):
 	assert scene_node.name() == 'ns0:scene'
 
 	start = int(scene_node.getAttribute("start"))
@@ -221,7 +221,7 @@ class domview_monitor(object):
 		continue
 
 	    try:
-		start, end, scene_type = self._parse_one_scene(scene_node)
+		start, end, scene_type = self.parse_one_scene(scene_node)
 	    except:
 		continue
 	    
@@ -659,7 +659,7 @@ class domview(domview_monitor):
     def insert_frames(self, layer_idx, frame_idx, num):
 	layer = self._layers[layer_idx]
 	for scene_node in layer.scenes:
-	    start, end, tween_type = self._parse_one_scene(scene_node)
+	    start, end, tween_type = self.parse_one_scene(scene_node)
 	    if start >= frame_idx:
 		self.chg_scene_node(scene_node, start=(start + num))
 		pass
@@ -686,7 +686,7 @@ class domview(domview_monitor):
 	last_rm = frame_idx + num - 1 # last removed frame
 	for scene_node in layer.scenes:
 	    start, end, tween_type = \
-		self._parse_one_scene(scene_node)
+		self.parse_one_scene(scene_node)
 	    
 	    if end < frame_idx:
 		continue

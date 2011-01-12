@@ -386,7 +386,7 @@ class domview_ui(object):
 	fl_stack = self._fl_stack
 	scene_nodes = self._dom.get_all_scene_node_of_layer(layer_idx)
 	for scene_node in scene_nodes:
-	    start, end, tween_name = self._dom._parse_one_scene(scene_node)
+	    start, end, tween_name = self._dom.parse_one_scene(scene_node)
 
 	    fl_stack.mark_keyframe(layer_idx, start)
 	    fl_stack.set_keyframe_data(layer_idx, start, scene_node)
@@ -568,7 +568,7 @@ class domview_ui(object):
         if layer_idx == -1:
             raise ValueError, \
                 'can not find the key for group %s' % (scene_group_id)
-	start, end, tween_name = self._dom._parse_one_scene(scene_node)
+	start, end, tween_name = self._dom.parse_one_scene(scene_node)
 	tween_type = self._tween_type_names.index(tween_name)
 	return layer_idx, (start, end, tween_type)
     
@@ -722,7 +722,7 @@ class domview_internal(object):
         self._dom.manage_scene_node(layer_idx, scene_node)
 
         start, end, tween_name = \
-            self._dom._parse_one_scene(scene_node)
+            self._dom.parse_one_scene(scene_node)
         tween_type = self._tween_type_names.index(tween_name)
 
         tween_len = end - start + 1
