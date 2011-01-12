@@ -69,7 +69,7 @@ class MBScene(object):
 	self._disable_tween_type_selector = False
 	self.current = 0
 
-	self._domview = create_domview_ui()
+	self._domviewui = create_domview_ui()
 	pass
 
     def change_active_frame(self, node):
@@ -86,11 +86,11 @@ class MBScene(object):
 	    
 	    try:
 		layer_idx, (start, end, tween_type) = \
-		    self._domview.find_key_from_group(node_id)
+		    self._domviewui.find_key_from_group(node_id)
 	    except:
 		pass
 	    else:
-		self._domview.set_active_layer_frame(layer_idx, start)
+		self._domviewui.set_active_layer_frame(layer_idx, start)
 		break
 	    
 	    node = node.parent()
@@ -107,24 +107,24 @@ class MBScene(object):
 
 	"""
 	try:
-	    self._domview.mark_key(layer_idx, frame_idx)
+	    self._domviewui.mark_key(layer_idx, frame_idx)
 	except ValueError:	# existed key frame
 	    pass
 	pass
 
     def removeKeyScene(self, layer_idx, frame_idx):
-	self._domview.unmark_key(layer_idx, frame_idx)
+	self._domviewui.unmark_key(layer_idx, frame_idx)
 	self._director.show_scene(frame_idx)
 	pass
     
     def extendScene(self):
-	layer_idx, frame_idx = self._domview.get_active_layer_frame()
+	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	start, end, tween_type = \
-	    self._domview.get_left_key(layer_idx, frame_idx)
+	    self._domviewui.get_left_key(layer_idx, frame_idx)
 	tween_len = frame_idx - start + 1
-	self._domview.tween(layer_idx, start, tween_len, tween_type)
+	self._domviewui.tween(layer_idx, start, tween_len, tween_type)
 	
-	scene_group = self._domview.get_key_group(layer_idx, start)
+	scene_group = self._domviewui.get_key_group(layer_idx, start)
 	self._enterGroup(scene_group)
 	pass
     
@@ -141,29 +141,29 @@ class MBScene(object):
     def selectSceneObject(self, layer_idx, frame_idx):
 	try:
 	    start, stop, tween_type = \
-		self._domview.get_key(layer_idx, frame_idx)
+		self._domviewui.get_key(layer_idx, frame_idx)
 	except:
 	    return
 
-	scene_group = self._domview.get_key_group(layer_idx, start)
+	scene_group = self._domviewui.get_key_group(layer_idx, start)
 	self._enterGroup(scene_group)
 	self.setTweenType(tween_type)
 	pass
 
     def duplicateKeyScene(self):
         # Search for the current scene
-	layer_idx, frame_idx = self._domview.get_active_layer_frame()
+	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 
 	try:
 	    left_start, left_end, left_tween_type = \
-		self._domview.get_left_key(layer_idx, frame_idx)
+		self._domviewui.get_left_key(layer_idx, frame_idx)
 	except:
 	    return
 	if left_end >= frame_idx:
 	    return
 
-	self._domview.mark_key(layer_idx, frame_idx)
-	self._domview.copy_key_group(layer_idx, left_start, frame_idx)
+	self._domviewui.mark_key(layer_idx, frame_idx)
+	self._domviewui.copy_key_group(layer_idx, left_start, frame_idx)
 
 	self._director.show_scene(frame_idx)
 	pass
@@ -227,14 +227,14 @@ class MBScene(object):
         pass
 
     def markUndo(self, msg):
-	#self._domview.mark_undo(msg)
+	#self._domviewui.mark_undo(msg)
 	# FIXME: move into domview latter when the inkscpae-pybind is modified
 	#        to support the sp_document_done.
 	self.desktop.doc().done("None",msg)
     
     def doInsertKeyScene(self,w):
 	self._lockui=True
-	layer_idx, frame_idx = self._domview.get_active_layer_frame()
+	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.insertKeyScene(layer_idx, frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
 	self.markUndo("insert key")
@@ -249,7 +249,7 @@ class MBScene(object):
 
     def doRemoveScene(self,w):
 	self._lockui = True
-	layer_idx, frame_idx = self._domview.get_active_layer_frame()
+	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.removeKeyScene(layer_idx, frame_idx)
 	self.markUndo("remove key")
 	self._lockui = False
@@ -280,7 +280,7 @@ class MBScene(object):
 	pass
 
     def doRunNext(self):
-	if self.current > self._domview.get_max_frame():
+	if self.current > self._domviewui.get_max_frame():
 	    self.current = 0
 	    pass
 	try:
@@ -295,15 +295,15 @@ class MBScene(object):
 
     def doInsertFrame(self, w):
 	self.lockui=True
-	layer_idx, frame_idx = self._domview.get_active_layer_frame()
-	self._domview.insert_frames(layer_idx, frame_idx, 1)
+	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
+	self._domviewui.insert_frames(layer_idx, frame_idx, 1)
 	self.markUndo("insert frame")
 	self.lockui=False
 
     def doRemoveFrame(self, w):
         self.lockui=True
-	layer_idx, frame_idx = self._domview.get_active_layer_frame()
-	self._domview.rm_frames(layer_idx, frame_idx, 1)
+	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
+	self._domviewui.rm_frames(layer_idx, frame_idx, 1)
 	self.markUndo("remove frame")
 	self.lockui=False
 
@@ -311,14 +311,14 @@ class MBScene(object):
 	if self._disable_tween_type_selector:
 	    return
 
-	layer_idx, frame_idx = self._domview.get_active_layer_frame()
+	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	tween_type = self.tweenTypeSelector.get_active()
 	
 	start, end, old_tween_type = \
-	    self._domview.get_left_key(layer_idx, frame_idx)
+	    self._domviewui.get_left_key(layer_idx, frame_idx)
 	if end >= frame_idx and start != end:
 	    # Length of tween > 1 and cover this frame
-	    self._domview.chg_tween(layer_idx, start, tween_type=tween_type)
+	    self._domviewui.chg_tween(layer_idx, start, tween_type=tween_type)
 	    pass
 	self.markUndo("change type")
 	pass
@@ -375,9 +375,9 @@ class MBScene(object):
 	
 	self.document = self.desktop.doc().rdoc
 	
-	self._domview.handle_doc_root(self.document, self._root)
-	self._domview.register_active_frame_callback(self.do_CellClick)
-	self._director = scenes_director(self._domview)
+	self._domviewui.handle_doc_root(self.document, self._root)
+	self._domviewui.register_active_frame_callback(self.do_CellClick)
+	self._director = scenes_director(self._domviewui)
 
 	if self.top == None:
 	    self.top = gtk.VBox(False, 0)
@@ -390,7 +390,7 @@ class MBScene(object):
 	vbox = gtk.VBox(False, 0)
 	self.startWindow = vbox
 	self.top.pack_start(vbox, expand=False)
-	frame_ui = self._domview.get_frame_ui_widget()
+	frame_ui = self._domviewui.get_frame_ui_widget()
 	vbox.pack_start(frame_ui, expand=False)
 	hbox=gtk.HBox(False, 0)
 	self._add_buttons(hbox)
