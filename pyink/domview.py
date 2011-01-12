@@ -159,7 +159,21 @@ class domview_monitor(object):
 		pass
 	    pass
 	elif (name in ('start', 'end')) and node.name() == 'ns0:scene':
-	    self._maxframe = max(int(new_value), self._maxframe)
+            try:
+                new_value = int(new_value)
+                old_value = int(old_value)
+            except TypeError:
+                scenes_node = node.parent()
+                self._maxframe = self._find_maxframe(scenes_node)
+            else:
+                if old_value == self._maxframe and old_value > new_value:
+                    # _maxframe may be reduced.
+                    scenes_node = node.parent()
+                    self._maxframe = self._find_maxframe(scenes_node)
+                else:
+                    self._maxframe = max(int(new_value), self._maxframe)
+                    pass
+                pass
 	    pass
 	pass
     
