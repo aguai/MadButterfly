@@ -431,7 +431,8 @@ class domview_ui(object):
     #
     def reset(self):
         self._fl_stack.remove_all_framelines()
-        self.handle_doc_root(self._doc, self._root)
+        self._dom.reset()
+        self._add_frameline_for_every_layer()
 	pass
 
     ## \brief Mark given frame as a key frame.
