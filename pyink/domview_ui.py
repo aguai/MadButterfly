@@ -75,7 +75,6 @@ class frameline_stack(object):
     def _add_frameline(self, layer_idx):
 	if layer_idx > len(self._framelines):
 	    raise ValueError, 'layer number should be a consequence'
-
 	vbox = self._frameline_vbox
 	
 	line = frameline(self._num_frames_of_line)
@@ -111,6 +110,7 @@ class frameline_stack(object):
 	
 	hbox = line.parent
 	vbox.remove(hbox)
+	hbox.remove(line)
 	del self._framelines[layer_idx]
 	
 	for idx in range(layer_idx, len(self._framelines)):
@@ -118,7 +118,23 @@ class frameline_stack(object):
 	    pass
 	pass
 
+    def _remove_all_framelines(self):
+        num = len(self._framelines)
+	
+        for idx in range(0,num):
+	    line = self._framelines[idx]
+	    hbox = line.parent
+	    self._frameline_vbox.remove(hbox)
+	self._framelines=[]
+	self._last_mouse_over_frameline = None
+	self._last_active_frameline = None
+	self._active_frame_callback = None
+
+	pass
+
     def _init_framelines(self):
+        if self._framelines!= None: 
+	    return
 	self._framelines = []
 	
 	box = gtk.ScrolledWindow()
@@ -411,6 +427,13 @@ class domview_ui(object):
         self._root = root
 	pass
 
+    ## \brief Reload the document.
+    #
+    def reset(self):
+        self._fl_stack._remove_all_framelines()
+        self.handle_doc_root(self._doc, self._root)
+	pass
+
     ## \brief Mark given frame as a key frame.
     #
     def mark_key(self, layer_idx, key_idx):
@@ -644,6 +667,13 @@ class domview_ui(object):
     def get_max_frame(self):
 	max_frame = self._dom.get_max_frame()
 	return max_frame
+
+    ## \brief add the current position to the undo buffer.
+    #
+    #  The msg will be displayed in the UI to indicate the undo set.
+    def mark_undo(self, msg):
+    	self._dom.mark_undo(msg)
+    	pass
 
     @property
     def doc(self):

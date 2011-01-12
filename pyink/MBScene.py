@@ -70,6 +70,7 @@ class MBScene(object):
 	self.current = 0
 
 	self._domviewui = create_domview_ui()
+	self._locker = self._domviewui
 	pass
 
     def change_active_frame(self, node):
@@ -254,6 +255,14 @@ class MBScene(object):
 	self.markUndo("remove key")
 	self._lockui = False
 	return
+
+    def lock(self):
+        self._domviewui.lock()
+	pass
+
+    def unlock(self):
+        self._domviewui.unlock()
+	pass
 
     
     def doExtendScene(self,w):

@@ -72,7 +72,7 @@ class domview_monitor(object):
 	    except:
 		pass
 	    pass
-	pass
+	pass	    
 
     def _find_maxframe(self, scenes_node):
 	maxframe = 0
@@ -104,8 +104,7 @@ class domview_monitor(object):
 	    pass
 	else:
 	    if child_id not in self._id2node:
-		raise ValueError, \
-		    'remove a node that is never known (%s)' % (child_id)
+	        return
 	    del self._id2node[child_id]
 	    pass
 	
@@ -189,7 +188,7 @@ class domview_monitor(object):
     
     def _parse_one_scene(self, scene_node):
 	assert scene_node.name() == 'ns0:scene'
-	
+
 	start = int(scene_node.getAttribute("start"))
 	try:
 	    end = int(scene_node.getAttribute("end"))
@@ -221,6 +220,7 @@ class domview_monitor(object):
 		continue
 
 	    try:
+	    	ref = scene_node.getAttribute('ref')
 		start, end, scene_type = self._parse_one_scene(scene_node)
 	    except:
 		continue
@@ -348,6 +348,10 @@ class domview(domview_monitor):
 	self._start_monitor()	# start domview_monitor
 	self._init_metadata()
 	self._parse_all_layers()
+	pass
+
+    def reset(self):
+        self.handle_doc_root( self._doc, self._root)
 	pass
    
     def dumpattr(self, n):
@@ -664,6 +668,12 @@ class domview(domview_monitor):
 		pass
 	    pass
 	pass
+
+    ## \brief add the current position to the undo buffer
+    #
+    def mark_undo(self, msg):
+    	self._doc.done("none", msg)
+    	pass
 
     ## \brief Remove frames
     #
