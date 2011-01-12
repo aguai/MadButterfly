@@ -34,7 +34,7 @@ class data_monitor(type):
 		    print '    kws:  %s' % (repr(kws))
 		    pass
 		
-		if not self._domview.lock(): # can not lock
+		if not self._locker.lock(): # can not lock
 		    if debug_level >= 1:
 			print '  fault to lock'
 			pass
@@ -43,7 +43,7 @@ class data_monitor(type):
 		try:
 		    func(self, *args, **kws)
 		finally:
-		    self._domview.unlock()
+		    self._locker.unlock()
 		    pass
 		pass
 	    return sentinel

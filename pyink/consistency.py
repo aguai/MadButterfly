@@ -1,6 +1,6 @@
 import dom_event
 from data_monitor import data_monitor
-
+import traceback
 ## \brief Check consistency of a DOM-tree associated with a domview_ui.
 #
 # This is a co-worker of \ref domview_ui to check DOM-tree and make
@@ -26,6 +26,7 @@ class consistency_checker(object):
     
     def __init__(self, domview_ui):
         self._domview = domview_ui
+	self._locker = self._domview
         self._doc = None
         self._root = None
         pass
@@ -75,6 +76,7 @@ class consistency_checker(object):
         pass
 
     def _remove_node_recursive(self, node, child):
+    	return
         for cchild in child.childList():
             self._remove_node_recursive(child, cchild)
             pass
@@ -131,5 +133,22 @@ class consistency_checker(object):
         pass
 
     def do_attr_modified(self, node, name, old_value, new_value):
+    	if node.name() == 'ns0:scene' and name == 'ref':
+	    try:
+	        if new_value:
+		    raise ValueError('The new_value is not empty')
+	        self._domview.reset()
+	    except:
+	        traceback.print_exc()
+	        pass
+	    pass
         pass
     pass
+
+    def lock(self):
+        self._domview.lock()
+	pass
+
+    def unlock(self):
+        self._domview.unlock()
+	pass
