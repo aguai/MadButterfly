@@ -121,11 +121,13 @@ class frameline_stack(object):
     def _remove_all_framelines(self):
         num = len(self._framelines)
 	
-        for idx in range(0,num):
+        for idx in range(0, num):
 	    line = self._framelines[idx]
 	    hbox = line.parent
 	    self._frameline_vbox.remove(hbox)
-	self._framelines=[]
+            pass
+        
+	self._framelines = []
 	self._last_mouse_over_frameline = None
 	self._last_active_frameline = None
 	self._active_frame_callback = None
