@@ -221,7 +221,6 @@ class domview_monitor(object):
 		continue
 
 	    try:
-	    	ref = scene_node.getAttribute('ref')
 		start, end, scene_type = self._parse_one_scene(scene_node)
 	    except:
 		continue
