@@ -61,7 +61,6 @@ class MBScene(object):
 	self.last_update = None
 	pybInkscape.inkscape.connect('change_selection', self.do_selection)
 	self.last_select = None
-	self._lockui = False
 	self._director = None
 	self.document = None
 	self._root = root
@@ -219,12 +218,8 @@ class MBScene(object):
 	pass
 
     def do_CellClick(self, layer_idx, frame_idx):
-	self._lockui = True
-	
 	self._director.show_scene(frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
-	
-	self._lockui = False
         pass
 
     def markUndo(self, msg):
@@ -234,26 +229,21 @@ class MBScene(object):
 	self.desktop.doc().done("None",msg)
     
     def doInsertKeyScene(self,w):
-	self._lockui=True
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.insertKeyScene(layer_idx, frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
 	self.markUndo("insert key")
-	self._lockui=False
 	return
     
     def doDuplicateKeyScene(self,w):
-	self._lockui = True
         self.duplicateKeyScene()
 	self.markUndo("dup key")
-	self._lockui = False
+	pass
 
     def doRemoveScene(self,w):
-	self._lockui = True
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.removeKeyScene(layer_idx, frame_idx)
 	self.markUndo("remove key")
-	self._lockui = False
 	return
 
     def lock(self):
@@ -266,10 +256,8 @@ class MBScene(object):
 
     
     def doExtendScene(self,w):
-	self._lockui = True
 	self.extendScene()
 	self.markUndo("extend key")
-	self._lockui = False
 	pass
 
     def doRun(self,arg):
@@ -278,13 +266,11 @@ class MBScene(object):
 	"""
 	if self.btnRun.get_label() == "Run":
 	    self.btnRun.set_label("Stop")
-	    self._lockui = True
 	    tmout = 1000 / self.framerate
             self.last_update = glib.timeout_add(tmout, self.doRunNext)
 	else:
 	    self.btnRun.set_label("Run")
 	    glib.source_remove(self.last_update)
-	    self._lockui = False
 	    pass
 	pass
 
