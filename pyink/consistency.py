@@ -1,6 +1,7 @@
 import dom_event
 from data_monitor import data_monitor
 import traceback
+
 ## \brief Check consistency of a DOM-tree associated with a domview_ui.
 #
 # This is a co-worker of \ref domview_ui to check DOM-tree and make
