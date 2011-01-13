@@ -134,14 +134,19 @@ class consistency_checker(object):
         pass
 
     def do_attr_modified(self, node, name, old_value, new_value):
-    	if node.name() == 'ns0:scene' and name == 'ref':
-	    try:
-	        if new_value:
-		    raise ValueError('The new_value is not empty')
-	        self._domviewui.reset()
-	    except:
-	        traceback.print_exc()
+    	if node.name() == 'ns0:scene':
+	    if name == 'ref':
+	        try:
+	            if new_value:
+		        raise ValueError('The new_value is not empty')
+	            self._domviewui.reset()
+	        except:
+	            traceback.print_exc()
+	            pass
 	        pass
-	    pass
+	    elif name == 'end' or name == 'start':
+                self._domviewui.reset()
+		pass
+	        
         pass
     pass
