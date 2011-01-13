@@ -433,6 +433,7 @@ class domview_ui(object):
         self._fl_stack.remove_all_framelines()
         self._dom.reset()
         self._add_frameline_for_every_layer()
+	self._fl_stack.show_framelines()
 	pass
 
     ## \brief Mark given frame as a key frame.
