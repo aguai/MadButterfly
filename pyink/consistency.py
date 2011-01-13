@@ -147,6 +147,9 @@ class consistency_checker(object):
 	    elif name == 'end' or name == 'start':
                 self._domviewui.reset()
 		pass
-	        
+	    elif name == 'type':
+                self._domviewui.reset()
+		pass
+	    pass
         pass
     pass
