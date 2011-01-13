@@ -26,8 +26,8 @@ class consistency_checker(object):
     __metaclass__ = data_monitor
     
     def __init__(self, domview_ui):
-        self._domview = domview_ui
-	self._locker = self._domview
+        self._domviewui = domview_ui
+	self._locker = self._domviewui
         self._doc = None
         self._root = None
         pass
@@ -59,15 +59,15 @@ class consistency_checker(object):
         if child_name == 'ns0:scene':
             scene_group_id = child.getAttribute('ref')
             try:
-                scene_group = self._domview.get_node(scene_group_id)
+                scene_group = self._domviewui.get_node(scene_group_id)
             except KeyError:    # can not find associated scene group.
                 pass
             else:
-                self._domview.manage_scene_node(child, scene_group)
+                self._domviewui.manage_scene_node(child, scene_group)
                 pass
         elif child_name == 'svg:g':
             if node.name() == 'svg:svg':
-                self._domview.manage_layer_group(child)
+                self._domviewui.manage_layer_group(child)
                 pass
             pass
         
@@ -104,11 +104,11 @@ class consistency_checker(object):
             
         try:
             layer_idx, (start, end, tween_type) = \
-                self._domview.find_key_from_group(group_id)
+                self._domviewui.find_key_from_group(group_id)
         except ValueError:
             pass
         else:               # We have found the key frame.
-            self._domview.unmark_key(layer_idx, start)
+            self._domviewui.unmark_key(layer_idx, start)
             return
 
         #
@@ -116,11 +116,11 @@ class consistency_checker(object):
         #
         if child_name == 'svg:g':
             try:
-                layer_idx = self._domview.find_layer_from_group(group_id)
+                layer_idx = self._domviewui.find_layer_from_group(group_id)
             except ValueError:
                 pass
             else:               # It is a layer group
-                self._domview.rm_layer(layer_idx)
+                self._domviewui.rm_layer(layer_idx)
                 pass
             pass
         pass
@@ -138,7 +138,7 @@ class consistency_checker(object):
 	    try:
 	        if new_value:
 		    raise ValueError('The new_value is not empty')
-	        self._domview.reset()
+	        self._domviewui.reset()
 	    except:
 	        traceback.print_exc()
 	        pass
