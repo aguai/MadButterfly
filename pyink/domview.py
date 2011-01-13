@@ -706,13 +706,18 @@ class domview(domview_monitor):
 	    
 	    if end < frame_idx:
 		continue
-	    
+
 	    if start > last_rm:	# this scene is at right side
 		self.chg_scene_node(scene_node,
 				    start=(start - num),
 				    end=(end - num))
+	    elif start >= frame_idx:
+	        self.rm_scene_node_n_group(scene_node)
+	        pass
 	    else:	 # this scene is covered by removing range
-		self.rm_scene_node_n_group(scene_node)
+		self.chg_scene_node(scene_node,
+				    start=start,
+				    end=(end - num))
 		pass
 	    pass
 	pass
