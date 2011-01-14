@@ -326,7 +326,6 @@ class frameline_stack(object):
 		pass
 	    pass
 
-	#
 	# Remove left key of the tween that right key frame is in removing
 	# range.
 	#
