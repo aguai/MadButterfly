@@ -732,15 +732,12 @@ class domview(domview_monitor):
     def copy_group_children(self, src_group, dst_group):
 	# Search for the duplicated group
 	doc = self._doc
-
-	dup_group = src_group.duplicate(doc)
-        
 	old_nodes = _DOM_iterator(src_group)
-	new_nodes = _DOM_iterator(dup_group)
         new_gids = set()
 	for old_node in old_nodes:
 	    old_node_id = old_node.getAttribute('id')
-	    new_node = new_nodes.next()
+	    new_node = doc.createElement("svg:use")
+	    new_node.setAttribute("xlink:href",'#'+old_node_id)
 	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
             
             #
@@ -756,11 +753,7 @@ class domview(domview_monitor):
                 pass
             new_gids.add(gid)
             new_node.setAttribute('id', gid)
-	    pass
-	
-	for child in dup_group.childList():
-	    dup_group.removeChild(child) # prvent from crash
-	    dst_group.appendChild(child)
+	    dst_group.appendChild(new_node)
 	    pass
 	pass
     pass

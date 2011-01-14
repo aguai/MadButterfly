@@ -245,8 +245,8 @@ class TweenObject(object):
 	    top = newobj
 	    newobj = newobj.firstChild()
 	    pass
-	        
-	if s.name() == 'svg:g':
+	print s.name() 
+	if s.name() == 'svg:g' or s.name() == 'svg:use':
 	    # Parse the translate or matrix
 	    # 
 	    # D  = B inv(A)
@@ -278,7 +278,7 @@ class TweenObject(object):
 	    dm = self.parseTransform(d)
 	    dd = self.decomposition(dm)
 	    sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
-	    sy = (ss[1]*(1-p)+dd[1]*p)/ss[0]
+	    sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
 	    a  = ss[2]*(1-p)+dd[2]*p-ss[2]
 	    tx = ox*(1-p)+dx*p
 	    ty = oy*(1-p)+dy*p
@@ -290,31 +290,50 @@ class TweenObject(object):
 	    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
         else:
 	    try:
-	        try:
-	            sw = float(s.getAttribute("width"))
-		except:
+		if d.name() == "svg:use":
 		    sw = 1
-		try:
-  	            sh = float(s.getAttribute("height"))
-		except:
 		    sh = 1
-		try:
-		    dw = float(d.getAttribute("width"))
-		except:
 		    dw = 1
-		try:
-		    dh = float(d.getAttribute("height"))
-		except:
 		    dh = 1
+		else:
+		    try:
+			sw = float(s.getAttribute("width"))
+		    except:
+			sw = 1
+		    try:
+			sh = float(s.getAttribute("height"))
+		    except:
+			sh = 1
+
+		    try:
+			dw = float(d.getAttribute("width"))
+		    except:
+			dw = 1
+		    try:
+			dh = float(d.getAttribute("height"))
+		    except:
+			dh = 1
+		    pass
+
 		try:
 		    start_opacity = parse_opacity(s)
 		except:
 		    start_opacity = 1
+		    pass
 
 		try:
 		    end_opacity =parse_opacity( d)
+		    if d.name() == "svg:use":
+			end_opacity = end_opacity * start_opacity
+			pass
+		    pass
 		except:
-		    end_opacity = 1
+		    if d.name() == "svg:use":
+			end_opacity = start_opacity
+		    else:
+			end_opacity = 1
+		    pass
+
 		cur_opacity = start_opacity*(1-p)+end_opacity*p
 		change_opacity(newobj,cur_opacity)
 
