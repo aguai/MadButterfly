@@ -732,7 +732,7 @@ class domview(domview_monitor):
     def copy_group_children(self, src_group, dst_group):
 	# Search for the duplicated group
 	doc = self._doc
-
+	
 	dup_group = src_group.duplicate(doc)
         
 	old_nodes = _DOM_iterator(src_group)
@@ -757,7 +757,7 @@ class domview(domview_monitor):
             new_gids.add(gid)
             new_node.setAttribute('id', gid)
 	    pass
-	
+
 	for child in dup_group.childList():
 	    dup_group.removeChild(child) # prvent from crash
 	    dst_group.appendChild(child)
