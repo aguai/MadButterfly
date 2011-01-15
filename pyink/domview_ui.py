@@ -604,6 +604,17 @@ class domview_ui(object):
         self._dom.copy_group_children(src_group, dst_group)
         pass
 
+    ## \brief Link content of a source key frame to a destinate.
+    #
+    # Link content of the scene group of a source key frame to the
+    # scene group of a destinate key frame.
+    #
+    def link_key_group(self, layer_idx, src_frame_idx, dst_frame_idx):
+        src_group = self.get_key_group(layer_idx, src_frame_idx)
+        dst_group = self.get_key_group(layer_idx, dst_frame_idx)
+        self._dom.link_group_children(src_group, dst_group)
+        pass
+
     ## \brief Return widget showing frames and layers.
     #
     def get_frame_ui_widget(self):

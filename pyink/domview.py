@@ -732,6 +732,46 @@ class domview(domview_monitor):
     def copy_group_children(self, src_group, dst_group):
 	# Search for the duplicated group
 	doc = self._doc
+
+	dup_group = src_group.duplicate(doc)
+        
+	old_nodes = _DOM_iterator(src_group)
+	new_nodes = _DOM_iterator(dup_group)
+        new_gids = set()
+	for old_node in old_nodes:
+	    old_node_id = old_node.getAttribute('id')
+	    new_node = new_nodes.next()
+	    new_node.setAttribute('ns0:duplicate-src', old_node_id)
+            
+            #
+            # Change ID here, or inkscape would insert the node with
+            # the same ID, and change it later to avoid duplication.
+            # But, our event handler would be called before changing
+            # ID.  It would confuse our code.  We change ID of nodes
+            # before inserting them into the DOM-tree.
+            #
+            gid = self.new_id()
+            while gid in new_gids:
+                gid = self.new_id()
+                pass
+            new_gids.add(gid)
+            new_node.setAttribute('id', gid)
+	    pass
+	
+	for child in dup_group.childList():
+	    dup_group.removeChild(child) # prvent from crash
+	    dst_group.appendChild(child)
+	    pass
+	pass
+    pass
+
+    ## \brief Link children of a group.
+    #
+    # Clone children of a group, and append them to another group.
+    #
+    def link_group_children(self, src_group, dst_group):
+	# Search for the duplicated group
+	doc = self._doc
 	old_nodes = _DOM_iterator(src_group)
         new_gids = set()
 	for old_node in old_nodes:
@@ -757,4 +797,3 @@ class domview(domview_monitor):
 	    pass
 	pass
     pass
-
