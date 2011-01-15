@@ -118,14 +118,19 @@ class MBScene(object):
 	pass
     
     def extendScene(self):
+        # Create a tween
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	start, end, tween_type = \
 	    self._domviewui.get_left_key(layer_idx, frame_idx)
-	tween_len = frame_idx - start + 1
+	tween_len = frame_idx - start 
 	self._domviewui.tween(layer_idx, start, tween_len, tween_type)
-	
+
+	# Create a key frame which link to the previous key frame
 	scene_group = self._domviewui.get_key_group(layer_idx, start)
-	self._enterGroup(scene_group)
+	self._domviewui.mark_key(layer_idx, frame_idx)
+	self._domviewui.copy_key_group(layer_idx, start, frame_idx)
+	self._director.show_scene(frame_idx)
+	self.selectSceneObject(layer_idx, frame_idx)
 	pass
     
     def _enterGroup(self, scene_group):
