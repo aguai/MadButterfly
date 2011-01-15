@@ -158,6 +158,7 @@ class MBScene(object):
     def duplicateKeyScene(self):
         # Search for the current scene
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
+	self.removeKeyScene(layer_idx, frame_idx)
 
 	try:
 	    left_start, left_end, left_tween_type = \
