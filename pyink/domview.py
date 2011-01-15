@@ -757,5 +757,24 @@ class domview(domview_monitor):
             dst_group.append(child)
             pass
 	pass
+
+    ## \brief Clone children of a source group to a destinate group.
+    #
+    # It create a 'svg:use' node for every child of the source group,
+    # and append nodes to the desitnate group.
+    #
+    def clone_group_children(self, src_group, dst_group):
+        doc = self._doc
+
+        for src_child in src_group.childList():
+            src_child_id = src_child.getAttribute('id')
+            dst_child_id = self.new_id()
+            
+            dst_child = doc.createElement('svg:use')
+            dst_child.setAttribute('xlink:href', '#' + src_child_id)
+            dst_child.setAttribute('id', dst_child_id)
+            dst_group.append(child)
+            pass
+        pass
     pass
 
