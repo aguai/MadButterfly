@@ -235,12 +235,11 @@ class domview_monitor(object):
 		continue
 
 	    try:
-	    	ref = scene_node.getAttribute('ref')
 		start, end, scene_type = self.parse_one_scene(scene_node)
-	    except:
+                group_id = scene_node.getAttribute("ref")
+	    except:             # the scene node is incompleted.
 		continue
 	    
-	    group_id = scene_node.getAttribute("ref")
 	    self._group2scene[group_id] = scene_node
 	    pass
 	pass
