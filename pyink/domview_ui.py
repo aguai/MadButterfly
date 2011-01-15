@@ -319,13 +319,14 @@ class frameline_stack(object):
 	except ValueError:	# last removed frame is not in any tween
 	    pass
 	else:
-	    if start >= frame_idx and start > last_rm:
+	    if start >= frame_idx and end > last_rm:
 		# Left key frame of the tween was removed, but not right one.
 		frameline.untween(start)
 		frameline.unmark_keyframe(end)
 		pass
 	    pass
 
+        #
 	# Remove left key of the tween that right key frame is in removing
 	# range.
 	#
