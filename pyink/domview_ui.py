@@ -227,7 +227,7 @@ class frameline_stack(object):
     # The tween can be changed by tweening it again.
     def tween(self, layer_idx, key_frame_idx, tween_len,
 	      tween_type=TweenObject.TWEEN_TYPE_NORMAL):
-	assert tween_len > 0
+	assert tween_len > 1
 	frameline = self._framelines[layer_idx]
 	right_frame_idx = key_frame_idx + tween_len - 1
 	fl_tween_type = self._frameline_tween_types[tween_type]
@@ -242,6 +242,16 @@ class frameline_stack(object):
 	frameline.mark_keyframe(right_frame_idx)
 	frameline.tween(start, fl_tween_type)
 	pass
+
+    def untween(self, layer_idx, key_frame_idx):
+	frameline = self._framelines[layer_idx]
+        start, end, tween_type = \
+            frameline.get_frame_block(key_frame_idx)
+        if start < end:
+            frameline.untween(start)
+            frameline.unmark_keyframe(end)
+            pass
+        pass
 
     ## \brief Unmark a key frame.
     #
@@ -319,13 +329,14 @@ class frameline_stack(object):
 	except ValueError:	# last removed frame is not in any tween
 	    pass
 	else:
-	    if start >= frame_idx and start > last_rm:
+	    if start >= frame_idx and end > last_rm:
 		# Left key frame of the tween was removed, but not right one.
 		frameline.untween(start)
 		frameline.unmark_keyframe(end)
 		pass
 	    pass
 
+        #
 	# Remove left key of the tween that right key frame is in removing
 	# range.
 	#
@@ -509,10 +520,53 @@ class domview_ui(object):
 
     ## \brief Insert frames at specified position.
     #
-    # All frame at and after given position will shift left, except nearest
+    # All frames at and after given position will shift left, except nearest
     # \ref num frames are removed.
     #
+    #  - For a tween that only right part is covered by removing
+    #    range, its tween length would be shrinked just before
+    #    removing range.
+    #  - For a tween that only left part is covered by removing range,
+    #    key and tween are fully removed.
+    #  - For a tween that only middle part is covered, tween length is
+    #    also shrinked according length of covered part.
+    #
     def rm_frames(self, layer_idx, frame_idx, num):
+        #
+        # Check the key that is partially covered key tween, but not
+        # include key frame.
+        #
+        last_rm_idx = frame_idx + num - 1
+        try:
+            start, end, tween_type = \
+                self._fl_stack.get_left_key_tween(layer_idx, frame_idx)
+        except ValueError:
+            pass                # no key at left
+        else:
+            if start < frame_idx and end >= frame_idx:
+                #
+                # Key frame is not covered, only part of a key tween
+                # is covered.  Shrink its tween length, size of the
+                # covered part, or the key will be unmarked.
+                #
+                shrink_sz = min(end - frame_idx + 1, num)
+                
+                tween_len = end - start + 1 - shrink_sz
+                if tween_len == 1:
+                    self._fl_stack.untween(layer_idx, start)
+                else:
+                    self._fl_stack.tween(layer_idx, start, tween_len,
+                                         tween_type)
+                    pass
+
+                scene_end = end - shrink_sz
+                scene_node = self._fl_stack.get_keyframe_data(layer_idx, start)
+                self._dom.chg_scene_node(scene_node, end=scene_end)
+
+                frame_idx = scene_end + 1 # to shift/remove keys at right side
+                pass
+            pass
+
 	self._fl_stack.rm_frames(layer_idx, frame_idx, num)
 	self._dom.rm_frames(layer_idx, frame_idx, num)
 	pass
@@ -604,15 +658,10 @@ class domview_ui(object):
         self._dom.copy_group_children(src_group, dst_group)
         pass
 
-    ## \brief Link content of a source key frame to a destinate.
-    #
-    # Link content of the scene group of a source key frame to the
-    # scene group of a destinate key frame.
-    #
-    def link_key_group(self, layer_idx, src_frame_idx, dst_frame_idx):
+    def clone_key_group(self, layer_idx, src_frame_idx, dst_frame_idx):
         src_group = self.get_key_group(layer_idx, src_frame_idx)
         dst_group = self.get_key_group(layer_idx, dst_frame_idx)
-        self._dom.link_group_children(src_group, dst_group)
+        self._dom.clone_group_children(src_group, dst_group)
         pass
 
     ## \brief Return widget showing frames and layers.
