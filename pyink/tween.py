@@ -216,7 +216,7 @@ class TweenObject(object):
 	        obj.appendChild(newobj)
 	pass
 
-    def updateTweenObjectScale_Group(self,s,d,top):
+    def updateTweenObjectScale_Group(self, s, d, p, newobj, top):
 	# Parse the translate or matrix
 	# 
 	# D  = B inv(A)
@@ -266,7 +266,7 @@ class TweenObject(object):
 	top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
 	pass
 
-    def updateTweenObjectScale_Use(self,s,d,top):
+    def updateTweenObjectScale_Use(self, s, d, p, newobj, top):
 	# Parse the translate or matrix
 	# 
 	# D  = B inv(A)
@@ -313,7 +313,7 @@ class TweenObject(object):
 	top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
 	pass
 
-    def updateTweenObjectScale_Primitive(self,s,d,top):
+    def updateTweenObjectScale_Primitive(self, s, d, p, newobj, top):
 	try:
 	    if d.name() == "svg:use":
 		sw = 1
@@ -432,11 +432,11 @@ class TweenObject(object):
 	    pass
 	print s.name() 
 	if s.name() == 'svg:g':
-	    self.updateTweenObjectScale_Group(s,d,top)
+	    self.updateTweenObjectScale_Group(s,d,p,newobj,top)
 	elif s.name() == 'svg:use':
-	    self.updateTweenObjectScale_Use(s,d,top)
+	    self.updateTweenObjectScale_Use(s,d,p,newobj,top)
         else:
-	    self.updateTweenObjectScale_Primitive(s,d,top)
+	    self.updateTweenObjectScale_Primitive(s,d,p,newobj,top)
 	pass
     pass
 
