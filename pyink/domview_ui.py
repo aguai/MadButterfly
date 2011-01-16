@@ -3,6 +3,7 @@ from tween import TweenObject
 from frameline import frameline, frameruler
 from domview import domview
 import consistency
+import unlink_clone
 
 ## \brief Maintain a stack of frameline UI component.
 #
@@ -823,12 +824,14 @@ class domview_ui_with_workers(domview_ui, domview_internal):
         super(domview_ui_with_workers, self).__init__()
         
         self._consistency_checker = consistency.consistency_checker(self)
+        self._unlink_clone_checker = unlink_clone.unlink_clone_checker(self)
         pass
 
     def handle_doc_root(self, doc, root):
         super(domview_ui_with_workers, self).handle_doc_root(doc, root)
         
         self._consistency_checker.handle_doc_root(doc, root)
+        self._unlink_clone_checker.handle_doc_root(doc, root)
         pass
     pass
 
