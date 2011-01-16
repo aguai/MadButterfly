@@ -484,6 +484,7 @@ class domview(domview_monitor):
 	gid = self.new_id()
 	scene_group.setAttribute("id", gid)
 	scene_group.setAttribute("inkscape:groupmode", "layer")
+        scene_group.setAttribute('scene_group', 'true')
 
 	layer.group.appendChild(scene_group)
 	
