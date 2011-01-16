@@ -754,7 +754,7 @@ class domview(domview_monitor):
 
         for child in dup_group.childList():
             dup_group.removeChild(child) # prevent from crash
-            dst_group.append(child)
+            dst_group.appendChild(child)
             pass
 	pass
 
