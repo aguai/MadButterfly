@@ -216,6 +216,191 @@ class TweenObject(object):
 	        obj.appendChild(newobj)
 	pass
 
+    def updateTweenObjectScale_Group(self,s,d,top):
+	# Parse the translate or matrix
+	# 
+	# D  = B inv(A)
+	try:
+	    (ox,oy) = s.spitem.getCenter()
+	except:
+	    ox = 0
+	    oy = 0
+	    pass
+
+	try:
+	    (dx,dy) = d.spitem.getCenter()
+	except:
+	    dx = 0
+	    dy = 0
+	    pass
+
+	try:
+	    start_opacity = parse_opacity(s)
+	except:
+	    start_opacity = 1
+	    pass
+
+	try:
+	    end_opacity =parse_opacity( d)
+	except:
+	    end_opacity = 1
+	    pass
+
+		
+	cur_opacity = start_opacity*(1-p)+end_opacity*p
+	change_opacity(newobj,cur_opacity)
+	sm = self.parseTransform(s)
+	ss = self.decomposition(sm)
+	dm = self.parseTransform(d)
+	dd = self.decomposition(dm)
+	sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
+	sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
+	a  = ss[2]*(1-p)+dd[2]*p-ss[2]
+	tx = ox*(1-p)+dx*p
+	ty = oy*(1-p)+dy*p
+	m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
+	m = self.mulA([sx,0,0,sy,0,0],m)
+	m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
+	m = self.mulA([1,0,0,1,tx,self.height-ty],m)
+
+	top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
+	pass
+
+    def updateTweenObjectScale_Use(self,s,d,top):
+	# Parse the translate or matrix
+	# 
+	# D  = B inv(A)
+	try:
+	    (ox,oy) = s.spitem.getCenter()
+	except:
+	    ox = 0
+	    oy = 0
+	    pass
+
+	try:
+	    (dx,dy) = d.spitem.getCenter()
+	except:
+	    dx = 0
+	    dy = 0
+	    pass
+
+	try:
+	    start_opacity = parse_opacity(s)
+	except:
+	    start_opacity = 1
+	    pass
+
+	try:
+	    end_opacity =parse_opacity( d)
+	except:
+	    end_opacity = 1
+	    pass
+		
+	cur_opacity = start_opacity*(1-p)+end_opacity*p
+	change_opacity(newobj,cur_opacity)
+	dm = self.parseTransform(d)
+	dd = self.decomposition(dm)
+	sx = 1-(1-dd[0])*p
+	sy = 1-(1-dd[1])*p
+	a  =  dd[2]*p 
+	tx = ox*(1-p)+dx*p
+	ty = oy*(1-p)+dy*p
+	m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
+	m = self.mulA([sx,0,0,sy,0,0],m)
+	m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
+	m = self.mulA([1,0,0,1,tx,self.height-ty],m)
+
+	top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
+	pass
+
+    def updateTweenObjectScale_Primitive(self,s,d,top):
+	try:
+	    if d.name() == "svg:use":
+		sw = 1
+		sh = 1
+		dw = 1
+		dh = 1
+	    else:
+		try:
+		    sw = float(s.getAttribute("width"))
+		except:
+		    sw = 1
+		try:
+		    sh = float(s.getAttribute("height"))
+		except:
+		    sh = 1
+
+		try:
+		    dw = float(d.getAttribute("width"))
+		except:
+		    dw = 1
+		try:
+		    dh = float(d.getAttribute("height"))
+		except:
+		    dh = 1
+		pass
+
+	    try:
+		start_opacity = parse_opacity(s)
+	    except:
+		start_opacity = 1
+		pass
+
+	    try:
+		end_opacity =parse_opacity( d)
+		if d.name() == "svg:use":
+		    end_opacity = end_opacity * start_opacity
+		    pass
+		pass
+	    except:
+		if d.name() == "svg:use":
+		    end_opacity = start_opacity
+		else:
+		    end_opacity = 1
+		pass
+
+	    cur_opacity = start_opacity*(1-p)+end_opacity*p
+	    change_opacity(newobj,cur_opacity)
+
+	    try:
+		(ox,oy) = s.spitem.getCenter()
+	    except:
+		ox = 0
+		oy = 0
+	    try:
+		(dx,dy) = d.spitem.getCenter()
+	    except:
+		dx = 0
+		dy = 0
+	    try:
+		sm = self.parseTransform(s)
+		ss = self.decomposition(sm)
+	    except:
+		ss = [1,1,0,0,0]
+		pass
+	    try:
+		dm = self.parseTransform(d)
+		dd = self.decomposition(dm)
+	    except:
+		dd = [1,1,0,0,0]
+	    dd[0] = dd[0]*dw/sw
+	    dd[1] = dd[1]*dh/sh
+	    sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
+	    sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
+	    a  = ss[2]*(1-p)+dd[2]*p-ss[2]
+	    tx = ox*(1-p)+dx*p
+	    ty = oy*(1-p)+dy*p
+	    m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
+	    m = self.mulA([sx,0,0,sy,0,0],m)
+	    m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
+	    m = self.mulA([1,0,0,1,tx,self.height-ty],m)
+
+	    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
+	except:
+	    traceback.print_exc()
+	    pass
+	pass
+
     def updateTweenObjectScale(self,obj,s,d,p,newobj):
         """
 	    Generate a new group which contains the original group and then 
@@ -246,135 +431,12 @@ class TweenObject(object):
 	    newobj = newobj.firstChild()
 	    pass
 	print s.name() 
-	if s.name() == 'svg:g' or s.name() == 'svg:use':
-	    # Parse the translate or matrix
-	    # 
-	    # D  = B inv(A)
-	    try:
-	        (ox,oy) = s.spitem.getCenter()
-	    except:
-	        ox = 0
-   	        oy = 0
-	    try:
-	        (dx,dy) = d.spitem.getCenter()
-	    except:
-	        dx = 0
-	        dy = 0
-	    try:
-		start_opacity = parse_opacity(s)
-	    except:
-		start_opacity = 1
-
-	    try:
-		end_opacity =parse_opacity( d)
-	    except:
-		end_opacity = 1
-
-		    
-	    cur_opacity = start_opacity*(1-p)+end_opacity*p
-	    change_opacity(newobj,cur_opacity)
-	    sm = self.parseTransform(s)
-	    ss = self.decomposition(sm)
-	    dm = self.parseTransform(d)
-	    dd = self.decomposition(dm)
-	    sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
-	    sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
-	    a  = ss[2]*(1-p)+dd[2]*p-ss[2]
-	    tx = ox*(1-p)+dx*p
-	    ty = oy*(1-p)+dy*p
-	    m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
-	    m = self.mulA([sx,0,0,sy,0,0],m)
-	    m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
-	    m = self.mulA([1,0,0,1,tx,self.height-ty],m)
-
-	    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
+	if s.name() == 'svg:g':
+	    self.updateTweenObjectScale_Group(s,d,top)
+	elif s.name() == 'svg:use':
+	    self.updateTweenObjectScale_Use(s,d,top)
         else:
-	    try:
-		if d.name() == "svg:use":
-		    sw = 1
-		    sh = 1
-		    dw = 1
-		    dh = 1
-		else:
-		    try:
-			sw = float(s.getAttribute("width"))
-		    except:
-			sw = 1
-		    try:
-			sh = float(s.getAttribute("height"))
-		    except:
-			sh = 1
-
-		    try:
-			dw = float(d.getAttribute("width"))
-		    except:
-			dw = 1
-		    try:
-			dh = float(d.getAttribute("height"))
-		    except:
-			dh = 1
-		    pass
-
-		try:
-		    start_opacity = parse_opacity(s)
-		except:
-		    start_opacity = 1
-		    pass
-
-		try:
-		    end_opacity =parse_opacity( d)
-		    if d.name() == "svg:use":
-			end_opacity = end_opacity * start_opacity
-			pass
-		    pass
-		except:
-		    if d.name() == "svg:use":
-			end_opacity = start_opacity
-		    else:
-			end_opacity = 1
-		    pass
-
-		cur_opacity = start_opacity*(1-p)+end_opacity*p
-		change_opacity(newobj,cur_opacity)
-
-	        try:
-		    (ox,oy) = s.spitem.getCenter()
-	        except:
-		    ox = 0
-		    oy = 0
-	        try:
-		    (dx,dy) = d.spitem.getCenter()
-	        except:
-		    dx = 0
-		    dy = 0
-		try:
-		    sm = self.parseTransform(s)
-		    ss = self.decomposition(sm)
-		except:
-		    ss = [1,1,0,0,0]
-		    pass
-		try:
-		    dm = self.parseTransform(d)
-		    dd = self.decomposition(dm)
-		except:
-		    dd = [1,1,0,0,0]
-		dd[0] = dd[0]*dw/sw
-		dd[1] = dd[1]*dh/sh
-		sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
-		sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
-		a  = ss[2]*(1-p)+dd[2]*p-ss[2]
-		tx = ox*(1-p)+dx*p
-		ty = oy*(1-p)+dy*p
-		m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
-		m = self.mulA([sx,0,0,sy,0,0],m)
-		m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
-		m = self.mulA([1,0,0,1,tx,self.height-ty],m)
-
-		top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
-	    except:
-	        traceback.print_exc()
-		pass
-	    pass
+	    self.updateTweenObjectScale_Primitive(s,d,top)
 	pass
     pass
 
