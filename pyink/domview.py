@@ -774,7 +774,7 @@ class domview(domview_monitor):
             dst_child.setAttribute('id', dst_child_id)
             dst_child.setAttribute('xlink:href', '#' + src_child_id)
             dst_child.setAttribute('ns0:duplicate-src', src_child_id)
-            dst_group.append(child)
+            dst_group.appendChild(dst_child)
             pass
         pass
     pass

@@ -126,7 +126,6 @@ class MBScene(object):
 	self._domviewui.tween(layer_idx, start, tween_len, tween_type)
 
 	# Create a key frame which link to the previous key frame
-	scene_group = self._domviewui.get_key_group(layer_idx, start)
 	self._domviewui.mark_key(layer_idx, frame_idx)
 	self._domviewui.clone_key_group(layer_idx, start, frame_idx)
 	self._director.show_scene(frame_idx)
