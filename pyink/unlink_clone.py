@@ -1,6 +1,24 @@
 import dom_event
 from data_monitor import data_monitor
 
+## \brief Tracking relation-ship btween copy nodes and source nodes.
+#
+# To trace the relation-ship between source node and copy node, we add
+# 'ns0:duplicate-src' attribute to copy nodes.  But after unlink a
+# clone node, inkscape does not copy attributes of 'svg:use' node to
+# new nodes inserted after unlinking.  So, we can not just putting
+# 'ns0:duplicate-src' on 'svg:use' and hoping it is still working for
+# us after unlinking.
+#
+# The solution is to duplicate value of 'id' attribute to 'saved_id'
+# attribute for every node.  Whenever Inkscape copying nodes for a
+# copy & paste or an unlinking, the value of 'saved_id' attribute
+# would be copied to copy nodes from source nodes.  We copy the value
+# of 'saved_id' attribute to 'ns0:duplicate-src', for copy node, to
+# preserve the relation-ship of copy node and source node.  After copy
+# 'saved_id' to 'ns0:duplicate-src', 'saved_id' is re-assigned to the
+# value of ID of copy node.  A copy node is the new node of a copying.
+#
 class unlink_clone_checker(object):
     __metaclass__ = data_monitor
     
