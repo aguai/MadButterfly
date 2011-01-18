@@ -2,12 +2,252 @@ import random
 import dom_event
 from tween import TweenObject
 
+
 class Layer:
     def __init__(self, node):
 	self.scenes = []
 	self.group = node
 	pass
     pass
+
+
+class Timeline(object):
+    def __init__(self, scenes_node):
+        self.scenes_node = scenes_node
+        pass
+
+    def name(self):
+        name = self.node.getAttribute('name')
+        return name
+    pass
+
+
+class Component(object):
+    #
+    # \param comp_node is None for main component.
+    #
+    def __init__(self, comp_mgr, comp_node):
+        self._comp_mgr = comp_mgr
+        self.node = comp_node
+        self.layers = []
+        self.timelines = []
+
+        if comp_node:
+            self._initialize_comp()
+            pass
+        pass
+
+    def _initialize_comp(self):
+        comp_node = self.node
+        for child in comp_node.childList():
+            if child.name() == 'ns0:scenes':
+                break
+            pass
+        else:                   # no any ns0:scenes
+            scenes_node = doc.createElementById('ns0:scenes')
+            scenes_node.setAttribute('name', 'default')
+            node_id = self._comp_mgr.new_id()
+            scenes_node.setAttribute('id', node_id)
+            comp_node.appendChild(scenes_node)
+            pass
+        pass
+
+    def name(self):
+        if self.node:
+            name = self.node.getAttribute('name')
+        else:
+            name = 'main'
+            pass
+        return name
+
+    def all_timeline_names(self):
+        names = [tl.name() for tl in self.timelines]
+        return names
+
+    def parse_timelines(self):
+        if self.node:
+            assert self.node.name() == 'ns0:component'
+            pass
+        
+        comp_node = self.node
+        for child in comp_node.childList:
+            if child.name() == 'ns0:scenes':
+                tl = Timeline(child)
+                self.timelines.append(tl)
+                pass
+            pass
+        pass
+
+    def get_timeline(self, name):
+        for tl in self.timelines:
+            if tl.name() == name:
+                return tl
+            pass
+        raise Value, 'invalid timeline name - %s' % (name)
+
+    def has_timeline(self, name):
+        for tl in self.timelines:
+            if tl.name() == name:
+                return True
+            pass
+        return False
+
+    def add_timeline(self, name):
+        if self.has_timeline(name):
+            raise ValueError, \
+                'try add a timeline with duplicated name - %s' % (name)
+        
+        doc = self._comp_mgr._doc
+        comp_node = self.node
+        
+        scenes_node = doc.createElementById('ns0:scenes')
+        scenes_node.setAttribute('name', name)
+        node_id = self._comp_mgr.new_id()
+        scenes_node.setAttribute('id', node_id)
+
+        comp_node.appendChild(scenes_node)
+        pass
+
+    ## \brief Add a timeline for an existed scenes node.
+    #
+    def add_timeline_scenes(self, scenes_node):
+        tl = Timeline(scenes_node)
+        name = tl.name()
+        if self.has_timeline(name):
+            raise ValueError, \
+                'name of scenes node of a timeline is duplicated'
+        pass
+
+    def rm_timeline(self, name):
+        for i, tl in enumerate(self.timelines):
+            if tl.name() == name:
+                del self.timelines[i]
+                return
+            pass
+        raise ValueError, 'try to remove a non-existed timeline - %s' % (name)
+    pass
+
+
+## \brief A mix-in for class domview for management of components.
+#
+class component_manager(object):
+    def __init__(self):
+        self._components = []
+        self._comp_names = set()
+        self._main_comp = None
+        self._cur_comp = None
+        self._cur_timeline = None
+        pass
+
+    def _set_main_component(self):
+        comp = Component(self, None)
+        comp.layers = self._layers
+        scenes_node = self._scenes_node
+        timeline = Timeline(scenes_node)
+        comp.timelines = [timeline]
+
+        self._components.append(comp)
+        self._comp_names.add('main')
+
+        self._main_comp = comp
+        self._cur_comp = comp
+        pass
+
+    def _parse_components(self):
+        comp_names = self._comp_names
+        components_node = self._components_node
+        for child in components_node.childList():
+            child_name = child.name()
+            if child_name != 'ns0:component':
+                continue
+            if child_name in comp_names:
+                raise ValueError, 'duplicate component name %s' % (child_name)
+
+            comp = Component(self, child)
+            comp.parse_timelines()
+            
+            self._components.append(comp)
+            comp_names.add(child_name)
+            pass
+        pass
+    
+    def all_comp_names(self):
+        return list(self._comp_names)
+
+    def has_component(self, name):
+        return name in self._comp_names
+
+    def switch_component(self, comp_name):
+        for comp in self._components:
+            if comp.name() == comp_name:
+                self._cu_comp = comp
+                self._layers = comp.layers
+
+                first_name = comp.all_timeline_names()[0]
+                self.switch_timeline(self, first_name)
+                return
+            pass
+        raise ValueError, 'not such component %s' % (comp_name)
+
+    def add_component(self, comp_name):
+        if self.has_component(comp_name):
+            raise ValueError, \
+                'try add a component with existed name %s' % (comp_name)
+
+        comp_node = self._doc.createElementById('ns0:component')
+        comp_id = self.new_id()
+        comp_node.setAttribute('id', comp_id)
+        comp_node.setAttribute('name', comp_name)
+        self._components_node.appendChild(comp_node)
+        
+        comp = Component(self, comp_node)
+        comp.parse_timelines()
+        
+        self._components.append(comp)
+        self._comp_names.add(comp_name)
+        pass
+
+    def add_component_node(self, comp_node):
+        comp = Component(self, comp_node)
+        comp_name = comp.name()
+        if self.has_component(comp_name):
+            raise ValueError, \
+                'the name of a ns0:component is duplicated'
+
+        self._components.append(comp)
+        self._comp_names.add(comp_name)
+        pass
+
+    def rm_component(self, comp_name):
+        if not self.has_component(comp_name):
+            raise ValueError, 'try to remove a non-existed component'
+
+        self._comp_names.remove(comp_name)
+        for i, comp in enumerate(self._components):
+            if comp.name() == comp_name:
+                del self._components[i]
+                self._comp_names.remove(comp_name)
+                break
+            pass
+        pass
+
+    def switch_timeline(self, timeline_name):
+        tl = self._cur_comp.get_timeline(timeline_name)
+        self._cur_timeline = tl
+        self._scenes_node = tl.scenes_node # of class domview
+
+        self._monitor_rescan()  # from domview_monitor
+        pass
+
+    def add_timeline(self, timeline_name):
+        self._cur_comp.add_timeline(timeline_name)
+        pass
+
+    def rm_timeline(self, timeline_name):
+        self._cur_comp.rm_timeline(timeline_name)
+        pass
+    pass
+
 
 ## \brief Monitor changes of DOM-tree.
 #
@@ -34,6 +274,17 @@ class domview_monitor(object):
 	dom_event.addEventListener(doc, 'DOMAttrModified',
                                    self._on_attr_modified, None)
 	pass
+
+    ## \brief Rescan the tree.
+    #
+    def _monitor_rescan(self):
+        self._maxframe = 0
+        self._id2node = {}
+        self._group2scene = {}
+
+        self._collect_node_ids()
+        self._collect_all_scenes()
+        pass
 
     def _on_insert_node(self, node, child):
 	for cchild in child.childList():
@@ -335,6 +586,17 @@ class domview(domview_monitor):
 	    scenes_node = self._doc.createElement("ns0:scenes")
 	    node.appendChild(scenes_node)
 	    self._scenes_node = scenes_node
+	    pass
+        
+	for n in node.childList():
+	    if n.name() == 'ns0:components':
+		self._components_node = n
+		break
+	    pass
+	else:
+	    components_node = self._doc.createElement("ns0:components")
+	    node.appendChild(components_node)
+	    self._components_node = components_node
 	    pass
 	pass
 
