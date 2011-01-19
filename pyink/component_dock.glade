@@ -2,6 +2,18 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkListStore" id="components_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="timelines_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="window1">
     <child>
       <object class="GtkVBox" id="component_dock_top">
@@ -12,26 +24,28 @@
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkLabel" id="label1">
-                <property name="visible">True</property>
-                <property name="xalign">0</property>
-                <property name="xpad">5</property>
-                <property name="label" translatable="yes">Components</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkTreeView" id="treeview_components">
                 <property name="height_request">100</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="model">components_model</property>
+                <signal name="cursor_changed" handler="on_treeview_components_cursor_changed"/>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn1">
+                    <property name="sizing">autosize</property>
+                    <property name="title">Component Name</property>
+                    <property name="expand">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
               </object>
               <packing>
-                <property name="position">1</property>
+                <property name="position">0</property>
               </packing>
             </child>
             <child>
@@ -46,6 +60,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_add_comp_clicked"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -60,6 +75,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_remove_comp_clicked"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -72,7 +88,7 @@
                 <property name="expand">False</property>
                 <property name="fill">False</property>
                 <property name="padding">1</property>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
           </object>
@@ -96,26 +112,29 @@
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkLabel" id="label2">
-                <property name="visible">True</property>
-                <property name="xalign">0</property>
-                <property name="xpad">5</property>
-                <property name="label" translatable="yes">Actions / timelines</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkTreeView" id="treeview_timelines">
                 <property name="height_request">100</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="model">timelines_model</property>
+                <property name="search_column">1</property>
+                <property name="level_indentation">9</property>
+                <property name="enable_grid_lines">horizontal</property>
+                <signal name="cursor_changed" handler="on_treeview_timelines_cursor_changed"/>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn2">
+                    <property name="title">Action/Timeline Name</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
               </object>
               <packing>
-                <property name="position">1</property>
+                <property name="position">0</property>
               </packing>
             </child>
             <child>
@@ -124,12 +143,13 @@
                 <property name="spacing">5</property>
                 <property name="layout_style">start</property>
                 <child>
-                  <object class="GtkButton" id="add_timline">
+                  <object class="GtkButton" id="add_timeline">
                     <property name="label">gtk-add</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_add_timeline_clicked"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -144,6 +164,7 @@
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_remove_timeline_clicked"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -156,7 +177,7 @@
                 <property name="expand">False</property>
                 <property name="fill">False</property>
                 <property name="padding">2</property>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
           </object>
