@@ -383,9 +383,14 @@ class domview_ui(object):
     _tween_type_names = ('normal', 'scale')
     
     def __init__(self):
+        from comp_dock import comp_dock
+        
 	super(domview_ui, self).__init__()
+        
 	self._fl_stack = frameline_stack()
 	self._dom = domview()
+        self._comp_dock = comp_dock(self)
+        self._desktop = None
         self._doc = None
         self._root = None
         self._lock = False
@@ -425,6 +430,15 @@ class domview_ui(object):
 	    self._update_frameline_content(layer_idx)
 	    pass
 	pass
+    
+    ## \brief Setup desktop that the document will be serviced.
+    #
+    # This method must be called before handle_doc_root.
+    #
+    def set_desktop(self, desktop):
+        self._desktop = desktop
+        self._comp_dock.install_dock(desktop) # from component_manager
+        pass
     
     ## \brief This method is called to handle a new document.
     #

@@ -58,7 +58,6 @@ class MBScene(object):
 	self.desktop = desktop
 	self.window = win
 	self.top = None
-	self._comp_dock = None
 	self.last_update = None
 	pybInkscape.inkscape.connect('change_selection', self.do_selection)
 	self.last_select = None
@@ -356,8 +355,6 @@ class MBScene(object):
 	pass
 
     def show(self):
-	from comp_dock import comp_dock
-	
 	self.OK = True
 	if not self._root:
 	    self._root = self.desktop.doc().root().repr
@@ -365,6 +362,7 @@ class MBScene(object):
 	
 	self.document = self.desktop.doc().rdoc
 	
+	self._domviewui.set_desktop(self.desktop)
 	self._domviewui.handle_doc_root(self.document, self._root)
 	self._domviewui.register_active_frame_callback(self.do_CellClick)
 	self._director = scenes_director(self._domviewui)
@@ -385,10 +383,6 @@ class MBScene(object):
 	hbox=gtk.HBox(False, 0)
 	self._add_buttons(hbox)
 	vbox.pack_start(hbox, expand=False)
-
-	dock = comp_dock()
-	dock.install_dock(self.desktop)
-	self._comp_dock = dock
 
 	self.top.show_all()
 	self.last_update = None
