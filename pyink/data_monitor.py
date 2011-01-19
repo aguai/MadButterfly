@@ -48,8 +48,13 @@ class data_monitor(type):
 		pass
 	    return sentinel
 
+        monitor_prefix = 'do'
+        if clazz_dict.has_key('__data_monitor_prefix__'):
+            monitor_prefix = clazz_dict['__data_monitor_prefix__']
+            pass
+        
 	for attr_name in clazz_dict:
-	    if (not attr_name.startswith('do')) or \
+	    if (not attr_name.startswith(monitor_prefix)) or \
 		    (not callable(clazz_dict[attr_name])):
 		continue
 	    clazz_dict[attr_name] = \
