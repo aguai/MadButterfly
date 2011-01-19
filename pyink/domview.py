@@ -132,6 +132,7 @@ class Component(object):
 #
 class component_manager(object):
     def __init__(self):
+        self._components_node = None
         self._components = []
         self._comp_names = set()
         self._main_comp = None
@@ -169,6 +170,29 @@ class component_manager(object):
             self._components.append(comp)
             comp_names.add(child_name)
             pass
+        pass
+
+    ## \brief To initialize subtree of metadata.
+    #
+    # This method is called by domview._init_metadata().
+    #
+    def _component_manager_init_metadata(self):
+	for n in self._metadata_node.childList():
+	    if n.name() == 'ns0:components':
+		self._components_node = n
+		break
+	    pass
+	else:
+	    components_node = self._doc.createElement("ns0:components")
+	    node.appendChild(components_node)
+	    self._components_node = components_node
+	    pass
+        pass
+
+    def _start_component_manager(self):
+        self._component_manager_init_metadata()
+        self._set_main_component()
+        self._parse_components()
         pass
     
     def all_comp_names(self):
@@ -236,7 +260,7 @@ class component_manager(object):
         self._cur_timeline = tl
         self._scenes_node = tl.scenes_node # of class domview
 
-        self._monitor_rescan()  # from domview_monitor
+        self.reset()            # from domview
         pass
 
     def add_timeline(self, timeline_name):
@@ -277,7 +301,7 @@ class domview_monitor(object):
 
     ## \brief Rescan the tree.
     #
-    def _monitor_rescan(self):
+    def _monitor_reparse(self):
         self._maxframe = 0
         self._id2node = {}
         self._group2scene = {}
@@ -555,13 +579,15 @@ def _DOM_iterator(node):
 # change and destroy scene node and scene group.  A scene node is a 'ns0:scene'
 # in 'ns0:scenes' tag.  A scene group is respective 'svg:g' for a scene.
 #
-class domview(domview_monitor):
+class domview(domview_monitor, component_manager):
     # Declare variables, here, for keeping tracking
     _doc = None
     _root = None
     
     def __init__(self, *args, **kws):
 	super(domview, self).__init__()
+        self._metadata_node = None
+        self._scenes_node = None
 	pass
 
     ## \brief Create a scenes node if not existed.
@@ -574,6 +600,8 @@ class domview(domview_monitor):
 	else:
 	    raise RuntimeError, \
 		'can not find <svg:metadata> node in the document'
+
+        self._metadata_node = node
 	
 	for n in node.childList():
 	    if n.name() == 'ns0:scenes':
@@ -586,17 +614,6 @@ class domview(domview_monitor):
 	    scenes_node = self._doc.createElement("ns0:scenes")
 	    node.appendChild(scenes_node)
 	    self._scenes_node = scenes_node
-	    pass
-        
-	for n in node.childList():
-	    if n.name() == 'ns0:components':
-		self._components_node = n
-		break
-	    pass
-	else:
-	    components_node = self._doc.createElement("ns0:components")
-	    node.appendChild(components_node)
-	    self._components_node = components_node
 	    pass
 	pass
 
@@ -621,12 +638,14 @@ class domview(domview_monitor):
 	self._root = root
 	self._layers = []
 	
-	self._start_monitor()	# start domview_monitor
+	self._start_monitor()	# from domview_monitor
 	self._init_metadata()
+        self._start_component_manager() # from component_manager
 	self._parse_all_layers()
 	pass
 
     def reset(self):
+        self._monitor_reparse() # from domview_monitor
         self._layers = []
         self._parse_all_layers()
 	pass
