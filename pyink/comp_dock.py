@@ -1,10 +1,13 @@
 import gtk
 import os
+import data_monitor
 
 ## \brief User interface for management components and their timelines.
 #
-class comp_dock(gtk.VBox):
-    def __init__(self, fname=None):
+class comp_dock(object):
+    __metaclass__ = data_monitor.data_monitor
+
+    def __init__(self, domview_ui, fname=None):
         super(comp_dock, self).__init__()
         
         if not fname:
@@ -18,9 +21,9 @@ class comp_dock(gtk.VBox):
         dock_top = builder.get_object('component_dock_top')
         dock_top_parent = dock_top.get_parent()
         dock_top_parent.remove(dock_top)
-        self.pack_start(dock_top)
-        dock_top.show()
 
+        self._domview_ui = domview_ui
+        self._locker = domview_ui
         self._builder = builder
         self._dock_top = dock_top
         self._desktop = None
@@ -35,9 +38,9 @@ class comp_dock(gtk.VBox):
                              'Component and timeline manager',
                              'feBlend-icon', dock.ITEM_ST_DOCKED_STATE)
         item_vbox = item.get_vbox()
-        item_vbox.pack_start(self)
         self._dock_item = item
         
-        self.show()
+        item_vbox.pack_start(self._dock_top)
+        self._dock_top.show()
         pass
     pass
