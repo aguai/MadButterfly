@@ -376,6 +376,30 @@ class frameline_stack(object):
     pass
 
 
+## \biref Components and timelines management for domview.
+#
+# This is mix-in for domview_ui to provide components and timelines
+# management functions.
+#
+class domview_ui_comp(object):
+    def __init__(self):
+        from comp_dock import comp_dock
+        
+        self._comp_dock = comp_dock(self)
+        pass
+    
+    ## \brief Setup desktop that the document will be serviced.
+    #
+    # This method must be called before handle_doc_root.
+    #
+    def set_desktop(self, desktop):
+        self._desktop = desktop
+        self._comp_dock.install_dock(desktop) # from component_manager
+        pass
+    
+    pass
+
+
 ## \brief Bridge of DOM-tree to syncrhonize data-model and UI.
 #
 # This class is a wrapper
@@ -383,13 +407,10 @@ class domview_ui(object):
     _tween_type_names = ('normal', 'scale')
     
     def __init__(self):
-        from comp_dock import comp_dock
-        
 	super(domview_ui, self).__init__()
         
 	self._fl_stack = frameline_stack()
 	self._dom = domview()
-        self._comp_dock = comp_dock(self)
         self._desktop = None
         self._doc = None
         self._root = None
@@ -430,15 +451,6 @@ class domview_ui(object):
 	    self._update_frameline_content(layer_idx)
 	    pass
 	pass
-    
-    ## \brief Setup desktop that the document will be serviced.
-    #
-    # This method must be called before handle_doc_root.
-    #
-    def set_desktop(self, desktop):
-        self._desktop = desktop
-        self._comp_dock.install_dock(desktop) # from component_manager
-        pass
     
     ## \brief This method is called to handle a new document.
     #
@@ -831,9 +843,17 @@ class domview_internal(object):
     pass
 
 
+## \brief Oven domview_ui and all mix-ins
+#
+class domview_ui_oven(domview_ui, domview_ui_comp):
+    def __init__(self):
+        super(domview_ui_oven, self).__init__()
+        pass
+    pass
+
 ## \brief A mix-in to enable workers for a domview_ui.
 #
-class domview_ui_with_workers(domview_ui, domview_internal):
+class domview_ui_with_workers(domview_ui_oven, domview_internal):
     def __init__(self):
         super(domview_ui_with_workers, self).__init__()
         

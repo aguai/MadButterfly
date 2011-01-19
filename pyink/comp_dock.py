@@ -13,7 +13,6 @@ class comp_dock(object):
         if not fname:
             dirname = os.path.dirname(__file__)
             fname = os.path.join(dirname, 'component_dock.glade')
-            print fname
             pass
 
         builder = gtk.Builder()
