@@ -379,7 +379,8 @@ class frameline_stack(object):
 ## \biref Components and timelines management for domview.
 #
 # This is mix-in for domview_ui to provide components and timelines
-# management functions.
+# management functions.  This class expose a lot of methods from class
+# component_manager.
 #
 class domview_ui_comp(object):
     def __init__(self):
@@ -394,7 +395,7 @@ class domview_ui_comp(object):
     #
     def set_desktop(self, desktop):
         self._desktop = desktop
-        self._comp_dock.install_dock(desktop) # from component_manager
+        self._comp_dock.install_dock(desktop)
         pass
     
     def add_component(self, name):
@@ -498,6 +499,7 @@ class domview_ui(object):
 	self._fl_stack.init_framelines()
 	self._add_frameline_for_every_layer()
 	self._fl_stack.show_framelines()
+        self._comp_dock.refresh() # from domview_ui_comp
 
         self._doc = doc
         self._root = root

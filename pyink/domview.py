@@ -17,7 +17,7 @@ class Timeline(object):
         pass
 
     def name(self):
-        name = self.node.getAttribute('name')
+        name = self.scenes_node.getAttribute('name')
         return name
     pass
 
