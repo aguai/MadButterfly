@@ -397,6 +397,45 @@ class domview_ui_comp(object):
         self._comp_dock.install_dock(desktop) # from component_manager
         pass
     
+    def add_component(self, name):
+        self._dom.add_component(name)
+        pass
+
+    def rm_component(self, name):
+        self._dom.rm_component(name)
+        pass
+
+    def switch_component(self, name):
+        self._dom.switch_component(name)
+        pass
+
+    def all_comp_names(self):
+        names = self._dom.all_comp_names()
+        return names
+
+    def has_component(self, name):
+        r = self._dom.has_component(name)
+        return r
+
+    def add_timeline(self, name):
+        self._dom.add_timeline(name)
+        pass
+
+    def rm_timeline(self, name):
+        self._dom.rm_timeline(name)
+        pass
+
+    def switch_timeline(self, name):
+        self._dom.siwtch_timeline(name)
+        pass
+
+    def all_timeline_names(self):
+        names = self._dom.all_timeline_names()
+        return names
+
+    def has_timeline(self, name):
+        r = self._dom.has_timeline(name)
+        return r
     pass
 
 
