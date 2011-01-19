@@ -270,6 +270,14 @@ class component_manager(object):
     def rm_timeline(self, timeline_name):
         self._cur_comp.rm_timeline(timeline_name)
         pass
+
+    def all_timeline_names(self):
+        r = self._cur_comp.all_timeline_names()
+        return r
+
+    def has_timeline(self, name):
+        r = self._cur_comp.has_timeline(name)
+        return r
     pass
 
 
