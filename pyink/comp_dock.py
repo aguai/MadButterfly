@@ -18,7 +18,6 @@ class comp_dock_base(object):
 
         builder = gtk.Builder()
         builder.add_from_file(fname)
-        builder.connect_signals(self)
         dock_top = builder.get_object('component_dock_top')
         components_model = builder.get_object('components_model')
         timelines_model = builder.get_object('timelines_model')
@@ -29,7 +28,6 @@ class comp_dock_base(object):
         dock_top_parent.remove(dock_top)
 
         self._domview_ui = domview_ui
-        self._locker = domview_ui
         self._builder = builder
         self._dock_top = dock_top
         self._desktop = None
@@ -73,6 +71,8 @@ class comp_dock_base(object):
             
             components_model.append((comp_name, editable))
             pass
+        
+        self._components_treeview.set_cursor((0,))
 
         timelines_model = self._timelines_model
         timelines_model.clear()
@@ -80,6 +80,8 @@ class comp_dock_base(object):
         for timeline_name in self._domview_ui.all_timeline_names():
             timelines_model.append((timeline_name, True))
             pass
+
+        self._timelines_treeview.set_cursor((0,))
         pass
 
     def dom_add_component(self, name):
@@ -131,8 +133,14 @@ class comp_dock_ui(object):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
 
-    def __init__(self, *args):
+    def __init__(self, domview_ui, fname=None):
         super(comp_dock_ui, self).__init__()
+        
+        self._locker = domview_ui
+        pass
+
+    def start_handle_ui_events(self):
+        self._builder.connect_signals(self)
         pass
     
     def _current_component(self):
@@ -258,5 +266,7 @@ class comp_dock_ui(object):
 class comp_dock(comp_dock_base, comp_dock_ui):
     def __init__(self, domview_ui, fname=None):
         super(comp_dock, self).__init__(domview_ui, fname)
+
+        self.start_handle_ui_events()
         pass
     pass
