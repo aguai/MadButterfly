@@ -400,10 +400,12 @@ class domview_ui_comp(object):
     
     def add_component(self, name):
         self._dom.add_component(name)
+        self._comp_dock.dom_add_component(name)
         pass
 
     def rm_component(self, name):
         self._dom.rm_component(name)
+        self._comp_dock.dom_rm_component(name)
         pass
 
     def switch_component(self, name):
@@ -420,10 +422,12 @@ class domview_ui_comp(object):
 
     def add_timeline(self, name):
         self._dom.add_timeline(name)
+        self._comp_dock.dom_add_timeline(name)
         pass
 
     def rm_timeline(self, name):
         self._dom.rm_timeline(name)
+        self._comp_dock.dom_rm_timeline(name)
         pass
 
     def switch_timeline(self, name):
