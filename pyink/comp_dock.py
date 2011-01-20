@@ -23,6 +23,8 @@ class comp_dock(object):
         dock_top = builder.get_object('component_dock_top')
         components_model = builder.get_object('components_model')
         timelines_model = builder.get_object('timelines_model')
+        components_treeview = builder.get_object('treeview_components')
+        timelines_treeview = builder.get_object('treeview_timelines')
         
         dock_top_parent = dock_top.get_parent()
         dock_top_parent.remove(dock_top)
@@ -36,6 +38,11 @@ class comp_dock(object):
         
         self._components_model = components_model
         self._timelines_model = timelines_model
+        self._components_treeview = components_treeview
+        self._timelines_treeview = timelines_treeview
+
+        self._cur_component = -1
+        self._cur_timeline = -1
         pass
 
     def install_dock(self, desktop):
@@ -59,14 +66,14 @@ class comp_dock(object):
         components_model.clear()
         
         for comp_name in self._domview_ui.all_comp_names():
-            components_model.append((comp_name,))
+            components_model.append((comp_name, True))
             pass
 
         timelines_model = self._timelines_model
         timelines_model.clear()
 
         for timeline_name in self._domview_ui.all_timeline_names():
-            timelines_model.append((timeline_name,))
+            timelines_model.append((timeline_name, True))
             pass
         pass
     
@@ -82,6 +89,11 @@ class comp_dock(object):
         print args
         pass
     
+    def on_cellrenderer_comp_edited(self, renderer, path,
+                                    new_text, *args):
+        print '%s - %s' % (path, new_text)
+        pass
+    
     def on_add_timeline_clicked(self, *args):
         print args
         pass
@@ -92,5 +104,10 @@ class comp_dock(object):
 
     def on_treeview_timelines_cursor_changed(self, *args):
         print args
+        pass
+
+    def on_cellrenderer_timelines_edited(self, renderer, path,
+                                         new_text, *args):
+        print '%s - %s' % (path, new_text)
         pass
     pass
