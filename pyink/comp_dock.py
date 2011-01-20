@@ -76,13 +76,94 @@ class comp_dock(object):
             timelines_model.append((timeline_name, True))
             pass
         pass
+
+    def _current_component(self):
+        treeview = self._components_treeview
+        path, col = treeview.get_cursor()
+
+        model = self._components_model
+        itr = model.get_iter(path)
+        name = model.get_value(itr, 0)
+        return name
+
+    def _current_timeline(self):
+        treeview = self._timelines_treeview
+        path, col = treeview.get_cursor()
+
+        model = self._timelines_model
+        itr = model.get_iter(path)
+        name = model.get_value(itr, 0)
+        return name
+
+    def _add_component(self):
+        def _make_component_name():
+            comp_name = 'New Component'
+            idx = 0
+            while comp_name in self._domview_ui.all_comp_names():
+                comp_name = 'New Component %d' % (idx)
+                idx = idx + 1
+                pass
+            return comp_name
+
+        comp_name = _make_component_name()
+        print comp_name
+        self._domview_ui.add_component(comp_name)
+        pass
+
+    def _rm_component(self):
+        if self._current_component() == 'main':
+            return
+        
+        treeview = self._components_treeview
+        path, col = treeview.get_cursor()
+        
+        model = self._components_model
+        itr = model.get_iter(path)
+        comp_name = model.get_value(itr, 0)
+        print comp_name
+
+        self._domview_ui.rm_component(comp_name)
+        pass
+    
+    def _add_timeline(self):
+        def _make_timeline_name():
+            tl_name = 'New Timeline'
+            idx = 0
+            while tl_name in self._domview_ui.all_timeline_names():
+                tl_name = 'New Timeline %d' % (idx)
+                idx = idx + 1
+                pass
+            return tl_name
+
+        if self._current_component() == 'main':
+            return
+
+        tl_name = _make_timeline_name()
+        print tl_name
+        self._domview_ui.add_timeline(tl_name)
+        pass
+
+    def _rm_timeline(self):
+        if self._current_component() == 'main':
+            return
+        
+        treeview = self._timelines_treeview
+        path, col = treeview.get_cursor()
+        
+        model = self._timelines_model
+        itr = model.get_iter(path)
+        tl_name = model.get_value(itr, col)
+        print tl_name
+
+        self._domview_ui.rm_timeline(tl_name)
+        pass
     
     def on_add_comp_clicked(self, *args):
-        print args
+        self._add_component()
         pass
 
     def on_remove_comp_clicked(self, *args):
-        print args
+        self._rm_component()
         pass
 
     def on_treeview_components_cursor_changed(self, *args):
@@ -95,11 +176,11 @@ class comp_dock(object):
         pass
     
     def on_add_timeline_clicked(self, *args):
-        print args
+        self._add_timeline()
         pass
 
     def on_remove_timeline_clicked(self, *args):
-        print args
+        self._rm_timeline()
         pass
 
     def on_treeview_timelines_cursor_changed(self, *args):

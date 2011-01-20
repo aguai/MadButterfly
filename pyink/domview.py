@@ -44,10 +44,13 @@ class Component(object):
                 break
             pass
         else:                   # no any ns0:scenes
-            scenes_node = doc.createElementById('ns0:scenes')
+            doc = self._comp_mgr._doc
+            scenes_node = doc.createElement('ns0:scenes')
             scenes_node.setAttribute('name', 'default')
+            
             node_id = self._comp_mgr.new_id()
             scenes_node.setAttribute('id', node_id)
+            
             comp_node.appendChild(scenes_node)
             pass
         pass
@@ -70,7 +73,7 @@ class Component(object):
             pass
         
         comp_node = self.node
-        for child in comp_node.childList:
+        for child in comp_node.childList():
             if child.name() == 'ns0:scenes':
                 tl = Timeline(child)
                 self.timelines.append(tl)
@@ -100,7 +103,7 @@ class Component(object):
         doc = self._comp_mgr._doc
         comp_node = self.node
         
-        scenes_node = doc.createElementById('ns0:scenes')
+        scenes_node = doc.createElement('ns0:scenes')
         scenes_node.setAttribute('name', name)
         node_id = self._comp_mgr.new_id()
         scenes_node.setAttribute('id', node_id)
@@ -218,7 +221,7 @@ class component_manager(object):
             raise ValueError, \
                 'try add a component with existed name %s' % (comp_name)
 
-        comp_node = self._doc.createElementById('ns0:component')
+        comp_node = self._doc.createElement('ns0:component')
         comp_id = self.new_id()
         comp_node.setAttribute('id', comp_id)
         comp_node.setAttribute('name', comp_name)
