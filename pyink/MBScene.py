@@ -354,7 +354,7 @@ class MBScene(object):
 	self.addTweenTypeSelector(hbox)
 	pass
 
-    def show(self):
+    def do_show(self):
 	self.OK = True
 	if not self._root:
 	    self._root = self.desktop.doc().root().repr
@@ -387,4 +387,8 @@ class MBScene(object):
 	self.top.show_all()
 	self.last_update = None
 	return False
+
+    def show(self):
+	self.do_show()
+	pass
     pass
