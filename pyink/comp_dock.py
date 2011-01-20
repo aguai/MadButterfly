@@ -5,12 +5,11 @@ import data_monitor
 
 ## \brief User interface for management components and their timelines.
 #
-class comp_dock(object):
-    __metaclass__ = data_monitor.data_monitor
-    __data_monitor_prefix__ = 'on_'
-
+# This class provide base functions to show components and timelines.
+#
+class comp_dock_base(object):
     def __init__(self, domview_ui, fname=None):
-        super(comp_dock, self).__init__()
+        super(comp_dock_base, self).__init__(domview_ui, fname)
         
         if not fname:
             dirname = os.path.dirname(__file__)
@@ -122,7 +121,20 @@ class comp_dock(object):
             pass
         
         raise ValueError, 'unknown component name - %s' % (name)
+    pass
 
+## \brief UI interactive handlers
+#
+# A mix-in to handle UI events.
+#
+class comp_dock_ui(object):
+    __metaclass__ = data_monitor.data_monitor
+    __data_monitor_prefix__ = 'on_'
+
+    def __init__(self, *args):
+        super(comp_dock_ui, self).__init__()
+        pass
+    
     def _current_component(self):
         treeview = self._components_treeview
         path, col = treeview.get_cursor()
@@ -236,5 +248,15 @@ class comp_dock(object):
     def on_cellrenderer_timelines_edited(self, renderer, path,
                                          new_text, *args):
         print '%s - %s' % (path, new_text)
+        pass
+    pass
+
+## \brief Component dock
+#
+# Mix base functions and event handlers together.
+#
+class comp_dock(comp_dock_base, comp_dock_ui):
+    def __init__(self, domview_ui, fname=None):
+        super(comp_dock, self).__init__(domview_ui, fname)
         pass
     pass
