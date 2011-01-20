@@ -6,12 +6,16 @@
     <columns>
       <!-- column-name name -->
       <column type="gchararray"/>
+      <!-- column-name editable -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkListStore" id="timelines_model">
     <columns>
       <!-- column-name name -->
       <column type="gchararray"/>
+      <!-- column-name editable -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window1">
@@ -36,8 +40,11 @@
                     <property name="title">Component Name</property>
                     <property name="expand">True</property>
                     <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                      <object class="GtkCellRendererText" id="cellrenderer_comp">
+                        <signal name="edited" handler="on_cellrenderer_comp_edited"/>
+                      </object>
                       <attributes>
+                        <attribute name="editable">1</attribute>
                         <attribute name="text">0</attribute>
                       </attributes>
                     </child>
@@ -125,8 +132,11 @@
                   <object class="GtkTreeViewColumn" id="treeviewcolumn2">
                     <property name="title">Action/Timeline Name</property>
                     <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                      <object class="GtkCellRendererText" id="cellrenderer_timelines">
+                        <signal name="edited" handler="on_cellrenderer_timelines_edited"/>
+                      </object>
                       <attributes>
+                        <attribute name="editable">1</attribute>
                         <attribute name="text">0</attribute>
                       </attributes>
                     </child>
