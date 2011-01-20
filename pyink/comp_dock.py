@@ -139,6 +139,8 @@ class comp_dock_ui(object):
         self._locker = domview_ui
         pass
 
+    ## \brief Start handle UI events.
+    #
     def start_handle_ui_events(self):
         self._builder.connect_signals(self)
         pass
@@ -266,7 +268,7 @@ class comp_dock_ui(object):
 class comp_dock(comp_dock_base, comp_dock_ui):
     def __init__(self, domview_ui, fname=None):
         super(comp_dock, self).__init__(domview_ui, fname)
-
+        
         self.start_handle_ui_events()
         pass
     pass
