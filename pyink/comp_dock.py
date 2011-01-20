@@ -66,7 +66,13 @@ class comp_dock(object):
         components_model.clear()
         
         for comp_name in self._domview_ui.all_comp_names():
-            components_model.append((comp_name, True))
+            if comp_name == 'main':
+                editable = False
+            else:
+                editable = True
+                pass
+            
+            components_model.append((comp_name, editable))
             pass
 
         timelines_model = self._timelines_model
@@ -76,6 +82,46 @@ class comp_dock(object):
             timelines_model.append((timeline_name, True))
             pass
         pass
+
+    def dom_add_component(self, name):
+        model = self._components_model
+        model.append((name, True))
+        pass
+
+    def dom_rm_component(self, name):
+        model = self._components_model
+        
+        itr = model.get_iter_first()
+        while itr:
+            itr_name = model.get_value(itr, 0)
+            if itr_name == name:
+                model.remove(itr)
+                return
+            
+            itr = itr.iter_next()
+            pass
+        
+        raise ValueError, 'unknown component name - %s' % (name)
+
+    def dom_add_timeline(self, name):
+        model = self._timelines_model
+        model.append((name, True))
+        pass
+
+    def dom_rm_timeline(self, name):
+        model = self._timelines_model
+        
+        itr = model.get_iter_first()
+        while itr:
+            itr_name = model.get_value(itr, 0)
+            if itr_name == name:
+                model.remove(itr)
+                return
+            
+            itr = itr.iter_next()
+            pass
+        
+        raise ValueError, 'unknown component name - %s' % (name)
 
     def _current_component(self):
         treeview = self._components_treeview
