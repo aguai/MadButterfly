@@ -118,6 +118,8 @@ class frameline_stack(object):
 	    pass
 	pass
 
+    ## \brief Remove all framelines from the stack.
+    #
     def remove_all_framelines(self):
         num = len(self._framelines)
 	
@@ -130,7 +132,6 @@ class frameline_stack(object):
 	self._framelines = []
 	self._last_mouse_over_frameline = None
 	self._last_active_frameline = None
-	self._active_frame_callback = None
 	pass
 
     def init_framelines(self):
