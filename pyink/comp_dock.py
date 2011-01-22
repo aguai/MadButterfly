@@ -56,13 +56,16 @@ class comp_dock_base(object):
         self._dock_top.show()
         pass
 
-    ## \brief Refresh content of component list and timeline list.
+    ## \brief Update the list of components.
     #
-    def refresh(self):
+    # The cursor is still keeping on the name of current component.
+    #
+    def refresh_components(self):
         components_model = self._components_model
         components_model.clear()
         
-        for comp_name in self._domview_ui.all_comp_names():
+        all_comp_names = self._domview_ui.all_comp_names()
+        for comp_name in all_comp_names:
             if comp_name == 'main':
                 editable = False
             else:
@@ -72,16 +75,34 @@ class comp_dock_base(object):
             components_model.append((comp_name, editable))
             pass
         
-        self._components_treeview.set_cursor((0,))
+        cur_comp_name = self._domview_ui.get_current_component()
+        cur_comp_idx = all_comp_names.index(cur_comp_name)
+        self._components_treeview.set_cursor((cur_comp_idx,))
+        pass
 
+    ## \brief Update the list of timelines.
+    #
+    # The cursor is still keeping on the name of current component.
+    #
+    def refresh_timelines(self):
         timelines_model = self._timelines_model
         timelines_model.clear()
 
-        for timeline_name in self._domview_ui.all_timeline_names():
+        all_timeline_names = self._domview_ui.all_timeline_names()
+        for timeline_name in all_timeline_names:
             timelines_model.append((timeline_name, True))
             pass
 
-        self._timelines_treeview.set_cursor((0,))
+        cur_tl_name = self._domview_ui.get_current_timeline()
+        cur_tl_idx = all_timeline_names.index(cur_tl_name)
+        self._timelines_treeview.set_cursor((cur_tl_idx,))
+        pass
+
+    ## \brief Refresh content of component list and timeline list.
+    #
+    def refresh(self):
+        self.refresh_components()
+        self.refresh_timelines()
         pass
 
     def dom_add_component(self, name):
