@@ -410,6 +410,9 @@ class domview_ui_comp(object):
 
     def switch_component(self, name):
         self._dom.switch_component(name)
+        self.reset()            # FIXME: it would parse layers again
+                                # while switch_compoent already parses
+                                # it.
         pass
 
     def all_comp_names(self):
@@ -509,7 +512,7 @@ class domview_ui(object):
         self._root = root
 	pass
 
-    ## \brief Reload the document.
+    ## \brief Parse the document from the scratch and update UI.
     #
     def reset(self):
         self._fl_stack.remove_all_framelines()
