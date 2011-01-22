@@ -169,7 +169,6 @@ class component_manager(object):
         self._comp_names.add('main')
         
         self._main_comp = comp
-        self._cur_comp = comp
         pass
 
     def _parse_components(self):
@@ -232,6 +231,11 @@ class component_manager(object):
         self._component_manager_init_metadata()
         self._set_main_component()
         self._parse_components()
+
+        self._cur_comp = self._main_comp
+        tl = self._main_comp.get_timeline('default')
+        self._cur_timeline = tl
+        self._scenes_node = tl.scenes_node
         pass
 
     def _create_component_group(self):
@@ -352,6 +356,9 @@ class component_manager(object):
         gid = comp_node.getAttribute('ref')
         comp_group = self.get_node(gid)
         return comp_group
+
+    def get_current_component(self):
+        return self._cur_comp.name()
     
     def switch_timeline(self, timeline_name):
         tl = self._cur_comp.get_timeline(timeline_name)
@@ -377,6 +384,9 @@ class component_manager(object):
     def has_timeline(self, name):
         r = self._cur_comp.has_timeline(name)
         return r
+
+    def get_current_timeline(self):
+        return self._cur_timeline.name()
     pass
 
 

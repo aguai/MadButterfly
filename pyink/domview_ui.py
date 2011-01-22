@@ -388,6 +388,10 @@ class domview_ui_comp(object):
         
         self._comp_dock = comp_dock(self)
         pass
+
+    def _ui_comp_refresh(self):
+        self._comp_dock.refresh()
+        pass
     
     ## \brief Setup desktop that the document will be serviced.
     #
@@ -410,9 +414,8 @@ class domview_ui_comp(object):
 
     def switch_component(self, name):
         self._dom.switch_component(name)
-        self.reset()            # FIXME: it would parse layers again
-                                # while switch_compoent already parses
-                                # it.
+        self._framelines_refresh() # from domview_ui
+        self._comp_dock.refresh_timelines()
         pass
 
     def all_comp_names(self):
@@ -422,6 +425,9 @@ class domview_ui_comp(object):
     def has_component(self, name):
         r = self._dom.has_component(name)
         return r
+
+    def get_current_component(self):
+        return self._dom.get_current_component()
 
     def add_timeline(self, name):
         self._dom.add_timeline(name)
@@ -434,7 +440,8 @@ class domview_ui_comp(object):
         pass
 
     def switch_timeline(self, name):
-        self._dom.siwtch_timeline(name)
+        self._dom.switch_timeline(name)
+        self._framelines_refresh() # from domview_ui
         pass
 
     def all_timeline_names(self):
@@ -444,6 +451,9 @@ class domview_ui_comp(object):
     def has_timeline(self, name):
         r = self._dom.has_timeline(name)
         return r
+
+    def get_current_timeline(self):
+        return self._dom.get_current_timeline()
     pass
 
 
@@ -506,19 +516,26 @@ class domview_ui(object):
 	self._fl_stack.init_framelines()
 	self._add_frameline_for_every_layer()
 	self._fl_stack.show_framelines()
-        self._comp_dock.refresh() # from domview_ui_comp
+        self._ui_comp_refresh() # from domview_ui_comp
 
         self._doc = doc
         self._root = root
 	pass
 
+    ## \brief Update framelines according domview.
+    #
+    def _framelines_refresh(self):
+        self._fl_stack.remove_all_framelines()
+        self._add_frameline_for_every_layer()
+	self._fl_stack.show_framelines()
+        pass
+
     ## \brief Parse the document from the scratch and update UI.
     #
     def reset(self):
-        self._fl_stack.remove_all_framelines()
         self._dom.reset()
-        self._add_frameline_for_every_layer()
-	self._fl_stack.show_framelines()
+        self._framelines_refresh()
+        self._ui_comp_refresh() # from domview_ui_comp
 	pass
 
     ## \brief Mark given frame as a key frame.
