@@ -3,6 +3,23 @@ import dom_event
 from tween import TweenObject
 
 
+## \brief Compare two nodes with ID.
+#
+# \return True if node1 ID equivalent to ndoe2 ID.
+#
+def _id_eq(node1, node2):
+    try:
+        node1_id = node1.getAttribute('id')
+    except:
+        return False
+
+    try:
+        node2_id = node2.getAttribute('id')
+    except:
+        return False
+    return node1_id == node2_id
+
+
 class Layer:
     def __init__(self, node):
 	self.scenes = []
@@ -450,7 +467,7 @@ class domview_monitor(object):
 		pass
 	    pass
 
-	if child.name() == 'ns0:scene':
+	if child.name() == 'ns0:scene' and _id_eq(node, self._scenes_node):
 	    try:
 		ref = child.getAttribute('ref')
 	    except:
@@ -509,7 +526,7 @@ class domview_monitor(object):
 	    del self._id2node[child_id]
 	    pass
 	
-	if child.name() == 'ns0:scene':
+	if child.name() == 'ns0:scene' and _id_eq(node, self._scenes_node):
 	    try:
 		ref = child.getAttribute('ref')
 	    except:
@@ -519,9 +536,8 @@ class domview_monitor(object):
 		pass
 
 	    try:
-		if node.name() == 'ns0:scenes' and \
-			(int(child.getAttribute('start')) == self._maxframe or
-			 int(child.getAttribute('end')) == self._maxframe):
+		if int(child.getAttribute('start')) == self._maxframe or \
+                        int(child.getAttribute('end')) == self._maxframe:
 		    self._maxframe = self._find_maxframe(node)
 		    pass
 	    except:
@@ -530,7 +546,10 @@ class domview_monitor(object):
 	pass
 
     def _on_attr_modified(self, node, name, old_value, new_value):
-	if name == 'id' and old_value != new_value:
+        if old_value == new_value:
+            return
+        
+	if name == 'id':
 	    if old_value and (old_value not in self._id2node):
 		raise ValueError, \
 		    'old ID value of passed node is invalid one (%s)' % \
@@ -546,8 +565,11 @@ class domview_monitor(object):
 	    self._id2node[new_value] = node
 	    pass
 	elif name == 'ref' and node.name() == 'ns0:scene':
-	    if old_value == new_value:
-		return
+            parent_node = node.parent()
+            scenes_node = self._scenes_node
+            if not _id_eq(parent_node, scenes_node):
+                return          # not in current timeline
+            
 	    if old_value:
 		node = self._group2scene[old_value] # use old node.  Binding
 						    # may generate a new
@@ -559,16 +581,19 @@ class domview_monitor(object):
 		pass
 	    pass
 	elif (name in ('start', 'end')) and node.name() == 'ns0:scene':
+            parent_node = node.parent()
+            scenes_node = self._scenes_node
+            if not _id_eq(parent_node, scenes_node):
+                return          # not in current timeline
+            
             try:
                 new_value = int(new_value)
                 old_value = int(old_value)
             except TypeError:
-                scenes_node = node.parent()
                 self._maxframe = self._find_maxframe(scenes_node)
             else:
                 if old_value == self._maxframe and old_value > new_value:
                     # _maxframe may be reduced.
-                    scenes_node = node.parent()
                     self._maxframe = self._find_maxframe(scenes_node)
                 else:
                     self._maxframe = max(int(new_value), self._maxframe)
@@ -647,19 +672,10 @@ class domview_monitor(object):
     ## \brief Parse all scenes node in svg:metadata subtree.
     #
     def _collect_all_scenes(self):
-	root = self._root
-	for child in root.childList():
-	    if child.name() != 'svg:metadata':
-		continue
-
-	    metadata_node = child
-	    for metachild in metadata_node.childList():
-		if metachild.name() == 'ns0:scenes':
-		    self._parse_one_scenes(metachild)
-		    self._maxframe = self._find_maxframe(metachild)
-		    pass
-		pass
-	    pass
+        scenes_node = self._scenes_node
+        self._parse_one_scenes(scenes_node)
+        self._maxframe = self._find_maxframe(scenes_node)
+        pass
 	pass
     
     ## \brief Return the node with given ID.
@@ -750,7 +766,6 @@ class domview(domview_monitor, component_manager):
 	pass
 
     def _parse_all_layers(self):
-	root = self._scenes_node
 	layers = self._layers
         layers_parent = self._layers_parent
 	
