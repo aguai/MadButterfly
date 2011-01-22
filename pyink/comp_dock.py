@@ -235,7 +235,11 @@ class comp_dock_ui(object):
         pass
 
     def on_treeview_components_cursor_changed(self, *args):
-        print args
+        comp_name = self._current_component()
+        print comp_name
+        
+        domview_ui = self._domview_ui
+        domview_ui.switch_component(comp_name)
         pass
     
     def on_cellrenderer_comp_edited(self, renderer, path,
