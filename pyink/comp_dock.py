@@ -256,10 +256,9 @@ class comp_dock_ui(object):
         pass
 
     def on_treeview_components_cursor_changed(self, *args):
-        comp_name = self._current_component()
-        print comp_name
-        
         domview_ui = self._domview_ui
+        
+        comp_name = self._current_component()
         domview_ui.switch_component(comp_name)
         pass
     
@@ -277,7 +276,10 @@ class comp_dock_ui(object):
         pass
 
     def on_treeview_timelines_cursor_changed(self, *args):
-        print args
+        domview_ui = self._domview_ui
+        
+        timeline_name = self._current_timeline()
+        domview_ui.switch_timeline(timeline_name)
         pass
 
     def on_cellrenderer_timelines_edited(self, renderer, path,
