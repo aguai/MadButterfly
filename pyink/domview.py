@@ -109,6 +109,9 @@ class Component(object):
         scenes_node.setAttribute('id', node_id)
 
         comp_node.appendChild(scenes_node)
+
+        tl = Timeline(scenes_node)
+        self.timelines.append(tl)
         pass
 
     ## \brief Add a timeline for an existed scenes node.
@@ -119,11 +122,16 @@ class Component(object):
         if self.has_timeline(name):
             raise ValueError, \
                 'name of scenes node of a timeline is duplicated'
+
+        self.timeline.append(tl)
         pass
 
     def rm_timeline(self, name):
         for i, tl in enumerate(self.timelines):
             if tl.name() == name:
+                comp_node = self.node
+                comp_node.removeChild(tl.scenes_node)
+                
                 del self.timelines[i]
                 return
             pass
@@ -287,7 +295,7 @@ class component_manager(object):
         pass
     
     def all_comp_names(self):
-        return list(self._comp_names)
+        return [comp.name() for comp in self._components]
 
     def has_component(self, name):
         return name in self._comp_names
