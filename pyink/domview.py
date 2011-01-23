@@ -764,6 +764,9 @@ class domview(domview_monitor, component_manager):
 	    ns = "http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
 	    self._root.setAttribute("xmlns:ns0", ns)
 	    scenes_node = self._doc.createElement("ns0:scenes")
+            scenes_node_id = 'main_default_scenes'
+            scenes_node.setAttribute('id', scenes_node_id)
+            scenes_node.setAttribute('name', 'default')
 	    node.appendChild(scenes_node)
 	    self._scenes_node = scenes_node
 	    pass
