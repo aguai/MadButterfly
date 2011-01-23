@@ -219,17 +219,21 @@ class component_manager(object):
     # This method is called by domview._init_metadata().
     #
     def _component_manager_init_metadata(self):
-	for n in self._metadata_node.childList():
+        metadata_node = self._metadata_node
+
+        # Make sure ns0:components in metadata
+	for n in metadata_node.childList():
 	    if n.name() == 'ns0:components':
 		self._components_node = n
 		break
 	    pass
 	else:
 	    components_node = self._doc.createElement("ns0:components")
-	    node.appendChild(components_node)
+	    metadata_node.appendChild(components_node)
 	    self._components_node = components_node
 	    pass
         
+        # Make sure the group for containing components.
         for n in self._root.childList():
             if n.name() != 'svg:g':
                 continue
