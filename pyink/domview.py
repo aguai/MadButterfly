@@ -313,6 +313,7 @@ class component_manager(object):
         layer_group.setAttribute('inkscape:label', layer_name)
         layer_group.setAttribute('inkscape:groupmode', 'layer')
         comp_group.appendChild(layer_group)
+        
         return layer_group
     
     ## \brief Return group of specified layer in a component.
@@ -331,6 +332,32 @@ class component_manager(object):
     def has_component(self, name):
         return name in self._comp_names
 
+    def hide_component(self, comp_name):
+        if comp_name == 'main':
+            comp = self._get_component(comp_name)
+            for layer in comp.layers:
+                group = layer.group
+                group.setAttribute('style', 'display: none')
+                pass
+            return
+
+        comp_group = self.get_component_group(comp_name)
+        comp_group.setAttribute('style', 'display: none')
+        pass
+
+    def show_component(self, comp_name):
+        if comp_name == 'main':
+            comp = self._get_component(comp_name)
+            for layer in comp.layers:
+                group = layer.group
+                group.setAttribute('style', '')
+                pass
+            return
+
+        comp_group = self.get_component_group(comp_name)
+        comp_group.setAttribute('style', '')
+        pass
+
     def switch_component(self, comp_name):
         old_comp = self._cur_comp
         
@@ -344,17 +371,8 @@ class component_manager(object):
         first_name = comp.all_timeline_names()[0]
         self.switch_timeline(first_name)
 
-        # Hide layers in old component
-        for layer in old_comp.layers:
-            group = layer.group
-            group.setAttribute('style', 'display: none')
-            pass
-        
-        # Show layers in new component
-        for layer in comp.layers:
-            group = layer.group
-            group.setAttribute('style', '')
-            pass
+        self.hide_component(old_comp.name())
+        self.show_component(comp.name())
         pass
 
     def add_component(self, comp_name):
@@ -367,7 +385,6 @@ class component_manager(object):
         comp_node = self._create_component_node(comp_name, comp_group_id)
 
         layer_group = self._create_comp_layer_group(comp_group, 'Layer1')
-        layer_group.setAttribute('style', 'display: none')
         
         comp = Component(self, comp_node)
         comp.parse_timelines()
@@ -377,6 +394,8 @@ class component_manager(object):
         
         self._components.append(comp)
         self._comp_names.add(comp_name)
+
+        self.hide_component(comp_name)
         pass
 
     def add_component_node(self, comp_node):
