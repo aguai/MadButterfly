@@ -260,6 +260,10 @@ class comp_dock_ui(object):
         
         comp_name = self._current_component()
         domview_ui.switch_component(comp_name)
+        
+        group = domview_ui.get_layer_group(0)
+        desktop = self._desktop # from comp_dock_base
+        desktop.setCurrentLayer(group.spitem)
         pass
     
     def on_cellrenderer_comp_edited(self, renderer, path,

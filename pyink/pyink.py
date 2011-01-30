@@ -13,24 +13,50 @@ import pybInkscape
 import pygtk
 import gtk
 from MBScene import *
-global ink_inited
-ink_inited=0
-def start_desktop(inkscape,ptr):
-    global ink_inited
-    if ink_inited == 1:
-    	desktop = pybInkscape.GPointer_2_PYSPDesktop(ptr)
-	top = desktop.getToplevel()
-    	#dock = desktop.getDock()
-    	#item = dock.new_item("scene", "scene", "feBlend-icon", dock.ITEM_ST_DOCKED_STATE)
-    	scene = MBScene(desktop,top)
-    	scene.show()
-        return
-        
 
-    ink_inited = 1
+all_desktop_mbscenes = {}
+
+def _init_mbscene(inkscape, ptr):
+    global all_desktop_mbscenes
+    
+    desktop = pybInkscape.GPointer_2_PYSPDesktop(ptr)
+
+    top = desktop.getToplevel()
+    mbscene = MBScene(desktop,top)
+    mbscene.show()
+
+    all_desktop_mbscenes[desktop] = mbscene
+
+    print hash(desktop)
+    pass
+
+
+## \brief Handler for events of activating a desktop.
+#
+def act_desktop(inkscape, ptr):
+    # Get Python wrapper of SPDesktop passed by ptr.
+    desktop = pybInkscape.GPointer_2_PYSPDesktop(ptr)
+    
+    top = desktop.getToplevel()
+    if not top:                 # has not top window.
+        return
+
+    if desktop in all_desktop_mbscenes:
+        return                  # already initialized
+    
+    _init_mbscene(inkscape, ptr)
+    pass
 
 
 def pyink_start():
-    print 'pyink_start()'
-    pybInkscape.inkscape.connect('activate_desktop', start_desktop)
+    pybInkscape.inkscape.connect('activate_desktop', act_desktop)
+    pass
+
+
+def pyink_context_menu(view, item, menu_factory):
+    print hash(view)
+    if view in all_desktop_mbscenes:
+        mbscene = all_desktop_mbscenes[view]
+        mbscene.context_menu(item, menu_factory)
+        pass
     pass
