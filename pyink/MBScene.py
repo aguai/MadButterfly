@@ -261,6 +261,17 @@ class MBScene(object):
 	    Execute the current animation till the last frame.
 	"""
 	if self.btnRun.get_label() == "Run":
+	    #
+	    # Make dup groups empty
+	    #
+	    nlayers = self._domviewui.get_layer_num()
+	    for layer_idx in range(nlayers):
+		layer_dup = self._domviewui.get_layer_dup_group(layer_idx)
+		for child in layer_dup.childList():
+		    layer_dup.removeChild(child)
+		    pass
+		pass
+	    
 	    self.btnRun.set_label("Stop")
 	    tmout = 1000 / self.framerate
             self.last_update = glib.timeout_add(tmout, self.doRunNext)
