@@ -26,8 +26,6 @@ def _init_mbscene(inkscape, ptr):
     mbscene.show()
 
     all_desktop_mbscenes[desktop] = mbscene
-
-    print hash(desktop)
     pass
 
 
@@ -54,7 +52,6 @@ def pyink_start():
 
 
 def pyink_context_menu(view, item, menu_factory):
-    print hash(view)
     if view in all_desktop_mbscenes:
         mbscene = all_desktop_mbscenes[view]
         mbscene.context_menu(item, menu_factory)
