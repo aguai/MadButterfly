@@ -267,6 +267,11 @@ class component_manager(object):
         self._scenes_node = tl.scenes_node
         pass
 
+    ## \brief Create component group
+    #
+    # A component group is a group with a layers group as child.
+    # The layers group is where layer groups is in.
+    #
     def _create_component_group(self):
         doc = self._doc
         group = doc.createElement('svg:g')
@@ -274,6 +279,14 @@ class component_manager(object):
         group.setAttribute('id', gid)
         
         self._components_group.appendChild(group)
+
+        # Create layers group
+        layers_group = doc.createElement('svg:g')
+        gid = self.new_id()
+        layers_group.setAttribute('id', gid)
+        layers_group.setAttribute('inkscape:label', 'layers')
+        group.appendChild(layers_group)
+        
         return group
 
     ## \brief Create a ns0:component node for a given name.
@@ -304,7 +317,7 @@ class component_manager(object):
 
     ## \brief Create a layer group for give layer of a component.
     #
-    def _create_comp_layer_group(self, comp_group, layer_name):
+    def _create_comp_layer_group(self, layers_group, layer_name):
         doc = self._doc
         gid = self.new_id()
         
@@ -312,7 +325,7 @@ class component_manager(object):
         layer_group.setAttribute('id', gid)
         layer_group.setAttribute('inkscape:label', layer_name)
         layer_group.setAttribute('inkscape:groupmode', 'layer')
-        comp_group.appendChild(layer_group)
+        layers_group.appendChild(layer_group)
         
         return layer_group
     
@@ -325,6 +338,16 @@ class component_manager(object):
         comp = self._get_component(comp_name)
         layer = comp.layers[layer_idx]
         return layer.group
+
+    def _get_layers_group_of_component(self, comp_name):
+        if comp_name == 'main':
+            return self._root
+        
+        comp_group = self.get_component_group(comp_name)
+        layers_group = comp_group.firstChild()
+        assert layers_group.getAttribute('inkscape:label') == 'layers'
+        
+        return layers_group
     
     def all_comp_names(self):
         return [comp.name() for comp in self._components]
@@ -366,7 +389,7 @@ class component_manager(object):
         self._layers = comp.layers
         comp_name = self._cur_comp.name()
         # for domview
-        self._layers_parent = self.get_component_group(comp_name)
+        self._layers_parent = self._get_layers_group_of_component(comp_name)
         
         first_name = comp.all_timeline_names()[0]
         self.switch_timeline(first_name)
@@ -379,22 +402,23 @@ class component_manager(object):
         if self.has_component(comp_name):
             raise ValueError, \
                 'try add a component with existed name %s' % (comp_name)
-
+        
         comp_group = self._create_component_group()
         comp_group_id = comp_group.getAttribute('id')
         comp_node = self._create_component_node(comp_name, comp_group_id)
-
-        layer_group = self._create_comp_layer_group(comp_group, 'Layer1')
         
         comp = Component(self, comp_node)
         comp.parse_timelines()
 
-        layer = Layer(layer_group)
-        comp.layers.append(layer)
-        
         self._components.append(comp)
         self._comp_names.add(comp_name)
 
+        # Create Layer1 (at least one layer for a component)
+        layers_group = self._get_layers_group_of_component(comp_name)
+        layer_group = self._create_comp_layer_group(layers_group, 'Layer1')
+        layer = Layer(layer_group)
+        comp.layers.append(layer)
+        
         self.hide_component(comp_name)
         pass
 
