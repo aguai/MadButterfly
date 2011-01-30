@@ -455,6 +455,16 @@ class domview_ui_comp(object):
 
     def get_current_timeline(self):
         return self._dom.get_current_timeline()
+
+    ## \brief Add a new component from a group node.
+    #
+    # The group node is reparented to the group of first layer of
+    # specified component.
+    #
+    def add_component_from_group(self, comp_name, group):
+        self.add_component(comp_name)
+        self._dom.mv_group_to_component(group, comp_name)
+        pass
     pass
 
 
@@ -757,6 +767,14 @@ class domview_ui(object):
         self._dom.clone_group_children(src_group, dst_group)
         pass
 
+    ## \brief To test a graphic node.
+    #
+    # A graphic node is a SVG node that is not layer group, scene
+    # group, ... etc.  It is only a normal node in a layer group or a
+    # scene group.
+    def is_graph_node(self, node):
+        return self._dom.is_graph_node(node)
+
     ## \brief Return widget showing frames and layers.
     #
     def get_frame_ui_widget(self):
@@ -906,6 +924,12 @@ class domview_internal(object):
             pass
         self._fl_stack.set_layer_label(layer_idx, label)
         pass
+
+    ## \brief Get layer group.
+    #
+    def get_layer_group(self, layer_idx):
+        layer_group = self._dom.get_layer_group(layer_idx)
+        return layer_group
     pass
 
 

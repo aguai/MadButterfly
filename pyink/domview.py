@@ -272,7 +272,6 @@ class component_manager(object):
         group = doc.createElement('svg:g')
         gid = self.new_id()
         group.setAttribute('id', gid)
-        group.setAttribute('component_group', 'true')
         
         self._components_group.appendChild(group)
         return group
@@ -312,8 +311,19 @@ class component_manager(object):
         layer_group = doc.createElement('svg:g')
         layer_group.setAttribute('id', gid)
         layer_group.setAttribute('inkscape:label', layer_name)
+        layer_group.setAttribute('inkscape:groupmode', 'layer')
         comp_group.appendChild(layer_group)
-        pass
+        return layer_group
+    
+    ## \brief Return group of specified layer in a component.
+    #
+    # This is here for getting layer group without switch current
+    # component.
+    #
+    def _get_group_of_component_layer(self, comp_name, layer_idx):
+        comp = self._get_component(comp_name)
+        layer = comp.layers[layer_idx]
+        return layer.group
     
     def all_comp_names(self):
         return [comp.name() for comp in self._components]
@@ -322,6 +332,8 @@ class component_manager(object):
         return name in self._comp_names
 
     def switch_component(self, comp_name):
+        old_comp = self._cur_comp
+        
         comp = self._get_component(comp_name)
         self._cur_comp = comp
         self._layers = comp.layers
@@ -331,6 +343,18 @@ class component_manager(object):
         
         first_name = comp.all_timeline_names()[0]
         self.switch_timeline(first_name)
+
+        # Hide layers in old component
+        for layer in old_comp.layers:
+            group = layer.group
+            group.setAttribute('style', 'display: none')
+            pass
+        
+        # Show layers in new component
+        for layer in comp.layers:
+            group = layer.group
+            group.setAttribute('style', '')
+            pass
         pass
 
     def add_component(self, comp_name):
@@ -342,10 +366,14 @@ class component_manager(object):
         comp_group_id = comp_group.getAttribute('id')
         comp_node = self._create_component_node(comp_name, comp_group_id)
 
-        self._create_comp_layer_group(comp_group, comp_name + ' Layer1')
+        layer_group = self._create_comp_layer_group(comp_group, 'Layer1')
+        layer_group.setAttribute('style', 'display: none')
         
         comp = Component(self, comp_node)
         comp.parse_timelines()
+
+        layer = Layer(layer_group)
+        comp.layers.append(layer)
         
         self._components.append(comp)
         self._comp_names.add(comp_name)
@@ -416,6 +444,21 @@ class component_manager(object):
 
     def get_current_timeline(self):
         return self._cur_timeline.name()
+
+    ## \brief Add a new component from a group node.
+    #
+    # The group node is reparented to the group of first layer of
+    # specified component.
+    #
+    def mv_group_to_component(self, group, comp_name):
+        group_parent = group.parent()
+        if group_parent:
+            group_parent.removeChild(group)
+            pass
+        
+        layer_group = self._get_group_of_component_layer(comp_name, 0)
+        layer_group.appendChild(group)
+        pass
     pass
 
 
@@ -738,6 +781,7 @@ class domview(domview_monitor, component_manager):
         #
         self._scenes_node = None
         self._layers_parent = None
+        self._layers = []
 	pass
 
     ## \brief Create a scenes node if not existed.
@@ -800,7 +844,7 @@ class domview(domview_monitor, component_manager):
     def handle_doc_root(self, doc, root):
 	self._doc = doc
 	self._root = root
-	self._layers = []
+        self._layers[:] = []
 	
 	self._init_metadata()
 	self._start_monitor()	# from domview_monitor
@@ -810,7 +854,7 @@ class domview(domview_monitor, component_manager):
 
     def reset(self):
         self._monitor_reparse() # from domview_monitor
-        self._layers = []
+        self._layers[:] = []
         self._parse_all_layers()
 	pass
    
@@ -1223,5 +1267,38 @@ class domview(domview_monitor, component_manager):
             dst_group.appendChild(dst_child)
             pass
         pass
+
+    ## \brief To test a graphic node.
+    #
+    # A graphic node is a SVG node that is not layer group, scene
+    # group, ... etc.  It is only a normal node in a layer group or a
+    # scene group.
+    def is_graph_node(self, node):
+        try:
+            mode = node.getAttribute('inkscape:groupmode')
+        except:
+            pass
+        else:
+            if mode == 'layer':
+                return False
+            pass
+
+        try:
+            label = node.geteAttribute('inkscape:label')
+        except:
+            pass
+        else:
+            return False
+        
+        try:
+            scene_group = node.geteAttribute('scene_group')
+        except:
+            pass
+        else:
+            if scene_group == 'true':
+                return False
+            pass
+        
+        return True
     pass
 

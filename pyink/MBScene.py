@@ -388,6 +388,26 @@ class MBScene(object):
 	self.last_update = None
 	return False
 
+    ## \brief To handle context menu event.
+    #
+    def do_make_component_from_group(self, node):
+	comp_name = 'Component ' + node.getAttribute('id')
+	self._domviewui.add_component_from_group(comp_name, node)
+	pass
+
+    def context_menu(self, spitem, menu_factory):
+	node = spitem.repr
+	if node.name() != 'svg:g':
+	    return		# not a group
+
+	if self._domviewui.is_graph_node(node):
+	    menu_item_handler = \
+		lambda *args: self.do_make_component_from_group(node)
+	    menu_factory.add_item_label('Make a component',
+					menu_item_handler)
+	    pass
+	pass
+
     def show(self):
 	self.do_show()
 	pass
