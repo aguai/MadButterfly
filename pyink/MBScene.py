@@ -262,7 +262,8 @@ class MBScene(object):
 	"""
 	if self.btnRun.get_label() == "Run":
 	    #
-	    # Make dup groups empty
+	    # Make dup groups empty.
+	    # It forces TweenObject to re-generate content from scratch.
 	    #
 	    nlayers = self._domviewui.get_layer_num()
 	    for layer_idx in range(nlayers):
