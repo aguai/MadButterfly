@@ -403,10 +403,19 @@ class MBScene(object):
     ## \brief To handle context menu event.
     #
     def do_make_component_from_group(self, node):
+	node_parent_group = node.parent()
+	
 	comp_name = 'Component ' + node.getAttribute('id')
 	self._domviewui.add_component_from_group(comp_name, node)
+	
+	self._domviewui.link_to_component(comp_name, node_parent_group)
 	pass
 
+    ## \brief Add menu item to context menu.
+    #
+    # This method is called by pyink.pyink_context_menu() to notify the
+    # creation of context menu for a node.
+    #
     def context_menu(self, spitem, menu_factory):
 	node = spitem.repr
 	if node.name() != 'svg:g':
