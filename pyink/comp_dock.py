@@ -266,10 +266,14 @@ class comp_dock_ui(object):
     
     def on_add_comp_clicked(self, *args):
         self._add_component()
+        self._desktop.doc().done("None",
+                                 "Add a new component")
         pass
 
     def on_remove_comp_clicked(self, *args):
         self._rm_component()
+        self._desktop.doc().done("None",
+                                 "Remove a component")
         pass
 
     def on_treeview_components_button_press_event(self, widget, event, *args):
@@ -284,6 +288,8 @@ class comp_dock_ui(object):
 
     def on_treeview_components_row_activated(self, *args):
         self._switch_component()
+        self._desktop.doc().done("None",
+                                 "Switch to another component")
         pass
     
     ## \brief Handle of changing component name.
@@ -299,6 +305,9 @@ class comp_dock_ui(object):
         model.set_value(itr, 1, False)
 
         self._domview_ui.rename_component(old_name, new_text)
+        
+        self._desktop.doc().done("None",
+                                 "Change name of a component")
         pass
 
     def on_rename_component_activate(self, *args):
@@ -320,18 +329,27 @@ class comp_dock_ui(object):
         cur_layer_group = cur_layer_group_sp.repr
         
         self._domview_ui.link_to_component(comp_name, cur_layer_group)
+        
+        self._desktop.doc().done("None",
+                                 "Make a xlink of a component")
         pass
     
     def on_switch_component_activate(self, *args):
         self._switch_component()
+        self._desktop.doc().done("None",
+                                 "Switch to another component")
         pass
     
     def on_add_timeline_clicked(self, *args):
         self._add_timeline()
+        self._desktop.doc().done("None",
+                                 "Add a timeline")
         pass
 
     def on_remove_timeline_clicked(self, *args):
         self._rm_timeline()
+        self._desktop.doc().done("None",
+                                 "Remove a timeline")
         pass
 
     def on_treeview_timelines_button_press_event(self, widget, event, *args):
@@ -346,6 +364,8 @@ class comp_dock_ui(object):
 
     def on_treeview_timelines_row_activated(self, *args):
         self._switch_timeline()
+        self._desktop.doc().done("None",
+                                 "Switch to another timeline")
         pass
 
     def on_cellrenderer_timelines_edited(self, renderer, path,
@@ -359,6 +379,9 @@ class comp_dock_ui(object):
         model.set_value(itr, 1, False)
         
         self._domview_ui.rename_timeline(old_name, new_text)
+        
+        self._desktop.doc().done("None",
+                                 "Change name of a timeline")
         pass
     
     def on_rename_timeline_activate(self, *args):
@@ -374,6 +397,8 @@ class comp_dock_ui(object):
     
     def on_switch_timeline_activate(self, *args):
         self._switch_timeline()
+        self._desktop.doc().done("None",
+                                 "Switch to another timeline")
         pass
     pass
 

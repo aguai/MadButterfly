@@ -482,6 +482,16 @@ class domview_ui_comp(object):
     def rename_timeline(self, timeline_name, new_name):
         self._dom.rename_timeline(timeline_name, new_name)
         pass
+
+    def refresh_components(self):
+        dock = self._comp_dock
+        dock.refresh_components()
+        pass
+
+    def refresh_timelines(self):
+        dock = self._comp_dock
+        dock.refresh_timelines()
+        pass
     pass
 
 
