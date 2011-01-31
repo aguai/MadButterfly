@@ -406,6 +406,11 @@ class MBScene(object):
 	node_parent_group = node.parent()
 	
 	comp_name = 'Component ' + node.getAttribute('id')
+	i = 0
+	while comp_name in self._domviewui.all_comp_names():
+	    comp_name = 'Component %s - %d' % (comp_name, i)
+	    i = i + 1
+	    pass
 	self._domviewui.add_component_from_group(comp_name, node)
 	
 	self._domviewui.link_to_component(comp_name, node_parent_group)
