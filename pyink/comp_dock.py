@@ -234,7 +234,7 @@ class comp_dock_ui(object):
                 pass
             return tl_name
 
-        if self._current_component() == 'main':
+        if self._domview_ui.get_current_component() == 'main':
             return
 
         tl_name = _make_timeline_name()
@@ -313,6 +313,13 @@ class comp_dock_ui(object):
         pass
 
     def on_link_component_activate(self, *args):
+        desktop = self._desktop
+        
+        comp_name = self._current_component()
+        cur_layer_group_sp = desktop.currentLayer()
+        cur_layer_group = cur_layer_group_sp.repr
+        
+        self._domview_ui.link_to_component(comp_name, cur_layer_group)
         pass
     
     def on_switch_component_activate(self, *args):
