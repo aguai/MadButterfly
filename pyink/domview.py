@@ -36,6 +36,11 @@ class Timeline(object):
     def name(self):
         name = self.scenes_node.getAttribute('name')
         return name
+
+    def rename(self, new_name):
+        scenes_node = self.scenes_node
+        scenes_node.setAttribute('name', new_name)
+        pass
     pass
 
 
@@ -153,6 +158,18 @@ class Component(object):
                 return
             pass
         raise ValueError, 'try to remove a non-existed timeline - %s' % (name)
+
+    def rename_timeline(self, timeline_name, new_name):
+        for i, tl in enumerate(self.timelines):
+            if tl.name() == timeline_name:
+                tl.rename(new_name)
+                return
+            pass
+        raise ValueError, 'try to remove a non-existed timeline - %s' % (name)
+
+    def rename(self, new_name):
+        self.node.setAttribute('name', new_name)
+        pass
     pass
 
 
@@ -444,6 +461,11 @@ class component_manager(object):
         self._components_node.removeChild(comp_node)
         self._components_group.removeChild(comp_group)
         pass
+
+    def rename_component(self, comp_name, new_name):
+        comp = self._get_component(comp_name)
+        comp.rename(new_name)
+        pass
     
     def get_component_group(self, comp_name):
         comp = self._get_component(comp_name)
@@ -475,6 +497,16 @@ class component_manager(object):
 
     def rm_timeline(self, timeline_name):
         self._cur_comp.rm_timeline(timeline_name)
+        pass
+
+    def rename_timeline_of_component(self, timeline_name, new_name, comp_name):
+        comp = self._get_component(comp_name)
+        comp.rename_timeline(timeline_name, new_name)
+        pass
+
+    def rename_timeline(self, timeline_name, new_name):
+        comp_name = self._cur_comp.name()
+        self.rename_timeline_of_component(timeline_name, new_name, comp_name)
         pass
 
     def all_timeline_names(self):
