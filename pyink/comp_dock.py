@@ -66,12 +66,7 @@ class comp_dock_base(object):
         
         all_comp_names = self._domview_ui.all_comp_names()
         for comp_name in all_comp_names:
-            if comp_name == 'main':
-                editable = False
-            else:
-                editable = True
-                pass
-            
+            editable = False
             components_model.append((comp_name, editable))
             pass
         
@@ -90,7 +85,7 @@ class comp_dock_base(object):
 
         all_timeline_names = self._domview_ui.all_timeline_names()
         for timeline_name in all_timeline_names:
-            timelines_model.append((timeline_name, True))
+            timelines_model.append((timeline_name, False))
             pass
 
         cur_tl_name = self._domview_ui.get_current_timeline()
@@ -107,7 +102,7 @@ class comp_dock_base(object):
 
     def dom_add_component(self, name):
         model = self._components_model
-        model.append((name, True))
+        model.append((name, False))
         pass
 
     def dom_rm_component(self, name):
@@ -127,7 +122,7 @@ class comp_dock_base(object):
 
     def dom_add_timeline(self, name):
         model = self._timelines_model
-        model.append((name, True))
+        model.append((name, False))
         pass
 
     def dom_rm_timeline(self, name):
@@ -255,7 +250,7 @@ class comp_dock_ui(object):
         self._rm_component()
         pass
 
-    def on_treeview_components_cursor_changed(self, *args):
+    def on_treeview_components_row_activated(self, *args):
         domview_ui = self._domview_ui
         
         comp_name = self._current_component()
@@ -279,7 +274,7 @@ class comp_dock_ui(object):
         self._rm_timeline()
         pass
 
-    def on_treeview_timelines_cursor_changed(self, *args):
+    def on_treeview_timelines_row_activated(self, *args):
         domview_ui = self._domview_ui
         
         timeline_name = self._current_timeline()
