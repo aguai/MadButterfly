@@ -465,6 +465,10 @@ class domview_ui_comp(object):
         self.add_component(comp_name)
         self._dom.mv_group_to_component(group, comp_name)
         pass
+
+    def link_to_component(self, comp_name, parent_group):
+        link_node = self._dom.link_to_component(comp_name, parent_group)
+        return link_node
     pass
 
 

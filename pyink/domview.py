@@ -502,6 +502,25 @@ class component_manager(object):
         layer_group = self._get_group_of_component_layer(comp_name, 0)
         layer_group.appendChild(group)
         pass
+
+    ## \brief Create a link to a component.
+    #
+    # \param parent_group is where the link will be pliaced in.
+    # \return link node.
+    #
+    def link_to_component(self, comp_name, parent_group):
+        layers_group = self._get_layers_group_of_component(comp_name)
+        
+        use_node = self._doc.createElement('svg:use')
+        layers_group_id = layers_group.getAttribute('id')
+        use_node.setAttribute('xlink:href', '#' + layers_group_id)
+        use_node_id = self.new_id()
+        use_node.setAttribute('id', use_node_id)
+        use_node.setAttribute('use_component', 'true')
+
+        parent_group.appendChild(use_node)
+        
+        return use_node
     pass
 
 
