@@ -70,6 +70,9 @@ class consistency_checker(object):
                 self._domviewui.manage_layer_group(child)
                 pass
             pass
+        elif child_name == 'ns0:scenes':
+            self._domviewui.refresh_timelines()
+            return
         
         for cchild in child.childList():
             self._remove_node_recursive(child, cchild)
@@ -101,6 +104,9 @@ class consistency_checker(object):
             except:
                 return
             pass
+        elif child_name == 'ns0:scenes':
+            self._domviewui.refresh_timelines()
+            return
             
         try:
             layer_idx, (start, end, tween_type) = \
@@ -151,5 +157,8 @@ class consistency_checker(object):
                 self._domviewui.reset()
 		pass
 	    pass
+        elif node.name() == 'ns0:scenes' and name == 'name':
+            self._domviewui.refresh_timelines()
+            pass
         pass
     pass
