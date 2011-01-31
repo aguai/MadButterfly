@@ -22,7 +22,9 @@ class comp_dock_base(object):
         components_model = builder.get_object('components_model')
         timelines_model = builder.get_object('timelines_model')
         components_treeview = builder.get_object('treeview_components')
+        components_menu = builder.get_object('components_menu')
         timelines_treeview = builder.get_object('treeview_timelines')
+        timelines_menu = builder.get_object('timelines_menu')
         
         dock_top_parent = dock_top.get_parent()
         dock_top_parent.remove(dock_top)
@@ -36,7 +38,9 @@ class comp_dock_base(object):
         self._components_model = components_model
         self._timelines_model = timelines_model
         self._components_treeview = components_treeview
+        self._components_menu = components_menu
         self._timelines_treeview = timelines_treeview
+        self._timelines_menu = timelines_menu
 
         self._cur_component = -1
         self._cur_timeline = -1
@@ -250,6 +254,16 @@ class comp_dock_ui(object):
         self._rm_component()
         pass
 
+    def on_treeview_components_button_press_event(self, widget, event, *args):
+        if event.type != gtk.gdk.BUTTON_PRESS:
+            return
+
+        if event.button != 3:   # not right button
+            return
+
+        self._components_menu.popup(None, None, None, event.button, event.time)
+        pass
+
     def on_treeview_components_row_activated(self, *args):
         domview_ui = self._domview_ui
         
@@ -261,9 +275,36 @@ class comp_dock_ui(object):
         desktop.setCurrentLayer(group.spitem)
         pass
     
+    ## \brief Handle of changing component name.
+    #
     def on_cellrenderer_comp_edited(self, renderer, path,
                                     new_text, *args):
-        print '%s - %s' % (path, new_text)
+        model = self._components_model
+        itr = model.get_iter(path)
+
+        old_name = model.get_value(itr, 0)
+
+        model.set_value(itr, 0, new_text)
+        model.set_value(itr, 1, False)
+
+        self._domview_ui.rename_component(old_name, new_text)
+        pass
+
+    def on_rename_component_activate(self, *args):
+        treeview = self._components_treeview
+        path, col = treeview.get_cursor()
+        
+        model = self._components_model
+        itr = model.get_iter(path)
+        model.set_value(itr, 1, True)
+
+        treeview.set_cursor(path, col, True)
+        pass
+
+    def on_link_component_activate(self, *args):
+        pass
+    
+    def on_switch_component_activate(self, *args):
         pass
     
     def on_add_timeline_clicked(self, *args):
@@ -272,6 +313,16 @@ class comp_dock_ui(object):
 
     def on_remove_timeline_clicked(self, *args):
         self._rm_timeline()
+        pass
+
+    def on_treeview_timelines_button_press_event(self, widget, event, *args):
+        if event.type != gtk.gdk.BUTTON_PRESS:
+            return
+
+        if event.button != 3:   # not right button
+            return
+
+        self._timelines_menu.popup(None, None, None, event.button, event.time)
         pass
 
     def on_treeview_timelines_row_activated(self, *args):
@@ -283,7 +334,32 @@ class comp_dock_ui(object):
 
     def on_cellrenderer_timelines_edited(self, renderer, path,
                                          new_text, *args):
-        print '%s - %s' % (path, new_text)
+        model = self._timelines_model
+        itr = model.get_iter(path)
+        
+        old_name = model.get_value(itr, 0)
+        
+        model.set_value(itr, 0, new_text)
+        model.set_value(itr, 1, False)
+        
+        self._domview_ui.rename_timeline(old_name, new_text)
+        pass
+    
+    def on_rename_timeline_activate(self, *args):
+        treeview = self._timelines_treeview
+        path, col = treeview.get_cursor()
+        
+        model = self._timelines_model
+        itr = model.get_iter(path)
+        model.set_value(itr, 1, True)
+
+        treeview.set_cursor(path, col, True)
+        pass
+    
+    def on_link_timeline_activate(self, *args):
+        pass
+    
+    def on_switch_timeline_activate(self, *args):
         pass
     pass
 

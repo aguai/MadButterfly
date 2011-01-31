@@ -469,6 +469,19 @@ class domview_ui_comp(object):
     def link_to_component(self, comp_name, parent_group):
         link_node = self._dom.link_to_component(comp_name, parent_group)
         return link_node
+
+    def rename_component(self, comp_name, new_name):
+        self._dom.rename_component(comp_name, new_name)
+        pass
+
+    def rename_timeline_of_component(self, timeline_name, new_name, comp_name):
+        self._dom.rename_timeline_of_component(timeline_name, new_name,
+                                               comp_name)
+        pass
+
+    def rename_timeline(self, timeline_name, new_name):
+        self._dom.rename_timeline(timeline_name, new_name)
+        pass
     pass
 
 
