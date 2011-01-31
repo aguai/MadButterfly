@@ -33,7 +33,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="model">components_model</property>
-                <signal name="cursor_changed" handler="on_treeview_components_cursor_changed"/>
+                <signal name="row_activated" handler="on_treeview_components_row_activated"/>
                 <child>
                   <object class="GtkTreeViewColumn" id="treeviewcolumn1">
                     <property name="sizing">autosize</property>
@@ -127,7 +127,7 @@
                 <property name="search_column">1</property>
                 <property name="level_indentation">9</property>
                 <property name="enable_grid_lines">horizontal</property>
-                <signal name="cursor_changed" handler="on_treeview_timelines_cursor_changed"/>
+                <signal name="row_activated" handler="on_treeview_timelines_row_activated"/>
                 <child>
                   <object class="GtkTreeViewColumn" id="treeviewcolumn2">
                     <property name="title">Action/Timeline Name</property>
