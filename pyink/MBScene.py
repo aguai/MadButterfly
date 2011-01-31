@@ -118,11 +118,11 @@ class MBScene(object):
 	pass
     
     def extendScene(self):
-        # Create a tween
+	# Create a tween
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	start, end, tween_type = \
 	    self._domviewui.get_left_key(layer_idx, frame_idx)
-	tween_len = frame_idx - start 
+	tween_len = frame_idx - start
 	self._domviewui.tween(layer_idx, start, tween_len, tween_type)
 
 	# Create a key frame which link to the previous key frame
@@ -157,7 +157,10 @@ class MBScene(object):
     def duplicateKeyScene(self):
         # Search for the current scene
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
-	self.removeKeyScene(layer_idx, frame_idx)
+	try:
+	    self.removeKeyScene(layer_idx, frame_idx)
+	except:			# no key and tween
+	    pass
 
 	try:
 	    left_start, left_end, left_tween_type = \
