@@ -212,6 +212,17 @@ class comp_dock_ui(object):
 
         self._domview_ui.rm_component(comp_name)
         pass
+
+    def _switch_component(self):
+        domview_ui = self._domview_ui
+        
+        comp_name = self._current_component()
+        domview_ui.switch_component(comp_name)
+        
+        group = domview_ui.get_layer_group(0)
+        desktop = self._desktop # from comp_dock_base
+        desktop.setCurrentLayer(group.spitem)
+        pass
     
     def _add_timeline(self):
         def _make_timeline_name():
@@ -245,6 +256,13 @@ class comp_dock_ui(object):
 
         self._domview_ui.rm_timeline(tl_name)
         pass
+
+    def _switch_timeline(self):
+        domview_ui = self._domview_ui
+        
+        timeline_name = self._current_timeline()
+        domview_ui.switch_timeline(timeline_name)
+        pass
     
     def on_add_comp_clicked(self, *args):
         self._add_component()
@@ -265,14 +283,7 @@ class comp_dock_ui(object):
         pass
 
     def on_treeview_components_row_activated(self, *args):
-        domview_ui = self._domview_ui
-        
-        comp_name = self._current_component()
-        domview_ui.switch_component(comp_name)
-        
-        group = domview_ui.get_layer_group(0)
-        desktop = self._desktop # from comp_dock_base
-        desktop.setCurrentLayer(group.spitem)
+        self._switch_component()
         pass
     
     ## \brief Handle of changing component name.
@@ -305,6 +316,7 @@ class comp_dock_ui(object):
         pass
     
     def on_switch_component_activate(self, *args):
+        self._switch_component()
         pass
     
     def on_add_timeline_clicked(self, *args):
@@ -326,10 +338,7 @@ class comp_dock_ui(object):
         pass
 
     def on_treeview_timelines_row_activated(self, *args):
-        domview_ui = self._domview_ui
-        
-        timeline_name = self._current_timeline()
-        domview_ui.switch_timeline(timeline_name)
+        self._switch_timeline()
         pass
 
     def on_cellrenderer_timelines_edited(self, renderer, path,
@@ -356,10 +365,8 @@ class comp_dock_ui(object):
         treeview.set_cursor(path, col, True)
         pass
     
-    def on_link_timeline_activate(self, *args):
-        pass
-    
     def on_switch_timeline_activate(self, *args):
+        self._switch_timeline()
         pass
     pass
 
