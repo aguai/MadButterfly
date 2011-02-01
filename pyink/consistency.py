@@ -80,13 +80,12 @@ class consistency_checker(object):
         pass
 
     def _remove_node_recursive(self, node, child):
-    	return
         for cchild in child.childList():
             self._remove_node_recursive(child, cchild)
             pass
         
         child_name = child.name()
-        if child_name not in ('ns0:scene', 'svg:g'):
+        if child_name not in ('ns0:scenes', 'ns0:scene', 'svg:g'):
             return
 
         #
