@@ -108,7 +108,7 @@ class unlink_clone_checker(object):
         pass
 
     def do_attr_modified(self, node, name, old_value, new_value):
-        if name == 'id' and node.name() != 'svg:use':
+        if name == 'id' and node.name() != 'svg:use' and new_value:
             #
             # The ID of a node may not be assigned when it being
             # inserted, and be assigned later.  So, we checking

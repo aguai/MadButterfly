@@ -90,6 +90,9 @@ class Component(object):
         return names
 
     def parse_timelines(self):
+        print 'parse timelines fro component ' + self.name()
+        self.timelines[:] = []
+        
         if self.node:
             assert self.node.name() == 'ns0:component'
             pass
@@ -99,6 +102,7 @@ class Component(object):
             if child.name() == 'ns0:scenes':
                 tl = Timeline(child)
                 self.timelines.append(tl)
+                print '    ' + tl.name()
                 pass
             pass
         pass
@@ -173,6 +177,48 @@ class Component(object):
     pass
 
 
+## \brief A mix-in for class component_manager for UI updating.
+#
+# This class collects all methods for supporting UI updating.
+#
+class component_manager_ui_update(object):
+    ## \brief Update the list of components.
+    #
+    def reparse_components(self):
+        saved_cur_comp = self._cur_comp
+        self._components[:] = [self._main_comp]
+        self._comp_names.clear()
+        self._parse_components()
+
+        for comp in self._components:
+            if comp.name() == saved_cur_comp.name():
+                self._cur_comp = comp
+                break
+            pass
+        else:
+            self._cur_comp = self._main_comp
+            pass
+        pass
+
+    ## \brief Update the list of timelines of current component.
+    #
+    def reparse_timelines(self):
+        comp = self._cur_comp
+        saved_cur_timeline = self._cur_timeline
+        comp.parse_timelines()
+        
+        for timeline in comp.timelines:
+            if timeline.name() == saved_cur_timeline.name():
+                self._cur_timeline = timeline
+                break
+            pass
+        else:
+            self._cur_timeline = comp.timelines[0]
+            pass
+        pass
+    pass
+
+
 ## \brief A mix-in for class domview for management of components.
 #
 # This class is responsible for manage components and timelines.  It
@@ -189,7 +235,7 @@ class Component(object):
 # special case with slightly different in structure.  It should be
 # removed and normalized to normal components.
 #
-class component_manager(object):
+class component_manager(component_manager_ui_update):
     def __init__(self):
         self._components_node = None
         self._components = []
@@ -703,7 +749,9 @@ class domview_monitor(object):
 	    if old_value:
 		del self._id2node[old_value]
 		pass
-	    self._id2node[new_value] = node
+            if new_value:
+                self._id2node[new_value] = node
+                pass
 	    pass
 	elif name == 'ref' and node.name() == 'ns0:scene':
             parent_node = node.parent()
@@ -759,9 +807,11 @@ class domview_monitor(object):
 	try:
 	    node_id = node.getAttribute('id')
 	except:
-	    return
-	
-	self._id2node[node_id] = node
+            pass
+        else:
+            self._id2node[node_id] = node
+            pass
+        
 	for n in node.childList():
 	    self._collect_node_ids_recursive(n)
 	    pass

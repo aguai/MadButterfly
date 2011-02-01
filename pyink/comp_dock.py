@@ -164,6 +164,11 @@ class comp_dock_ui(object):
     def start_handle_ui_events(self):
         self._builder.connect_signals(self)
         pass
+
+    def install_dock(self, desktop):
+        doc = desktop.doc()
+        doc.connectCommit(self.on_commit)
+        pass
     
     def _current_component(self):
         treeview = self._components_treeview
@@ -400,6 +405,10 @@ class comp_dock_ui(object):
         self._desktop.doc().done("None",
                                  "Switch to another timeline")
         pass
+
+    def on_commit(self):
+        print 'commit'
+        pass
     pass
 
 ## \brief Component dock
@@ -411,5 +420,10 @@ class comp_dock(comp_dock_base, comp_dock_ui):
         super(comp_dock, self).__init__(domview_ui, fname)
         
         self.start_handle_ui_events()
+        pass
+    
+    def install_dock(self, desktop):
+        comp_dock_base.install_dock(self, desktop)
+        comp_dock_ui.install_dock(self, desktop)
         pass
     pass

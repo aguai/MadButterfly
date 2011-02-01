@@ -484,11 +484,13 @@ class domview_ui_comp(object):
         pass
 
     def refresh_components(self):
+        self._dom.reparse_components()
         dock = self._comp_dock
         dock.refresh_components()
         pass
 
     def refresh_timelines(self):
+        self._dom.reparse_timelines()
         dock = self._comp_dock
         dock.refresh_timelines()
         pass
