@@ -401,6 +401,8 @@ class MBScene(object):
 
 	self.top.show_all()
 	self.last_update = None
+	
+	self.markUndo("Initialize")
 	return False
 
     ## \brief To handle context menu event.
