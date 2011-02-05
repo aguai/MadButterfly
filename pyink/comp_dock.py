@@ -1,6 +1,7 @@
 import gtk
 import os
 import data_monitor
+import pybInkscape
 
 
 ## \brief User interface for management components and their timelines.
@@ -145,6 +146,7 @@ class comp_dock_base(object):
         raise ValueError, 'unknown component name - %s' % (name)
     pass
 
+
 ## \brief UI interactive handlers
 #
 # A mix-in to handle UI events.
@@ -159,6 +161,11 @@ class comp_dock_ui(object):
         self._locker = domview_ui
         pass
 
+    def _drop_undo(self):
+        self._doc.commit()
+        self._doc.beginTransaction()
+        pass
+
     ## \brief Start handle UI events.
     #
     def start_handle_ui_events(self):
@@ -166,8 +173,7 @@ class comp_dock_ui(object):
         pass
 
     def install_dock(self, desktop):
-        doc = desktop.doc()
-        doc.connectCommit(self.on_commit)
+        self._doc = desktop.doc().rdoc
         pass
     
     def _current_component(self):
@@ -271,14 +277,12 @@ class comp_dock_ui(object):
     
     def on_add_comp_clicked(self, *args):
         self._add_component()
-        self._desktop.doc().done("None",
-                                 "Add a new component")
+        self._drop_undo()
         pass
 
     def on_remove_comp_clicked(self, *args):
         self._rm_component()
-        self._desktop.doc().done("None",
-                                 "Remove a component")
+        self._drop_undo()
         pass
 
     def on_treeview_components_button_press_event(self, widget, event, *args):
@@ -293,8 +297,7 @@ class comp_dock_ui(object):
 
     def on_treeview_components_row_activated(self, *args):
         self._switch_component()
-        self._desktop.doc().done("None",
-                                 "Switch to another component")
+        self._drop_undo()
         pass
     
     ## \brief Handle of changing component name.
@@ -311,8 +314,7 @@ class comp_dock_ui(object):
 
         self._domview_ui.rename_component(old_name, new_text)
         
-        self._desktop.doc().done("None",
-                                 "Change name of a component")
+        self._drop_undo()
         pass
 
     def on_rename_component_activate(self, *args):
@@ -335,26 +337,22 @@ class comp_dock_ui(object):
         
         self._domview_ui.link_to_component(comp_name, cur_layer_group)
         
-        self._desktop.doc().done("None",
-                                 "Make a xlink of a component")
+        self._drop_undo()
         pass
     
     def on_switch_component_activate(self, *args):
         self._switch_component()
-        self._desktop.doc().done("None",
-                                 "Switch to another component")
+        self._drop_undo()
         pass
     
     def on_add_timeline_clicked(self, *args):
         self._add_timeline()
-        self._desktop.doc().done("None",
-                                 "Add a timeline")
+        self._drop_undo()
         pass
 
     def on_remove_timeline_clicked(self, *args):
         self._rm_timeline()
-        self._desktop.doc().done("None",
-                                 "Remove a timeline")
+        self._drop_undo()
         pass
 
     def on_treeview_timelines_button_press_event(self, widget, event, *args):
@@ -369,8 +367,7 @@ class comp_dock_ui(object):
 
     def on_treeview_timelines_row_activated(self, *args):
         self._switch_timeline()
-        self._desktop.doc().done("None",
-                                 "Switch to another timeline")
+        self._drop_undo()
         pass
 
     def on_cellrenderer_timelines_edited(self, renderer, path,
@@ -385,8 +382,7 @@ class comp_dock_ui(object):
         
         self._domview_ui.rename_timeline(old_name, new_text)
         
-        self._desktop.doc().done("None",
-                                 "Change name of a timeline")
+        self._drop_undo()
         pass
     
     def on_rename_timeline_activate(self, *args):
@@ -402,12 +398,7 @@ class comp_dock_ui(object):
     
     def on_switch_timeline_activate(self, *args):
         self._switch_timeline()
-        self._desktop.doc().done("None",
-                                 "Switch to another timeline")
-        pass
-
-    def on_commit(self):
-        print 'commit'
+        self._drop_undo()
         pass
     pass
 

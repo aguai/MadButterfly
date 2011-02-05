@@ -176,11 +176,9 @@ class MBScene(object):
 	self._director.show_scene(frame_idx)
 	pass
 
-    def markUndo(self, msg):
-	#self._domviewui.mark_undo(msg)
-	# FIXME: move into domview latter when the inkscpae-pybind is modified
-	#        to support the sp_document_done.
-	self.desktop.doc().done("None",msg)
+    def _drop_undo(self):
+	self.document.commit()	# commit the transation and drop change log.
+	self.document.beginTransaction()
     
     def addNameEditor(self,hbox):
 	self.nameEditor = gtk.Entry(max=40)
@@ -240,23 +238,23 @@ class MBScene(object):
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.insertKeyScene(layer_idx, frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
-	self.markUndo("insert key")
+	self._drop_undo()
 	return
     
     def doDuplicateKeyScene(self,w):
         self.duplicateKeyScene()
-	self.markUndo("dup key")
+	self._drop_undo()
 	pass
 
     def doRemoveScene(self,w):
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.removeKeyScene(layer_idx, frame_idx)
-	self.markUndo("remove key")
+	self._drop_undo()
 	return
 
     def doExtendScene(self,w):
 	self.extendScene()
-	self.markUndo("extend key")
+	self._drop_undo()
 	pass
 
     def doRun(self,arg):
@@ -302,12 +300,12 @@ class MBScene(object):
     def doInsertFrame(self, w):
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self._domviewui.insert_frames(layer_idx, frame_idx, 1)
-	self.markUndo("insert frame")
+	self._drop_undo()
 
     def doRemoveFrame(self, w):
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self._domviewui.rm_frames(layer_idx, frame_idx, 1)
-	self.markUndo("remove frame")
+	self._drop_undo()
 
     def do_TweenTypeChange(self, w):
 	if self._disable_tween_type_selector:
@@ -322,7 +320,7 @@ class MBScene(object):
 	    # Length of tween > 1 and cover this frame
 	    self._domviewui.chg_tween(layer_idx, start, tween_type=tween_type)
 	    pass
-	self.markUndo("change type")
+	self._drop_undo()
 	pass
     
     def onQuit(self, event):
@@ -402,7 +400,8 @@ class MBScene(object):
 	self.top.show_all()
 	self.last_update = None
 	
-	self.markUndo("Initialize")
+	self._drop_undo()
+	
 	return False
 
     ## \brief To handle context menu event.
