@@ -3,38 +3,30 @@
 import traceback
 import math
 
-def parse_opacity(obj):
-    style = obj.getAttribute("style")
-    arr = style.split(';')
-    for a in arr:
-	f = a.split(':')
-	if f[0] == 'opacity':
-	    return float(f[1])
-    return 1
 
-def change_opacity(obj, opacity):
-    try:
-        style = obj.getAttribute("style")
-    except:
-        obj.setAttribute("style","opacity:%g" % opacity)
-	return
-    arr = style.split(';')
-    s=''
-    for a in arr:
-	f = a.split(':')
-	f[0] = f[0].replace(' ','')
-	if f[0] == 'opacity':
-	    if s != '':
-		s = s + ('; opacity:%g' % opacity)
-	    else:
-		s = 'opacity:%g' % opacity
-	elif f[0] != '':
-	    if s == '':
-		s = a
-	    else:
-		s = s +';'+ a
-    obj.setAttribute("style",s)
+def parse_style(style):
+    attrs = {}
+    
+    style_parts = style.split(';')
+    for part in style_parts:
+	part = part.strip()
+	if not part:
+	    continue
+	nv_pair = part.split(':')
+	if len(nv_pair) != 2:
+	    raise ValueError, 'invalid format for style "%s"' % (style)
 
+	name = nv_pair[0].strip()
+	value = nv_pair[1].strip()
+	attrs[name] = value
+	pass
+
+    return attrs
+
+def gen_style(attrs):
+    parts = [name + ':' + value for name, value in attrs.items()]
+    style = ';'.join(parts)
+    return style
 
 class TweenObject(object):
     TWEEN_TYPE_NORMAL = 0
@@ -216,6 +208,44 @@ class TweenObject(object):
 	        obj.appendChild(newobj)
 	pass
 
+    def _update_tween_style(self, s, d, p, newobj):
+	try:
+	    s_style = s.getAttribute('style')
+	except:
+	    s_attrs = {}
+	else:
+	    s_attrs = parse_style(s_style)
+	    pass
+
+	try:
+	    d_style = d.getAttribute('style')
+	except:
+	    d_attrs = {}
+	else:
+	    d_attrs = parse_style(d_style)
+	    pass
+
+	attrs = dict(s_attrs)
+	
+	if s_attrs.has_key('opacity'):
+	    start_opacity = float(s_attrs['opacity'])
+	else:
+	    start_opacity = 1
+	    pass
+
+	if d_attrs.has_key('opacity'):
+	    end_opacity = float(d_attrs['opacity'])
+	else:
+	    end_opacity = 1
+	    pass
+
+	cur_opacity = start_opacity * (1 - p) + end_opacity * p
+	attrs['opacity'] = '%g' % (cur_opacity)
+
+	new_style = gen_style(attrs)
+	newobj.setAttribute('style', new_style)
+	pass
+
     def updateTweenObjectScale_Group(self, s, d, p, newobj, top):
 	# Parse the translate or matrix
 	# 
@@ -234,21 +264,8 @@ class TweenObject(object):
 	    dy = 0
 	    pass
 
-	try:
-	    start_opacity = parse_opacity(s)
-	except:
-	    start_opacity = 1
-	    pass
+	self._update_tween_style(s, d, p, newobj)
 
-	try:
-	    end_opacity =parse_opacity( d)
-	except:
-	    end_opacity = 1
-	    pass
-
-		
-	cur_opacity = start_opacity*(1-p)+end_opacity*p
-	change_opacity(newobj,cur_opacity)
 	sm = self.parseTransform(s)
 	ss = self.decomposition(sm)
 	dm = self.parseTransform(d)
@@ -284,20 +301,8 @@ class TweenObject(object):
 	    dy = 0
 	    pass
 
-	try:
-	    start_opacity = parse_opacity(s)
-	except:
-	    start_opacity = 1
-	    pass
-
-	try:
-	    end_opacity =parse_opacity( d)
-	except:
-	    end_opacity = 1
-	    pass
-		
-	cur_opacity = start_opacity*(1-p)+end_opacity*p
-	change_opacity(newobj,cur_opacity)
+	self._update_tween_style(s, d, p, newobj)
+	
 	dm = self.parseTransform(d)
 	dd = self.decomposition(dm)
 	sx = 1-(1-dd[0])*p
@@ -340,28 +345,8 @@ class TweenObject(object):
 		    dh = 1
 		pass
 
-	    try:
-		start_opacity = parse_opacity(s)
-	    except:
-		start_opacity = 1
-		pass
-
-	    try:
-		end_opacity =parse_opacity( d)
-		if d.name() == "svg:use":
-		    end_opacity = end_opacity * start_opacity
-		    pass
-		pass
-	    except:
-		if d.name() == "svg:use":
-		    end_opacity = start_opacity
-		else:
-		    end_opacity = 1
-		pass
-
-	    cur_opacity = start_opacity*(1-p)+end_opacity*p
-	    change_opacity(newobj,cur_opacity)
-
+	    self._update_tween_style(s, d, p, newobj)
+	    
 	    try:
 		(ox,oy) = s.spitem.getCenter()
 	    except:
@@ -430,7 +415,6 @@ class TweenObject(object):
 	    top = newobj
 	    newobj = newobj.firstChild()
 	    pass
-	print s.name() 
 	if s.name() == 'svg:g':
 	    self.updateTweenObjectScale_Group(s,d,p,newobj,top)
 	elif s.name() == 'svg:use':
