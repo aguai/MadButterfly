@@ -628,6 +628,43 @@ class domview_monitor(object):
                                    self._on_attr_modified, None)
 	pass
 
+    ## \brief Add a node to id2node mapping.
+    #
+    # domview_monitor._id2node is a multiple mapping to map a key to
+    # multiple node.  The reason that it is not a single mapping is
+    # Inkscape would insert a node with the ID from the node been
+    # copied, and change its ID to a unique one later.  So, we must
+    # provide the capability to handle two or more nodes with the same
+    # ID.
+    def _map_id2node(self, node, node_id):
+        if node_id in self._id2node:
+            old_value = self._id2node[node_id]
+            if isinstance(old_value, list):
+                old_value.append(node)
+            else:
+                self._id2node[node_id] = [old_value, node]
+                pass
+        else:
+            self._id2node[node_id] = node
+            pass
+        pass
+
+    def _unmap_id2node(self, node, node_id):
+        if node_id not in self._id2node:
+            raise ValueError, 'invalide node ID (%s)' % (node_id)
+
+        value = self._id2node[node_id]
+        if isinstance(value, list):
+            value.remove(node)
+            if not value:
+                del self._id2node[node_id]
+                pass
+            pass
+        else:
+            del self._id2node[node_id]
+            pass
+        pass
+
     ## \brief Rescan the tree.
     #
     def _monitor_reparse(self):
@@ -649,9 +686,7 @@ class domview_monitor(object):
 	except:
 	    pass
 	else:
-	    if child_id not in self._id2node:
-		self._id2node[child_id] = child
-		pass
+            self._map_id2node(child, child_id)
 	    pass
 
 	if child.name() == 'ns0:scene' and _id_eq(node, self._scenes_node):
@@ -707,10 +742,7 @@ class domview_monitor(object):
 	except:
 	    pass
 	else:
-	    if child_id not in self._id2node:
-                raise ValueError, \
-                    'remove a node that is never known (%s)' % (child_id)
-	    del self._id2node[child_id]
+            self._unmap_id2node(child, child_id)
 	    pass
 	
 	if child.name() == 'ns0:scene' and _id_eq(node, self._scenes_node):
@@ -737,20 +769,11 @@ class domview_monitor(object):
             return
         
 	if name == 'id':
-	    if old_value and (old_value not in self._id2node):
-		raise ValueError, \
-		    'old ID value of passed node is invalid one (%s)' % \
-		    (old_value)
-	    if (new_value in self._id2node):
-		raise ValueError, \
-		    'new ID value of passed node is invalid one (%s)' % \
-		    (new_value)
-	    
-	    if old_value:
-		del self._id2node[old_value]
+	    if old_value and old_value in self._id2node:
+                self._unmap_id2node(node, old_value)
 		pass
             if new_value:
-                self._id2node[new_value] = node
+                self._map_id2node(node, new_value)
                 pass
 	    pass
 	elif name == 'ref' and node.name() == 'ns0:scene':
@@ -872,7 +895,10 @@ class domview_monitor(object):
     ## \brief Return the node with given ID.
     #
     def get_node(self, node_id):
-	return self._id2node[node_id]
+	value = self._id2node[node_id]
+        if isinstance(value, list):
+            return value[-1]
+        return value
 
     ## \brief Return a scene node corresponding to a scene group of given ID.
     #
