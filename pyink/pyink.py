@@ -47,7 +47,10 @@ def act_desktop(inkscape, ptr):
 
 
 def pyink_start():
+    import extensions
+    
     pybInkscape.inkscape.connect('activate_desktop', act_desktop)
+    extensions.initial()
     pass
 
 
