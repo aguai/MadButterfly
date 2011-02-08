@@ -959,16 +959,14 @@ class domview(domview_monitor):
         self._layers = []
 
         self._comp_mgr = component_manager(self)
+        # Mixing-in component_manager to domview.
+        for attr in dir(self._comp_mgr):
+            if not attr.startswith('_'):
+                v = getattr(self._comp_mgr, attr)
+                setattr(self, attr, v)
+                pass
+            pass
 	pass
-
-    ## \brief Special method to get attribute.
-    #
-    # This method is here for delegating attribute accessing for
-    # mix-in.
-    #
-    def __getattr__(self, name):
-        val = getattr(self._comp_mgr, name)
-        return val
 
     ## \brief Create a scenes node if not existed.
     #
