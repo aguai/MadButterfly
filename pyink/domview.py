@@ -532,8 +532,28 @@ class component_manager(component_manager_ui_update):
 
     def get_current_component(self):
         return self._cur_comp.name()
+
+    ## \brief Hide scene groups of current timeline.
+    #
+    # This method all scene groups of current timeline invisible.
+    #
+    def _hide_current_timeline(self):
+        tl = self._cur_timeline
+        scenes_node = tl.scenes_node
+        for child in scenes_node.childList():
+            if child.name() != 'ns0:scene':
+                continue
+            gid = child.getAttribute('ref')
+            group = self._domview.get_node(gid)
+            group.setAttribute('style', 'display: none')
+            pass
+        pass
     
     def switch_timeline(self, timeline_name):
+        if self._cur_timeline:
+            self._hide_current_timeline()
+            pass
+        
         tl = self._cur_comp.get_timeline(timeline_name)
         self._cur_timeline = tl
         self._domview._scenes_node = tl.scenes_node # of class domview
