@@ -1,6 +1,7 @@
 import random
 import dom_event
 from tween import TweenObject
+from trait import trait, require, composite
 
 
 ## \brief Compare two nodes with ID.
@@ -48,8 +49,8 @@ class Component(object):
     #
     # \param comp_node is None for main component.
     #
-    def __init__(self, domview, comp_node):
-        self._domview = domview
+    def __init__(self, comp_mgr, comp_node):
+        self._comp_mgr = comp_mgr
         self.node = comp_node
         self.layers = []
         self.timelines = []
@@ -66,11 +67,11 @@ class Component(object):
                 break
             pass
         else:                   # no any ns0:scenes
-            doc = self._domview._doc
+            doc = self._comp_mgr._doc
             scenes_node = doc.createElement('ns0:scenes')
             scenes_node.setAttribute('name', 'default')
             
-            node_id = self._domview.new_id()
+            node_id = self._comp_mgr.new_id()
             scenes_node.setAttribute('id', node_id)
             
             comp_node.appendChild(scenes_node)
@@ -126,12 +127,12 @@ class Component(object):
             raise ValueError, \
                 'try add a timeline with duplicated name - %s' % (name)
         
-        doc = self._domview._doc
+        doc = self._comp_mgr._doc
         comp_node = self.node
         
         scenes_node = doc.createElement('ns0:scenes')
         scenes_node.setAttribute('name', name)
-        node_id = self._domview.new_id()
+        node_id = self._comp_mgr.new_id()
         scenes_node.setAttribute('id', node_id)
 
         comp_node.appendChild(scenes_node)
@@ -219,7 +220,7 @@ class component_manager_ui_update(object):
     pass
 
 
-## \brief A mix-in for class domview for management of components.
+## \brief A trait for class domview for managing components.
 #
 # This class is responsible for manage components and timelines.  It
 # is also responsible for switching component and timeline.  Switching
@@ -235,8 +236,20 @@ class component_manager_ui_update(object):
 # special case with slightly different in structure.  It should be
 # removed and normalized to normal components.
 #
+@trait
 class component_manager(component_manager_ui_update):
-    def __init__(self, domview):
+    _layers = require
+    _scenes_node = require
+    _metadata_node = require
+    _doc = require
+    _root = require
+    _layers = require
+    _layers_parent = require
+    new_id = require
+    get_node = require
+    reset = require
+
+    def __init__(self):
         super(component_manager, self).__init__()
         self._components_node = None
         self._components = []
@@ -245,14 +258,12 @@ class component_manager(component_manager_ui_update):
         self._cur_comp = None
         self._cur_timeline = None
         self._components_group = None
-        
-        self._domview = domview
         pass
 
     def _set_main_component(self):
-        comp = Component(self._domview, None)
-        comp.layers = self._domview._layers
-        scenes_node = self._domview._scenes_node
+        comp = Component(self, None)
+        comp.layers = self._layers
+        scenes_node = self._scenes_node
         timeline = Timeline(scenes_node)
         comp.timelines = [timeline]
 
@@ -272,7 +283,7 @@ class component_manager(component_manager_ui_update):
             if child_name in comp_names:
                 raise ValueError, 'duplicate component name %s' % (child_name)
 
-            comp = Component(self._domview, child)
+            comp = Component(self, child)
             comp.parse_timelines()
             
             self._components.append(comp)
@@ -285,7 +296,7 @@ class component_manager(component_manager_ui_update):
     # This method is called by domview._init_metadata().
     #
     def _component_manager_init_metadata(self):
-        metadata_node = self._domview._metadata_node
+        metadata_node = self._metadata_node
 
         # Make sure ns0:components in metadata
 	for n in metadata_node.childList():
@@ -295,13 +306,13 @@ class component_manager(component_manager_ui_update):
 	    pass
 	else:
 	    components_node = \
-                self._domview._doc.createElement("ns0:components")
+                self._doc.createElement("ns0:components")
 	    metadata_node.appendChild(components_node)
 	    self._components_node = components_node
 	    pass
         
         # Make sure the group for containing components.
-        for n in self._domview._root.childList():
+        for n in self._root.childList():
             if n.name() != 'svg:g':
                 continue
             try:
@@ -313,12 +324,12 @@ class component_manager(component_manager_ui_update):
                 break
             pass
         else:                   # no components group
-            components_group = self._domview._doc.createElement('svg:g')
+            components_group = self._doc.createElement('svg:g')
             components_group.setAttribute('inkscape:label', 'components')
-            gid = self._domview.new_id()
+            gid = self.new_id()
             components_group.setAttribute('id', gid)
             
-            self._domview._root.appendChild(components_group)
+            self._root.appendChild(components_group)
             self._components_group = components_group
             pass
         pass
@@ -331,7 +342,7 @@ class component_manager(component_manager_ui_update):
         self._cur_comp = self._main_comp
         tl = self._main_comp.get_timeline('default')
         self._cur_timeline = tl
-        self._domview._scenes_node = tl.scenes_node
+        self._scenes_node = tl.scenes_node
         pass
 
     ## \brief Create component group
@@ -340,16 +351,16 @@ class component_manager(component_manager_ui_update):
     # The layers group is where layer groups is in.
     #
     def _create_component_group(self):
-        doc = self._domview._doc
+        doc = self._doc
         group = doc.createElement('svg:g')
-        gid = self._domview.new_id()
+        gid = self.new_id()
         group.setAttribute('id', gid)
         
         self._components_group.appendChild(group)
 
         # Create layers group
         layers_group = doc.createElement('svg:g')
-        gid = self._domview.new_id()
+        gid = self.new_id()
         layers_group.setAttribute('id', gid)
         layers_group.setAttribute('inkscape:label', 'layers')
         group.appendChild(layers_group)
@@ -363,8 +374,8 @@ class component_manager(component_manager_ui_update):
     # \return a ns0:component node.
     #
     def _create_component_node(self, comp_name, comp_group_id):
-        comp_node = self._domview._doc.createElement('ns0:component')
-        comp_id = self._domview.new_id()
+        comp_node = self._doc.createElement('ns0:component')
+        comp_id = self.new_id()
         comp_node.setAttribute('id', comp_id)
         comp_node.setAttribute('name', comp_name)
         comp_node.setAttribute('ref', comp_group_id)
@@ -385,8 +396,8 @@ class component_manager(component_manager_ui_update):
     ## \brief Create a layer group for give layer of a component.
     #
     def _create_comp_layer_group(self, layers_group, layer_name):
-        doc = self._domview._doc
-        gid = self._domview.new_id()
+        doc = self._doc
+        gid = self.new_id()
         
         layer_group = doc.createElement('svg:g')
         layer_group.setAttribute('id', gid)
@@ -408,7 +419,7 @@ class component_manager(component_manager_ui_update):
 
     def _get_layers_group_of_component(self, comp_name):
         if comp_name == 'main':
-            return self._domview._root
+            return self._root
         
         comp_group = self.get_component_group(comp_name)
         layers_group = comp_group.firstChild()
@@ -453,10 +464,10 @@ class component_manager(component_manager_ui_update):
         
         comp = self._get_component(comp_name)
         self._cur_comp = comp
-        self._domview._layers = comp.layers
+        self._layers = comp.layers
         comp_name = self._cur_comp.name()
         # for domview
-        self._domview._layers_parent = \
+        self._layers_parent = \
             self._get_layers_group_of_component(comp_name)
         
         first_name = comp.all_timeline_names()[0]
@@ -475,7 +486,7 @@ class component_manager(component_manager_ui_update):
         comp_group_id = comp_group.getAttribute('id')
         comp_node = self._create_component_node(comp_name, comp_group_id)
         
-        comp = Component(self._domview, comp_node)
+        comp = Component(self, comp_node)
         comp.parse_timelines()
 
         self._components.append(comp)
@@ -491,7 +502,7 @@ class component_manager(component_manager_ui_update):
         pass
 
     def add_component_node(self, comp_node):
-        comp = Component(self._domview, comp_node)
+        comp = Component(self, comp_node)
         comp_name = comp.name()
         if self.has_component(comp_name):
             raise ValueError, \
@@ -523,11 +534,11 @@ class component_manager(component_manager_ui_update):
         
         comp_name = comp.name()
         if comp_name == 'main':
-            return self._domview._root
+            return self._root
         
         comp_node = comp.node
         gid = comp_node.getAttribute('ref')
-        comp_group = self._domview.get_node(gid)
+        comp_group = self.get_node(gid)
         return comp_group
 
     def get_current_component(self):
@@ -544,7 +555,7 @@ class component_manager(component_manager_ui_update):
             if child.name() != 'ns0:scene':
                 continue
             gid = child.getAttribute('ref')
-            group = self._domview.get_node(gid)
+            group = self.get_node(gid)
             group.setAttribute('style', 'display: none')
             pass
         pass
@@ -556,10 +567,10 @@ class component_manager(component_manager_ui_update):
         
         tl = self._cur_comp.get_timeline(timeline_name)
         self._cur_timeline = tl
-        self._domview._scenes_node = tl.scenes_node # of class domview
+        self._scenes_node = tl.scenes_node # of class domview
 
         # Make domview to rescan layers and scenes.
-        self._domview.reset()            # from domview
+        self.reset()            # from domview
         pass
 
     def add_timeline(self, timeline_name):
@@ -614,10 +625,10 @@ class component_manager(component_manager_ui_update):
     def link_to_component(self, comp_name, parent_group):
         layers_group = self._get_layers_group_of_component(comp_name)
         
-        use_node = self._domview._doc.createElement('svg:use')
+        use_node = self._doc.createElement('svg:use')
         layers_group_id = layers_group.getAttribute('id')
         use_node.setAttribute('xlink:href', '#' + layers_group_id)
-        use_node_id = self._domview.new_id()
+        use_node_id = self.new_id()
         use_node.setAttribute('id', use_node_id)
         use_node.setAttribute('use_component', 'true')
 
@@ -962,7 +973,15 @@ def _DOM_iterator(node):
 # change and destroy scene node and scene group.  A scene node is a 'ns0:scene'
 # in 'ns0:scenes' tag.  A scene group is respective 'svg:g' for a scene.
 #
+@composite
 class domview(domview_monitor):
+    use_traits = (component_manager,)
+    
+    method_map_component_manager = \
+        {component_manager._start_component_manager:
+             '_start_component_manager'}
+    method_map_traits = {component_manager: method_map_component_manager}
+
     # Declare variables, here, for keeping tracking
     _doc = None
     _root = None
@@ -977,15 +996,6 @@ class domview(domview_monitor):
         self._scenes_node = None
         self._layers_parent = None
         self._layers = []
-
-        self._comp_mgr = component_manager(self)
-        # Mixing-in component_manager to domview.
-        for attr in dir(self._comp_mgr):
-            if not attr.startswith('_'):
-                v = getattr(self._comp_mgr, attr)
-                setattr(self, attr, v)
-                pass
-            pass
 	pass
 
     ## \brief Create a scenes node if not existed.
@@ -1052,7 +1062,7 @@ class domview(domview_monitor):
 	
 	self._init_metadata()
 	self._start_monitor()	# from domview_monitor
-        self._comp_mgr._start_component_manager()
+        self._start_component_manager()
 	self._parse_all_layers()
 	pass
 
