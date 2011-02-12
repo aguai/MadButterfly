@@ -179,7 +179,7 @@ def composite(clazz):
                 continue
             
             value = getattr(a_trait, attr)
-            if value == require:
+            if isinstance(value, require):
                 continue
             
             attrname_cnts[attr] = attrname_cnts.setdefault(attr, 0) + 1
