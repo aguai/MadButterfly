@@ -262,6 +262,35 @@ def _include_methods(clazz):
 # dictionary mapping from require attributes of used traits to names
 # of attributes of the composition class.
 #
+# \verbatim
+# @composite
+# class foo(object):
+#     use_trait = (trait_a, trait_b)
+#     provide_traits = {trait_a.var_a: 'var_foo'}
+#
+#     var_foo = 'value of var_foo'
+#     pass
+# \endverbatim
+#
+# Like mapping require attributes of used traits, there is a map,
+# named method_map_traits, for methods of used traits.
+#
+# \verbatim
+# @composite
+# class foo(object):
+#     use_trait = (trait_a, trait_b)
+#     provide_traits = {trait_a.var_a: 'var_foo'}
+#     method_map_traits = {trait_a.xxx: 'hello')
+#
+#     var_foo = 'value of var_foo'
+#     pass
+# \endverbatim
+#
+# Previous example maps trait_a.xxx method to foo.hello method.
+# composite does not include methods that has a name prefixed by a '_'
+# charater.  But, you can still force it, by an explicity mapping in
+# method_map_traits, to include a method prefixed by a '_' character.
+#
 def composite(clazz):
     if not hasattr(clazz, 'use_traits'):
         raise KeyError, \
