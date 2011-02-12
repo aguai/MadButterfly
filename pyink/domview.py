@@ -638,11 +638,151 @@ class component_manager(component_manager_ui_update):
     pass
 
 
+## \brief Parser for scenes nodes.
+#
+# This class parses scenes nodes and collect ID of all nodes.
+#
+@trait
+class scenes_parser(object):
+    _root = require
+    _scenes_node = require
+    _id2node = require
+    _group2scene = require
+    current = require
+    _maxframe = require
+    
+    def _find_maxframe(self, scenes_node):
+	maxframe = 0
+	for child in scenes_node.childList():
+	    if child.name() != 'ns0:scene':
+		continue
+	    
+	    try:
+		start = child.getAttribute('start')
+		maxframe = max(int(start), maxframe)
+	    except:
+		pass
+	    try:
+		end = child.getAttribute('end')
+		maxframe = max(int(end), maxframe)
+	    except:
+		pass
+	    pass
+	return maxframe
+
+    ## \brief Collect ID of nodes in the document.
+    #
+    # It is used to implement a fast mapping from an ID to the respective node.
+    #
+    def _collect_node_ids(self):
+	self._id2node = {}
+	root = self._root
+	for n in root.childList():
+	    self._collect_node_ids_recursive(n)
+	    pass
+	pass
+    
+    def _collect_node_ids_recursive(self, node):
+	try:
+	    node_id = node.getAttribute('id')
+	except:
+            pass
+        else:
+            self._id2node[node_id] = node
+            pass
+        
+	for n in node.childList():
+	    self._collect_node_ids_recursive(n)
+	    pass
+	pass
+    
+    def parse_one_scene(self, scene_node):
+	assert scene_node.name() == 'ns0:scene'
+
+	start = int(scene_node.getAttribute("start"))
+	try:
+	    end = int(scene_node.getAttribute("end"))
+	except:
+	    end = start
+	    pass
+	
+	try:
+	    scene_type = scene_node.getAttribute('type')
+	    if scene_type == None:
+		scene_type = 'normal'
+		pass
+	except:
+	    scene_type = 'normal'
+	    pass
+
+	return start, end, scene_type
+
+    def _parse_one_scenes(self, scenes_node):
+	try:
+	    cur = int(n.getAttribute("current"))
+	except:
+	    cur = 0
+	    pass
+	self.current = cur
+	
+	for scene_node in scenes_node.childList():
+	    if scene_node.name() != 'ns0:scene':
+		continue
+
+	    try:
+		start, end, scene_type = self.parse_one_scene(scene_node)
+                group_id = scene_node.getAttribute("ref")
+	    except:             # the scene node is incompleted.
+		continue
+	    
+	    self._group2scene[group_id] = scene_node
+	    pass
+	pass
+
+    ## \brief Parse all scenes node in svg:metadata subtree.
+    #
+    def _collect_all_scenes(self):
+        scenes_node = self._scenes_node
+        self._parse_one_scenes(scenes_node)
+        self._maxframe = self._find_maxframe(scenes_node)
+        pass
+	pass
+    
+    ## \brief Return the node with given ID.
+    #
+    def get_node(self, node_id):
+	value = self._id2node[node_id]
+        if isinstance(value, list):
+            return value[-1]
+        return value
+
+    ## \brief Return a scene node corresponding to a scene group of given ID.
+    #
+    def get_scene(self, group_id):
+	return self._group2scene[group_id]
+
+    def new_id(self):
+	while True:
+	    candidate = 's%d' % int(random.random()*100000)
+	    if candidate not in self._id2node:
+		return candidate
+	    pass
+	pass
+    pass
+
 ## \brief Monitor changes of DOM-tree.
 #
 # This class monitors DOM-tree to maintain _maxframe and maps for node ID to
 # node and scene group ID to scene node.
+@composite
 class domview_monitor(object):
+    use_traits = (scenes_parser,)
+
+    method_map_traits = {
+        scenes_parser._find_maxframe: '_find_maxframe',
+        scenes_parser._collect_all_scenes: '_collect_all_scenes',
+        scenes_parser._collect_node_ids: '_collect_node_ids'}
+    
     def __init__(self, *args, **kws):
 	super(domview_monitor, self).__init__()
 
@@ -749,25 +889,6 @@ class domview_monitor(object):
 	    pass
 	pass	    
 
-    def _find_maxframe(self, scenes_node):
-	maxframe = 0
-	for child in scenes_node.childList():
-	    if child.name() != 'ns0:scene':
-		continue
-	    
-	    try:
-		start = child.getAttribute('start')
-		maxframe = max(int(start), maxframe)
-	    except:
-		pass
-	    try:
-		end = child.getAttribute('end')
-		maxframe = max(int(end), maxframe)
-	    except:
-		pass
-	    pass
-	return maxframe
-
     def _on_remove_node(self, node, child):
 	for cchild in child.childList():
 	    self._on_remove_node(child, cchild)
@@ -847,105 +968,6 @@ class domview_monitor(object):
                     self._maxframe = max(int(new_value), self._maxframe)
                     pass
                 pass
-	    pass
-	pass
-    
-    ## \brief Collect ID of nodes in the document.
-    #
-    # It is used to implement a fast mapping from an ID to the respective node.
-    #
-    def _collect_node_ids(self):
-	self._id2node = {}
-	root = self._root
-	for n in root.childList():
-	    self._collect_node_ids_recursive(n)
-	    pass
-	pass
-    
-    def _collect_node_ids_recursive(self, node):
-	try:
-	    node_id = node.getAttribute('id')
-	except:
-            pass
-        else:
-            self._id2node[node_id] = node
-            pass
-        
-	for n in node.childList():
-	    self._collect_node_ids_recursive(n)
-	    pass
-	pass
-    
-    def parse_one_scene(self, scene_node):
-	assert scene_node.name() == 'ns0:scene'
-
-	start = int(scene_node.getAttribute("start"))
-	try:
-	    end = int(scene_node.getAttribute("end"))
-	except:
-	    end = start
-	    pass
-	
-	try:
-	    scene_type = scene_node.getAttribute('type')
-	    if scene_type == None:
-		scene_type = 'normal'
-		pass
-	except:
-	    scene_type = 'normal'
-	    pass
-
-	return start, end, scene_type
-
-    def _parse_one_scenes(self, scenes_node):
-	try:
-	    cur = int(n.getAttribute("current"))
-	except:
-	    cur = 0
-	    pass
-	self.current = cur
-	
-	for scene_node in scenes_node.childList():
-	    if scene_node.name() != 'ns0:scene':
-		continue
-
-	    try:
-		start, end, scene_type = self.parse_one_scene(scene_node)
-                group_id = scene_node.getAttribute("ref")
-	    except:             # the scene node is incompleted.
-		continue
-	    
-	    self._group2scene[group_id] = scene_node
-	    pass
-	pass
-
-    ## \brief Parse all scenes node in svg:metadata subtree.
-    #
-    def _collect_all_scenes(self):
-        scenes_node = self._scenes_node
-        self._parse_one_scenes(scenes_node)
-        self._maxframe = self._find_maxframe(scenes_node)
-        pass
-	pass
-    
-    ## \brief Return the node with given ID.
-    #
-    def get_node(self, node_id):
-	value = self._id2node[node_id]
-        if isinstance(value, list):
-            return value[-1]
-        return value
-
-    ## \brief Return a scene node corresponding to a scene group of given ID.
-    #
-    def get_scene(self, group_id):
-	return self._group2scene[group_id]
-
-    def new_id(self):
-	while True:
-	    candidate = 's%d' % int(random.random()*100000)
-	    if candidate not in self._id2node:
-		return candidate
 	    pass
 	pass
     pass
