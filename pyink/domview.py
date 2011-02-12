@@ -977,10 +977,8 @@ def _DOM_iterator(node):
 class domview(domview_monitor):
     use_traits = (component_manager,)
     
-    method_map_component_manager = \
-        {component_manager._start_component_manager:
-             '_start_component_manager'}
-    method_map_traits = {component_manager: method_map_component_manager}
+    method_map_traits = {component_manager._start_component_manager:
+                             '_start_component_manager'}
 
     # Declare variables, here, for keeping tracking
     _doc = None

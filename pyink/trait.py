@@ -4,6 +4,10 @@
 # attributes of the instance of the composition class.
 #
 class require(object):
+    def __init__(self, trait_clazz):
+        self.trait_clazz = trait_clazz
+        pass
+    
     def __get__(self, instance, owner):
         if not instance:        # from a class object
             return self
@@ -32,7 +36,7 @@ def trait(trait_clazz):
         if value != require:
             continue
 
-        require_o = require()
+        require_o = require(trait_clazz)
         setattr(trait_clazz, attr, require_o)
         attrname_map[require_o] = attr
         pass
@@ -69,13 +73,20 @@ def trait_method_proxy(trait_clazz, method):
 ## \brief Derive and modify an existing trait.
 #
 def derive_trait(a_trait, composite_clazz):
+    #
+    # Set a map mamping requires to attribute names.
+    #
+    # Search provide_traits for requires of a_trait, and patch
+    # attrname_map for it.
+    #
     attrname_map = None
     if hasattr(composite_clazz, 'provide_traits'):
         provide_traits = composite_clazz.provide_traits
-        if a_trait in provide_traits:
-            provide_trait = provide_traits[a_trait]
-            attrname_map = dict(a_trait._trait_attrname_map)
-            attrname_map.update(provide_trait)
+        attrname_map = dict(a_trait._trait_attrname_map)
+        for req in provide_traits:
+            if req.trait_clazz == a_trait:
+                attrname_map[req] = provide_traits[req]
+                pass
             pass
         pass
     
@@ -89,13 +100,13 @@ def derive_trait(a_trait, composite_clazz):
     return derived
 
 
-## \brief Handle explicity providing for requires.
+## \brief Check explicity providing for requires.
 #
 # Composite maps require attributes of traits to the attribute, with
 # the same name, of composition class by default.  But, composition
 # class can specify name of the attribute that will satisfy a require.
 #
-def _handle_provide_traits(clazz):
+def _check_provide_traits(clazz):
     traits = clazz.use_traits
     
     #
@@ -106,20 +117,19 @@ def _handle_provide_traits(clazz):
             raise TypeError, \
                 'provide_traits of a composite must be a dictionary'
         
-        provide_set = set(clazz.provide_traits.keys())
+        provide_set = set([req.trait_clazz
+                           for req in clazz.provide_traits.keys()])
         trait_set = set(traits)
         unused_set = provide_set - trait_set
         if unused_set:
             raise ValueError, \
                 'can not find %s in provide_traits' % (repr(unused_set.pop()))
 
-        for trait, attrname_map in clazz.provide_traits.items():
-            for req in attrname_map:
-                if not isinstance(req, require):
-                    raise TypeError, \
-                        '%s is not a require: key of an ' \
-                        'attribute name map must be a require' % (repr(req))
-                pass
+        for req in clazz.provide_traits:
+            if not isinstance(req, require):
+                raise TypeError, \
+                    '%s is not a require: key of an ' \
+                    'attribute name map must be a require' % (repr(req))
             pass
         pass
     pass
@@ -161,11 +171,6 @@ def _include_methods(clazz):
         derived = derive_trait(a_trait, clazz)
         derived_traits[a_trait] = derived
 
-        if a_trait in method_map_traits:
-            method_map_trait = method_map_traits[a_trait]
-        else:
-            method_map_trait = {}
-        
         for attr in dir(derived):
             if attr not in attrname_cnts: # hidden
                 continue
@@ -176,7 +181,7 @@ def _include_methods(clazz):
                 continue
 
             value = getattr(a_trait, attr)
-            if value in method_map_trait: # do it later
+            if value in method_map_traits: # do it later
                 continue
             
             value = getattr(derived, attr)
@@ -192,23 +197,23 @@ def _include_methods(clazz):
         pass
 
     #
-    # Map methods specified in method_map_traits.
+    # Set a proxy for methods specified in method_map_traits.
     #
-    for a_trait, method_map_trait in method_map_traits.items():
+    for method, attrname in method_map_traits.items():
+        if not callable(method):
+            raise TypeError, \
+                '%s.%s is not a callable' % (repr(a_trait), repr(method))
+        
+        a_trait = method.im_class
         if a_trait not in derived_traits:
             raise TypeError, \
                 '%s is not a trait used by the composition class' % \
                 (repr(a_trait))
         
         derived = derived_traits[a_trait]
-        for method, attrname in method_map_trait.items():
-            if not callable(method):
-                raise TypeError, \
-                    '%s.%s is not a callable' % (repr(a_trait), repr(method))
-            func = method.im_func
-            proxy = trait_method_proxy(derived, func)
-            setattr(clazz, attrname, proxy)
-            pass
+        func = method.im_func
+        proxy = trait_method_proxy(derived, func)
+        setattr(clazz, attrname, proxy)
         pass
     pass
 
@@ -253,10 +258,9 @@ def _include_methods(clazz):
 # By default, traits map attribute 'var_a' to 'var_a' of instances of
 # composition classes.  But, you can change it by specifying the map
 # in an attribute, named 'provide_traits', defined in composition
-# class.  The attribute provide_traits is a dictionary mapping from
-# trait class to a dictionary, named 'attrname_map' for the trait.
-# The attrname_map maps require attributes of the trait to names of
-# attributes of instances of the composition class.
+# class.  The attribute provide_traits of a composition class is a
+# dictionary mapping from require attributes of used traits to names
+# of attributes of the composition class.
 #
 def composite(clazz):
     if not hasattr(clazz, 'use_traits'):
@@ -269,7 +273,7 @@ def composite(clazz):
             raise TypeError, '%s is not a trait' % (repr(a_trait))
         pass
 
-    _handle_provide_traits(clazz)
+    _check_provide_traits(clazz)
     
     _include_methods(clazz)
     
@@ -296,12 +300,8 @@ if __name__ == '__main__':
     @composite
     class hello_bye(object):
         use_traits = (hello, bye)
-        
-        provide_hello = {hello.msg: 'msg1'}
-        provide_traits = {hello: provide_hello}
-        
-        method_map_hello = {hello.hello: 'hello1'}
-        method_map_traits = {hello: method_map_hello}
+        provide_traits = {hello.msg: 'msg1'}
+        method_map_traits = {hello.hello: 'hello1'}
 
         msg = 'hello_bye'
         msg1 = 'hello_bye_msg1'
