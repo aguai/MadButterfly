@@ -88,62 +88,16 @@ def derive_trait(a_trait, composite_clazz):
     
     return derived
 
-## \brief A decorator to make class composited from traits.
+
+## \brief Handle explicity providing for requires.
 #
-# The class decorated by composite must own a use_traits attribute.
+# Composite maps require attributes of traits to the attribute, with
+# the same name, of composition class by default.  But, composition
+# class can specify name of the attribute that will satisfy a require.
 #
-# \verbatim
-# @trait
-# class trait_a(object):
-#   var_a = require
-#   def xxx(self): return self.var_a
-#
-# @trait
-# class trait_b(object):
-#   def ooo(self): pass
-#
-# @composite
-# class foo(object):
-#    use_traits = (trait_a, trait_b)
-#
-#    var_a = 'value of var_a'
-#    pass
-#
-# obj = foo()
-# \endverbatim
-#
-# To make a class from a set of traits.  You must decorate the class
-# with the decorator 'composite'.  The class must has an attribute,
-# named use_traits, to provide a list or tuple of traits.
-#
-# Class that defines a trait must decorated with the decorator
-# 'trait'.  If the trait need to access state (varaibles) of the
-# intances of composition class, it must define attributes with value
-# 'require', likes what 'var_a' of trait_a does.  Then, the attributes
-# would be mapped to corresponding attributes of instances of
-# composition class.  For example, when you call obj.xxx(), it returns
-# value of 'var_a', and attribute 'var_a' is a property that returns
-# the value of 'var_a' of 'obj', an instance of class foo.
-#
-# By default, traits map attribute 'var_a' to 'var_a' of instances of
-# composition classes.  But, you can change it by specifying the map
-# in an attribute, named 'provide_traits', defined in composition
-# class.  The attribute provide_traits is a dictionary mapping from
-# trait class to a dictionary, named 'attrname_map' for the trait.
-# The attrname_map maps require attributes of the trait to names of
-# attributes of instances of the composition class.
-#
-def composite(clazz):
-    if not hasattr(clazz, 'use_traits'):
-        raise KeyError, \
-            '%s has no use_trait: it must be a list of traits' % (repr(clazz))
+def _handle_provide_traits(clazz):
     traits = clazz.use_traits
     
-    for a_trait in traits:
-        if not hasattr(a_trait, '_is_trait'):
-            raise TypeError, '%s is not a trait' % (repr(a_trait))
-        pass
-
     #
     # Check content of clazz.provide_traits
     #
@@ -168,6 +122,13 @@ def composite(clazz):
                 pass
             pass
         pass
+    pass
+
+
+## \brief Include methods from trait for a composition class.
+#
+def _include_methods(clazz):
+    traits = clazz.use_traits
     
     #
     # Count number of appearing in all traits for every attribute name.
@@ -249,6 +210,68 @@ def composite(clazz):
             setattr(clazz, attrname, proxy)
             pass
         pass
+    pass
+
+
+## \brief A decorator to make class composited from traits.
+#
+# The class decorated by composite must own a use_traits attribute.
+#
+# \verbatim
+# @trait
+# class trait_a(object):
+#   var_a = require
+#   def xxx(self): return self.var_a
+#
+# @trait
+# class trait_b(object):
+#   def ooo(self): pass
+#
+# @composite
+# class foo(object):
+#    use_traits = (trait_a, trait_b)
+#
+#    var_a = 'value of var_a'
+#    pass
+#
+# obj = foo()
+# \endverbatim
+#
+# To make a class from a set of traits.  You must decorate the class
+# with the decorator 'composite'.  The class must has an attribute,
+# named use_traits, to provide a list or tuple of traits.
+#
+# Class that defines a trait must decorated with the decorator
+# 'trait'.  If the trait need to access state (varaibles) of the
+# intances of composition class, it must define attributes with value
+# 'require', likes what 'var_a' of trait_a does.  Then, the attributes
+# would be mapped to corresponding attributes of instances of
+# composition class.  For example, when you call obj.xxx(), it returns
+# value of 'var_a', and attribute 'var_a' is a property that returns
+# the value of 'var_a' of 'obj', an instance of class foo.
+#
+# By default, traits map attribute 'var_a' to 'var_a' of instances of
+# composition classes.  But, you can change it by specifying the map
+# in an attribute, named 'provide_traits', defined in composition
+# class.  The attribute provide_traits is a dictionary mapping from
+# trait class to a dictionary, named 'attrname_map' for the trait.
+# The attrname_map maps require attributes of the trait to names of
+# attributes of instances of the composition class.
+#
+def composite(clazz):
+    if not hasattr(clazz, 'use_traits'):
+        raise KeyError, \
+            '%s has no use_trait: it must be a list of traits' % (repr(clazz))
+    traits = clazz.use_traits
+    
+    for a_trait in traits:
+        if not hasattr(a_trait, '_is_trait'):
+            raise TypeError, '%s is not a trait' % (repr(a_trait))
+        pass
+
+    _handle_provide_traits(clazz)
+    
+    _include_methods(clazz)
     
     return clazz
 
