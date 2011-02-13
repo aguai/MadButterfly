@@ -63,8 +63,7 @@ class dom_parser(object):
         pass
 
     def reset(self):
-        self._layers[:] = []
-        self._parse_all_layers()
+        self.reset_layers()
         pass
     pass
 
@@ -73,7 +72,9 @@ class html5css3_ext(pybExtension.PYBindExtImp):
     def save(self, module, doc, filename):
         parser = dom_parser()
         parser.start_handle(doc.rdoc)
-        print parser._metadata_node
+        
+        print parser.all_comp_names()
+        print parser._layers
         print 'save to ' + filename
         pass
     pass
