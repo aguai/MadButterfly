@@ -238,7 +238,6 @@ class component_manager_ui_update(object):
 #
 @trait
 class component_manager(component_manager_ui_update):
-    _layers = require
     _scenes_node = require
     _metadata_node = require
     _doc = require
@@ -989,6 +988,55 @@ def _DOM_iterator(node):
     pass
 
 
+@trait
+class layers_parser(object):
+    _layers = require
+    _layers_parent = require
+    get_scene = require
+    
+    def parse_all_layers(self):
+	layers = self._layers
+        layers_parent = self._layers_parent
+	
+	for child in layers_parent.childList():
+	    if child.name() != 'svg:g':
+		continue
+            
+            try:
+                label = child.getAttribute('inkscape:label')
+            except:
+                pass
+            else:               # has no label
+                if label == 'components':
+                    continue
+                pass
+
+	    layer_group = child
+	    layer = Layer(layer_group)
+	    layer.idx = len(layers)
+	    layers.append(layer)
+	    self.parse_layer(layer.idx)
+	    pass
+	pass
+    
+    def parse_layer(self, layer_idx):
+	layer = self._layers[layer_idx]
+	layer_group = layer.group
+	
+	for child in layer_group.childList():
+	    if child.name() != 'svg:g':
+		continue
+	    try:
+		child_id = child.getAttribute('id')
+		scene_node = self.get_scene(child_id)
+	    except:
+		continue
+	    
+	    layer.scenes.append(scene_node)
+	    pass
+	pass
+    pass
+
 ## \brief This layer provide a data view to the DOM-tree.
 #
 # This class maintains layers information, and provides functions to create,
@@ -997,7 +1045,7 @@ def _DOM_iterator(node):
 #
 @composite
 class domview(domview_monitor):
-    use_traits = (component_manager,)
+    use_traits = (component_manager, layers_parser)
     
     method_map_traits = {component_manager._start_component_manager:
                              '_start_component_manager'}
@@ -1050,31 +1098,6 @@ class domview(domview_monitor):
 	    pass
 	pass
 
-    def _parse_all_layers(self):
-	layers = self._layers
-        layers_parent = self._layers_parent
-	
-	for child in layers_parent.childList():
-	    if child.name() != 'svg:g':
-		continue
-            
-            try:
-                label = child.getAttribute('inkscape:label')
-            except:
-                pass
-            else:               # has no label
-                if label == 'components':
-                    continue
-                pass
-
-	    layer_group = child
-	    layer = Layer(layer_group)
-	    layer.idx = len(layers)
-	    layers.append(layer)
-	    self.parse_layer(layer.idx)
-	    pass
-	pass
-
     def handle_doc_root(self, doc, root):
 	self._doc = doc
 	self._root = root
@@ -1083,13 +1106,13 @@ class domview(domview_monitor):
 	self._init_metadata()
 	self._start_monitor()	# from domview_monitor
         self._start_component_manager()
-	self._parse_all_layers()
+	self.parse_all_layers()
 	pass
 
     def reset(self):
         self._monitor_reparse() # from domview_monitor
         self._layers[:] = []
-        self._parse_all_layers()
+        self.parse_all_layers()
 	pass
    
     def dumpattr(self, n):
@@ -1213,23 +1236,6 @@ class domview(domview_monitor):
 	
 	return scene_group
     
-    def parse_layer(self, layer_idx):
-	layer = self._layers[layer_idx]
-	layer_group = layer.group
-	
-	for child in layer_group.childList():
-	    if child.name() != 'svg:g':
-		continue
-	    try:
-		child_id = child.getAttribute('id')
-		scene_node = self.get_scene(child_id)
-	    except:
-		continue
-	    
-	    layer.scenes.append(scene_node)
-	    pass
-	pass
-
     ## \brief Add/insert a layer at given position.
     #
     # \param layer_idx is the position in the layer list.
