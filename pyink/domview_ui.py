@@ -109,6 +109,13 @@ class frameline_stack(object):
 	vbox = self._frameline_vbox
 	line = self._framelines[layer_idx]
 	
+        if self._last_active_frameline == line:
+            self._last_active_frameline = None
+            pass
+        if self._last_mouse_over_frameline == line:
+            self._last_mouse_over_frameline = None
+            pass
+        
 	hbox = line.parent
 	vbox.remove(hbox)
 	del self._framelines[layer_idx]
