@@ -150,7 +150,7 @@ def _include_methods(clazz):
                 continue
             
             value = getattr(a_trait, attr)
-            if isinstance(value, require):
+            if isinstance(value, require) or not callable(value):
                 continue
             
             attrname_cnts[attr] = attrname_cnts.setdefault(attr, 0) + 1
@@ -187,8 +187,7 @@ def _include_methods(clazz):
             value = getattr(derived, attr)
             
             if not callable(value):
-                raise TypeError, \
-                    '%s.%s is not a callable' % (repr(a_trait), attr)
+                continue
             
             func = value.im_func
             proxy = trait_method_proxy(derived, func)
@@ -313,17 +312,31 @@ if __name__ == '__main__':
     @trait
     class hello(object):
         msg = require
+        bye_provide = require
         
         def hello(self, name):
             return self.msg + ' hello ' + name
+
+        def hello_provide(self):
+            return 'hello provide'
+
+        def require_bye(self):
+            return self.bye_provide()
         pass
 
     @trait
     class bye(object):
         msg = require
+        hello_provide = require
         
         def bye(self, name):
             return self.msg + ' bye ' + name
+
+        def bye_provide(self):
+            return 'bye provide'
+
+        def require_hello(self):
+            return self.hello_provide()
         pass
     
     @composite
@@ -339,5 +352,7 @@ if __name__ == '__main__':
     o = hello_bye()
     assert o.hello1('Miky') == 'hello_bye_msg1 hello Miky'
     assert o.bye('Miky') == 'hello_bye bye Miky'
+    assert o.require_bye() == 'bye provide'
+    assert o.require_hello() == 'hello provide'
     print 'OK'
     pass
