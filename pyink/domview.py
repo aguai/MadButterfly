@@ -990,9 +990,12 @@ def _DOM_iterator(node):
 
 @trait
 class layers_parser(object):
+    _doc = require
     _layers = require
     _layers_parent = require
     get_scene = require
+    get_node = require
+    new_id = require
     
     def parse_all_layers(self):
 	layers = self._layers
@@ -1038,6 +1041,154 @@ class layers_parser(object):
     
     def get_layer_num(self):
 	return len(self._layers)
+
+    ## \brief Add/insert a layer at given position.
+    #
+    # \param layer_idx is the position in the layer list.
+    #
+    def insert_layer(self, layer_idx, layer_group):
+	layers = self._layers
+	
+	layer = Layer(layer_group)
+	if layer_idx >= len(layers):
+	    layers.append(layer)
+	else:
+	    layers.insert(layer_idx, layer)
+	    for idx in range(layer_idx, len(layers)):
+		layers[idx].idx = idx
+		pass
+	    pass
+	pass
+
+    ## \brief Manage a existed layer group
+    #
+    # This method scan layer groups of all managed layers, and find a
+    # proper place to insert it.
+    #
+    # \return -1 for error, or layer index.
+    #
+    def manage_layer_group(self, layer_group_id):
+        layer_group = self.get_node(layer_group_id)
+        new_layer = Layer(layer_group)
+
+        if not self._layers:
+            new_layer.idx = 0
+            self._layers.append(new_layer)
+            return 0
+        
+        #
+        # Scan who is after the given group
+        #
+        next_group = layer_group.next()
+        while next_group:
+            next_group_id = next_group.getAttribute('id')
+            
+            for vlayer in self._layers:
+                vlayer_group_id = vlayer.group.getAttribute('id')
+                if vlayer_group_id == next_group_id:
+                    # This layer group is after given one.
+                    self._layers.insert(vlayer.idx, new_layer)
+                    
+                    for idx in range(vlayer.idx, len(self._layers)):
+                        self._layers[idx].idx = idx
+                        pass
+                    return new_layer.idx
+                pass
+            
+            next_group = next_group.next()
+            pass
+        
+        #
+        # Is the given group after last layer group?
+        #
+        tail_group = self._layers[-1].group.next()
+        while tail_group:
+            tail_group_id = tail_group.getAttribute('id')
+            
+            if tail_group_id == layer_group_id:
+                # it is after last layer group.
+                new_layer.idx = len(self._layers)
+                self._layers.append(new_layer)
+                return new_layer.idx
+            
+            tail_group = tail_group.next()
+            pass
+
+        return -1             # error, can not determinze the position
+    
+    ## \brief Remove layer and associated scene nodes and scene groups.
+    #
+    def rm_layer(self, layer_idx):
+	layers = self._layers
+
+        layer = self._layers[layer_idx]
+        for scene_node in layer.scenes:
+            scene_group_id = scene_node.getAttribute('ref')
+            try:
+                scene_group_node = self.get_node(scene_group_id)
+                if scene_group_node.parent(): # keep from crashing
+                    scene_group_node.parent().removeChild(scene_group_node)
+                    pass
+            except:
+                pass
+            
+            if scene_node.parent(): # keep from crashing
+                scene_node.parent().removeChild(scene_node)
+		pass
+	    pass
+	
+	del layers[layer_idx]
+
+	for idx in range(layer_idx, len(layers)):
+	    layers[idx].idx = idx
+	    pass
+	pass
+
+    def get_layer_group(self, layer_idx):
+	layer = self._layers[layer_idx]
+	return layer.group
+
+    def get_all_scene_node_of_layer(self, layer_idx):
+	layer = self._layers[layer_idx]
+	return layer.scenes
+
+    def get_layer_data(self, layer_idx):
+	layer = self._layers[layer_idx]
+	try:
+	    data = layer.data
+	except:
+	    return None
+	return data
+
+    def set_layer_data(self, layer_idx, data):
+	layer = self._layers[layer_idx]
+	layer.data = data
+	pass
+
+    def create_layer_dup_group(self, layer_idx):
+	layer = self._layers[layer_idx]
+	
+	dup_group = self._doc.createElement('svg:g')
+	gid = self.new_id()
+	dup_group.setAttribute('id', gid)
+	dup_group.setAttribute('inkscape:label', 'dup')
+	dup_group.setAttribute('sodipodi:insensitive', '1')
+	dup_group.setAttribute('style', '')
+
+	layer.group.appendChild(dup_group)
+	
+	return dup_group
+
+    ## \brief Return associated layer index of given layer group.
+    #
+    # \return -1 for error.
+    #
+    def find_layer_of_group(self, group_id):
+        for layer_idx, layer in enumerate(self._layers):
+            if layer.group.getAttribute('id') == group_id:
+                return layer_idx
+            pass
+        return -1
 
     def reset_layers(self):
         self._layers[:] = []
@@ -1242,108 +1393,6 @@ class domview(domview_monitor):
 	
 	return scene_group
     
-    ## \brief Add/insert a layer at given position.
-    #
-    # \param layer_idx is the position in the layer list.
-    #
-    def insert_layer(self, layer_idx, layer_group):
-	layers = self._layers
-	
-	layer = Layer(layer_group)
-	if layer_idx >= len(layers):
-	    layers.append(layer)
-	else:
-	    layers.insert(layer_idx, layer)
-	    for idx in range(layer_idx, len(layers)):
-		layers[idx].idx = idx
-		pass
-	    pass
-	pass
-
-    ## \brief Manage a existed layer group
-    #
-    # This method scan layer groups of all managed layers, and find a
-    # proper place to insert it.
-    #
-    # \return -1 for error, or layer index.
-    #
-    def manage_layer_group(self, layer_group_id):
-        layer_group = self.get_node(layer_group_id)
-        new_layer = Layer(layer_group)
-
-        if not self._layers:
-            new_layer.idx = 0
-            self._layers.append(new_layer)
-            return 0
-        
-        #
-        # Scan who is after the given group
-        #
-        next_group = layer_group.next()
-        while next_group:
-            next_group_id = next_group.getAttribute('id')
-            
-            for vlayer in self._layers:
-                vlayer_group_id = vlayer.group.getAttribute('id')
-                if vlayer_group_id == next_group_id:
-                    # This layer group is after given one.
-                    self._layers.insert(vlayer.idx, new_layer)
-                    
-                    for idx in range(vlayer.idx, len(self._layers)):
-                        self._layers[idx].idx = idx
-                        pass
-                    return new_layer.idx
-                pass
-            
-            next_group = next_group.next()
-            pass
-        
-        #
-        # Is the given group after last layer group?
-        #
-        tail_group = self._layers[-1].group.next()
-        while tail_group:
-            tail_group_id = tail_group.getAttribute('id')
-            
-            if tail_group_id == layer_group_id:
-                # it is after last layer group.
-                new_layer.idx = len(self._layers)
-                self._layers.append(new_layer)
-                return new_layer.idx
-            
-            tail_group = tail_group.next()
-            pass
-
-        return -1             # error, can not determinze the position
-    
-    ## \brief Remove layer and associated scene nodes and scene groups.
-    #
-    def rm_layer(self, layer_idx):
-	layers = self._layers
-
-        layer = self._layers[layer_idx]
-        for scene_node in layer.scenes:
-            scene_group_id = scene_node.getAttribute('ref')
-            try:
-                scene_group_node = self.get_node(scene_group_id)
-                if scene_group_node.parent(): # keep from crashing
-                    scene_group_node.parent().removeChild(scene_group_node)
-                    pass
-            except:
-                pass
-            
-            if scene_node.parent(): # keep from crashing
-                scene_node.parent().removeChild(scene_node)
-		pass
-	    pass
-	
-	del layers[layer_idx]
-
-	for idx in range(layer_idx, len(layers)):
-	    layers[idx].idx = idx
-	    pass
-	pass
-
     ## \brief Find layer index and scene info for a given scene node.
     #
     # \return (-1, None) for error.
@@ -1357,52 +1406,6 @@ class domview(domview_monitor):
 		pass
 	    pass
 	return -1, None
-
-    def get_layer_group(self, layer_idx):
-	layer = self._layers[layer_idx]
-	return layer.group
-
-    def get_all_scene_node_of_layer(self, layer_idx):
-	layer = self._layers[layer_idx]
-	return layer.scenes
-
-    def get_layer_data(self, layer_idx):
-	layer = self._layers[layer_idx]
-	try:
-	    data = layer.data
-	except:
-	    return None
-	return data
-
-    def set_layer_data(self, layer_idx, data):
-	layer = self._layers[layer_idx]
-	layer.data = data
-	pass
-
-    def create_layer_dup_group(self, layer_idx):
-	layer = self._layers[layer_idx]
-	
-	dup_group = self._doc.createElement('svg:g')
-	gid = self.new_id()
-	dup_group.setAttribute('id', gid)
-	dup_group.setAttribute('inkscape:label', 'dup')
-	dup_group.setAttribute('sodipodi:insensitive', '1')
-	dup_group.setAttribute('style', '')
-
-	layer.group.appendChild(dup_group)
-	
-	return dup_group
-
-    ## \brief Return associated layer index of given layer group.
-    #
-    # \return -1 for error.
-    #
-    def find_layer_of_group(self, group_id):
-        for layer_idx, layer in enumerate(self._layers):
-            if layer.group.getAttribute('id') == group_id:
-                return layer_idx
-            pass
-        return -1
 
     def insert_frames(self, layer_idx, frame_idx, num):
 	layer = self._layers[layer_idx]
