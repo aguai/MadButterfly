@@ -1035,6 +1035,14 @@ class layers_parser(object):
 	    layer.scenes.append(scene_node)
 	    pass
 	pass
+    
+    def get_layer_num(self):
+	return len(self._layers)
+
+    def reset_layers(self):
+        self._layers[:] = []
+        self.parse_all_layers()
+        pass
     pass
 
 ## \brief This layer provide a data view to the DOM-tree.
@@ -1101,18 +1109,16 @@ class domview(domview_monitor):
     def handle_doc_root(self, doc, root):
 	self._doc = doc
 	self._root = root
-        self._layers[:] = []
 	
 	self._init_metadata()
 	self._start_monitor()	# from domview_monitor
         self._start_component_manager()
-	self.parse_all_layers()
+        self.reset_layers()
 	pass
 
     def reset(self):
         self._monitor_reparse() # from domview_monitor
-        self._layers[:] = []
-        self.parse_all_layers()
+        self.reset_layers()
 	pass
    
     def dumpattr(self, n):
@@ -1337,9 +1343,6 @@ class domview(domview_monitor):
 	    layers[idx].idx = idx
 	    pass
 	pass
-
-    def get_layer_num(self):
-	return len(self._layers)
 
     ## \brief Find layer index and scene info for a given scene node.
     #
