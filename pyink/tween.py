@@ -209,6 +209,8 @@ class TweenObject(object):
 	pass
 
     def _update_tween_style(self, s, d, p, newobj):
+	if d.name() == 'svg:use':
+	    return
 	try:
 	    s_style = s.getAttribute('style')
 	except:
