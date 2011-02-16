@@ -13,7 +13,7 @@ class ObjectWatcher(pybInkscape.PYNodeObserver):
     def notifyChildRemoved(self, node, child, prev):
         if self.type == 'DOMNodeRemoved':
 	    self.func(node, child)
-    def notifyChildOrderChanged(self,node,child,prev):
+    def notifyChildOrderChanged(self, node, child, old_prev, new_prev):
         pass
     def notifyContentChanged(self,node,old_content,new_content):
         if self.type == 'DOMSubtreeModified':
