@@ -4,7 +4,31 @@ import traceback
 import math
 
 
-def parse_style(style):
+def _shift_matrix(x, y):
+    return (1, 0, 0, 1, x, y)
+
+
+def _rotate_matrix(a):
+    return (math.cos(a), math.sin(a), -math.sin(a), math.cos(a), 0, 0)
+
+
+def _scale_matrix(scale_x, scale_y):
+    return (scale_x, 0, 0, scale_y, 0, 0)
+
+
+_id_matrix = (1, 0, 0, 1, 0, 0)
+
+
+def _mulA(a, b):
+    return (a[0] * b[0] + a[2] * b[1],
+	    a[1] * b[0] + a[3] * b[1],
+	    a[0] * b[2] + a[2] * b[3],
+	    a[1] * b[2] + a[3] * b[3],
+	    a[0] * b[4] + a[2] * b[5] + a[4],
+	    a[1] * b[4] + a[3] * b[5] + a[5])
+
+
+def _parse_style(style):
     attrs = {}
     
     style_parts = style.split(';')
@@ -23,10 +47,299 @@ def parse_style(style):
 
     return attrs
 
-def gen_style(attrs):
+
+def _gen_style(attrs):
     parts = [name + ':' + value for name, value in attrs.items()]
     style = ';'.join(parts)
     return style
+
+
+def _parse_transform_str(txt):
+    if txt[0:9] == 'translate':
+	fields = txt[10:].split(',')
+	x = float(fields[0])
+	fields = fields[1].split(')')
+	y = float(fields[0])
+	return [1, 0, 0, 1 , x, y]
+    elif txt[0:6] == 'matrix':
+	fields = txt[7:].split(')')
+	fields = fields[0].split(',')
+	return [float(field) for field in fields]
+    pass
+
+
+## \brief Parse style attributes about animation.
+#
+def _parse_style_ani(node, ani_attrs):
+    try:
+	style = node.getAttribute('style')
+    except:			# has no style
+	style_attrs = {}
+    else:
+	style_attrs = _parse_style(style)
+	pass
+
+    if 'opacity' in style_attrs:
+	ani_attrs['opacity'] = float(style_attrs['opacity'])
+	pass
+
+    if 'display' in style_attrs:
+	ani_attrs['display'] = style_attrs['display'] != 'none'
+	pass
+    pass
+
+
+## \brief Parse all attributes about animation
+#
+def _parse_attr_ani(node, ani_attrs):
+    def _parse_transform_with_center(attr_value):
+	value = _parse_transform_str(attr_value)
+	x, y = node.spitem.getCenter()
+	return (value, (x, y))
+    
+    attr_defs = {'x': float, 'y': float,
+		 'width': float, 'height': float,
+		 'transform': _parse_transform_with_center}
+
+    for attrname, parser in attr_defs.items():
+	try:
+	    value = node.getAttribute(attrname)
+	except:			# has no this attribute
+	    pass
+	else:
+	    parsed_value = parser(value)
+	    ani_attrs[attrname] = parsed_value
+	    pass
+	pass
+    pass
+
+
+## \brief Interpolate float values.
+#
+def _interp_float(start_value, stop_value, percent):
+    if start_value == None or stop_value == None:
+	if percent == 1:
+	    return stop_value
+	return start_value
+    
+    return start_value * (1 - percent) + stop_value * percent
+
+
+## \brief Interpolate matric.
+#
+def _interp_transform(start_value, stop_value, percent):
+    start_matrix = start_value[0]
+    start_center_x, start_center_y = start_value[1]
+    stop_matrix = stop_value[0]
+    stop_center_x, stop_center_y = stop_value[1]
+
+    start_scale_x, start_scale_y, start_ang, start_x, start_y = \
+	_decomposition(start_matrix)
+    stop_scale_x, stop_scale_y, stop_ang, stop_x, stop_y = \
+	_decomposition(stop_matrix)
+
+    interp = lambda x, y: _interp_float(x, y, percent)
+    
+    factor_x = interp(start_scale_x, stop_scale_x) / start_scale_x
+    factor_y = interp(start_scale_y, stop_scale_y) / start_scale_y
+    angle = interp(start_ang, stop_ang)
+    shift_x = interp(start_center_x, stop_center_x)
+    shift_y = interp(start_center_y, stop_center_y)
+
+    # Shift center point back to origin
+    matrix = start_matrix
+    shift_matrix = _shift_matrix(-start_center_x, -start_center_y)
+    matrix = _mulA(shift_matrix, matrix)
+    # Remove rotation
+    rotate_matrix = _rotate_matrix(-start_ang)
+    matrix = _mulA(rotate_matrix, matrix)
+    
+    # Apply new scaling
+    scale_matrix = _scale_matrix(factor_x, factor_y)
+    matrix = _mulA(scale_matrix, matrix)
+    # Rotate to new angle
+    rotate_matrix = _rotate_matrix(angle)
+    matrix = _mulA(rotate_matrix, matrix)
+    # Shift space to aim center point on new position.
+    shift_matrix = _shift_matrix(shift_x, shift_y)
+    matrix = _mulA(shift_matrix, matrix)
+    
+    return matrix
+
+
+## \brief Interpolate for value of display style.
+#
+def _interp_display(start_value, stop_value, percent):
+    if percent < 1:
+	return start_value
+    return stop_value
+
+
+_interp_funcs = {
+    'x': _interp_float, 'y': _interp_float,
+    'width': _interp_float, 'height': _interp_float,
+    'opacity': _interp_float, 'display': _interp_display,
+    'transform': _interp_transform}
+
+
+def _tween_interpolation(attrname, start_value, stop_value, percent):
+    interp = _interp_funcs[attrname]
+    _interp_value = interp(start_value, stop_value, percent)
+    return _interp_value
+
+
+def _apply_animation_attrs(ani_attrs, node):
+    for attr in ('x', 'y', 'width', 'height', 'opacity', 'display'):
+	if attr in ani_attrs:
+	    node.setAttribute(attr, str(ani_attrs[attr]))
+	    pass
+	pass
+
+    if 'transform' in ani_attrs:
+	try:
+	    style = node.getAttribute('style')
+	except:
+	    style = ''
+	    pass
+
+	transform = [str(elm) for elm in ani_attrs['transform']]
+	transform_str = 'matrix(' + ','.join(transform) + ')'
+	node.setAttribute('transform', transform_str)
+	pass
+
+    chg_style = []
+    for attrname in 'opacity display'.split():
+	if attrname in ani_attrs:
+	    chg_style.append((attrname, str(ani_attrs[attrname])))
+	    pass
+	pass
+    if chg_style:
+	try:
+	    style = node.getAttribute('style')
+	except:
+	    style_attrs = chg_style
+	else:
+	    style_attrs = _parse_style(style)
+	    style_attrs.update(dict(chg_style))
+	    pass
+	style = _gen_style(style_attrs)
+	node.setAttribute('style', style)
+	pass
+    pass
+
+
+def _decomposition(m):
+    """
+    Decompose the affine matrix into production of
+    translation,rotation,shear and scale.  The algorithm is
+    documented at
+    http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
+    """
+    if m[0]*m[3] == m[1]*m[2]:
+	print "The affine matrix is singular"
+	return [1,0,0,1,0,0]
+    A=m[0]
+    B=m[2]
+    C=m[1]
+    D=m[3]
+    E=m[4]
+    F=m[5]
+    sx = math.sqrt(A*A+B*B)
+    A = A/sx
+    B = B/sx
+    shear = m[0]*m[1]+m[2]*m[3]
+    C = C - A*shear
+    D = D - B*shear
+    sy = math.sqrt(C*C+D*D)
+    C = C/sy
+    D = D/sy
+    r = A*D-B*C
+    if r == -1:
+	shear = -shear
+	sy = -sy
+	pass
+    R = math.atan2(-B,A)
+    return [sx,sy, R, E, F]
+
+
+def _normalize_attrs(node1, attrs1, node2, attrs2):
+    if node2.name() == 'svg:use':
+	for name in 'x y width height'.split():
+	    if name in attrs1:
+		del attrs1[name]
+		pass
+	    if name in attrs2:
+		del attrs2[name]
+		pass
+	    pass
+	pass
+    
+    names = set(attrs1.keys() + attrs2.keys())
+
+    if 'transform' in names:
+	if 'transform' not in attrs1:
+	    center = node1.spitem.getCenter()
+	    attrs1['transform'] = (_id_matrix, center)
+	    pass
+	if 'transform' not in attrs2:
+	    center = node2.spitem.getCenter()
+	    attrs2['transform'] = (_id_matrix, center)
+	    pass
+	
+	root = node1.root()
+	try:
+	    root_h = float(root.getAttribute('height'))
+	except:
+	    root_h = 600	# 800x600
+	    pass
+	
+	for attrs in (attrs1, attrs2):
+	    transform = attrs['transform']
+	    center = (transform[1][0], root_h - transform[1][1])
+	    attrs['transform'] = (transform[0], center)
+	    
+	    if 'x' in attrs:
+		del attrs['x']
+		pass
+	    if 'y' in attrs:
+		del attrs['y']
+		pass
+	    pass
+	pass
+
+    if 'opacity' in names:
+	if 'opacity' not in attrs1:
+	    attrs1['opacity'] = 1.0
+	    pass
+	if 'opacity' not in attrs2:
+	    attrs2['opacity'] = 1.0
+	    pass
+
+	if node2.name() == 'svg:use':
+	    attrs2['opacity'] = attrs2['opacity'] * attrs1['opacity']
+	    pass
+	pass
+
+    if 'display' in names:
+	if 'display' not in attrs1:
+	    attrs1['display'] = ''
+	    pass
+	if 'display' not in attrs2:
+	    attrs2['display'] = ''
+	    pass
+	pass
+    
+    for name in 'x y width height'.split():
+	if name in names:
+	    if name not in attrs1:
+		attrs1[name] = 0
+		pass
+	    if name not in attrs2:
+		attrs2[name] = 0
+		pass
+	    pass
+	pass
+    pass
 
 class TweenObject(object):
     TWEEN_TYPE_NORMAL = 0
@@ -116,12 +429,8 @@ class TweenObject(object):
 	    try:
 		stop_node = stop_nodes[start_node_id]
 	    except KeyError:
-		self.updateTweenObject(duplicate_group, tween_type,
-				       start_node, start_node,
-				       percent, dup_node)
-		start_node = start_node.next()
-		continue
-	    
+		stop_node = start_node
+		pass
 	    
 	    self.updateTweenObject(duplicate_group, tween_type,
 				   start_node, stop_node,
@@ -130,82 +439,25 @@ class TweenObject(object):
 	    pass
 	pass
 
-    def parseTransform(self,obj):
-	"""
-	    Return the transform matrix of an object
-	"""
-	try:
-	    t = obj.getAttribute("transform")
-	    if t[0:9] == 'translate':
-		fields = t[10:].split(',')
-		x = float(fields[0])
-		fields = fields[1].split(')')
-		y = float(fields[0])
-		return [1,0,0,1,x,y]
-	    elif t[0:6] == 'matrix':
-		fields=t[7:].split(')')
-		fields = fields[0].split(',')
-		return [float(fields[0]),float(fields[1]),float(fields[2]),float(fields[3]),float(fields[4]),float(fields[5])]
-	except:
-	    #traceback.print_exc()
-	    return [1,0,0,1,0,0]
-
-    def invA(self,m):
-        d = m[0]*m[3]-m[2]*m[1]
-	return [m[3]/d, -m[1]/d, -m[2]/d, m[0]/d, (m[1]*m[5]-m[4]*m[3])/d, (m[4]*m[2]-m[0]*m[5])/d]
-	
-    def mulA(self,a,b):
-        return [a[0]*b[0]+a[1]*b[2],
-	        a[0]*b[1]+a[1]*b[3],
-		a[2]*b[0]+a[3]*b[2],
-		a[2]*b[1]+a[3]*b[3],
-		a[0]*b[4]+a[1]*b[5]+a[4],
-		a[2]*b[4]+a[3]*b[5]+a[5]]
-
-    def decomposition(self,m):
-	"""
-	Decompose the affine matrix into production of translation,rotation,shear and scale.
-	The algorithm is documented at http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
-	"""
-        if m[0]*m[3] == m[1]*m[2]:
-	    print "The affine matrix is singular"
-	    return [1,0,0,1,0,0]
-	A=m[0]
-	B=m[2]
-	C=m[1]
-	D=m[3]
-	E=m[4]
-	F=m[5]
-	sx = math.sqrt(A*A+B*B)
-	A = A/sx
-	B = B/sx
-	shear = m[0]*m[1]+m[2]*m[3]
-	C = C - A*shear
-	D = D - B*shear
-	sy = math.sqrt(C*C+D*D)
-	C = C/sy
-	D = D/sy
-	r = A*D-B*C
-	if r == -1:
-	    shear = -shear
-	    sy = -sy
-	R = math.atan2(B,A)
-	return [sx,sy, R, E,F]
-
 	    
-    def updateTweenObject(self,obj,typ,s,d,p,newobj):
+    def updateTweenObject(self, obj, typ, s, d, p, newobj):
 	"""
 	    Generate tweened object in the @obj by using s and d in the @p percent
 	    http://lists.w3.org/Archives/Public/www-style/2010Jun/0602.html
 	"""
 	if typ == self.TWEEN_TYPE_SCALE:
-	    self.updateTweenObjectScale(obj,s,d,p,newobj)
-	    pass
-	elif typ == self.TWEEN_TYPE_NORMAL:
 	    if newobj == None:
-	        newobj = s.duplicate(self._doc)
-	        newobj.setAttribute("ref", s.getAttribute("id"))
-	        obj.appendChild(newobj)
+		newobj = s.duplicate(self._doc)
+		newobj.setAttribute("ref", s.getAttribute("id"))
+		obj.appendChild(newobj)
+		pass
+	    self.update_tween_object_scale(s, d, p, newobj)
+	    pass
+	elif typ == self.TWEEN_TYPE_NORMAL and newobj == None:
+	    newobj = s.duplicate(self._doc)
+	    newobj.setAttribute("ref", s.getAttribute("id"))
+	    obj.appendChild(newobj)
+	    pass
 	pass
 
     def _update_tween_style(self, s, d, p, newobj):
@@ -216,7 +468,7 @@ class TweenObject(object):
 	except:
 	    s_attrs = {}
 	else:
-	    s_attrs = parse_style(s_style)
+	    s_attrs = _parse_style(s_style)
 	    pass
 
 	try:
@@ -224,7 +476,7 @@ class TweenObject(object):
 	except:
 	    d_attrs = {}
 	else:
-	    d_attrs = parse_style(d_style)
+	    d_attrs = _parse_style(d_style)
 	    pass
 
 	attrs = dict(s_attrs)
@@ -244,185 +496,34 @@ class TweenObject(object):
 	cur_opacity = start_opacity * (1 - p) + end_opacity * p
 	attrs['opacity'] = '%g' % (cur_opacity)
 
-	new_style = gen_style(attrs)
+	new_style = _gen_style(attrs)
 	newobj.setAttribute('style', new_style)
 	pass
 
-    def updateTweenObjectScale_Group(self, s, d, p, newobj, top):
-	# Parse the translate or matrix
-	# 
-	# D  = B inv(A)
-	try:
-	    (ox,oy) = s.spitem.getCenter()
-	except:
-	    ox = 0
-	    oy = 0
+    def update_tween_object_scale(self, start, stop, percent, newobj):
+	start_attrs = {}
+	_parse_style_ani(start, start_attrs)
+	_parse_attr_ani(start, start_attrs)
+
+	stop_attrs = {}
+	_parse_style_ani(stop, stop_attrs)
+	_parse_attr_ani(stop, stop_attrs)
+
+	_normalize_attrs(start, start_attrs, stop, stop_attrs)
+
+	tween_attrs = {}
+	attrs = set(start_attrs.keys() + stop_attrs.keys())
+	for attr in attrs:
+	    start_v = start_attrs[attr]
+	    stop_v = stop_attrs[attr]
+
+	    if start_v != stop_v:
+		new_v = _tween_interpolation(attr, start_v, stop_v, percent)
+		tween_attrs[attr] = new_v
+		pass
 	    pass
-
-	try:
-	    (dx,dy) = d.spitem.getCenter()
-	except:
-	    dx = 0
-	    dy = 0
-	    pass
-
-	self._update_tween_style(s, d, p, newobj)
-
-	sm = self.parseTransform(s)
-	ss = self.decomposition(sm)
-	dm = self.parseTransform(d)
-	dd = self.decomposition(dm)
-	sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
-	sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
-	a  = ss[2]*(1-p)+dd[2]*p-ss[2]
-	tx = ox*(1-p)+dx*p
-	ty = oy*(1-p)+dy*p
-	m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
-	m = self.mulA([sx,0,0,sy,0,0],m)
-	m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
-	m = self.mulA([1,0,0,1,tx,self.height-ty],m)
-
-	top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
-	pass
-
-    def updateTweenObjectScale_Use(self, s, d, p, newobj, top):
-	# Parse the translate or matrix
-	# 
-	# D  = B inv(A)
-	try:
-	    (ox,oy) = s.spitem.getCenter()
-	except:
-	    ox = 0
-	    oy = 0
-	    pass
-
-	try:
-	    (dx,dy) = d.spitem.getCenter()
-	except:
-	    dx = 0
-	    dy = 0
-	    pass
-
-	self._update_tween_style(s, d, p, newobj)
 	
-	dm = self.parseTransform(d)
-	dd = self.decomposition(dm)
-	sx = 1-(1-dd[0])*p
-	sy = 1-(1-dd[1])*p
-	a  =  dd[2]*p 
-	tx = ox*(1-p)+dx*p
-	ty = oy*(1-p)+dy*p
-	m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
-	m = self.mulA([sx,0,0,sy,0,0],m)
-	m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
-	m = self.mulA([1,0,0,1,tx,self.height-ty],m)
-
-	top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
-	pass
-
-    def updateTweenObjectScale_Primitive(self, s, d, p, newobj, top):
-	try:
-	    if d.name() == "svg:use":
-		sw = 1
-		sh = 1
-		dw = 1
-		dh = 1
-	    else:
-		try:
-		    sw = float(s.getAttribute("width"))
-		except:
-		    sw = 1
-		try:
-		    sh = float(s.getAttribute("height"))
-		except:
-		    sh = 1
-
-		try:
-		    dw = float(d.getAttribute("width"))
-		except:
-		    dw = 1
-		try:
-		    dh = float(d.getAttribute("height"))
-		except:
-		    dh = 1
-		pass
-
-	    self._update_tween_style(s, d, p, newobj)
-	    
-	    try:
-		(ox,oy) = s.spitem.getCenter()
-	    except:
-		ox = 0
-		oy = 0
-	    try:
-		(dx,dy) = d.spitem.getCenter()
-	    except:
-		dx = 0
-		dy = 0
-	    try:
-		sm = self.parseTransform(s)
-		ss = self.decomposition(sm)
-	    except:
-		ss = [1,1,0,0,0]
-		pass
-	    try:
-		dm = self.parseTransform(d)
-		dd = self.decomposition(dm)
-	    except:
-		dd = [1,1,0,0,0]
-	    dd[0] = dd[0]*dw/sw
-	    dd[1] = dd[1]*dh/sh
-	    sx = (ss[0]*(1-p)+dd[0]*p)/ss[0]
-	    sy = (ss[1]*(1-p)+dd[1]*p)/ss[1]
-	    a  = ss[2]*(1-p)+dd[2]*p-ss[2]
-	    tx = ox*(1-p)+dx*p
-	    ty = oy*(1-p)+dy*p
-	    m = [math.cos(a),math.sin(a),-math.sin(a),math.cos(a),0,0]
-	    m = self.mulA([sx,0,0,sy,0,0],m)
-	    m = self.mulA(m,[1,0,0,1,-ox,oy-self.height])
-	    m = self.mulA([1,0,0,1,tx,self.height-ty],m)
-
-	    top.setAttribute("transform","matrix(%g,%g,%g,%g,%g,%g)" % (m[0],m[2],m[1],m[3],m[4],m[5]))
-	except:
-	    traceback.print_exc()
-	    pass
-	pass
-
-    def updateTweenObjectScale(self,obj,s,d,p,newobj):
-        """
-	    Generate a new group which contains the original group and then 
-	    add the transform matrix to generate a tween frame between the 
-	    origin and destination scene group. 
-
-	    We will parse the transform matrix of the @s and @d and then 
-	    generate the matrix which is (1-p) of @s and p percent of @d.
-	"""
-	if newobj and not newobj.firstChild():
-	    # newobj is not with expect structure.
-	    #
-	    # When a user change tween type of a scene, the structure
-	    # of dup group created by old tween type may not satisfy
-	    # the requirement of current tween type.
-	    newobj.parent().removeChild(newobj)
-	    newobj = None
-	    pass
-
-	if newobj == None:
-            newobj = s.duplicate(self._doc)
-            top = self._doc.createElement("svg:g")
-	    top.setAttribute("ref",s.getAttribute("id"))
-	    top.appendChild(newobj)
-	    obj.appendChild(top)
-	else:
-	    top = newobj
-	    newobj = newobj.firstChild()
-	    pass
-	if s.name() == 'svg:g':
-	    self.updateTweenObjectScale_Group(s,d,p,newobj,top)
-	elif s.name() == 'svg:use':
-	    self.updateTweenObjectScale_Use(s,d,p,newobj,top)
-        else:
-	    self.updateTweenObjectScale_Primitive(s,d,p,newobj,top)
+	_apply_animation_attrs(tween_attrs, newobj)
 	pass
     pass
 
