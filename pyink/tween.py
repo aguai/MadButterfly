@@ -189,7 +189,7 @@ def _tween_interpolation(attrname, start_value, stop_value, percent):
 
 
 def _apply_animation_attrs(ani_attrs, node):
-    for attr in ('x', 'y', 'width', 'height', 'opacity', 'display'):
+    for attr in ('x', 'y', 'width', 'height'):
 	if attr in ani_attrs:
 	    node.setAttribute(attr, str(ani_attrs[attr]))
 	    pass
@@ -307,39 +307,37 @@ def _normalize_attrs(node1, attrs1, node2, attrs2):
 	    pass
 	pass
 
-    if 'opacity' in names:
-	if 'opacity' not in attrs1:
-	    attrs1['opacity'] = 1.0
-	    pass
-	if 'opacity' not in attrs2:
-	    attrs2['opacity'] = 1.0
-	    pass
-
-	if node2.name() == 'svg:use':
-	    attrs2['opacity'] = attrs2['opacity'] * attrs1['opacity']
-	    pass
-	pass
-
-    if 'display' in names:
-	if 'display' not in attrs1:
-	    attrs1['display'] = ''
-	    pass
-	if 'display' not in attrs2:
-	    attrs2['display'] = ''
-	    pass
-	pass
+    defaults = {'x': 0, 'y': 0,
+		'width': 0, 'height': 0,
+		'opacity': 1.0, 'display': 'inline'}
     
-    for name in 'x y width height'.split():
-	if name in names:
-	    if name not in attrs1:
-		attrs1[name] = 0
+    for attrname in defaults:
+	if attrname in names:
+	    if attrname not in attrs1:
+		attrs1[attrname] = defaults[attrname]
 		pass
-	    if name not in attrs2:
-		attrs2[name] = 0
+	    if attrname not in attrs2:
+		attrs2[attrname] = defaults[attrname]
 		pass
+	    pass
+	pass
+
+    if node2.name() == 'svg:use':
+	accumulators = {'opacity':
+			    (lambda attr_v1, attr_v2: attr_v1 * attr_v2),
+			'transform':
+			    (lambda m1, m2: (_mulA(m2[0], m1[0]), m2[1]))
+			}
+	for attrname in accumulators:
+	    if attrname not in names:
+		continue
+	    accumulator = accumulators[attrname]
+	    acc = accumulator(attrs1[attrname], attrs2[attrname])
+	    attrs2[attrname] = acc
 	    pass
 	pass
     pass
+
 
 class TweenObject(object):
     TWEEN_TYPE_NORMAL = 0
