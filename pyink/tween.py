@@ -449,7 +449,7 @@ class TweenObject(object):
 		newobj.setAttribute("ref", s.getAttribute("id"))
 		obj.appendChild(newobj)
 		pass
-	    self.update_tween_object_scale(s, d, p, newobj)
+	    self._update_tween_object_scale(s, d, p, newobj)
 	    pass
 	elif typ == self.TWEEN_TYPE_NORMAL and newobj == None:
 	    newobj = s.duplicate(self._doc)
@@ -458,47 +458,7 @@ class TweenObject(object):
 	    pass
 	pass
 
-    def _update_tween_style(self, s, d, p, newobj):
-	if d.name() == 'svg:use':
-	    return
-	try:
-	    s_style = s.getAttribute('style')
-	except:
-	    s_attrs = {}
-	else:
-	    s_attrs = _parse_style(s_style)
-	    pass
-
-	try:
-	    d_style = d.getAttribute('style')
-	except:
-	    d_attrs = {}
-	else:
-	    d_attrs = _parse_style(d_style)
-	    pass
-
-	attrs = dict(s_attrs)
-	
-	if s_attrs.has_key('opacity'):
-	    start_opacity = float(s_attrs['opacity'])
-	else:
-	    start_opacity = 1
-	    pass
-
-	if d_attrs.has_key('opacity'):
-	    end_opacity = float(d_attrs['opacity'])
-	else:
-	    end_opacity = 1
-	    pass
-
-	cur_opacity = start_opacity * (1 - p) + end_opacity * p
-	attrs['opacity'] = '%g' % (cur_opacity)
-
-	new_style = _gen_style(attrs)
-	newobj.setAttribute('style', new_style)
-	pass
-
-    def update_tween_object_scale(self, start, stop, percent, newobj):
+    def _update_tween_object_scale(self, start, stop, percent, newobj):
 	start_attrs = {}
 	_parse_style_ani(start, start_attrs)
 	_parse_attr_ani(start, start_attrs)
