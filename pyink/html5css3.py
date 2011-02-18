@@ -120,6 +120,11 @@ def _print_level(txt, lvl, out):
     pass
 
 def _print_node_open(node, lvl, out):
+    node_name = node.name()
+    if node_name.startswith('svg:'):
+        node_name = node_name[4:]
+        pass
+    
     attrs = []
     for attrname in node.allAttributes():
         attrvalue = node.getAttribute(attrname)
@@ -129,19 +134,29 @@ def _print_node_open(node, lvl, out):
     
     if attrs:
         attrs_str = ' '.join(attrs)
-        line = '<%s %s>' % (node.name(), attrs_str)
+        line = '<%s %s>' % (node_name, attrs_str)
     else:
-        line = '<%s>' % (node.name())
+        line = '<%s>' % (node_name)
         pass
     _print_level(line, lvl, out)
     pass
 
 def _print_node_close(node, lvl, out):
-    line = '</%s>' % (node.name())
+    node_name = node.name()
+    if node_name.startswith('svg:'):
+        node_name = node_name[4:]
+        pass
+    
+    line = '</%s>' % (node_name)
     _print_level(line, lvl, out)
     pass
 
 def _print_node_single(node, lvl, out):
+    node_name = node.name()
+    if node_name.startswith('svg:'):
+        node_name = node_name[4:]
+        pass
+    
     attrs = []
     for attrname in node.allAttributes():
         attrvalue = node.getAttribute(attrname)
@@ -151,9 +166,9 @@ def _print_node_single(node, lvl, out):
     
     if attrs:
         attrs_str = ' '.join(attrs)
-        line = '<%s %s/>' % (node.name(), attrs_str)
+        line = '<%s %s/>' % (node_name, attrs_str)
     else:
-        line = '<%s/>' % (node.name())
+        line = '<%s/>' % (node_name)
         pass
     _print_level(line, lvl, out)
     pass
@@ -269,13 +284,42 @@ class html5css3_ext(pybExtension.PYBindExtImp):
         self._parser = parser
         parser.start_handle(doc.rdoc)
         
-        print parser._maxframe
-        print doc.rdoc.root().allAttributes()
-        print parser.all_comp_names()
-        print 'save to ' + filename
-
         self._handle_transition_layers()
-        print self._stylesheet.keys()
+        
+        out = file(filename, 'w+')
+        print >> out, '''\
+<html
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:ns0="http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
+   >
+<head>
+<title>Scribboo Test Page</title>
+<!-- Style for animation transitions -->
+<style type='text/css'>'''
+
+        for selector, style in self._stylesheet.items():
+            self._write_css(selector, style, out)
+            pass
+        
+        print >> out, '''\
+</style>
+</head>
+<body>'''
+
+        root = doc.rdoc.root()
+        _print_subtree(root, 1, out)
+
+        print >> out, '''\
+</body>
+</html>'''
+
+        out.close()
         pass
 
     ## \brief Find all animation pairs.
