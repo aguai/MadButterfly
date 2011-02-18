@@ -1,6 +1,6 @@
 import pybExtension
 from domview import component_manager, layers_parser, scenes_parser
-from trait import composite
+from trait import composite, trait, require
 
 
 def _scene_node_range(node):
@@ -16,18 +16,20 @@ def _scene_node_range(node):
         scene_type = 'normal'
         pass
     
-    return int(start), int(stop), scene_type
+    return int(start), int(end), scene_type
 
 
 @composite
 class dom_parser(object):
     use_traits = (component_manager, layers_parser, scenes_parser)
+    provide_traits = {layers_parser.get_scene: '_scenes_get_scene'}
     method_map_traits = {
         scenes_parser._find_maxframe: '_find_maxframe',
         scenes_parser._collect_all_scenes: '_collect_all_scenes',
         scenes_parser._collect_node_ids: '_collect_node_ids',
         component_manager._start_component_manager:
-            '_start_component_manager'
+            '_start_component_manager',
+        scenes_parser.get_scene: '_scenes_get_scene'
         }
 
     def __init__(self):
@@ -178,17 +180,201 @@ def _print_subtree(node, lvl, out):
     _print_node_close(node, lvl, out)
     pass
 
+
+## \brief CSS3 animation code generator.
+#
+# This trait parses and generate transition code, in CSS3, for two
+# nodes.
+#
+@trait
+class css3_ani_gen(object):
+    _parse_ani_attrs = require
+    
+    _passing = lambda name, value: (name, str(value))
+    _trans_transform = lambda name, value: \
+        (name, 'matrix(' + ','.join([str(e) for e in value]) + ')')
+    
+    _translators = {'x': _passing, 'y': _passing,
+                   'width': _passing, 'height': _passing,
+                   'opacity': _passing, 'transform': _trans_transform
+                   }
+    
+    del _trans_transform
+    del _passing
+    
+    @staticmethod
+    def _ani_attr_to_css3(attrname, attrvalue, css):
+        translator = css3_ani_gen._translators[attrname]
+        cssname, cssvalue = translator(attrname, attrvalue)
+        css[cssname] = cssvalue
+        pass
+
+    def _make_css3_transition(self, node1, node2, duration):
+        from tween import _normalize_attrs
+        
+        ani_attrs1 = self._parse_ani_attrs(node1)
+        ani_attrs2 = self._parse_ani_attrs(node2)
+
+        _normalize_attrs(node1, ani_attrs1, node2, ani_attrs2)
+        
+        css = {}
+        
+        attrnames = set(ani_attrs1.keys() + ani_attrs2.keys())
+        for attrname in attrnames:
+            attrvalue = ani_attrs2[attrname]
+            self._ani_attr_to_css3(attrname, attrvalue, css)
+            pass
+        
+        properties = css.keys()
+        css['transition-property'] = ', '.join(properties)
+        css['transition-duration'] = '%gs' % (duration)
+        
+        return css
+
+    def _write_css(self, selector, css_props, out):
+        print >> out, '%s {' % (selector)
+        for prop_name, prop_value in css_props.items():
+            print >> out, '    %s: %s' % (prop_name, prop_value)
+            pass
+        print >> out, '}'
+        pass
+    pass
+
+
+@composite
 class html5css3_ext(pybExtension.PYBindExtImp):
+    use_traits = (css3_ani_gen,)
+    method_map_traits = {css3_ani_gen._make_css3_transition:
+                             '_make_css3_transition',
+                         css3_ani_gen._write_css: '_write_css'
+                         }
+
+    _frame_rate = 12
+
+    def __init__(self):
+        self._stylesheet = {}
+        pass
+    
+    @staticmethod
+    def _parse_ani_attrs(node):
+        from tween import _parse_attr_ani, _parse_style_ani        
+        attrs = {}
+        _parse_attr_ani(node, attrs)
+        _parse_style_ani(node, attrs)
+        return attrs
+
     def save(self, module, doc, filename):
         import sys
         parser = dom_parser()
+        self._parser = parser
         parser.start_handle(doc.rdoc)
         
         print parser._maxframe
         print doc.rdoc.root().allAttributes()
         print parser.all_comp_names()
-        print parser._layers
         print 'save to ' + filename
+
+        self._handle_transition_layers()
+        print self._stylesheet.keys()
+        pass
+
+    ## \brief Find all animation pairs.
+    #
+    # An animation pair is two nodes, one from start scene group and
+    # another from stop scene group.  The node from start scene group
+    # will transite to the state of the node from stop scene group.
+    # This method is responsible for finding all pairs.
+    #
+    @staticmethod
+    def _find_transition_pairs(start_scene_group, stop_scene_group):
+	# Collect all nodes in stop scene
+	stop_nodes = {}
+	node = stop_scene_group.firstChild()
+	while node:
+	    try:
+		node_label = node.getAttribute("ns0:duplicate-src")
+		stop_nodes[node_label] = node
+	    except:
+		pass
+	    node = node.next()
+	    pass
+	
+	# Collect all nodes in start scene
+	start_nodes = {}
+	node = start_scene_group.firstChild()
+	while node:
+	    try:
+		node_label = node.getAttribute("id")
+		start_nodes[node_label] = node
+	    except:
+		pass
+	    node = node.next()
+	    pass
+
+        pairs = []
+        for start_node in start_scene_group.childList():
+            start_node_id = start_node.getAttribute('id')
+            try:
+                stop_node = stop_nodes[start_node_id]
+            except:
+                stop_node = start_node
+                pass
+            pairs.append((start_node, stop_node))
+            pass
+        
+        return pairs
+
+    def _handle_transition_layer(self, layer_idx):
+        parser = self._parser
+        maxframe = parser.get_maxframe()
+        stylesheet = self._stylesheet
+
+        frame_idx = 0
+        while frame_idx < maxframe:
+            scene = parser.get_scene(frame_idx, layer_idx)
+            if not scene:
+                frame_idx = frame_idx + 1
+                continue
+            
+            start, end, tween_type = scene
+            if start == end:
+                frame_idx = frame_idx + 1
+                continue
+            
+            next_start = end + 1
+            scene = parser.get_scene(next_start, layer_idx)
+            if not scene:
+                frame_idx = next_start + 1
+                continue
+
+            scene_group = parser.get_scene_group(start, layer_idx)
+            next_scene_group = parser.get_scene_group(next_start, layer_idx)
+
+            duration = float(next_start - start) / self._frame_rate
+            
+            #
+            # Generate style for every transition pair
+            #
+            transition_pairs = \
+                self._find_transition_pairs(scene_group, next_scene_group)
+            for start_node, stop_node in transition_pairs:
+                css_props = self._make_css3_transition(start_node,
+                                                       stop_node,
+                                                       duration)
+                node_id = start_node.getAttribute('id')
+                selector = '.transition%d #%s' % (start, node_id)
+                stylesheet[selector] = css_props
+                pass
+
+            frame_idx = next_start
+            pass
+        pass
+
+    def _handle_transition_layers(self):
+        num_layers = self._parser.get_layer_num()
+        for layer_idx in range(num_layers):
+            self._handle_transition_layer(layer_idx)
+            pass
         pass
     pass
 
