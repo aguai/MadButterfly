@@ -234,7 +234,7 @@ class css3_ani_gen(object):
     def _write_css(self, selector, css_props, out):
         print >> out, '%s {' % (selector)
         for prop_name, prop_value in css_props.items():
-            print >> out, '    %s: %s' % (prop_name, prop_value)
+            print >> out, '    %s: %s;' % (prop_name, prop_value)
             pass
         print >> out, '}'
         pass
@@ -324,6 +324,14 @@ class html5css3_ext(pybExtension.PYBindExtImp):
         
         return pairs
 
+    def _make_scene_group_style(self, frame_idx, layer_idx):
+        scene_group = self._parser.get_scene_group(frame_idx, layer_idx)
+        gid = scene_group.getAttribute('id')
+        selector = '.frame%04d #%s' % (frame_idx, gid)
+        style = {'display': 'inline'}
+        self._stylesheet[selector] = style
+        pass
+
     def _handle_transition_layer(self, layer_idx):
         parser = self._parser
         maxframe = parser.get_maxframe()
@@ -335,6 +343,8 @@ class html5css3_ext(pybExtension.PYBindExtImp):
             if not scene:
                 frame_idx = frame_idx + 1
                 continue
+            
+            self._make_scene_group_style(frame_idx, layer_idx)
             
             start, end, tween_type = scene
             if start == end:
@@ -362,7 +372,7 @@ class html5css3_ext(pybExtension.PYBindExtImp):
                                                        stop_node,
                                                        duration)
                 node_id = start_node.getAttribute('id')
-                selector = '.transition%d #%s' % (start, node_id)
+                selector = '.frame%04d #%s' % (start, node_id)
                 stylesheet[selector] = css_props
                 pass
 
