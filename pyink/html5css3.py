@@ -3,22 +3,6 @@ from domview import component_manager, layers_parser, scenes_parser
 from trait import composite, trait, require
 
 
-def _scene_node_range(node):
-    start = node.getAttribute('start')
-    try:
-        end = node.getAttribute('end')
-    except:
-        end = start
-        pass
-    try:
-        scene_type = node.getAttribute('type')
-    except:
-        scene_type = 'normal'
-        pass
-    
-    return int(start), int(end), scene_type
-
-
 @composite
 class dom_parser(object):
     use_traits = (component_manager, layers_parser, scenes_parser)
@@ -46,7 +30,7 @@ class dom_parser(object):
         self._group2scene = {}
         pass
 
-    def _find_meta(self):
+    def _find_metadata(self):
         for child in self._root.childList():
             if child.name() == 'svg:metadata':
                 self._metadata_node = child
@@ -65,13 +49,33 @@ class dom_parser(object):
                 'can not find \'ns0:scenes\' node under \'svg:metadata\''
 
         pass
+    
+    ## \brief Return the range of a scene node.
+    #
+    @staticmethod
+    def _scene_node_range(node):
+        start = node.getAttribute('start')
+        try:
+            end = node.getAttribute('end')
+        except:
+            end = start
+            pass
+        try:
+            scene_type = node.getAttribute('type')
+        except:
+            scene_type = 'normal'
+            pass
+        
+        return int(start), int(end), scene_type
 
+    ## \brief To handle the parsing for the given document.
+    #
     def start_handle(self, doc):
         self._doc = doc
         self._root = doc.root()
         self._layers_parent = self._root
 
-        self._find_meta()
+        self._find_metadata()
         
         self._collect_node_ids()
         self._collect_all_scenes()
@@ -81,6 +85,8 @@ class dom_parser(object):
         self._start_component_manager()
         pass
 
+    ## \brief Reset the content of the parser before next parsing.
+    #
     def reset(self):
         self.reset_layers()
         pass
@@ -91,7 +97,7 @@ class dom_parser(object):
     def _find_scene_node(self, frame_idx, layer_idx):
         layer = self._layers[layer_idx]
         for scene_node in layer.scenes:
-            start, end, scene_type = _scene_node_range(scene_node)
+            start, end, scene_type = self._scene_node_range(scene_node)
             if start <= frame_idx and frame_idx <= end:
                 return scene_node
             pass
@@ -100,7 +106,7 @@ class dom_parser(object):
     def get_scene(self, frame_idx, layer_idx):
         scene_node = self._find_scene_node(frame_idx, layer_idx)
         if scene_node:
-            start, end, scene_type = _scene_node_range(scene_node)
+            start, end, scene_type = self._scene_node_range(scene_node)
             return start, end, scene_type
         return None
 
@@ -114,6 +120,9 @@ class dom_parser(object):
     pass
 
 
+#
+# Following functions are used to print XML from a DOM-tree.
+#
 def _print_level(txt, lvl, out):
     indent = '    ' * lvl
     print >> out, '%s%s' % (indent, txt)
