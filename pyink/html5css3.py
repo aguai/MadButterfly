@@ -216,7 +216,7 @@ class css3_ani_gen(object):
     
     _passing = lambda name, value: (name, str(value))
     _trans_transform = lambda name, value: \
-        (name, 'matrix(' + ','.join([str(e) for e in value]) + ')')
+        (name, 'matrix(' + ','.join([str(e) for e in value[0]]) + ')')
     
     _translators = {'x': _passing, 'y': _passing,
                    'width': _passing, 'height': _passing,
@@ -318,6 +318,14 @@ class html5css3_ext(pybExtension.PYBindExtImp):
         
         print >> out, '''\
 </style>
+<script>'''
+
+        print >>out, 'var animation_info = '
+        import pprint
+        pprint.pprint(self._stylesheet, stream=out, indent=4, depth=2)
+
+        print >> out, '''\
+</script>
 </head>
 <body>'''
 
