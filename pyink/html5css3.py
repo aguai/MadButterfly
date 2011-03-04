@@ -120,74 +120,127 @@ class dom_parser(object):
     pass
 
 
-#
-# Following functions are used to print XML from a DOM-tree.
-#
-def _print_level(txt, lvl, out):
-    indent = '    ' * lvl
-    print >> out, '%s%s' % (indent, txt)
-    pass
-
-def _print_node_open(node, lvl, out):
-    node_name = node.name()
-    if node_name.startswith('svg:'):
-        node_name = node_name[4:]
-        pass
-    
-    attrs = []
-    for attrname in node.allAttributes():
-        attrvalue = node.getAttribute(attrname)
-        attr = '%s="%s"' % (attrname, attrvalue)
-        attrs.append(attr)
-        pass
-    
-    if attrs:
-        attrs_str = ' '.join(attrs)
-        line = '<%s %s>' % (node_name, attrs_str)
-    else:
-        line = '<%s>' % (node_name)
-        pass
-    _print_level(line, lvl, out)
-    pass
-
-def _print_node_close(node, lvl, out):
-    node_name = node.name()
-    if node_name.startswith('svg:'):
-        node_name = node_name[4:]
-        pass
-    
-    line = '</%s>' % (node_name)
-    _print_level(line, lvl, out)
-    pass
-
-def _print_node_single(node, lvl, out):
-    node_name = node.name()
-    if node_name.startswith('svg:'):
-        node_name = node_name[4:]
-        pass
-    
-    attrs = []
-    for attrname in node.allAttributes():
-        attrvalue = node.getAttribute(attrname)
-        attr = '%s="%s"' % (attrname, attrvalue)
-        attrs.append(attr)
-        pass
-    
-    if attrs:
-        attrs_str = ' '.join(attrs)
-        line = '<%s %s/>' % (node_name, attrs_str)
-    else:
-        line = '<%s/>' % (node_name)
-        pass
-    _print_level(line, lvl, out)
-    pass
-
-def _print_node_content(node, lvl, out):
-    line = node.content()
-    _print_level(line, lvl, out)
-    pass
-
 def _print_subtree(node, lvl, out):
+    ## \brief Determize whether to skip a node and its descendants.
+    #
+    # Some part of the tree is useless in the result document.
+    #
+    def skip(node):
+        node_name = node.name()
+        if node_name == 'svg:metadata':
+            return True
+        
+        try:
+            label = node.getAttribute('inkscape:label')
+        except:
+            return False
+        if label == 'dup':
+            return True
+        
+        return False
+    
+    ## \brief Last modify style properties before generate output.
+    #
+    # This is function return a string that will be written out as
+    # value of style attribute.
+    #
+    def filter_style(node):
+        from tween import _parse_style_ani
+        
+        try:
+            style = node.getAttribute('style')
+        except:
+            style = ''
+            pass
+        
+        #
+        # Make scene groups hidden
+        #
+        try:
+            scene_group = node.getAttribute('scene_group')
+        except:
+            return style
+
+        if scene_group != 'true':
+            return style
+        
+        props = {}
+        _parse_style_ani(node, props)
+        props['display'] = 'none'
+        
+        return ';'.join([key + ':' + value for key, value in props.items()])
+    
+    def _print_level(txt, lvl, out):
+        indent = '    ' * lvl
+        print >> out, '%s%s' % (indent, txt)
+        pass
+
+    def _print_node_open(node, lvl, out):
+        node_name = node.name()
+        if node_name.startswith('svg:'):
+            node_name = node_name[4:]
+            pass
+    
+        attrs = []
+        for attrname in node.allAttributes():
+            if attrname == 'style':
+                attrvalue = filter_style(node)
+                if not attrvalue:
+                    continue
+                pass
+            else:
+                attrvalue = node.getAttribute(attrname)
+                pass
+            attr = '%s="%s"' % (attrname, attrvalue)
+            attrs.append(attr)
+            pass
+        
+        if attrs:
+            attrs_str = ' '.join(attrs)
+            line = '<%s %s>' % (node_name, attrs_str)
+        else:
+            line = '<%s>' % (node_name)
+            pass
+        _print_level(line, lvl, out)
+        pass
+    
+    def _print_node_close(node, lvl, out):
+        node_name = node.name()
+        if node_name.startswith('svg:'):
+            node_name = node_name[4:]
+            pass
+        
+        line = '</%s>' % (node_name)
+        _print_level(line, lvl, out)
+        pass
+    
+    def _print_node_single(node, lvl, out):
+        node_name = node.name()
+        if node_name.startswith('svg:'):
+            node_name = node_name[4:]
+            pass
+        
+        attrs = []
+        for attrname in node.allAttributes():
+            attrvalue = node.getAttribute(attrname)
+            attr = '%s="%s"' % (attrname, attrvalue)
+            attrs.append(attr)
+            pass
+        
+        if attrs:
+            attrs_str = ' '.join(attrs)
+            line = '<%s %s/>' % (node_name, attrs_str)
+        else:
+            line = '<%s/>' % (node_name)
+            pass
+        _print_level(line, lvl, out)
+        pass
+
+    def _print_node_content(node, lvl, out):
+        line = node.content()
+        _print_level(line, lvl, out)
+        pass
+
     children = node.childList()
     if not children:
         if node.name() != 'string':
@@ -199,6 +252,8 @@ def _print_subtree(node, lvl, out):
 
     _print_node_open(node, lvl, out)
     for child in children:
+        if skip(child):
+            continue
         _print_subtree(child, lvl + 1, out)
         pass
     _print_node_close(node, lvl, out)
