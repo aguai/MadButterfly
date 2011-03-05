@@ -74,6 +74,8 @@ extern shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
 						 int pnt_cnt,
 						 co_aix *float_args,
 						 int float_arg_cnt);
+extern shape_t *rdman_shape_path_clone(redraw_man_t *rdman,
+				       const shape_t *src_path);
 extern void sh_path_transform(shape_t *shape);
 extern void sh_path_draw(shape_t *shape, mbe_t *cr);
 /* @} */
@@ -251,6 +253,8 @@ extern shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
 				     co_aix x, co_aix y,
 				     co_aix w, co_aix h,
 				     co_aix rx, co_aix ry);
+extern shape_t *rdman_shape_rect_clone(redraw_man_t *rdman,
+				       const shape_t *src_rect);
 extern void sh_rect_transform(shape_t *shape);
 extern void sh_rect_draw(shape_t *shape, mbe_t *cr);
 extern void sh_rect_set(shape_t *shape, co_aix x, co_aix y,
@@ -263,6 +267,8 @@ extern void sh_rect_set(shape_t *shape, co_aix x, co_aix y,
 extern shape_t *rdman_shape_image_new(redraw_man_t *rdman,
 				      co_aix x, co_aix y,
 				      co_aix w, co_aix h);
+extern shape_t *rdman_shape_image_clone(redraw_man_t *rdman,
+					const shape_t *src_img);
 extern void sh_image_transform(shape_t *shape);
 extern void sh_image_draw(shape_t *shape, mbe_t *cr);
 extern void sh_image_set_geometry(shape_t *shape, co_aix x, co_aix y,
@@ -312,6 +318,8 @@ typedef struct {
 extern shape_t *rdman_shape_stext_new(redraw_man_t *rdman,
 				      const char *txt,
 				      co_aix x, co_aix y);
+extern shape_t *rdman_shape_stext_clone(redraw_man_t *rdman,
+					const shape_t *_src_txt);
 extern void sh_stext_transform(shape_t *shape);
 extern void sh_stext_draw(shape_t *shape, mbe_t *cr);
 extern int sh_stext_set_text(shape_t *shape, const char *txt);

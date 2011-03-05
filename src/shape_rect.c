@@ -50,6 +50,23 @@ shape_t *rdman_shape_rect_new(redraw_man_t *rdman,
     return (shape_t *)rect;
 }
 
+shape_t *
+rdman_shape_rect_clone(redraw_man_t *rdman, const shape_t *_src_rect) {
+    const sh_rect_t *src_rect = (const sh_rect_t *)_src_rect;
+    sh_rect_t *new_rect;
+
+    new_rect = (sh_rect_t *)rdman_shape_rect_new(rdman,
+						 src_rect->x, src_rect->y,
+						 src_rect->w, src_rect->h,
+						 src_rect->rx, src_rect->ry);
+    if(new_rect == NULL)
+	return NULL;
+
+    sh_copy_style(rdman, (shape_t *)src_rect, (shape_t *)new_rect);
+
+    return (shape_t *)src_rect;
+}
+
 void sh_rect_set(shape_t *shape, co_aix x, co_aix y,
 		 co_aix w, co_aix h, co_aix rx, co_aix ry) {
     sh_rect_t *rect = (sh_rect_t *)shape;

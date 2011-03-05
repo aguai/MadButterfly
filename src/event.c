@@ -15,8 +15,12 @@
 
 #define OK 0
 #define ERR -1
+#ifndef FALSE
 #define FALSE 0
+#endif
+#ifndef TRUE
 #define TRUE 1
+#endif
 
 #define ARRAY_EXT_SZ 64
 

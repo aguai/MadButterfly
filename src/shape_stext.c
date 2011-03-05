@@ -157,7 +157,7 @@ mb_scaled_font_t *make_scaled_font_face_matrix(mb_font_face_t *face,
     ASSERT(matrix != NULL);
 
     scaled_font = mbe_scaled_font_create((mbe_font_face_t *)face,
-					 matrix, &id);
+					 matrix, id);
 
     return (mb_scaled_font_t *)scaled_font;
 }
@@ -310,6 +310,34 @@ shape_t *rdman_shape_stext_new(redraw_man_t *rdman, const char *txt,
 
     return (shape_t *)txt_o;
 }
+
+#ifndef UNITTEST
+shape_t *
+rdman_shape_stext_clone(redraw_man_t *rdman, const shape_t *_src_txt) {
+    sh_stext_t *src_txt = (const sh_stext_t *)_src_txt;
+    sh_stext_t *new_txt;
+    style_blks_lst_t *style_blks;
+    int r;
+
+    new_txt = (sh_stext_t *)rdman_shape_stext_new(rdman, src_txt->txt,
+						  src_txt->x, src_txt->y);
+    if(new_txt == NULL)
+	return NULL;
+
+    style_blks = &src_txt->style_blks;
+    if(style_blks->num > 0) {
+	r = sh_stext_set_style(new_txt, style_blks->ds, style_blks->num);
+	if(r != OK) {
+	    _rdman_shape_stext_free((shape_t *)new_txt);
+	    return NULL;
+	}
+    }
+    
+    sh_copy_style(rdman, (shape_t *)src_txt, (shape_t *)new_txt);
+    
+    return (shape_t *)new_txt;
+}
+#endif	/* UNITTEST */
 
 static
 int compute_utf8_chars_sz(const char *txt, int n_chars) {

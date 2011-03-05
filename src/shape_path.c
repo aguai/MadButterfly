@@ -1204,6 +1204,32 @@ shape_t *rdman_shape_path_new_from_binary(redraw_man_t *rdman,
     return (shape_t *)path;
 }
 
+shape_t *
+rdman_shape_path_clone(redraw_man_t *rdman, const shape_t *_src_path) {
+    const sh_path_t *src_path = (const sh_path_t *)_src_path;
+    sh_path_t *new_path;
+    char *udata;
+    char *cmds;
+    co_aix *pnts, *float_args;
+
+    udata = src_path->user_data;
+    cmds = udata;
+    pnts = (co_aix *)(udata + src_path->cmd_len);
+    float_args = pnts + src_path->pnt_len;
+    new_path =
+	(sh_path_t *)rdman_shape_path_new_from_binary(rdman,
+						      cmds,
+						      pnts, src_path->pnt_len,
+						      float_args,
+						      src_path->float_arg_len);
+    if(new_path == NULL)
+	return NULL;
+
+    sh_copy_style(rdman, (shape_t *)src_path, (shape_t *)new_path);
+
+    return (shape_t *)new_path;
+}
+
 
 /*! \brief Transform a path from user space to device space.
  *
