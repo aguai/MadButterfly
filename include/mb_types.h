@@ -392,5 +392,14 @@ struct _shape {
 #define sh_get_stroke(sh) ((sh)->stroke)
 #define sh_set_stroke_width(sh, v) do { (sh)->stroke_width = (v); } while(0)
 #define sh_get_stroke_width(sh) (sh)->stroke_width
+#define sh_copy_style(rdman, sh_src, sh_dst) do {			\
+	if(sh_get_fill(sh_src))						\
+	    rdman_paint_fill((rdman), sh_get_fill(sh_src), (sh_dst));	\
+	if(sh_get_stroke(sh_src))					\
+	    rdman_paint_stroke((rdman), sh_get_stroke(sh_src), (sh_dst)); \
+	(sh_dst)->stroke_width = (sh_src)->stroke_width;		\
+	(sh_dst)->stroke_linecap = (sh_src)->stroke_linecap;		\
+	(sh_dst)->stroke_linejoin = (sh_src)->stroke_linejoin;		\
+    } while(0)
 
 #endif /* __MB_TYPES_H_ */

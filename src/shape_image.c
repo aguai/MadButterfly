@@ -92,6 +92,22 @@ shape_t *rdman_shape_image_new(redraw_man_t *rdman,
     return (shape_t *)img;
 }
 
+shape_t *
+rdman_shape_image_clone(redraw_man_t *rdman, const shape_t *_src_img) {
+    const sh_image_t *src_img = (const sh_image_t *)_src_img;
+    sh_image_t *new_img;
+
+    new_img = (sh_image_t *)rdman_shape_image_new(rdman,
+						  src_img->x, src_img->y,
+						  src_img->w, src_img->h);
+    if(new_img == NULL)
+	return NULL;
+    
+    sh_copy_style(rdman, (shape_t *)src_img, (shape_t *)new_img);
+
+    return (shape_t *)new_img;
+}
+
 void sh_image_free(shape_t *shape) {
     sh_image_t *img = (sh_image_t *)shape;
 
