@@ -128,6 +128,8 @@ extern int rdman_paint_free(redraw_man_t *rdman, paint_t *paint);
 
 extern coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent);
 extern int rdman_coord_free(redraw_man_t *rdman, coord_t *coord);
+extern coord_t * rdman_coord_clone_subtree(redraw_man_t *rdman,
+					   coord_t *parent, coord_t *src);
 extern int rdman_coord_subtree_free(redraw_man_t *rdman, coord_t *subtree);
 extern int rdman_coord_changed(redraw_man_t *rdman, coord_t *coord);
 extern int rdman_shape_changed(redraw_man_t *rdman, shape_t *shape);

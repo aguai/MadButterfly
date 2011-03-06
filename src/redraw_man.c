@@ -1067,6 +1067,91 @@ coord_t *rdman_coord_new(redraw_man_t *rdman, coord_t *parent) {
     return coord;
 }
 
+static shape_t *
+_rdman_clone_shape(redraw_man_t *rdman, const shape_t *sh) {
+    shape_t *cloning = NULL;
+
+#ifndef UNITTEST
+    switch(sh->obj.obj_type) {
+    case MBO_PATH:
+	cloning = rdman_shape_path_clone(rdman, sh);
+	break;
+	
+    case MBO_TEXT:
+	break;
+	
+    case MBO_RECT:
+	cloning = rdman_shape_rect_clone(rdman, sh);
+	break;
+	
+    case MBO_IMAGE:
+	cloning = rdman_shape_image_clone(rdman, sh);
+	break;
+	
+    case MBO_STEXT:
+	cloning = rdman_shape_stext_clone(rdman, sh);
+	break;
+    }
+#else
+    extern shape_t *sh_dummy_clone(redraw_man_t *rdman, const shape_t *_src);
+    
+    cloning = sh_dummy_clone(rdman, sh);
+#endif /* UNITTEST */
+
+    return cloning;
+}
+
+/*! \brief Clone a subtree rooted at a srouce coord.
+ *
+ * \param rdman is the redraw manager managing the tree where parent is in.
+ * \param parent is a coord where the cloning subtree would be hooked.
+ * \param src is the coord that cloned subtree is rooted.
+ * \return the root of new subtree.
+ */
+coord_t *
+rdman_coord_clone_subtree(redraw_man_t *rdman,
+			  coord_t *parent, coord_t *src) {
+    coord_t *cloning;
+    coord_t *child;
+    shape_t *member, *cloning_member;
+    geo_t *member_geo;
+    int member_idx, child_pos;
+    
+    cloning = rdman_coord_new(rdman, parent);
+    
+    member_geo = FIRST_MEMBER(src);
+    member_idx = 0;
+    
+    /*
+     * Clone all children and members.
+     */
+    FORCHILDREN(src, child) {
+	/* Add members before the child */
+	child_pos = child->before_pmem;
+	while(member_idx < child_pos) {
+	    member = member_geo->shape;
+	    cloning_member = _rdman_clone_shape(rdman, member);
+	    rdman_add_shape(rdman, cloning_member, cloning);
+	    
+	    member_geo = NEXT_MEMBER(member_geo);
+	    member_idx++;
+	}
+
+	rdman_coord_clone_subtree(rdman, cloning, child);
+    }
+    
+    /* Clone remain members after last child if any */
+    while(member_geo) {
+	member = member_geo->shape;
+	cloning_member = _rdman_clone_shape(rdman, member);
+	rdman_add_shape(rdman, cloning_member, cloning);
+	
+	member_geo = NEXT_MEMBER(member_geo);
+    }
+
+    return cloning;
+}
+
 static int rdman_coord_free_postponse(redraw_man_t *rdman, coord_t *coord) {
     int r;
 
@@ -2740,6 +2825,16 @@ shape_t *sh_dummy_new(redraw_man_t *rdman,
     return (shape_t *)dummy;
 }
 
+shape_t *
+sh_dummy_clone(redraw_man_t *rdman, const shape_t *_src) {
+    sh_dummy_t *src = (sh_dummy_t *)_src;
+    shape_t *new_dummy;
+
+    new_dummy = sh_dummy_new(rdman, src->x, src->y, src->w, src->h);
+
+    return new_dummy;
+}
+
 void sh_dummy_transform(shape_t *shape) {
     sh_dummy_t *dummy = (sh_dummy_t *)shape;
     co_aix poses[2][2];
@@ -3012,6 +3107,48 @@ test_own_canvas_redraw(void) {
     redraw_man_destroy(rdman);
 }
 
+static void
+test_rdman_coord_clone_subtree(void) {
+    redraw_man_t _rdman;
+    redraw_man_t *rdman;
+    coord_t *coord1, *coord2, *coord3;
+    coord_t *cloning;
+    shape_t *sh1, *sh2;
+    coord_t *cloning_visit;
+    
+    redraw_man_init(&_rdman, NULL, NULL);
+    rdman = &_rdman;
+    
+    coord1 = rdman_coord_new(rdman, rdman->root_coord);
+    CU_ASSERT(coord1 != NULL);
+
+    sh1 = sh_dummy_new(rdman, 100, 100, 20, 20);
+    CU_ASSERT(sh1 != NULL);
+    rdman_add_shape(rdman, (shape_t *)sh1, coord1);
+    
+    coord2 = rdman_coord_new(rdman, coord1);
+    CU_ASSERT(coord2 != NULL);
+
+    sh2 = sh_dummy_new(rdman, 150, 150, 11, 11);
+    CU_ASSERT(sh2 != NULL);
+    rdman_add_shape(rdman, (shape_t *)sh2, coord2);
+
+    coord3 = rdman_coord_new(rdman, coord2);
+    CU_ASSERT(coord3 != NULL);
+
+    cloning = rdman_coord_clone_subtree(rdman, rdman->root_coord, coord1);
+    CU_ASSERT(NEXT_CHILD(coord1) == cloning);
+    
+    cloning_visit = FIRST_CHILD(cloning);
+    CU_ASSERT(cloning_visit != NULL);
+    CU_ASSERT(cloning_visit->before_pmem == 1);
+
+    cloning_visit = FIRST_CHILD(cloning_visit);
+    CU_ASSERT(cloning_visit != NULL);
+
+    redraw_man_destroy(rdman);
+}
+
 CU_pSuite get_redraw_man_suite(void) {
     CU_pSuite suite;
 
@@ -3022,6 +3159,7 @@ CU_pSuite get_redraw_man_suite(void) {
     CU_ADD_TEST(suite, test_own_canvas_area);
     CU_ADD_TEST(suite, test_own_canvas);
     CU_ADD_TEST(suite, test_own_canvas_redraw);
+    CU_ADD_TEST(suite, test_rdman_coord_clone_subtree);
 
     return suite;
 }
