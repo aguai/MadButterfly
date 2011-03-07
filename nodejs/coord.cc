@@ -232,6 +232,26 @@ xnjsmb_coord_remove(coord_t *coord, Handle<Object> self) {
     xnjsmb_coord_free_subtree(rdman, coord);
 }
 
+static coord_t *
+xnjsmb_coord_clone_from_subtree(coord_t *coord, Handle<Object> self,
+				coord_t *src, const char **err) {
+    Handle<Object> js_rt;
+    redraw_man_t *rdman;
+    coord_t *cloning;
+
+    js_rt = GET(self, "mbrt")->ToObject();
+    ASSERT(js_rt != NULL);
+    rdman = xnjsmb_rt_rdman(js_rt);
+
+    cloning = rdman_coord_clone_from_subtree(rdman, coord, src);
+    if(cloning == NULL) {
+	*err = "can not clone a subtree (allocate memory)";
+	return NULL;
+    }
+
+    return cloning;
+}
+
 static void
 xnjsmb_coord_show(coord_t *coord, Handle<Object> self) {
     Handle<Object> js_rt;

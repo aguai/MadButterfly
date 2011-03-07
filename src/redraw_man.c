@@ -1109,8 +1109,8 @@ _rdman_clone_shape(redraw_man_t *rdman, const shape_t *sh) {
  * \return the root of new subtree.
  */
 coord_t *
-rdman_coord_clone_subtree(redraw_man_t *rdman,
-			  coord_t *parent, coord_t *src) {
+rdman_coord_clone_from_subtree(redraw_man_t *rdman,
+			       coord_t *parent, coord_t *src) {
     coord_t *cloning;
     coord_t *child;
     shape_t *member, *cloning_member;
@@ -1137,7 +1137,7 @@ rdman_coord_clone_subtree(redraw_man_t *rdman,
 	    member_idx++;
 	}
 
-	rdman_coord_clone_subtree(rdman, cloning, child);
+	rdman_coord_clone_from_subtree(rdman, cloning, child);
     }
     
     /* Clone remain members after last child if any */
@@ -3108,7 +3108,7 @@ test_own_canvas_redraw(void) {
 }
 
 static void
-test_rdman_coord_clone_subtree(void) {
+test_rdman_coord_clone_from_subtree(void) {
     redraw_man_t _rdman;
     redraw_man_t *rdman;
     coord_t *coord1, *coord2, *coord3;
@@ -3136,7 +3136,7 @@ test_rdman_coord_clone_subtree(void) {
     coord3 = rdman_coord_new(rdman, coord2);
     CU_ASSERT(coord3 != NULL);
 
-    cloning = rdman_coord_clone_subtree(rdman, rdman->root_coord, coord1);
+    cloning = rdman_coord_clone_from_subtree(rdman, rdman->root_coord, coord1);
     CU_ASSERT(NEXT_CHILD(coord1) == cloning);
     
     cloning_visit = FIRST_CHILD(cloning);
@@ -3159,7 +3159,7 @@ CU_pSuite get_redraw_man_suite(void) {
     CU_ADD_TEST(suite, test_own_canvas_area);
     CU_ADD_TEST(suite, test_own_canvas);
     CU_ADD_TEST(suite, test_own_canvas_redraw);
-    CU_ADD_TEST(suite, test_rdman_coord_clone_subtree);
+    CU_ADD_TEST(suite, test_rdman_coord_clone_from_subtree);
 
     return suite;
 }
