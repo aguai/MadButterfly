@@ -33,8 +33,8 @@ xnjsmb_coord_new(njs_runtime_t *rt, coord_t *parent, const char **err) {
     return coord;
 }
 
-static void
-xnjsmb_mb_rt_objs_mod(Handle<Object> mbrt, Handle<Value> ret) {
+void
+_xnjsmb_mb_rt_objs_mod(Handle<Object> mbrt, Handle<Value> ret) {
     Handle<Object> ret_obj = ret->ToObject();
 
     SET(ret_obj, "mbrt", mbrt);
