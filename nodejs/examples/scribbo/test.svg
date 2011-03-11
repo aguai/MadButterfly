@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48+devel r9795 custom"
+   xmlns:ns0="http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
+   sodipodi:docname="新文件 1">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="76.428571"
+     inkscape:cy="520"
+     inkscape:document-units="px"
+     inkscape:current-layer="s29027"
+     showgrid="false"
+     inkscape:window-width="884"
+     inkscape:window-height="639"
+     inkscape:window-x="416"
+     inkscape:window-y="51"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+    <ns0:scenes
+       id="main_default_scenes"
+       name="default">
+      <ns0:scene
+         start="0"
+         type="scale"
+         ref="s29027"
+         end="8" />
+      <ns0:scene
+         start="9"
+         type="normal"
+         ref="s97910" />
+    </ns0:scenes>
+    <ns0:components />
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="s51002"
+       inkscape:label="dup"
+       sodipodi:insensitive="1"
+       style="display: none">
+      <rect
+         y="246.6479"
+         x="48.57143"
+         height="291.42856"
+         width="308.57141"
+         saved_id="rect13"
+         id="rect17"
+         style="opacity:0.12999998;fill:#ff0000;fill-opacity:1;stroke:none"
+         ref="rect13"
+         transform="matrix(1.25333335556,0.0,0.0,1.32407411111,-12.3047633333,-79.9322093787)" />
+    </g>
+    <g
+       id="s29027"
+       inkscape:groupmode="layer"
+       scene_group="true"
+       style="">
+      <rect
+         style="opacity:0.12999998;fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect13"
+         saved_id="rect13"
+         width="142.85713"
+         height="137.14284"
+         x="48.57143"
+         y="246.6479" />
+    </g>
+    <g
+       id="s97910"
+       inkscape:groupmode="layer"
+       scene_group="true"
+       style="display: none">
+      <use
+         id="s66615"
+         xlink:href="#rect13"
+         ns0:duplicate-src="rect13"
+         x="0"
+         y="0"
+         width="1"
+         height="1"
+         transform="matrix(2.1400001,0,0,2.4583335,-55.371435,-359.69491)" />
+    </g>
+  </g>
+  <g
+     inkscape:label="components"
+     id="s38631" />
+</svg>
