@@ -145,6 +145,30 @@ app.prototype.addKeyListener=function(key,f) {
     }
 }
 
+app.prototype.generateScaleTween=function(src,dest,p) {
+    sys.puts("p="+ p);
+    if (p == 0) {
+	if (src.dup) src.dup.hide();
+	src.show();
+	return;
+    }
+    src.hide();
+    // Duplicate the group
+    if (src.dup == null) {
+        dup = src.parent.clone_from_subtree(src);
+	src.dup = dup;
+    } else {
+	dup = src.dup;
+    }
+    dup.hide();
+    sys.puts(dup);
+
+
+    for(n in dup) {
+	
+        
+    }
+}
 
 app.prototype.changeScene=function(s) {
     var nth;
@@ -156,10 +180,21 @@ app.prototype.changeScene=function(s) {
 	if (nth == -1) return;
     }
     var scenes = this.svg.scenes;
-    for(i=0;i<scenes.length;i++) {
+    for(i=0;i<scenes.length-1;i++) {
         try {
             if (nth >=scenes[i].start && nth <=scenes[i].end) {
-	        this.get(scenes[i].ref).show();
+		if (scenes[i].type == 'normal' || i == scenes.length-1) {
+	            this.get(scenes[i].ref).show();
+		} else if (scenes[i].type == 'scale') {
+		    if (scenes[i].end == (scenes[i+1].start-1)) {
+			var p = (nth-scenes[i].start)/(scenes[i].end-scenes[i].start+1);
+			this.generateScaleTween(this.get(scenes[i].ref),this.get(scenes[i+1].ref),p);
+		    } else {
+		        // If there is no second key frame defined, fall back to the normal
+	                this.get(scenes[i].ref).show();
+		    }
+		}
+
 	    } else {
 	        this.get(scenes[i].ref).hide();
 	    }

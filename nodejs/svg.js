@@ -41,6 +41,8 @@ function loadSVG(mb_rt, root, filename) {
 }
 
 loadSVG.prototype.load=function(mb_rt, root, filename) {
+    sys.puts(filename);
+    sys.puts(libxml);
     var doc = libxml.parseXmlFile(filename);
     var _root = doc.root();
     var nodes = _root.childNodes();
@@ -51,6 +53,7 @@ loadSVG.prototype.load=function(mb_rt, root, filename) {
     this.stop_ref={};
     this.gradients={};
     this.radials = {};
+    this._groupMap={};
     coord.center=new Object();
     coord.center.x = 10000;
     coord.center.y = 10000;
@@ -940,6 +943,12 @@ function parseGroupStyle(style,n)
     }
 }
 
+loadSVG.prototype.duplicateGroup=function(id,root) {
+    n =  this._groupMap[id];
+    var m = [1,0,0,1,0,0]
+    this.parseGroup(m,root,id, n)
+}
+
 loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     var k;
     var nodes = n.childNodes();
@@ -990,6 +999,7 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
 	root.center.y = coord.center.y;
 
     this._set_bbox(n, coord);
+    this._groupMap[n.name()] = n;
     
     make_mbnames(this.mb_rt, n, coord);
 };
@@ -1218,13 +1228,29 @@ loadSVG.prototype.parseScenes=function(coord,node) {
 	        scene.end = scene.start;
 	    }
 	    scene.ref = node.attr('ref').value();
-	    scene.type = node.attr('type').value();
+	    try {
+	        scene.type = node.attr('type').value();
+	    } catch(e) {
+	        scene.type='normal';
+	    }
 
 	    try {
 	        this.scenenames[node.attr('name').value()] = scene.start;
 	    } catch(e) {
 	    }
 	    this.scenes.push(scene);
+	}
+    }
+}
+
+loadSVG.prototype.parseComponents=function(coord,node) {
+    
+    var nodes = node.childNodes();
+
+    for(k in nodes) {
+        var name = nodes[k].name();
+	if (name == 'component') {
+	    // Parse the component here
 	}
     }
 }
@@ -1238,6 +1264,8 @@ loadSVG.prototype.parseMetadata=function(coord,node) {
 	    this.scenes=[];
 	    this.scenenames={};
 	    this.parseScenes(coord,nodes[k]);
+	} else if (name == "components") {
+	    this.parseComponents(coord,nodes[k]);
 	}
     }
 }
