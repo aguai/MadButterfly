@@ -77,4 +77,8 @@ xnjsmb_img_ldr_init_mb_rt_temp(v8::Handle<v8::Object> mb_rt_temp);
 v8::Handle<v8::Value> export_xnjsmb_auto_subject_new(subject_t *subject);
 void xnjsmb_observer_init(void);
 
+extern void _xnjsmb_mb_rt_objs_mod(v8::Handle<v8::Object> mbrt,
+				  v8::Handle<v8::Value> ret);
+#define xnjsmb_mb_rt_objs_mod _xnjsmb_mb_rt_objs_mod
+
 #endif /* __MBFLY_NJS_H_ */
