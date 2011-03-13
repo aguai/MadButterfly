@@ -232,6 +232,15 @@ xnjsmb_coord_remove(coord_t *coord, Handle<Object> self) {
     xnjsmb_coord_free_subtree(rdman, coord);
 }
 
+static void
+_xnjsmb_coord_clone_from_subtree_mod(Handle<Object> src, Handle<Value> ret) {
+    Handle<Object> js_rt;
+    Handle<Object> ret_obj = ret->ToObject();
+
+    js_rt = GET(src, "mbrt")->ToObject();
+    SET(ret_obj, "mbrt", js_rt);
+}
+
 static coord_t *
 xnjsmb_coord_clone_from_subtree(coord_t *coord, Handle<Object> self,
 				coord_t *src, const char **err) {
