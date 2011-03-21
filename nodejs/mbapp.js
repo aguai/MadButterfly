@@ -146,28 +146,74 @@ app.prototype.addKeyListener=function(key,f) {
 }
 
 app.prototype.generateScaleTween=function(src,dest,p) {
-    sys.puts("p="+ p);
-    if (p == 0) {
-	if (src.dup) src.dup.hide();
-	src.show();
-	return;
-    }
+    //sys.puts("p="+ p);
     src.hide();
     // Duplicate the group
+    var nodes = src.node.childNodes();
     if (src.dup == null) {
-        dup = src.parent.clone_from_subtree(src);
+        dup = this.mb_rt.coord_new(src.parent);
+	for (i in nodes) {
+	    n = nodes[i];
+	    g = dup.clone_from_subtree(n.coord);
+	    n.coord.dup = g;
+	}
 	src.dup = dup;
     } else {
 	dup = src.dup;
+	src.dup.show();
     }
-    dup.hide();
-    sys.puts(dup);
+    //dup.hide();
+    //dest.hide();
+    //sys.puts(dup);
 
-
-    for(n in dup) {
-	
-        
+    for(i in nodes) {
+        n= nodes[i];
+	coord = n.coord;
+	var attr = n.attr('id');
+	if (attr == null) continue;
+	var id = attr.value();
+	this.generateScaleTweenObject(coord.dup,coord,coord.target,p);
     }
+}
+function printcoord(s)
+{
+    sys.puts(s[0]+" "+s[1]+" "+s[2]+" "+s[3]+" "+s[4]+" "+s[5]);
+}
+
+function mul(a,b)
+{
+    return [a[0]*b[0]+a[1]*b[3], a[0]*b[1]+a[1]*b[4], a[0]*b[2]+a[1]*b[5]+a[2], 
+            a[3]*b[0]+a[4]*b[3], a[3]*b[1]+a[4]*b[4], a[3]*b[2]+a[4]*b[5]+a[5]];
+}
+
+app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
+    sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
+    sys.puts("dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
+    var p1 = 1-p;
+    var sx = src.sx*p+dest.sx*p1;
+    var sy = src.sy*p+dest.sy*p1;
+    var r = src.r*p+dest.r*p1;
+    var tx = src.tx*p+dest.tx*p1;
+    var ty = src.ty*p+dest.ty*p1;
+    var mt = [1, 0, -src.tx, 0, 1, -src.ty];
+    var ms;
+    if (r == 0) {
+        m = mt;
+    } else {
+        ms= [Math.cos(r), -Math.sin(r),0,Math.sin(r), Math.cos(r),0];
+	m = mul(ms,mt);
+    }
+    m = mul([sx,0,0,0,sy,0],m);
+    m = mul([1,0,tx,0,1,ty],m);
+    //m[2] = -m[2];
+    coord[0] = m[0];
+    coord[1] = m[1];
+    coord[2] = m[2];
+    coord[3] = m[3];
+    coord[4] = m[4];
+    coord[5] = m[5];
+    //sys.puts(coord);
+    sys.puts(m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
 }
 
 app.prototype.changeScene=function(s) {
@@ -187,12 +233,13 @@ app.prototype.changeScene=function(s) {
 	            this.get(scenes[i].ref).show();
 		} else if (scenes[i].type == 'scale') {
 		    if (scenes[i].end == (scenes[i+1].start-1)) {
-			var p = (nth-scenes[i].start)/(scenes[i].end-scenes[i].start+1);
+			var p = 1-(nth-scenes[i].start)/(scenes[i].end-scenes[i].start+1);
 			this.generateScaleTween(this.get(scenes[i].ref),this.get(scenes[i+1].ref),p);
 		    } else {
 		        // If there is no second key frame defined, fall back to the normal
 	                this.get(scenes[i].ref).show();
 		    }
+		    this.get(scenes[i+1].ref).hide();
 		}
 
 	    } else {
@@ -203,6 +250,7 @@ app.prototype.changeScene=function(s) {
 	    sys.puts(scenes[i].ref);
 	}
     }
+    this.refresh();
 }
 
 app.prototype.runToScene=function(n) {
