@@ -104,7 +104,6 @@ function make_mbnames(mb_rt, n, obj) {
     if(mbname) {
 	name = mbname.value();
 	mb_rt.mbnames[name] = obj;
-	return;
     }
     mbname = n.attr("label");
     if(mbname&&(mbname.value()!="")) {
@@ -113,7 +112,7 @@ function make_mbnames(mb_rt, n, obj) {
     }
     try {
         var gname = n.attr('id').value();
-        sys.puts(gname);
+        sys.puts("defone object "+ gname);
         mb_rt.mbnames[gname] = obj;
     } catch(e) {
     }
@@ -790,6 +789,9 @@ loadSVG.prototype.parsePath=function(accu, coord,id, n)
     var style = n.attr('style');
     var path = this.mb_rt.path_new(d);
     var pcoord = this.mb_rt.coord_new(coord);
+    pcoord.node = n;
+    n.coord = pcoord;
+    this._check_duplicate_src(n,pcoord);
 
     guessPathBoundingBox(pcoord,d);
     pcoord.add_shape(path);
@@ -805,6 +807,10 @@ loadSVG.prototype.parseText=function(accu,coord,id, n)
     var y = getInteger(n,'y');
     var tcoord = this.mb_rt.coord_new(coord);
     var style;
+
+    tcoord.node = n;
+    n.coord = tcoord;
+    this._check_duplicate_src(n,tcoord);
 
     if (n.attr('x')) {
 	var nx = coord[0]*x+coord[1]*y+coord[2];
@@ -884,6 +890,53 @@ function parseTransform(coord, s)
         newm[5] = parseFloat(fields[5]);
         multiply(coord,newm);
     }
+    if (coord[0]*coord[4] == coord[1]*coord[3]) {
+        sys.puts("Singular affine matrix\n");
+	coord.sx = 1;
+	coord.sy = 1;
+	coord.r = 0;
+	coord.tx = 0;
+	coord.ty = 0;
+	return;
+    }
+    A = coord[0];
+    B = coord[3];
+    C = coord[1];
+    D = coord[4];
+    E = coord[2];
+    F = coord[5];
+    sx = Math.sqrt(A*A+B*B);
+    A = A / sx;
+    B = B / sx;
+    shear = A*C+B*D;
+    C = C - A*shear;
+    D = D - B*shear;
+    sy = Math.sqrt(C*C+D*D);
+    C = C / sy;
+    D = D / sy;
+    r = A*D - B*C;
+    if (r == -1) {
+        shear = - shear;
+	sy = -sy;
+    }
+    R = Math.atan2(-B,A);
+    coord.sx = sx;
+    coord.sy = sy;
+    coord.r = R;
+    coord.tx = E;
+    coord.ty = F;
+    sys.puts("transform="+s);
+    sys.puts("coord[0]="+coord[0]);
+    sys.puts("coord[1]="+coord[1]);
+    sys.puts("coord[2]="+coord[2]);
+    sys.puts("coord[3]="+coord[3]);
+    sys.puts("coord[4]="+coord[4]);
+    sys.puts("coord[5]="+coord[5]);
+    sys.puts("coord.sx="+coord.sx);
+    sys.puts("coord.sy="+coord.sy);
+    sys.puts("coord.r="+coord.r);
+    sys.puts("coord.tx="+coord.tx);
+    sys.puts("coord.ty="+coord.ty);
 }
 
 loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n) 
@@ -896,11 +949,23 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
     var trans = n.attr('transform');
     var paint;
     var tcoord = this.mb_rt.coord_new(coord);
+    tcoord.node = n;
+    n.coord = tcoord;
+    this._check_duplicate_src(n,tcoord);
 	
     var style = n.attr('style');
 
     if (trans)
         parseTransform(tcoord,trans.value());
+    else {
+        tcoord.sx = 1;
+	tcoord.sy = 1;
+	tcoord.r = 0;
+	tcoord.tx = 0;
+	tcoord.ty = 0;
+    }
+	
+	
 
     var rect = this.mb_rt.rect_new(x,y,w,h,10, 10);
     tcoord.add_shape(rect);
@@ -949,6 +1014,18 @@ loadSVG.prototype.duplicateGroup=function(id,root) {
     this.parseGroup(m,root,id, n)
 }
 
+loadSVG.prototype._check_duplicate_src=function(n,coord) {
+    var attr = n.attr('duplicate-src');
+    if (attr == null) return;
+    sys.puts("---->"+attr.value());
+    var id = attr.value();
+    try {
+        this.mb_rt.mbnames[id].target = coord;
+    } catch(e) {
+        sys.puts("id "+id+" is not defined");
+    }
+}
+
 loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     var k;
     var nodes = n.childNodes();
@@ -957,13 +1034,22 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     var trans = n.attr('transform');
     var accu=[1,0,0,0,1,0];
     var style;
+    n.coord = coord;
+    coord.node = n;
+    this._check_duplicate_src(n,coord);
 
     coord.center= new Object();
     coord.center.x = 10000;
     coord.center.y = 10000;
     if (trans!=null) {
 	parseTransform(coord, trans.value());
-    } 
+    } else {
+        coord.sx = 1;
+	coord.sy = 1;
+	coord.r = 0;
+	coord.tx = 0;
+	coord.ty = 0;
+    }
     multiply(accu,accu_matrix);
     multiply(accu,coord);
 
@@ -973,7 +1059,6 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
 	sys.puts("opacity=" + style.opacity);
 	coord.opacity=style.opacity;
     }
-
     for(k in nodes) {
 	var c = nodes[k].name();
 	var attr = nodes[k].attr('id');
@@ -991,7 +1076,97 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
 	    this.parseRect(accu_matrix,coord, id, nodes[k]);
 	} else if (c == "image") {
 	    this.parseImage(accu_matrix,coord, id, nodes[k]);
+	} else if (c == "use") {
+	    this.parseUse(accu_matrix,coord, id, nodes[k]);
 	}
+    }
+    if (root.center.x > coord.center.x)
+	root.center.x = coord.center.x;
+    if (root.center.y > coord.center.y)
+	root.center.y = coord.center.y;
+
+    this._set_bbox(n, coord);
+    // Set the group map only it is not defined before. The group might be 
+    // redefined by the svg:use tag
+    if (this._groupMap[n.name()]==null)
+        this._groupMap[n.name()] = n;
+    
+    make_mbnames(this.mb_rt, n, coord);
+    return coord;
+};
+
+loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
+    var k;
+    var nodes;
+    var coord = this.mb_rt.coord_new(root);
+    // Parse the transform and style here
+    var trans = n.attr('transform');
+    var accu=[1,0,0,0,1,0];
+    var style;
+    n.coord = coord;
+    coord.node = n;
+    this._check_duplicate_src(n,coord);
+
+    coord.center= new Object();
+    coord.center.x = 10000;
+    coord.center.y = 10000;
+    if (trans!=null) {
+	parseTransform(coord, trans.value());
+    } else {
+        tcoord.sx = 1;
+	tcoord.sy = 1;
+	tcoord.r = 0;
+	tcoord.tx = 0;
+	tcoord.ty = 0;
+        
+    }
+    multiply(accu,accu_matrix);
+    multiply(accu,coord);
+
+    style = {};
+    parseGroupStyle(style, n);
+    if(style.opacity) {
+	sys.puts("opacity=" + style.opacity);
+	coord.opacity=style.opacity;
+    }
+    // For a use tag, we will duplicate the group inside it.
+    attr = n.attr('duplicate-src');
+    if (attr != null) {
+        n = this._groupMap[attr.value()];
+	if (n == null) {
+	    sys.puts("Can not find object "+attr.value());
+	    return;
+	}
+	nodes = n.childNodes();
+        for(k in nodes) {
+	    var c = nodes[k].name();
+	    var attr = nodes[k].attr('id');
+	    var id;
+	    if (attr) {
+	        id = attr.value();
+	    }
+	    if (c == "g") {
+	        this.parseGroup(accu,coord, id, nodes[k]);
+	    } else if (c == "path") {
+	        this.parsePath(accu,coord, id, nodes[k]);
+	    } else if (c == "text") {
+	        this.parseText(accu,coord, id, nodes[k]);
+	    } else if (c == "rect") {
+	        this.parseRect(accu_matrix,coord, id, nodes[k]);
+	    } else if (c == "image") {
+	        this.parseImage(accu_matrix,coord, id, nodes[k]);
+	    } else if (c == "use") {
+	        this.parseUse(accu_matrix,coord, id, nodes[k]);
+	    }
+	    attr = nodes[k].attr('duplicate-src');
+	        if (attr == null) continue;
+	    id = attr.value();
+	    try {
+	        this.mbnames[id].target = coord;
+	    } catch(e) {
+	        sys.puts("id "+id+" is not defined");
+ 	    }
+        }
     }
     if (root.center.x > coord.center.x)
 	root.center.x = coord.center.x;
@@ -1003,12 +1178,14 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     
     make_mbnames(this.mb_rt, n, coord);
 };
-
 loadSVG.prototype.parseImage=function(accu,coord,id, n)
 {
     var ref = n.attr('href').value();
     var tcoord = this.mb_rt.coord_new(coord);
     var trans = n.attr('transform');
+    n.coord = tcoord;
+    tcoord.node = n;
+    this._check_duplicate_src(n,tcoord);
 
     if (ref == null) return;
     if (ref.substr(0,7) == "file://") {
