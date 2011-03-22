@@ -6,17 +6,9 @@ var sys=require("sys");
 var animate=require("animate");
 var fs = require("fs");
 
-function renderFrame() {
-    cur = cur + 1;
-    if (cur == 10) cur=1;
-    app.changeScene(cur);
-    setTimeout(renderFrame,30);
-}
-
 app = new mbapp.app();
 app.loadSVG("test.svg");
-cur = 1;
-setTimeout(renderFrame,30);
+app.runToScene(15);
 app.loop();
 
 

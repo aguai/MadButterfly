@@ -101,9 +101,11 @@ app=function(display, w, h) {
     this.keymap={};
     this.onKeyPress = null;
     this.svg = new svg.loadSVG(this.mb_rt,this.mb_rt.root,null);
+    this.frame_interval = 1000/12; // 12 frame per second
 }
 app.prototype.loadSVG=function(fname) {
-    this.svg.load(this.mb_rt,this.mb_rt.root,fname)
+    this.svg.load(this.mb_rt,this.mb_rt.root,fname);
+    this.changeScene(1);
 }
 
 app.prototype.KeyPress = function(evt) {
@@ -187,8 +189,8 @@ function mul(a,b)
 }
 
 app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
-    sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
-    sys.puts("dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
+    //sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
+    //sys.puts("dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
     var p1 = 1-p;
     var sx = src.sx*p+dest.sx*p1;
     var sy = src.sy*p+dest.sy*p1;
@@ -200,12 +202,12 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     if (r == 0) {
         m = mt;
     } else {
-        ms= [Math.cos(r), -Math.sin(r),0,Math.sin(r), Math.cos(r),0];
+        ms= [Math.cos(r), Math.sin(r),0,-Math.sin(r), Math.cos(r),0];
 	m = mul(ms,mt);
     }
     m = mul([sx,0,0,0,sy,0],m);
     m = mul([1,0,tx,0,1,ty],m);
-    //m[2] = -m[2];
+    m[2] = -m[2];
     coord[0] = m[0];
     coord[1] = m[1];
     coord[2] = m[2];
@@ -213,7 +215,7 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     coord[4] = m[4];
     coord[5] = m[5];
     //sys.puts(coord);
-    sys.puts(m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
+    sys.puts("p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
 }
 
 app.prototype.changeScene=function(s) {
@@ -225,6 +227,7 @@ app.prototype.changeScene=function(s) {
         nth = this.svg.getFrameNumber(s);
 	if (nth == -1) return;
     }
+    this.currentScene = nth;
     var scenes = this.svg.scenes;
     for(i=0;i<scenes.length-1;i++) {
         try {
@@ -253,8 +256,39 @@ app.prototype.changeScene=function(s) {
     this.refresh();
 }
 
-app.prototype.runToScene=function(n) {
-    
+app.prototype.runToScene=function(s) {
+    if (typeof(s)=='number') {
+        var i;
+	nth = s;
+    } else {
+        nth = this.svg.getFrameNumber(s);
+	if (nth == -1) return;
+    }
+    var self = this;
+    if (nth > this.currentScene) {
+        this.targetScene = nth;
+	this.startScene = this.currentScene;
+	this.starttime = Date.now();
+        setTimeout(function() {
+	    self.skipFrame()
+	}, this.frame_interval);
+    } else {
+        this.changeScene(nth);
+    }
+}
+
+app.prototype.skipFrame=function() {
+    var self = this;
+    sys.puts("n="+this.currentScene);
+    if (this.currentScene != this.targetScene) {
+        nextframe = this.startScene + Math.round((Date.now() - this.starttime)/this.frame_interval);
+	if (nextframe > this.targetScene)
+	    nextframe = this.targetScene;
+        this.changeScene(nextframe);
+        setTimeout(function() {
+	    self.skipFrame()
+	}, this.frame_interval);
+    }
 }
 
 app.prototype.addSceneListener=function(n, cb) {
