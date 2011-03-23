@@ -201,7 +201,7 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     var opacity;
     var ms;
 
-    opacity = src.opacity*p + src.opacity*p1;
+    opacity = src.opacity*p + dest.opacity*p1;
     coord.opacity = opacity;
 
     if (r == 0) {
