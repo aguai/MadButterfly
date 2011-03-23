@@ -198,7 +198,12 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     var tx = src.tx*p+dest.tx*p1;
     var ty = src.ty*p+dest.ty*p1;
     var mt = [1, 0, -src.tx, 0, 1, -src.ty];
+    var opacity;
     var ms;
+
+    opacity = src.opacity*p + src.opacity*p1;
+    coord.opacity = opacity;
+
     if (r == 0) {
         m = mt;
     } else {
