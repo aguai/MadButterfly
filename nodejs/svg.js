@@ -964,6 +964,23 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
 	tcoord.tx = 0;
 	tcoord.ty = 0;
     }
+
+    tcoord.tx += x;
+    tcoord.ty += y;
+    attr = n.attr('duplicate-src');
+    if (attr) {
+        var id = attr.value();
+        var orign = this.mb_rt.mbnames[id].node;
+        sys.puts("xxxxxxxxxxxxxx");
+        var nw = getInteger(orign,'width');
+        var nh = getInteger(orign,'height');
+	sys.puts("nw="+nw);
+	sys.puts("nh="+nh);
+	sys.puts("w="+w);
+	sys.puts("h="+h);
+	tcoord.sx *= w/nw;
+	tcoord.sy *= h/nh;
+    }
 	
 	
 
@@ -1027,6 +1044,8 @@ loadSVG.prototype._check_duplicate_src=function(n,coord) {
 }
 
 loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
+    var label = n.attr('label');
+    if (label && label.value()=='dup') return;
     var k;
     var nodes = n.childNodes();
     var coord = this.mb_rt.coord_new(root);
@@ -1034,6 +1053,7 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     var trans = n.attr('transform');
     var accu=[1,0,0,0,1,0];
     var style;
+    
     n.coord = coord;
     coord.node = n;
     this._check_duplicate_src(n,coord);
