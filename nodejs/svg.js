@@ -32,9 +32,8 @@ function parse_color(color) {
     return [r, g, b];
 }
 
-exports.loadSVG=loadSVG;
 
-function loadSVG(mb_rt, root, filename) {
+exports.prototype.loadSVG = function (mb_rt, root, filename) {
     this.pgstack=[];
     if (filename)
         this.load(mb_rt,root,filename);
