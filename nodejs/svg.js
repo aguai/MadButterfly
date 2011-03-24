@@ -1152,12 +1152,12 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
     // For a use tag, we will duplicate the group inside it.
     attr = n.attr('duplicate-src');
     if (attr != null) {
-        n = this._groupMap[attr.value()];
-	if (n == null) {
+        c = this.mb_rt.mbnames[attr.value()];
+	if (c == null) {
 	    sys.puts("Can not find object "+attr.value());
 	    return;
 	}
-	coord.clone_from_subtree(n.coord);
+	coord.clone_from_subtree(c);
     }
     if (root.center.x > coord.center.x)
 	root.center.x = coord.center.x;
