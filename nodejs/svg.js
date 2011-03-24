@@ -1133,11 +1133,11 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
     if (trans!=null) {
 	parseTransform(coord, trans.value());
     } else {
-        tcoord.sx = 1;
-	tcoord.sy = 1;
-	tcoord.r = 0;
-	tcoord.tx = 0;
-	tcoord.ty = 0;
+        coord.sx = 1;
+	coord.sy = 1;
+	coord.r = 0;
+	coord.tx = 0;
+	coord.ty = 0;
         
     }
     multiply(accu,accu_matrix);
@@ -1179,7 +1179,7 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
 	        this.parseUse(accu_matrix,coord, id, nodes[k]);
 	    }
 	    attr = nodes[k].attr('duplicate-src');
-	        if (attr == null) continue;
+	    if (attr == null) continue;
 	    id = attr.value();
 	    try {
 	        this.mbnames[id].target = coord;
@@ -1217,12 +1217,18 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     var w;
     var h;
     var x,y,nx,ny;
-    coord.center= new Object();
-    coord.center.x = 10000;
-    coord.center.y = 10000;
+    tcoord.center= new Object();
+    tcoord.center.x = 10000;
+    tcoord.center.y = 10000;
     if (trans!=null) {
 	parseTransform(coord, trans.value());
-    } 
+    } else { 
+        tcoord.sx = 1;
+	tcoord.sy = 1;
+	tcoord.r = 0;
+	tcoord.tx = 0;
+	tcoord.ty = 0;
+    }
 
     w = n.attr("width");
     if (w == null) return;
@@ -1236,21 +1242,43 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     y = n.attr("y");
     if (y == null) return;
     y = parseFloat(y.value());
+    tcoord.tx += x;
+    tcoord.ty += y;
+    attr = n.attr('duplicate-src');
+    if (attr) {
+        var id = attr.value();
+        var orign = this.mb_rt.mbnames[id].node;
+        sys.puts("xxxxxxxxxxxxxx");
+        var nw = getInteger(orign,'width');
+        var nh = getInteger(orign,'height');
+	sys.puts("nw="+nw);
+	sys.puts("nh="+nh);
+	sys.puts("w="+w);
+	sys.puts("h="+h);
+	tcoord.sx *= w/nw;
+	tcoord.sy *= h/nh;
+    }
     nx = tcoord[0]*x+tcoord[1]*y+tcoord[2];
     ny = tcoord[3]*x+tcoord[4]*y+tcoord[5];
-    if (coord.center.x > nx) 
-	coord.center.x = nx;
-    if (coord.center.y > ny)
-	coord.center.y = ny;
+    if (tcoord.center.x > nx) 
+	tcoord.center.x = nx;
+    if (tcoord.center.y > ny)
+	tcoord.center.y = ny;
     var img = this.mb_rt.image_new(x,y,w,h);
     var img_data = ldr.load(ref);
-    var paint = this.mb_rt.paint_image_new(img_data);
-    paint.fill(img);
+    try {
+        sys.puts('----'+ref);
+        var paint = this.mb_rt.paint_image_new(img_data);
+        paint.fill(img);
+    } catch(e) {
+        sys.puts(e);
+        sys.puts("Can not load image "+ref);
+    }
     tcoord.add_shape(img);
     
-    this._set_bbox(n, img);
+    this._set_bbox(n, tcoord);
     
-    make_mbnames(this.mb_rt, n, img);
+    make_mbnames(this.mb_rt, n, tcoord);
 };
 
 function _parse_stops(n) {
