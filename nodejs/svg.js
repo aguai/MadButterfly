@@ -1108,8 +1108,8 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     this._set_bbox(n, coord);
     // Set the group map only it is not defined before. The group might be 
     // redefined by the svg:use tag
-    if (this._groupMap[n.name()]==null)
-        this._groupMap[n.name()] = n;
+    if (this._groupMap[group_id]==undefined)
+        this._groupMap[group_id] = n;
     
     make_mbnames(this.mb_rt, n, coord);
     return coord;
@@ -1157,36 +1157,7 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
 	    sys.puts("Can not find object "+attr.value());
 	    return;
 	}
-	nodes = n.childNodes();
-        for(k in nodes) {
-	    var c = nodes[k].name();
-	    var attr = nodes[k].attr('id');
-	    var id;
-	    if (attr) {
-	        id = attr.value();
-	    }
-	    if (c == "g") {
-	        this.parseGroup(accu,coord, id, nodes[k]);
-	    } else if (c == "path") {
-	        this.parsePath(accu,coord, id, nodes[k]);
-	    } else if (c == "text") {
-	        this.parseText(accu,coord, id, nodes[k]);
-	    } else if (c == "rect") {
-	        this.parseRect(accu_matrix,coord, id, nodes[k]);
-	    } else if (c == "image") {
-	        this.parseImage(accu_matrix,coord, id, nodes[k]);
-	    } else if (c == "use") {
-	        this.parseUse(accu_matrix,coord, id, nodes[k]);
-	    }
-	    attr = nodes[k].attr('duplicate-src');
-	    if (attr == null) continue;
-	    id = attr.value();
-	    try {
-	        this.mbnames[id].target = coord;
-	    } catch(e) {
-	        sys.puts("id "+id+" is not defined");
- 	    }
-        }
+	coord.clone_from_subtree(n.coord);
     }
     if (root.center.x > coord.center.x)
 	root.center.x = coord.center.x;
@@ -1265,14 +1236,14 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     if (tcoord.center.y > ny)
 	tcoord.center.y = ny;
     var img = this.mb_rt.image_new(x,y,w,h);
+    sys.puts('----'+ref);
     var img_data = ldr.load(ref);
     try {
-        sys.puts('----'+ref);
         var paint = this.mb_rt.paint_image_new(img_data);
         paint.fill(img);
     } catch(e) {
         sys.puts(e);
-        sys.puts("Can not load image "+ref);
+        sys.puts("--Can not load image "+ref);
     }
     tcoord.add_shape(img);
     
