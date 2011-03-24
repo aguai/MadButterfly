@@ -52,10 +52,10 @@ function isCached(cachepath,file,obj) {
         var ext = fields.pop();
 	var pngfile = cachepath;
 	sys.puts("ext="+ext);
-	if (ext != 'png') {
-	    fields.push('png');
-	    pngfile = fields.join('.');
-	}
+	//if (ext != 'png') {
+	//    fields.push('png');
+	//    pngfile = fields.join('.');
+	//}
         var st = fs.statSync(pngfile);
 	try {
 	    fs.unlinkSync(file);
@@ -63,9 +63,13 @@ function isCached(cachepath,file,obj) {
 	}
 	fs.linkSync(pngfile, file);
         obj.pend = obj.pend - 1;
-        if (obj.pend == 0) {
-            obj.onInitDone();
-        }
+	try {
+            if (obj.pend == 0) {
+                obj.onInitDone();
+            } 
+	} catch(e) {
+	    sys.puts(e);
+	}
 	return 1;
     } catch(e) {
 	sys.puts(e);
@@ -154,7 +158,7 @@ EPG.prototype.onLoad = function(res) {
     this.maincat = cats;
     for (i in cats) {
 	c = cats[i];
-	httpGetFile(c['ProgramPIC'],'cat'+i+'.png',this);
+	httpGetFile(c['ProgramPIC'],'cat'+i+'.jpg',this);
     }
 }
 
