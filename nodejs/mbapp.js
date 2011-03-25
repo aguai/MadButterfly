@@ -105,7 +105,7 @@ app=function(display, w, h) {
 }
 app.prototype.loadSVG=function(fname) {
     this.svg.load(this.mb_rt,this.mb_rt.root,fname);
-    this.changeScene(1);
+    this.changeScene(0);
 }
 
 app.prototype.KeyPress = function(evt) {
@@ -148,7 +148,7 @@ app.prototype.addKeyListener=function(key,f) {
 }
 
 app.prototype.generateScaleTween=function(src,dest,p) {
-    //sys.puts("p="+ p);
+    sys.puts("p="+ p);
     src.hide();
     // Duplicate the group
     var nodes = src.node.childNodes();
@@ -174,6 +174,7 @@ app.prototype.generateScaleTween=function(src,dest,p) {
 	var attr = n.attr('id');
 	if (attr == null) continue;
 	var id = attr.value();
+	sys.puts("id="+id);
 	this.generateScaleTweenObject(coord.dup,coord,coord.target,p);
     }
 }
@@ -189,8 +190,8 @@ function mul(a,b)
 }
 
 app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
-    //sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
-    //sys.puts("dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
+    sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
+    sys.puts("dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
     var p1 = 1-p;
     var sx = src.sx*p+dest.sx*p1;
     var sy = src.sy*p+dest.sy*p1;
@@ -220,11 +221,13 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     coord[4] = m[4];
     coord[5] = m[5];
     //sys.puts(coord);
-    sys.puts("p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
+    //sys.puts("p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
 }
 
 app.prototype.changeScene=function(s) {
     var nth;
+    sys.puts(s);
+    sys.puts(typeof(s));
     if (typeof(s)=='number') {
         var i;
 	nth = s;
@@ -232,14 +235,17 @@ app.prototype.changeScene=function(s) {
         nth = this.svg.getFrameNumber(s);
 	if (nth == -1) return;
     }
+    sys.puts("goto to scene "+nth);
     this.currentScene = nth;
     var scenes = this.svg.scenes;
     for(i=0;i<scenes.length-1;i++) {
         try {
             if (nth >=scenes[i].start && nth <=scenes[i].end) {
+	        sys.puts("find");
 		if (scenes[i].type == 'normal' || i == scenes.length-1) {
 	            this.get(scenes[i].ref).show();
 		} else if (scenes[i].type == 'scale') {
+		    sys.puts(i+","+scenes[i+1].start+","+scenes[i].end);
 		    if (scenes[i].end == (scenes[i+1].start-1)) {
 			var p = 1-(nth-scenes[i].start)/(scenes[i].end-scenes[i].start+1);
 			this.generateScaleTween(this.get(scenes[i].ref),this.get(scenes[i+1].ref),p);
@@ -251,6 +257,7 @@ app.prototype.changeScene=function(s) {
 		}
 
 	    } else {
+	        sys.puts("hide "+scenes[i].ref);
 	        this.get(scenes[i].ref).hide();
 	    }
 	} catch(e) {
@@ -262,6 +269,8 @@ app.prototype.changeScene=function(s) {
 }
 
 app.prototype.runToScene=function(s) {
+    sys.puts(s);
+    sys.puts(typeof(s));
     if (typeof(s)=='number') {
         var i;
 	nth = s;
@@ -270,6 +279,7 @@ app.prototype.runToScene=function(s) {
 	if (nth == -1) return;
     }
     var self = this;
+    sys.puts(this.currentScene+","+nth);
     if (nth > this.currentScene) {
         this.targetScene = nth;
 	this.startScene = this.currentScene;
@@ -289,6 +299,7 @@ app.prototype.skipFrame=function() {
         nextframe = this.startScene + Math.round((Date.now() - this.starttime)/this.frame_interval);
 	if (nextframe > this.targetScene)
 	    nextframe = this.targetScene;
+	sys.puts("change to scene "+nextframe);
         this.changeScene(nextframe);
         setTimeout(function() {
 	    self.skipFrame()
