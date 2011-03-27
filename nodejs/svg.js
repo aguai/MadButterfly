@@ -1216,16 +1216,16 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     attr = n.attr('duplicate-src');
     if (attr) {
         var id = attr.value();
-        var orign = this.mb_rt.mbnames[id].node;
-        sys.puts("xxxxxxxxxxxxxx");
-        var nw = getInteger(orign,'width');
-        var nh = getInteger(orign,'height');
-	sys.puts("nw="+nw);
-	sys.puts("nh="+nh);
-	sys.puts("w="+w);
-	sys.puts("h="+h);
-	tcoord.sx *= w/nw;
-	tcoord.sy *= h/nh;
+	var origcoord = this.mb_rt.mbnames[id];
+	if (origcoord==null) {
+	    sys.puts("Unknown reference "+id);
+	} else {
+            var orign = origcoord.node;
+            var nw = getInteger(orign,'width');
+            var nh = getInteger(orign,'height');
+	    tcoord.sx *= w/nw;
+	    tcoord.sy *= h/nh;
+	}
     }
     nx = tcoord[0]*x+tcoord[1]*y+tcoord[2];
     ny = tcoord[3]*x+tcoord[4]*y+tcoord[5];
@@ -1234,7 +1234,6 @@ loadSVG.prototype.parseImage=function(accu,coord,id, n)
     if (tcoord.center.y > ny)
 	tcoord.center.y = ny;
     var img = this.mb_rt.image_new(x,y,w,h);
-    sys.puts('----'+ref);
     var img_data = ldr.load(ref);
     try {
         var paint = this.mb_rt.paint_image_new(img_data);

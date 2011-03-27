@@ -192,13 +192,17 @@ function mul(a,b)
 app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
     sys.puts("dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
+    if (src == null) return;
+    sys.puts("src.center="+src.center);
     var p1 = 1-p;
+    var x1 = src.center.x;
+    var y1 = src.center.y;
     var sx = src.sx*p+dest.sx*p1;
     var sy = src.sy*p+dest.sy*p1;
     var r = src.r*p+dest.r*p1;
-    var tx = src.tx*p+dest.tx*p1;
-    var ty = src.ty*p+dest.ty*p1;
-    var mt = [1, 0, -src.tx, 0, 1, -src.ty];
+    var tx = src.tx*p+dest.tx*p1-src.tx;
+    var ty = src.ty*p+dest.ty*p1-src.ty;
+    var mt = [1, 0, -x1, 0, 1, -y1];
     var opacity;
     var ms;
 
@@ -211,9 +215,12 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
         ms= [Math.cos(r), Math.sin(r),0,-Math.sin(r), Math.cos(r),0];
 	m = mul(ms,mt);
     }
+    sys.puts("x1="+x1);
+    sys.puts("y1="+y1);
     m = mul([sx,0,0,0,sy,0],m);
+    m = mul([1,0,x1,0,1,y1],m);
     m = mul([1,0,tx,0,1,ty],m);
-    m[2] = -m[2];
+    //m[2] = -m[2];
     coord[0] = m[0];
     coord[1] = m[1];
     coord[2] = m[2];
@@ -221,7 +228,7 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     coord[4] = m[4];
     coord[5] = m[5];
     //sys.puts(coord);
-    //sys.puts("p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
+    sys.puts("p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
 }
 
 app.prototype.changeScene=function(s) {
@@ -238,6 +245,7 @@ app.prototype.changeScene=function(s) {
     sys.puts("goto to scene "+nth);
     this.currentScene = nth;
     var scenes = this.svg.scenes;
+    if (scenes == null) return;
     for(i=0;i<scenes.length-1;i++) {
         try {
             if (nth >=scenes[i].start && nth <=scenes[i].end) {
