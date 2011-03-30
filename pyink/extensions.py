@@ -1,7 +1,7 @@
 import pybExtension
-import html5css3
+import html5css3, mbbbox
 
-_all_extensions = [html5css3.extension]
+_all_extensions = [html5css3.extension, mbbbox.extension]
 
 _DEBUG_FLAG_NAME = 'PYINK_EXT_DBG_ENABLE'
 
