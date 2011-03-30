@@ -12,6 +12,8 @@ def _print_subtree(node, lvl, out):
         attrs = []
         for attrname in node.allAttributes():
             attrvalue = node.getAttribute(attrname)
+	    if attrname[0:13] == 'inkscape:bbox':
+	        continue
             attr = '%s="%s"' % (attrname, attrvalue)
             attrs.append(attr)
             pass
@@ -56,6 +58,8 @@ def _print_subtree(node, lvl, out):
         
         attrs = []
         for attrname in node.allAttributes():
+	    if attrname[0:13] == 'inkscape:bbox':
+	        continue
             attrvalue = node.getAttribute(attrname)
             attr = '%s="%s"' % (attrname, attrvalue)
             attrs.append(attr)
