@@ -271,6 +271,7 @@ app.prototype.changeScene=function(s) {
     if (scenes == null) return;
     for(i=0;i<scenes.length-1;i++) {
         try {
+            this.get(scenes[i].ref).hide();
             if (nth >=scenes[i].start && nth <=scenes[i].end) {
 	        sys.puts("find");
 		if (scenes[i].type == 'normal' || i == scenes.length-1) {
@@ -298,6 +299,7 @@ app.prototype.changeScene=function(s) {
 	    sys.puts(scenes[i].ref);
 	}
     }
+    this.get(scenes[i].ref).hide();
     this.refresh();
 }
 
