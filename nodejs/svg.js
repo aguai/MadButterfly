@@ -39,8 +39,6 @@ function loadSVG (mb_rt, root, filename) {
 }
 
 loadSVG.prototype.load=function(mb_rt, root, filename) {
-    sys.puts(filename);
-    sys.puts(libxml);
     var doc = libxml.parseXmlFile(filename);
     var _root = doc.root();
     var nodes = _root.childNodes();
@@ -637,8 +635,12 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
     var orig;
     
     a = node.attr("bbox-x");
-    if(!a)
+    if(!a) {
+	tgt.center = new Object();
+	tgt.center.x=0;
+	tgt.center.y=0;
 	return 0;
+    }
     
     /* bbox.orig is initial values of bbox.  The bbox is recomputed
      * according bbox.orig and current matrix.  See bbox.update().
@@ -791,10 +793,21 @@ loadSVG.prototype.parsePath=function(accu, coord,id, n)
     n.coord = pcoord;
     this._check_duplicate_src(n,pcoord);
 
-    guessPathBoundingBox(pcoord,d);
+    //guessPathBoundingBox(pcoord,d);
+    var trans = n.attr('transform');
+    if (trans)
+        parseTransform(pcoord,trans.value());
+    else {
+        pcoord.sx = 1;
+	pcoord.sy = 1;
+	pcoord.r = 0;
+	pcoord.tx = 0;
+	pcoord.ty = 0;
+    }
+
     pcoord.add_shape(path);
     this._set_paint(n, path);
-    this._set_bbox(n, path);
+    this._set_bbox(n, pcoord);
 
     make_mbnames(this.mb_rt, n, pcoord);
 };
@@ -1030,9 +1043,13 @@ loadSVG.prototype.duplicateGroup=function(id,root) {
 }
 
 loadSVG.prototype._check_duplicate_src=function(n,coord) {
+    if (n.name()=="use") {
+        n.coord.isuse = true
+    } else {
+        n.coord.isuse = false;
+    }
     var attr = n.attr('duplicate-src');
     if (attr == null) return;
-    sys.puts("---->"+attr.value());
     var id = attr.value();
     try {
         this.mb_rt.mbnames[id].target = coord;
@@ -1128,6 +1145,8 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
     coord.center= new Object();
     coord.center.x = 10000;
     coord.center.y = 10000;
+    sys.puts("use id="+use_id+" "+trans);
+    sys.puts(n);
     if (trans!=null) {
 	parseTransform(coord, trans.value());
     } else {
@@ -1138,6 +1157,11 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
 	coord.ty = 0;
         
     }
+    var attr = n.attr('duplicate-src');
+    if (attr) {
+        var src = this.mb_rt.mbnames[attr.value()];
+        multiply(coord, coord,src);
+    }
     multiply(accu,accu_matrix);
     multiply(accu,coord);
 
@@ -1147,16 +1171,7 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
 	sys.puts("opacity=" + style.opacity);
 	coord.opacity=style.opacity;
     }
-    // For a use tag, we will duplicate the group inside it.
-    attr = n.attr('duplicate-src');
-    if (attr != null) {
-        c = this.mb_rt.mbnames[attr.value()];
-	if (c == null) {
-	    sys.puts("Can not find object "+attr.value());
-	    return;
-	}
-	coord.clone_from_subtree(c);
-    }
+
     if (root.center.x > coord.center.x)
 	root.center.x = coord.center.x;
     if (root.center.y > coord.center.y)
