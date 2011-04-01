@@ -106,6 +106,7 @@ app=function(display, w, h) {
 app.prototype.loadSVG=function(fname) {
     this.svg.load(this.mb_rt,this.mb_rt.root,fname);
     this.changeScene(0);
+    sys.puts("xxxx");
 }
 
 app.prototype.KeyPress = function(evt) {
@@ -153,11 +154,21 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     // Duplicate the group
     var nodes = src.node.childNodes();
     if (src.dup == null) {
-        dup = this.mb_rt.coord_new(src.parent);
+        var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
-	    n = nodes[i];
-	    g = dup.clone_from_subtree(n.coord);
-	    n.coord.dup = g;
+            var child_dup = this.mb_rt.coord_new(dup);
+	    var n = nodes[i];
+	    var c = n.coord;
+	    var k = child_dup.clone_from_subtree(c);
+	    n.coord.dup = child_dup;
+	    sys.puts(n);
+	    sys.puts("c[0] = "+c[0]+" c[1]="+c[1]+" c[2]="+c[2]+" c[3]="+c[3]+" c[4]="+c[4]+" c[5]="+c[5]);
+	    k[0] = c[0];
+	    k[1] = c[1];
+	    k[2] = c[2];
+	    k[3] = c[3];
+	    k[4] = c[4];
+	    k[5] = c[5];
 	}
 	src.dup = dup;
     } else {
@@ -175,7 +186,7 @@ app.prototype.generateScaleTween=function(src,dest,p) {
 	if (attr == null) continue;
 	var id = attr.value();
 	sys.puts("id="+id);
-	this.generateScaleTweenObject(coord.dup,coord,coord.target,p);
+	this.generateScaleTweenObject(coord.dup,coord,coord.target,p,id);
     }
 }
 function printcoord(s)
@@ -189,24 +200,37 @@ function mul(a,b)
             a[3]*b[0]+a[4]*b[3], a[3]*b[1]+a[4]*b[4], a[3]*b[2]+a[4]*b[5]+a[5]];
 }
 
-app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
+app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
+    sys.puts(src.node);
     sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
-    sys.puts("dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
-    if (src == null) return;
+    sys.puts("id="+dest.node.attr('id')+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
     sys.puts("src.center="+src.center);
+    sys.puts("src.center.x="+src.center.x+" src.center.y="+src.center.y);
+    if (src == null) return;
     var p1 = 1-p;
     var x1 = src.center.x;
     var y1 = src.center.y;
-    var sx = src.sx*p+dest.sx*p1;
-    var sy = src.sy*p+dest.sy*p1;
-    var r = src.r*p+dest.r*p1;
-    var tx = src.tx*p+dest.tx*p1-src.tx;
-    var ty = src.ty*p+dest.ty*p1-src.ty;
+
+    // For the svg:use, the transform matrix is the transform of teh svg:use and the elements inside it
+    var d,sx,sy,r,tx,ty;
+    if (dest.isuse) {
+        sx = 1+(dest.sx-1)*p1;
+        sy = 1+(dest.sy-1)*p1;
+        r = dest.r*p1;
+        tx = dest.tx*p1;
+        ty = dest.ty*p1;
+    } else {
+        sx = src.sx*p+dest.sx*p1;
+        sy = src.sy*p+dest.sy*p1;
+        r = src.r*p+dest.r*p1;
+        tx = src.tx*p+dest.tx*p1;
+        ty = src.ty*p+dest.ty*p1;
+    }
     var mt = [1, 0, -x1, 0, 1, -y1];
     var opacity;
     var ms;
 
-    opacity = src.opacity*p + dest.opacity*p1;
+    opacity = src.opacity*p1 + dest.opacity*p;
     coord.opacity = opacity;
 
     if (r == 0) {
@@ -227,8 +251,7 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p) {
     coord[3] = m[3];
     coord[4] = m[4];
     coord[5] = m[5];
-    //sys.puts(coord);
-    sys.puts("p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
+    sys.puts("id="+id+" src.tx="+src.tx+" src.ty="+src.ty+" tx="+tx+" ty="+ty+" r="+r+" x1="+x1+" y1="+y1+" p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
 }
 
 app.prototype.changeScene=function(s) {
@@ -267,6 +290,8 @@ app.prototype.changeScene=function(s) {
 	    } else {
 	        sys.puts("hide "+scenes[i].ref);
 	        this.get(scenes[i].ref).hide();
+		if (this.get(scenes[i].ref).dup)
+	            this.get(scenes[i].ref).dup.hide();
 	    }
 	} catch(e) {
 	    sys.puts(e);
