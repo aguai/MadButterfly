@@ -633,7 +633,7 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
     var vstr;
     var bbox, center;
     var orig;
-    
+
     a = node.attr("bbox-x");
     if(!a) {
 	tgt.center = new Object();
@@ -1133,11 +1133,18 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
 loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
     var k;
     var nodes;
-    var coord = this.mb_rt.coord_new(root);
+    var coord;
     // Parse the transform and style here
     var trans = n.attr('transform');
     var accu=[1,0,0,0,1,0];
     var style;
+    var attr = n.attr('duplicate-src');
+    if (attr) {
+        var src = this.mb_rt.mbnames[attr.value()];
+	coord = root.clone_from_subtree(src);
+    } else {
+        coord = this.mb_rt.coord_new(root);
+    }
     n.coord = coord;
     coord.node = n;
     this._check_duplicate_src(n,coord);
@@ -1157,11 +1164,6 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
 	coord.ty = 0;
         
     }
-    var attr = n.attr('duplicate-src');
-    if (attr) {
-        var src = this.mb_rt.mbnames[attr.value()];
-        multiply(coord, coord,src);
-    }
     multiply(accu,accu_matrix);
     multiply(accu,coord);
 
@@ -1176,7 +1178,6 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
 	root.center.x = coord.center.x;
     if (root.center.y > coord.center.y)
 	root.center.y = coord.center.y;
-
     this._set_bbox(n, coord);
     this._groupMap[n.name()] = n;
     
