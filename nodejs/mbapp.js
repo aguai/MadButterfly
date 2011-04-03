@@ -56,12 +56,13 @@ function _decorate_mb_rt(mb_rt) {
 	    shape.parent = this;
 	    this.children.push(shape);
 	}
-	coord.clone_from_subtree = function(coord) {
-	    var newcoord = this._mbapp_saved_clone_from_subtree(coord);
+	coord.clone_from_subtree = function(c) {
+	    var newcoord = this._mbapp_saved_clone_from_subtree(c);
 	    newcoord.parent = this;
+	    this.children.push(newcoord);
 	    // FIXME: This is incorrect. However, we have no way to fix it for now.
 	    //        We need to implement a function which can get coord for a coord_t.
-	    newcoord.children=coord.children;
+	    newcoord.children=c.children;
 	    return newcoord;
 	}
 
@@ -87,14 +88,15 @@ function _decorate_mb_rt(mb_rt) {
 	this._mbapp_saved_add_shape(shape);
 	shape.parent = this;
     }
-    coord.clone_from_subtree = function(coord) {
+    coord.clone_from_subtree = function(c) {
 	var newcoord;
 
-	newcoord = this._mbapp_saved_clone_from_subtree(coord);
+	newcoord = this._mbapp_saved_clone_from_subtree(c);
 	newcoord.parent = this;
+        this.children.push(newcoord);
 	// FIXME: This is incorrect. However, we have no way to fix it for now.
 	//        We need to implement a function which can get coord for a coord_t.
-	newcoord.children=coord.children;
+	newcoord.children=c.children;
 	return newcoord;
     }
 }
@@ -173,24 +175,13 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     src.hide();
     // Duplicate the group
     var nodes = src.children;
-    sys.puts(src.node);
-    sys.puts(src.children);
     if (src.dup == null) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
-            var child_dup = this.mb_rt.coord_new(dup);
 	    var c = nodes[i];
-	    var n = c.node;
-	    var k = child_dup.clone_from_subtree(c);
-	    n.coord.dup = child_dup;
-	    sys.puts(n);
-	    sys.puts("c[0] = "+c[0]+" c[1]="+c[1]+" c[2]="+c[2]+" c[3]="+c[3]+" c[4]="+c[4]+" c[5]="+c[5]);
-	    k[0] = c[0];
-	    k[1] = c[1];
-	    k[2] = c[2];
-	    k[3] = c[3];
-	    k[4] = c[4];
-	    k[5] = c[5];
+	    var ng = this.mb_rt.coord_new(dup);
+	    var k = dup.clone_from_subtree(c);
+	    c.dup = k;
 	}
 	src.dup = dup;
     } else {
@@ -200,15 +191,22 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     //dup.hide();
     //dest.hide();
     //sys.puts(dup);
+    sys.puts("src.id="+ src.id);
 
     for(i in nodes) {
         coord= nodes[i];
-	n = coord.node;
-	var attr = n.attr('id');
-	if (attr == null) continue;
-	var id = attr.value();
-	sys.puts("id="+id);
-	this.generateScaleTweenObject(coord.dup,coord,coord.target,p,id);
+	sys.puts("coord="+coord+" coord.target=",coord.target);
+	if (coord.target)
+	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
+	else {
+	    sys.puts(coord.id);
+	    sys.puts(coord[0]);
+	    sys.puts(coord[1]);
+	    sys.puts(coord[2]);
+	    sys.puts(coord[3]);
+	    sys.puts(coord[4]);
+	    sys.puts(coord[5]);
+	}
     }
 }
 function printcoord(s)
@@ -223,9 +221,10 @@ function mul(a,b)
 }
 
 app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
-    sys.puts(dest.node);
+    sys.puts("xxxxxxx");
+    sys.puts("dest="+dest);
     sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
-    sys.puts("id="+dest.node.attr('id')+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
+    sys.puts("id="+id+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
     sys.puts("src.center="+src.center);
     sys.puts("src.center.x="+src.center.x+" src.center.y="+src.center.y);
     if (src == null) return;
@@ -237,19 +236,11 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
 
     // For the svg:use, the transform matrix is the transform of teh svg:use and the elements inside it
     var d,sx,sy,r,tx,ty;
-    if (dest.isuse) {
-        sx = 1+(dest.sx-1)*p1;
-        sy = 1+(dest.sy-1)*p1;
-        r = dest.r*p1;
-        tx = dest.tx*p1;
-        ty = dest.ty*p1;
-    } else {
-        sx = src.sx*p+dest.sx*p1;
-        sy = src.sy*p+dest.sy*p1;
-        r = src.r*p+dest.r*p1;
-        tx = src.tx*p+dest.tx*p1;
-        ty = src.ty*p+dest.ty*p1;
-    }
+    sx = src.sx*p+dest.sx*p1;
+    sy = src.sy*p+dest.sy*p1;
+    r = src.r*p+dest.r*p1;
+    tx = src.tx*p+dest.tx*p1;
+    ty = src.ty*p+dest.ty*p1;
     var mt = [1, 0, -x1, 0, 1, -y1];
     var opacity;
     var ms;
@@ -263,8 +254,8 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
         ms= [Math.cos(r), Math.sin(r),0,-Math.sin(r), Math.cos(r),0];
 	m = mul(ms,mt);
     }
-    sys.puts("x1="+x1);
-    sys.puts("y1="+y1);
+    sys.puts("tx="+tx);
+    sys.puts("ty="+ty);
     m = mul([sx,0,0,0,sy,0],m);
     m = mul([1,0,x1,0,1,y1],m);
     m = mul([1,0,tx,0,1,ty],m);
