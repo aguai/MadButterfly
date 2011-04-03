@@ -123,7 +123,8 @@ app=function(display, w, h) {
     this.keymap={};
     this.onKeyPress = null;
     this.svg = new svg.loadSVG(this.mb_rt,this.mb_rt.root,null);
-    this.frame_interval = 1000/12; // 12 frame per second
+    this.frame_interval = 1000/24; // 12 frame per second
+    this.timer = null;
 }
 app.prototype.loadSVG=function(fname) {
     this.svg.load(this.mb_rt,this.mb_rt.root,fname);
@@ -191,11 +192,9 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     //dup.hide();
     //dest.hide();
     //sys.puts(dup);
-    sys.puts("src.id="+ src.id);
 
     for(i in nodes) {
         coord= nodes[i];
-	sys.puts("coord="+coord+" coord.target=",coord.target);
 	if (coord.target)
 	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
 	else {
@@ -221,12 +220,12 @@ function mul(a,b)
 }
 
 app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
-    sys.puts("xxxxxxx");
-    sys.puts("dest="+dest);
-    sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
-    sys.puts("id="+id+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
-    sys.puts("src.center="+src.center);
-    sys.puts("src.center.x="+src.center.x+" src.center.y="+src.center.y);
+    //sys.puts("xxxxxxx");
+    //sys.puts("dest="+dest);
+   // sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
+    //sys.puts("id="+id+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
+    //sys.puts("src.center="+src.center);
+    //sys.puts("src.center.x="+src.center.x+" src.center.y="+src.center.y);
     if (src == null) return;
     var p1 = 1-p;
     var x1 = src.center.x;
@@ -254,8 +253,6 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
         ms= [Math.cos(r), Math.sin(r),0,-Math.sin(r), Math.cos(r),0];
 	m = mul(ms,mt);
     }
-    sys.puts("tx="+tx);
-    sys.puts("ty="+ty);
     m = mul([sx,0,0,0,sy,0],m);
     m = mul([1,0,x1,0,1,y1],m);
     m = mul([1,0,tx,0,1,ty],m);
@@ -266,7 +263,7 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
     coord[3] = m[3];
     coord[4] = m[4];
     coord[5] = m[5];
-    sys.puts("id="+id+" src.tx="+src.tx+" src.ty="+src.ty+" tx="+tx+" ty="+ty+" r="+r+" x1="+x1+" y1="+y1+" p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
+    //sys.puts("id="+id+" src.tx="+src.tx+" src.ty="+src.ty+" tx="+tx+" ty="+ty+" r="+r+" x1="+x1+" y1="+y1+" p="+p+" "+m[0]+","+m[1]+","+m[2]+","+m[3]+","+m[4]+","+m[5]);
 }
 
 app.prototype.changeScene=function(s) {
@@ -291,11 +288,9 @@ app.prototype.changeScene=function(s) {
 	        this.get(scenes[i].ref).show();
 	        if (this.get(scenes[i].ref).dup)
                     this.get(scenes[i].ref).dup.show();
-	        sys.puts("find");
 		if (scenes[i].type == 'normal' || i == scenes.length-1) {
 	            this.get(scenes[i].ref).show();
 		} else if (scenes[i].type == 'scale') {
-		    sys.puts(i+","+scenes[i+1].start+","+scenes[i].end);
 		    if (scenes[i].end == (scenes[i+1].start-1)) {
 			var p = 1-(nth-scenes[i].start)/(scenes[i].end-scenes[i].start+1);
 			this.generateScaleTween(this.get(scenes[i].ref),this.get(scenes[i+1].ref),p);
@@ -307,7 +302,6 @@ app.prototype.changeScene=function(s) {
 		}
 
 	    } else {
-	        sys.puts("hide "+scenes[i].ref);
 	        this.get(scenes[i].ref).hide();
 		if (this.get(scenes[i].ref).dup)
 	            this.get(scenes[i].ref).dup.hide();
@@ -322,8 +316,6 @@ app.prototype.changeScene=function(s) {
 }
 
 app.prototype.runToScene=function(s) {
-    sys.puts(s);
-    sys.puts(typeof(s));
     if (typeof(s)=='number') {
         var i;
 	nth = s;
@@ -334,29 +326,40 @@ app.prototype.runToScene=function(s) {
     var self = this;
     sys.puts(this.currentScene+","+nth);
     if (nth > this.currentScene) {
-        this.targetScene = nth;
-	this.startScene = this.currentScene;
-	this.starttime = Date.now();
-        setTimeout(function() {
-	    self.skipFrame()
-	}, this.frame_interval);
+        this.skipdir = 1;
     } else {
-        this.changeScene(nth);
+        this.skipdir = -1;
+    }
+    this.targetScene = nth;
+    this.startScene = this.currentScene;
+    this.starttime = Date.now();
+    if (this.timer == null) {
+        this.timer = setTimeout(function() {
+	    self.skipFrame()
+        }, this.frame_interval);
     }
 }
 
 app.prototype.skipFrame=function() {
     var self = this;
-    sys.puts("n="+this.currentScene);
     if (this.currentScene != this.targetScene) {
-        nextframe = this.startScene + Math.round((Date.now() - this.starttime)/this.frame_interval);
-	if (nextframe > this.targetScene)
-	    nextframe = this.targetScene;
-	sys.puts("change to scene "+nextframe);
+        var step = Math.round((Date.now() - this.starttime)/this.frame_interval)*this.skipdir;
+        nextframe = this.startScene + step
+	if (this.skipdir>0) {
+	    if (nextframe > this.targetScene) 
+	        nextframe = this.targetScene;
+	} else {
+	    if (nextframe < this.targetScene)
+	        nextframe = this.targetScene;
+	}
         this.changeScene(nextframe);
-        setTimeout(function() {
-	    self.skipFrame()
-	}, this.frame_interval);
+	if (nextframe != this.targetScene) {
+            this.timer = setTimeout(function() {
+   	        self.skipFrame()
+	    }, this.frame_interval);
+	} else {
+	    this.timer = null;
+	}
     }
 }
 
