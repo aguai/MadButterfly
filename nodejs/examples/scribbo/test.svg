@@ -2,6 +2,7 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
+   xmlns:ns0="http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -10,13 +11,13 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="744.09448819"
-   height="1052.3622047"
+   width="744.09448"
+   height="1052.3622"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48+devel r9795 custom"
-   xmlns:ns0="http://madbutterfly.sourceforge.net/DTD/madbutterfly.dtd"
-   sodipodi:docname="新文件 1">
+   inkscape:version="0.48+devel r9798 custom"
+   sodipodi:docname="test1.svg"
+   style="display:inline">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -26,17 +27,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35"
-     inkscape:cx="76.428571"
-     inkscape:cy="520"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="133.62635"
+     inkscape:cy="774.7615"
      inkscape:document-units="px"
-     inkscape:current-layer="s29027"
+     inkscape:current-layer="s72724"
      showgrid="false"
-     inkscape:window-width="884"
-     inkscape:window-height="639"
-     inkscape:window-x="416"
-     inkscape:window-y="51"
-     inkscape:window-maximized="0" />
+     inkscape:window-width="1680"
+     inkscape:window-height="975"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -55,62 +56,115 @@
          start="0"
          type="scale"
          ref="s29027"
-         end="8" />
+         end="18" />
       <ns0:scene
-         start="9"
+         start="19"
          type="normal"
-         ref="s97910" />
+         ref="s72724" />
     </ns0:scenes>
     <ns0:components />
   </metadata>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
-    <g
-       id="s51002"
-       inkscape:label="dup"
-       sodipodi:insensitive="1"
-       style="display: none">
-      <rect
-         y="246.6479"
-         x="48.57143"
-         height="291.42856"
-         width="308.57141"
-         saved_id="rect13"
-         id="rect17"
-         style="opacity:0.12999998;fill:#ff0000;fill-opacity:1;stroke:none"
-         ref="rect13"
-         transform="matrix(1.25333335556,0.0,0.0,1.32407411111,-12.3047633333,-79.9322093787)" />
-    </g>
+     id="layer1"
+     style="display:inline">
     <g
        id="s29027"
        inkscape:groupmode="layer"
        scene_group="true"
-       style="">
-      <rect
-         style="opacity:0.12999998;fill:#ff0000;fill-opacity:1;stroke:none"
-         id="rect13"
-         saved_id="rect13"
-         width="142.85713"
-         height="137.14284"
-         x="48.57143"
-         y="246.6479" />
+       style="display: none">
+      <g
+         id="g16"
+         saved_id="g16"
+         ns0:duplicate-src="g16"
+         transform="translate(-48.487323,23.99001)">
+        <image
+           saved_id="image76"
+           width="148.48216"
+           height="186.12172"
+           xlink:href="file:///home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/cat0.png"
+           id="image76"
+           x="166.17522"
+           y="93.600594"
+           ns0:duplicate-src="image76" />
+      </g>
+      <g
+         transform="translate(167.68531,23.99001)"
+         ns0:duplicate-src="g16"
+         saved_id="g370"
+         id="g370">
+        <image
+           ns0:duplicate-src="image76"
+           y="93.600594"
+           x="166.17522"
+           id="image372"
+           xlink:href="file:///home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/cat0.png"
+           height="186.12172"
+           width="148.48216"
+           saved_id="image372" />
+      </g>
     </g>
     <g
-       id="s97910"
+       id="s18562"
+       inkscape:label="dup"
+       sodipodi:insensitive="true"
+       style="display: none">
+      <g
+         transform="matrix(1.0,0.0,0.0,0.786332775263,-123.876601,-33.2728727904)"
+         ns0:duplicate-src="g16"
+         saved_id="g16"
+         id="g401"
+         ref="g16">
+        <image
+           ns0:duplicate-src="image76"
+           y="93.600594"
+           x="166.17522"
+           id="image403"
+           xlink:href="file:///home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/cat0.png"
+           height="186.12172"
+           width="148.48216"
+           saved_id="image76" />
+      </g>
+      <g
+         id="g405"
+         saved_id="g370"
+         ns0:duplicate-src="g16"
+         transform="matrix(1.0,0.0,0.0,1.42419230526,264.234637368,-37.7375175458)"
+         ref="g370">
+        <image
+           saved_id="image372"
+           width="148.48216"
+           height="186.12172"
+           xlink:href="file:///home/wycc/devel/md6/MadButterfly/nodejs/examples/mce/cat0.png"
+           id="image407"
+           x="166.17522"
+           y="93.600594"
+           ns0:duplicate-src="image76" />
+      </g>
+    </g>
+    <g
+       id="s72724"
        inkscape:groupmode="layer"
        scene_group="true"
-       style="display: none">
+       style="display:inline">
       <use
-         id="s66615"
-         xlink:href="#rect13"
-         ns0:duplicate-src="rect13"
+         id="s97869"
+         xlink:href="#g16"
+         ns0:duplicate-src="g16"
+         x="0"
+         y="0"
+         width="1"
+         height="1" />
+      <use
+         id="s54066"
+         xlink:href="#g370"
+         ns0:duplicate-src="g370"
          x="0"
          y="0"
          width="1"
          height="1"
-         transform="matrix(2.1400001,0,0,2.4583335,-55.371435,-359.69491)" />
+         transform="translate(160,0)" />
     </g>
   </g>
   <g
