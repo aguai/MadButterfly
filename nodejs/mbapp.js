@@ -48,12 +48,21 @@ function _decorate_mb_rt(mb_rt) {
 	coord._mbapp_saved_rev_mtx = _reverse(coord._mbapp_saved_mtx);
 	coord.parent = parent;
 	coord._mbapp_saved_add_shape = coord.add_shape;
+	coord._mbapp_saved_clone_from_subtree = coord.clone_from_subtree;
 	coord.add_shape = function(shape) {
 	    var coord;
 	    
 	    this._mbapp_saved_add_shape(shape);
 	    shape.parent = this;
 	    this.children.push(shape);
+	}
+	coord.clone_from_subtree = function(coord) {
+	    var newcoord = this._mbapp_saved_clone_from_subtree(coord);
+	    newcoord.parent = this;
+	    // FIXME: This is incorrect. However, we have no way to fix it for now.
+	    //        We need to implement a function which can get coord for a coord_t.
+	    newcoord.children=coord.children;
+	    return newcoord;
 	}
 
 	parent.children.push(coord);
@@ -71,11 +80,22 @@ function _decorate_mb_rt(mb_rt) {
 			      coord[3], coord[4], coord[5]];
 	coord._mbapp_saved_rev_mtx = _reverse(coord._mbapp_saved_mtx);
     coord._mbapp_saved_add_shape = coord.add_shape;
+    coord._mbapp_saved_clone_from_subtree = coord.clone_from_subtree;
     coord.add_shape = function(shape) {
 	var coord;
 	
 	this._mbapp_saved_add_shape(shape);
 	shape.parent = this;
+    }
+    coord.clone_from_subtree = function(coord) {
+	var newcoord;
+
+	newcoord = this._mbapp_saved_clone_from_subtree(coord);
+	newcoord.parent = this;
+	// FIXME: This is incorrect. However, we have no way to fix it for now.
+	//        We need to implement a function which can get coord for a coord_t.
+	newcoord.children=coord.children;
+	return newcoord;
     }
 }
 
@@ -152,13 +172,15 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     sys.puts("p="+ p);
     src.hide();
     // Duplicate the group
-    var nodes = src.node.childNodes();
+    var nodes = src.children;
+    sys.puts(src.node);
+    sys.puts(src.children);
     if (src.dup == null) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
             var child_dup = this.mb_rt.coord_new(dup);
-	    var n = nodes[i];
-	    var c = n.coord;
+	    var c = nodes[i];
+	    var n = c.node;
 	    var k = child_dup.clone_from_subtree(c);
 	    n.coord.dup = child_dup;
 	    sys.puts(n);
@@ -180,8 +202,8 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     //sys.puts(dup);
 
     for(i in nodes) {
-        n= nodes[i];
-	coord = n.coord;
+        coord= nodes[i];
+	n = coord.node;
 	var attr = n.attr('id');
 	if (attr == null) continue;
 	var id = attr.value();
@@ -201,7 +223,7 @@ function mul(a,b)
 }
 
 app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
-    sys.puts(src.node);
+    sys.puts(dest.node);
     sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
     sys.puts("id="+dest.node.attr('id')+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
     sys.puts("src.center="+src.center);
@@ -210,6 +232,8 @@ app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
     var p1 = 1-p;
     var x1 = src.center.x;
     var y1 = src.center.y;
+    var y1 = 0;
+    x1 = 0;
 
     // For the svg:use, the transform matrix is the transform of teh svg:use and the elements inside it
     var d,sx,sy,r,tx,ty;
@@ -273,6 +297,9 @@ app.prototype.changeScene=function(s) {
         try {
             this.get(scenes[i].ref).hide();
             if (nth >=scenes[i].start && nth <=scenes[i].end) {
+	        this.get(scenes[i].ref).show();
+	        if (this.get(scenes[i].ref).dup)
+                    this.get(scenes[i].ref).dup.show();
 	        sys.puts("find");
 		if (scenes[i].type == 'normal' || i == scenes.length-1) {
 	            this.get(scenes[i].ref).show();
