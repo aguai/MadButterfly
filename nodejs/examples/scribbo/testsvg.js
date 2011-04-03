@@ -5,10 +5,17 @@ var mbapp = require("mbapp");
 var sys=require("sys");
 var animate=require("animate");
 var fs = require("fs");
-
-app = new mbapp.app();
-app.loadSVG("test.svg");
-app.runToScene(15);
+var s=0;
+app = new mbapp.app(":0.0",1920,1080);
+app.loadSVG("test1.svg");
+app.addKeyListener(mbapp.KEY_LEFT, function() { 
+    s--;
+    app.runToScene(s);
+});
+app.addKeyListener(mbapp.KEY_RIGHT, function() { 
+    s++;
+    app.runToScene(s);
+});
 app.loop();
 
 
