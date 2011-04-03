@@ -56,6 +56,7 @@ loadSVG.prototype.load=function(mb_rt, root, filename) {
     if (this.pgstack.length > 0)
         this.pgstack[this.pgstack.length-1].hide();
     this.pgstack.push(coord);
+    this.mb_rt.mbnames={};
 
     
     if(_root.attr("width")) {
@@ -814,6 +815,8 @@ loadSVG.prototype.parsePath=function(accu, coord,id, n)
 
 loadSVG.prototype.parseText=function(accu,coord,id, n)
 {
+    var nodes = n.childNodes();
+    if (nodes == "") return;
     var x = getInteger(n,'x');
     var y = getInteger(n,'y');
     var tcoord = this.mb_rt.coord_new(coord);
@@ -901,6 +904,10 @@ function parseTransform(coord, s)
         newm[5] = parseFloat(fields[5]);
         multiply(coord,newm);
     }
+    generateAffineParameters(coord);
+}    
+function generateAffineParameters(coord) 
+{
     if (coord[0]*coord[4] == coord[1]*coord[3]) {
         sys.puts("Singular affine matrix\n");
 	coord.sx = 1;
@@ -936,18 +943,6 @@ function parseTransform(coord, s)
     coord.r = R;
     coord.tx = E;
     coord.ty = F;
-    sys.puts("transform="+s);
-    sys.puts("coord[0]="+coord[0]);
-    sys.puts("coord[1]="+coord[1]);
-    sys.puts("coord[2]="+coord[2]);
-    sys.puts("coord[3]="+coord[3]);
-    sys.puts("coord[4]="+coord[4]);
-    sys.puts("coord[5]="+coord[5]);
-    sys.puts("coord.sx="+coord.sx);
-    sys.puts("coord.sy="+coord.sy);
-    sys.puts("coord.r="+coord.r);
-    sys.puts("coord.tx="+coord.tx);
-    sys.puts("coord.ty="+coord.ty);
 }
 
 loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n) 
@@ -1043,15 +1038,28 @@ loadSVG.prototype.duplicateGroup=function(id,root) {
 }
 
 loadSVG.prototype._check_duplicate_src=function(n,coord) {
+    var id = n.attr('id');
+    coord.id = id;
+    if (id) {
+        coord.id = id.value();
+    } else {
+        coord.id = "NA";
+    }
     if (n.name()=="use") {
         n.coord.isuse = true
     } else {
         n.coord.isuse = false;
     }
     var attr = n.attr('duplicate-src');
-    if (attr == null) return;
+    if (attr == null) {
+        sys.puts("no duplicated" + n);
+        return;
+    }
     var id = attr.value();
     try {
+        if (this.mb_rt.mbnames[id].target) {
+	    sys.puts("duplicated");
+	}
         this.mb_rt.mbnames[id].target = coord;
     } catch(e) {
         sys.puts("id "+id+" is not defined");
@@ -1142,6 +1150,12 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
     if (attr) {
         var src = this.mb_rt.mbnames[attr.value()];
 	coord = root.clone_from_subtree(src);
+	coord[0] = src[0];
+	coord[1] = src[1];
+	coord[2] = src[2];
+	coord[3] = src[3];
+	coord[4] = src[4];
+	coord[5] = src[5];
     } else {
         coord = this.mb_rt.coord_new(root);
     }
@@ -1152,17 +1166,10 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
     coord.center= new Object();
     coord.center.x = 10000;
     coord.center.y = 10000;
-    sys.puts("use id="+use_id+" "+trans);
-    sys.puts(n);
     if (trans!=null) {
 	parseTransform(coord, trans.value());
     } else {
-        coord.sx = 1;
-	coord.sy = 1;
-	coord.r = 0;
-	coord.tx = 0;
-	coord.ty = 0;
-        
+	generateAffineParameters(coord);
     }
     multiply(accu,accu_matrix);
     multiply(accu,coord);
@@ -1180,7 +1187,7 @@ loadSVG.prototype.parseUse=function(accu_matrix,root, use_id, n) {
 	root.center.y = coord.center.y;
     this._set_bbox(n, coord);
     this._groupMap[n.name()] = n;
-    
+
     make_mbnames(this.mb_rt, n, coord);
 };
 loadSVG.prototype.parseImage=function(accu,coord,id, n)
