@@ -123,8 +123,15 @@ app=function(display, w, h) {
     this.keymap={};
     this.onKeyPress = null;
     this.svg = new svg.loadSVG(this.mb_rt,this.mb_rt.root,null);
-    this.frame_interval = 1000/24; // 12 frame per second
+    this.frame_interval = 1000/30; // 12 frame per second
     this.timer = null;
+    this._time = Date.now();
+}
+
+app.prototype.ts=function(m) {
+    var now = Date.now();
+    var t = now-this._time;
+    sys.puts("["+t+"] "+m);
 }
 app.prototype.loadSVG=function(fname) {
     this.svg.load(this.mb_rt,this.mb_rt.root,fname);
@@ -155,6 +162,7 @@ app.prototype.addKeyboardListener=function(type,f) {
 }
 app.prototype.refresh=function() {
     this.mb_rt.redraw_changed();
+    //this.mb_rt.redraw_all();
     this.mb_rt.flush();
 }
 app.prototype.dump=function() {
@@ -176,6 +184,10 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     src.hide();
     // Duplicate the group
     var nodes = src.children;
+    if (src.dup) {
+        //src.dup.remove();
+        //src.dup = null;
+    }
     if (src.dup == null) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
@@ -277,7 +289,7 @@ app.prototype.changeScene=function(s) {
         nth = this.svg.getFrameNumber(s);
 	if (nth == -1) return;
     }
-    sys.puts("goto to scene "+nth);
+    this.ts("goto to scene "+nth);
     this.currentScene = nth;
     var scenes = this.svg.scenes;
     if (scenes == null) return;
@@ -312,7 +324,9 @@ app.prototype.changeScene=function(s) {
 	}
     }
     this.get(scenes[i].ref).hide();
+    this.ts("refresh");
     this.refresh();
+    this.ts("refresh done");
 }
 
 app.prototype.runToScene=function(s) {
@@ -334,17 +348,19 @@ app.prototype.runToScene=function(s) {
     this.startScene = this.currentScene;
     this.starttime = Date.now();
     if (this.timer == null) {
-        this.timer = setTimeout(function() {
-	    self.skipFrame()
-        }, this.frame_interval);
+        this.skipFrame();
     }
 }
 
 app.prototype.skipFrame=function() {
     var self = this;
     if (this.currentScene != this.targetScene) {
-        var step = Math.round((Date.now() - this.starttime)/this.frame_interval)*this.skipdir;
+        var now = Date.now();
+        var step = Math.round((now - this.starttime)/this.frame_interval)*this.skipdir;
         nextframe = this.startScene + step
+        //nextframe = this.currentScene + this.skipdir;
+	this.ts("goto begin");
+	
 	if (this.skipdir>0) {
 	    if (nextframe > this.targetScene) 
 	        nextframe = this.targetScene;
@@ -352,14 +368,22 @@ app.prototype.skipFrame=function() {
 	    if (nextframe < this.targetScene)
 	        nextframe = this.targetScene;
 	}
-        this.changeScene(nextframe);
 	if (nextframe != this.targetScene) {
+	    var timegap = (nextframe-this.startScene)*this.skipdir*this.frame_interval+this.starttime - Date.now();
+	    sys.puts("goto "+timegap);
+	    if (timegap <200) {
+	        timegap = 0;
+	    } else {
+	    }
             this.timer = setTimeout(function() {
    	        self.skipFrame()
-	    }, this.frame_interval);
+	    }, timegap);
 	} else {
 	    this.timer = null;
 	}
+        this.changeScene(nextframe);
+	now = Date.now();
+	this.ts("goto end");
     }
 }
 
