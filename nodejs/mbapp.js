@@ -4,6 +4,7 @@ var mbfly = require("mbfly");
 var svg = require("./svg");
 var sys = require("sys");
 var ldr = mbfly.img_ldr_new(".");
+var component = require("./component");
 
 function _reverse(m1) {
     var rev = new Array(1, 0, 0, 0, 1, 0);
@@ -126,6 +127,7 @@ app=function(display, w, h) {
     this.frame_interval = 1000/30; // 12 frame per second
     this.timer = null;
     this._time = Date.now();
+    this._componentmanager = new component.ComponentManager(this);
 }
 
 app.prototype.ts=function(m) {
@@ -154,9 +156,22 @@ app.prototype.update=function() {
     this.mb_rt.redraw_all();
     this.mb_rt.flush();
 }
+
 app.prototype.get=function(name) {
     return this.mb_rt.mbnames[name];
 }
+
+
+app.prototype.getComponent=function(name) {
+    var comp = new component.Component(this,name);
+    this._componentmanager.dump();
+    comp.realize();
+    sys.puts("Search for "+name);
+    var obj = comp.toCoord();
+    sys.puts("obj="+obj+" id="+obj.id+" refid="+obj.refid);
+    return comp;
+}
+
 app.prototype.addKeyboardListener=function(type,f) {
     return this.mb_rt.kbevents.add_event_observer(type,f);    
 }
@@ -185,8 +200,8 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     // Duplicate the group
     var nodes = src.children;
     if (src.dup) {
-        //src.dup.remove();
-        //src.dup = null;
+        src.dup.remove();
+        src.dup = null;
     }
     if (src.dup == null) {
         var dup = this.mb_rt.coord_new(src.parent);
@@ -195,6 +210,8 @@ app.prototype.generateScaleTween=function(src,dest,p) {
 	    var ng = this.mb_rt.coord_new(dup);
 	    var k = dup.clone_from_subtree(c);
 	    c.dup = k;
+	    c.dup.id = c.id;
+	    c.dup.refid = c.refid;
 	}
 	src.dup = dup;
     } else {
@@ -207,9 +224,10 @@ app.prototype.generateScaleTween=function(src,dest,p) {
 
     for(i in nodes) {
         coord= nodes[i];
-	if (coord.target)
+	if (coord.target) {
 	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
-	else {
+	    this._componentmanager.add(coord,coord.dup);
+	} else {
 	    sys.puts(coord.id);
 	    sys.puts(coord[0]);
 	    sys.puts(coord[1]);
