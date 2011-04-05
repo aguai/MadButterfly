@@ -81,6 +81,7 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
     FOR_COORDS_PREORDER(coord, child) {
 	child_hdl = (Persistent<Object> *)mb_prop_get(&child->obj.props,
 						      PROP_JSOBJ);
+	if (child_hdl == NULL) continue;
 	SET(*child_hdl, "valid", _false);
 	WRAP(*child_hdl, NULL);
 	child_hdl->Dispose();
@@ -90,6 +91,7 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
 	FOR_COORD_SHAPES(child, mem) {
 	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
 							PROP_JSOBJ);
+	    if (mem_hdl == NULL) continue;							
 	    SET(*mem_hdl, "valid", _false);
 	    WRAP(*mem_hdl, NULL);
 	    mem_hdl->Dispose();
