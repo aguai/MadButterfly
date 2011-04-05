@@ -35,7 +35,10 @@ class Timeline(object):
         pass
 
     def name(self):
-        name = self.scenes_node.getAttribute('name')
+    	try:
+            name = self.scenes_node.getAttribute('name')
+	except:
+	    name='default'
         return name
 
     def rename(self, new_name):
