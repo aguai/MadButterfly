@@ -1037,13 +1037,40 @@ loadSVG.prototype.duplicateGroup=function(id,root) {
     this.parseGroup(m,root,id, n)
 }
 
+function getName(n)
+{
+    var attr = n.attr('mbname');
+    var name;
+
+    if (attr) {
+        name = attr.value();
+        if (name != '') return name;
+    }
+    attr = n.attr('label');
+
+    if (attr) {
+        name = attr.value();
+        if (name != '') return name;
+    }
+    attr = n.attr('id');
+
+    if (attr) {
+        name = attr.value();
+        if (name != '') return name;
+    }
+
+    return '';
+
+}
+
 loadSVG.prototype._check_duplicate_src=function(n,coord) {
-    var id = n.attr('id');
-    coord.id = id;
+    var id = getName(n);
     if (id) {
-        coord.id = id.value();
+        coord.id = id;
+        coord.refid = id;
     } else {
         coord.id = "NA";
+	coord.refid ="NA";
     }
     if (n.name()=="use") {
         n.coord.isuse = true
@@ -1061,6 +1088,7 @@ loadSVG.prototype._check_duplicate_src=function(n,coord) {
 	    sys.puts("duplicated");
 	}
         this.mb_rt.mbnames[id].target = coord;
+	coord.refid = this.mb_rt.mbnames[id].id;
     } catch(e) {
         sys.puts("id "+id+" is not defined");
     }
