@@ -81,6 +81,14 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
     FOR_COORDS_PREORDER(coord, child) {
 	child_hdl = (Persistent<Object> *)mb_prop_get(&child->obj.props,
 						      PROP_JSOBJ);
+	/* There is no associated JS object.  Perhaps, it is created
+	 * by xnjsmb_coord_clone_from_subtree().
+	 */
+	if(child_hdl == NULL) {
+	    preorder_coord_skip_subtree(child);
+	    continue;
+	}
+	
 	SET(*child_hdl, "valid", _false);
 	WRAP(*child_hdl, NULL);
 	child_hdl->Dispose();
@@ -90,6 +98,12 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
 	FOR_COORD_SHAPES(child, mem) {
 	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
 							PROP_JSOBJ);
+	    /* There is no associated JS object.  Perhaps, it is
+	     * created by xnjsmb_coord_clone_from_subtree().
+	     */
+	    if(mem_hdl == NULL)
+		continue;
+	    
 	    SET(*mem_hdl, "valid", _false);
 	    WRAP(*mem_hdl, NULL);
 	    mem_hdl->Dispose();
@@ -236,9 +250,20 @@ static void
 _xnjsmb_coord_clone_from_subtree_mod(Handle<Object> src, Handle<Value> ret) {
     Handle<Object> js_rt;
     Handle<Object> ret_obj = ret->ToObject();
+    coord_t *ret_coord, *child;
+    Handle<Object> child_obj;
 
     js_rt = GET(src, "mbrt")->ToObject();
     SET(ret_obj, "mbrt", js_rt);
+
+    /* Only root of the subtree is warpped.  Descendants of subtree
+     * are not wrapped by JS object.  We have no any method to access
+     * children and members of a coord, now.  So, it is fine.  But,
+     * sometime later, we will provide APIs for traveling a tree.  At
+     * that time, we need to create wrappers for all descendants.
+     */
+    ret_coord = (coord_t *)UNWRAP(ret_obj);
+    xnjsmb_coord_mod(ret_obj, ret_coord);
 }
 
 static coord_t *
@@ -257,6 +282,7 @@ xnjsmb_coord_clone_from_subtree(coord_t *coord, Handle<Object> self,
 	*err = "can not clone a subtree (allocate memory)";
 	return NULL;
     }
+    rdman_coord_changed(rdman, cloning);
 
     return cloning;
 }
