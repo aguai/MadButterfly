@@ -1,0 +1,10 @@
+Scene 1: Main category
+
+1. Start to load all pictures and save them in the file system.
+2. Load the main screen and move all pictures to the correct positions.
+3. Show the cursor and do animation to scale it.
+4. After the animation, start to listent to keys and move the cursor.
+5. If the key is enter, load the next scene.
+
+
+Scene 2:
