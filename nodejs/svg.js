@@ -976,16 +976,14 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
     attr = n.attr('duplicate-src');
     if (attr) {
         var id = attr.value();
-        var orign = this.mb_rt.mbnames[id].node;
-        sys.puts("xxxxxxxxxxxxxx");
-        var nw = getInteger(orign,'width');
-        var nh = getInteger(orign,'height');
-	sys.puts("nw="+nw);
-	sys.puts("nh="+nh);
-	sys.puts("w="+w);
-	sys.puts("h="+h);
-	tcoord.sx *= w/nw;
-	tcoord.sy *= h/nh;
+	var coord = this.mb_rt.mbnames[id];
+	if (coord) {
+            var orign = this.mb_rt.mbnames[id].node;
+            var nw = getInteger(orign,'width');
+            var nh = getInteger(orign,'height');
+	    tcoord.sx *= w/nw;
+	    tcoord.sy *= h/nh;
+	}
     }
 	
 	
@@ -1037,13 +1035,40 @@ loadSVG.prototype.duplicateGroup=function(id,root) {
     this.parseGroup(m,root,id, n)
 }
 
+function getName(n)
+{
+    var attr = n.attr('mbname');
+    var name;
+
+    if (attr) {
+        name = attr.value();
+        if (name != '') return name;
+    }
+    attr = n.attr('label');
+
+    if (attr) {
+        name = attr.value();
+        if (name != '') return name;
+    }
+    attr = n.attr('id');
+
+    if (attr) {
+        name = attr.value();
+        if (name != '') return name;
+    }
+
+    return '';
+
+}
+
 loadSVG.prototype._check_duplicate_src=function(n,coord) {
-    var id = n.attr('id');
-    coord.id = id;
+    var id = getName(n);
     if (id) {
-        coord.id = id.value();
+        coord.id = id;
+        coord.refid = id;
     } else {
         coord.id = "NA";
+	coord.refid ="NA";
     }
     if (n.name()=="use") {
         n.coord.isuse = true
@@ -1061,6 +1086,7 @@ loadSVG.prototype._check_duplicate_src=function(n,coord) {
 	    sys.puts("duplicated");
 	}
         this.mb_rt.mbnames[id].target = coord;
+	coord.refid = this.mb_rt.mbnames[id].id;
     } catch(e) {
         sys.puts("id "+id+" is not defined");
     }
