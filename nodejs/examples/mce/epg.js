@@ -101,7 +101,9 @@ function httpGetFile(url,file,obj)
     sys.puts("fetch "+ file);
     var u = URL.parse(url);
     var cachepath =  'cache/'+u.pathname;
-    if (isCached(cachepath,file,obj)) return;
+    if (isCached(cachepath,file,obj)) {
+        return;
+    }
     CreateDirectory(cachepath);
 
     // Fetch file from the server and convert it tyo PNG if it is not PNG format.
@@ -145,6 +147,7 @@ function httpGetFile(url,file,obj)
 	    obj.pend = obj.pend - 1;
 	    if (obj.pend == 0) {
 	        obj.onInitDone();
+		sys.puts("done");
 	    }
 
 	});
@@ -159,7 +162,10 @@ EPG.prototype.onLoad = function(res) {
     for (i in cats) {
 	c = cats[i];
 	httpGetFile(c['ProgramPIC'],'cat'+i+'.jpg',this);
+        sys.puts("this.pend="+this.pend);
     }
+    if (this.pend == 0)
+        this.onInitDone();
 }
 
 EPG.prototype.getList=function(item,func) {

@@ -4,6 +4,7 @@ var mbfly = require("mbfly");
 var svg = require("./svg");
 var sys = require("sys");
 var ldr = mbfly.img_ldr_new(".");
+var component = require("./component");
 
 function _reverse(m1) {
     var rev = new Array(1, 0, 0, 0, 1, 0);
@@ -123,8 +124,16 @@ app=function(display, w, h) {
     this.keymap={};
     this.onKeyPress = null;
     this.svg = new svg.loadSVG(this.mb_rt,this.mb_rt.root,null);
-    this.frame_interval = 1000/24; // 12 frame per second
+    this.frame_interval = 1000/30; // 12 frame per second
     this.timer = null;
+    this._time = Date.now();
+    this._componentmanager = new component.ComponentManager(this);
+}
+
+app.prototype.ts=function(m) {
+    var now = Date.now();
+    var t = now-this._time;
+    sys.puts("["+t+"] "+m);
 }
 app.prototype.loadSVG=function(fname) {
     this.svg.load(this.mb_rt,this.mb_rt.root,fname);
@@ -147,14 +156,28 @@ app.prototype.update=function() {
     this.mb_rt.redraw_all();
     this.mb_rt.flush();
 }
+
 app.prototype.get=function(name) {
     return this.mb_rt.mbnames[name];
 }
+
+
+app.prototype.getComponent=function(name) {
+    var comp = new component.Component(this,name);
+    this._componentmanager.dump();
+    comp.realize();
+    sys.puts("Search for "+name);
+    var obj = comp.toCoord();
+    sys.puts("obj="+obj+" id="+obj.id+" refid="+obj.refid);
+    return comp;
+}
+
 app.prototype.addKeyboardListener=function(type,f) {
     return this.mb_rt.kbevents.add_event_observer(type,f);    
 }
 app.prototype.refresh=function() {
     this.mb_rt.redraw_changed();
+    //this.mb_rt.redraw_all();
     this.mb_rt.flush();
 }
 app.prototype.dump=function() {
@@ -176,6 +199,10 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     src.hide();
     // Duplicate the group
     var nodes = src.children;
+    if (src.dup) {
+        src.dup.remove();
+        src.dup = null;
+    }
     if (src.dup == null) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
@@ -183,6 +210,8 @@ app.prototype.generateScaleTween=function(src,dest,p) {
 	    var ng = this.mb_rt.coord_new(dup);
 	    var k = dup.clone_from_subtree(c);
 	    c.dup = k;
+	    c.dup.id = c.id;
+	    c.dup.refid = c.refid;
 	}
 	src.dup = dup;
     } else {
@@ -195,9 +224,10 @@ app.prototype.generateScaleTween=function(src,dest,p) {
 
     for(i in nodes) {
         coord= nodes[i];
-	if (coord.target)
+	if (coord.target) {
 	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
-	else {
+	    this._componentmanager.add(coord,coord.dup);
+	} else {
 	    sys.puts(coord.id);
 	    sys.puts(coord[0]);
 	    sys.puts(coord[1]);
@@ -277,7 +307,7 @@ app.prototype.changeScene=function(s) {
         nth = this.svg.getFrameNumber(s);
 	if (nth == -1) return;
     }
-    sys.puts("goto to scene "+nth);
+    this.ts("goto to scene "+nth);
     this.currentScene = nth;
     var scenes = this.svg.scenes;
     if (scenes == null) return;
@@ -312,7 +342,9 @@ app.prototype.changeScene=function(s) {
 	}
     }
     this.get(scenes[i].ref).hide();
+    this.ts("refresh");
     this.refresh();
+    this.ts("refresh done");
 }
 
 app.prototype.runToScene=function(s) {
@@ -334,17 +366,19 @@ app.prototype.runToScene=function(s) {
     this.startScene = this.currentScene;
     this.starttime = Date.now();
     if (this.timer == null) {
-        this.timer = setTimeout(function() {
-	    self.skipFrame()
-        }, this.frame_interval);
+        this.skipFrame();
     }
 }
 
 app.prototype.skipFrame=function() {
     var self = this;
     if (this.currentScene != this.targetScene) {
-        var step = Math.round((Date.now() - this.starttime)/this.frame_interval)*this.skipdir;
+        var now = Date.now();
+        var step = Math.round((now - this.starttime)/this.frame_interval)*this.skipdir;
         nextframe = this.startScene + step
+        //nextframe = this.currentScene + this.skipdir;
+	this.ts("goto begin");
+	
 	if (this.skipdir>0) {
 	    if (nextframe > this.targetScene) 
 	        nextframe = this.targetScene;
@@ -352,14 +386,22 @@ app.prototype.skipFrame=function() {
 	    if (nextframe < this.targetScene)
 	        nextframe = this.targetScene;
 	}
-        this.changeScene(nextframe);
 	if (nextframe != this.targetScene) {
+	    var timegap = (nextframe-this.startScene)*this.skipdir*this.frame_interval+this.starttime - Date.now();
+	    sys.puts("goto "+timegap);
+	    if (timegap <200) {
+	        timegap = 0;
+	    } else {
+	    }
             this.timer = setTimeout(function() {
    	        self.skipFrame()
-	    }, this.frame_interval);
+	    }, timegap);
 	} else {
 	    this.timer = null;
 	}
+        this.changeScene(nextframe);
+	now = Date.now();
+	this.ts("goto end");
     }
 }
 
