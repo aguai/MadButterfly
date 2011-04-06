@@ -13,13 +13,12 @@ data=mbapp.ldr.load("sample.png");
 paint = app.mb_rt.paint_image_new(data);
 img = app.mb_rt.image_new(10,10,50,50);
 paint.fill(img);
-coord.opacity = 0.9;
 coord.add_shape(img);
 
 var shift = 0;
 function translate_handler() {
     coord_parent[2] = shift;
-    app.mb_rt.redraw_changed();
+    app.refresh();
     setTimeout(translate_handler, 100);
     shift = shift + 10;
 }
