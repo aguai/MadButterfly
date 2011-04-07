@@ -474,7 +474,17 @@ class component_manager(component_manager_ui_update):
         first_name = comp.all_timeline_names()[0]
         self.switch_timeline(first_name)
 
-        self.hide_component(old_comp.name())
+        try:
+            comp_grp = self.get_component_group(old_comp.name())
+            old_comp_existed = True
+        except ValueError:
+            old_comp_existed = False
+            pass
+        
+        if old_comp_existed:
+            self.hide_component(old_comp.name())
+            pass
+        
         self.show_component(comp.name())
         pass
 
