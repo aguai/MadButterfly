@@ -94,7 +94,6 @@ class Component(object):
         return names
 
     def parse_timelines(self):
-        print 'parse timelines fro component ' + self.name()
         self.timelines[:] = []
         
         if self.node:
