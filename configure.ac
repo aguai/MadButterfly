@@ -5,7 +5,8 @@ AC_PREREQ(2.61)
 AC_INIT([MadButterfly],[0.0],[http://www.assembla.com/spaces/MadButterfly])
 AC_CONFIG_SRCDIR([README.h])
 AC_CONFIG_HEADER([config.h include/mb_config.h])
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign silent-rules])
+AM_SILENT_RULES([yes])
 
 # Checks for programs.
 AC_PROG_CC
