@@ -124,7 +124,7 @@ app=function(display, w, h) {
     this.keymap={};
     this.onKeyPress = null;
     this.svg = new svg.loadSVG(this.mb_rt,this.mb_rt.root,null);
-    this.frame_interval = 1000/30; // 12 frame per second
+    this.frame_interval = 1000/12; // 12 frame per second
     this.timer = null;
     this._time = Date.now();
     this._componentmanager = new component.ComponentManager(this);
@@ -386,20 +386,17 @@ app.prototype.skipFrame=function() {
 	    if (nextframe < this.targetScene)
 	        nextframe = this.targetScene;
 	}
+        this.changeScene(nextframe);
 	if (nextframe != this.targetScene) {
-	    var timegap = (nextframe-this.startScene)*this.skipdir*this.frame_interval+this.starttime - Date.now();
-	    sys.puts("goto "+timegap);
-	    if (timegap <200) {
-	        timegap = 0;
-	    } else {
-	    }
+	    var timegap = this.frame_interval - (Date.now()-now);
+	    if (timegap < 0) timegap = 0;
+	    
             this.timer = setTimeout(function() {
    	        self.skipFrame()
-	    }, timegap);
+	    }, timegap );
 	} else {
 	    this.timer = null;
 	}
-        this.changeScene(nextframe);
 	now = Date.now();
 	this.ts("goto end");
     }
