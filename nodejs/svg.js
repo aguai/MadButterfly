@@ -976,16 +976,15 @@ loadSVG.prototype.parseRect=function(accu_matrix,coord, id, n)
     attr = n.attr('duplicate-src');
     if (attr) {
         var id = attr.value();
-        var orign = this.mb_rt.mbnames[id].node;
-        sys.puts("xxxxxxxxxxxxxx");
-        var nw = getInteger(orign,'width');
-        var nh = getInteger(orign,'height');
-	sys.puts("nw="+nw);
-	sys.puts("nh="+nh);
-	sys.puts("w="+w);
-	sys.puts("h="+h);
-	tcoord.sx *= w/nw;
-	tcoord.sy *= h/nh;
+        var src = this.mb_rt.mbnames[id];
+	if (src != null) {
+            var orign = src.node;
+            sys.puts("xxxxxxxxxxxxxx");
+            var nw = getInteger(orign,'width');
+            var nh = getInteger(orign,'height');
+	    tcoord.sx *= w/nw;
+	    tcoord.sy *= h/nh;
+	}
     }
 	
 	
