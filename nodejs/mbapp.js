@@ -199,10 +199,10 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     src.hide();
     // Duplicate the group
     var nodes = src.children;
-    if (src.dup) {
-        src.dup.remove();
-        src.dup = null;
-    }
+    //if (src.dup) {
+    //    src.dup.remove();
+    //    src.dup = null;
+    //}
     if (src.dup == null) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
@@ -315,7 +315,7 @@ app.prototype.changeScene=function(s) {
         try {
             this.get(scenes[i].ref).hide();
             if (nth >=scenes[i].start && nth <=scenes[i].end) {
-	        this.get(scenes[i].ref).show();
+	        //this.get(scenes[i].ref).show();
 	        if (this.get(scenes[i].ref).dup)
                     this.get(scenes[i].ref).dup.show();
 		if (scenes[i].type == 'normal' || i == scenes.length-1) {
@@ -328,7 +328,7 @@ app.prototype.changeScene=function(s) {
 		        // If there is no second key frame defined, fall back to the normal
 	                this.get(scenes[i].ref).show();
 		    }
-		    this.get(scenes[i+1].ref).hide();
+		    //this.get(scenes[i+1].ref).hide();
 		}
 
 	    } else {
