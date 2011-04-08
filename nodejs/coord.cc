@@ -201,6 +201,8 @@ coord_set_index(coord_t *coord, Handle<Object> self,
         return 0;
     }
 
+    if (coord_get_matrix(coord)[idx] == v) return v;
+
     coord_get_matrix(coord)[idx] = v;
 
     js_rt = GET(self, "mbrt")->ToObject();
@@ -295,7 +297,7 @@ xnjsmb_coord_show(coord_t *coord, Handle<Object> self) {
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-
+    if ((coord->flags & COF_HIDDEN) == 0) return;
     coord_show(coord);
     rdman_coord_changed(rdman, coord);
 }
@@ -309,6 +311,7 @@ xnjsmb_coord_hide(coord_t *coord, Handle<Object> self) {
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
 
+    if ((coord->flags & COF_HIDDEN) != 0) return;
     coord_hide(coord);
     rdman_coord_changed(rdman, coord);
 }
@@ -323,6 +326,7 @@ xnjsmb_coord_set_opacity(Handle<Object> self, coord_t *coord, Handle<Value> valu
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
 
+    if (coord_get_opacity(coord) == value->NumberValue()) return;
     
     coord_set_opacity(coord, value->NumberValue());
     rdman_coord_changed(rdman, coord);
