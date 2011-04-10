@@ -474,9 +474,7 @@ class component_manager(component_manager_ui_update):
         self._layers_parent = \
             self._get_layers_group_of_component(comp_name)
         
-        first_name = comp.all_timeline_names()[0]
-        self._cur_timeline = None
-        self.switch_timeline(first_name)
+        self.make_sure_timeline()
 
         try:
             comp_grp = self.get_component_group(old_comp.name())
@@ -586,6 +584,22 @@ class component_manager(component_manager_ui_update):
 
         # Make domview to rescan layers and scenes.
         self.reset()            # from domview
+
+        cur_comp_name = self.get_current_component()
+        cur_comp_node = self.get_component_group(cur_comp_name)
+        cur_comp_node.setAttribute("cur_timeline", timeline_name)
+        pass
+
+    def make_sure_timeline(self):
+        cur_comp_name = self.get_current_component()
+        cur_comp_node = self.get_component_group(cur_comp_name)
+        try:
+            timeline_name = cur_comp_node.getAttribute("cur_timeline")
+        except KeyError:
+            timeline_name = self.all_timeline_names()[0]
+            pass
+        self._cur_timeline = None
+        self.switch_timeline(timeline_name)
         pass
 
     def add_timeline(self, timeline_name):
