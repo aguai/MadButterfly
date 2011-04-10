@@ -665,6 +665,8 @@ class component_manager(component_manager_ui_update):
         
         return use_node
 
+    ## \brief Remember current frame and layer on the scenes node.
+    #
     def remember_current_frame(self, layer_idx, frame_idx):
         if not isinstance(layer_idx, int):
             raise TypeError, 'layer index should be a integer'
@@ -678,6 +680,8 @@ class component_manager(component_manager_ui_update):
         timeline_scenes.setAttribute('cur_frame', str(frame_idx))
         pass
 
+    ## \brief Get current frame and layer from the scenes node.
+    #
     def get_current_frame(self):
         timeline_name = self.get_current_timeline()
         timeline = self._cur_comp.get_timeline(timeline_name)

@@ -882,10 +882,14 @@ class domview_ui(object):
 	max_frame = self._dom.get_max_frame()
 	return max_frame
 
+    ## \brief Remember current frame and layer on the scenes node.
+    #
     def remember_current_frame(self, layer_idx, frame_idx):
         self._dom.remember_current_frame(layer_idx, frame_idx)
         pass
 
+    ## \brief Get current frame and layer from the scenes node.
+    #
     def get_current_frame(self):
         return self._dom.get_current_frame()
 
