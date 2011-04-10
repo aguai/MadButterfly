@@ -475,6 +475,7 @@ class component_manager(component_manager_ui_update):
             self._get_layers_group_of_component(comp_name)
         
         first_name = comp.all_timeline_names()[0]
+        self._cur_timeline = None
         self.switch_timeline(first_name)
 
         try:
