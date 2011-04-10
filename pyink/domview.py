@@ -321,7 +321,7 @@ class component_manager(component_manager_ui_update):
             except:
                 continue
             if nlabel == 'components':
-                self._components_group
+                self._components_group = n
                 break
             pass
         else:                   # no components group
