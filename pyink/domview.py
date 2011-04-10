@@ -664,6 +664,40 @@ class component_manager(component_manager_ui_update):
         parent_group.appendChild(use_node)
         
         return use_node
+
+    def remember_current_frame(self, layer_idx, frame_idx):
+        if not isinstance(layer_idx, int):
+            raise TypeError, 'layer index should be a integer'
+        if not isinstance(frame_idx, int):
+            raise TypeError, 'frame index should be a integer'
+        
+        timeline_name = self.get_current_timeline()
+        timeline = self._cur_comp.get_timeline(timeline_name)
+        timeline_scenes = timeline.scenes_node
+        timeline_scenes.setAttribute('cur_layer', str(layer_idx))
+        timeline_scenes.setAttribute('cur_frame', str(frame_idx))
+        pass
+
+    def get_current_frame(self):
+        timeline_name = self.get_current_timeline()
+        timeline = self._cur_comp.get_timeline(timeline_name)
+        timeline_scenes = timeline.scenes_node
+        try:
+            cur_layer = timeline_scenes.getAttribute('cur_layer')
+        except KeyError:
+            cur_layer_idx = 0
+        else:
+            cur_layer_idx = int(cur_layer)
+            pass
+        try:
+            cur_frame = timeline_scenes.getAttribute('cur_frame')
+        except KeyError:
+            cur_frame_idx = 0
+        else:
+            cur_frame_idx = int(cur_frame)
+            pass
+
+        return cur_layer_idx, cur_frame_idx
     pass
 
 

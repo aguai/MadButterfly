@@ -232,6 +232,7 @@ class MBScene(object):
     def do_CellClick(self, layer_idx, frame_idx):
 	self._director.show_scene(frame_idx)
 	self.selectSceneObject(layer_idx, frame_idx)
+	self._domviewui.remember_current_frame(layer_idx, frame_idx)
         pass
 
     def doInsertKeyScene(self,w):

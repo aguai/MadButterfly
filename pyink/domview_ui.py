@@ -424,6 +424,9 @@ class domview_ui_comp(object):
         self._dom.switch_component(name)
         self._framelines_refresh() # from domview_ui
         self._comp_dock.refresh_timelines()
+        
+        cur_layer_idx, cur_frame_idx = self._dom.get_current_frame()
+        self._fl_stack.active_frame(cur_layer_idx, cur_frame_idx)
         pass
 
     def all_comp_names(self):
@@ -450,6 +453,9 @@ class domview_ui_comp(object):
     def switch_timeline(self, name):
         self._dom.switch_timeline(name)
         self._framelines_refresh() # from domview_ui
+        
+        cur_layer_idx, cur_frame_idx = self._dom.get_current_frame()
+        self._fl_stack.active_frame(cur_layer_idx, cur_frame_idx)
         pass
 
     def all_timeline_names(self):
@@ -875,6 +881,13 @@ class domview_ui(object):
     def get_max_frame(self):
 	max_frame = self._dom.get_max_frame()
 	return max_frame
+
+    def remember_current_frame(self, layer_idx, frame_idx):
+        self._dom.remember_current_frame(layer_idx, frame_idx)
+        pass
+
+    def get_current_frame(self):
+        return self._dom.get_current_frame()
 
     ## \brief add the current position to the undo buffer.
     #
