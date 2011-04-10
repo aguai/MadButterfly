@@ -278,9 +278,11 @@ class component_manager(component_manager_ui_update):
         comp_names = self._comp_names
         components_node = self._components_node
         for child in components_node.childList():
-            child_name = child.name()
-            if child_name != 'ns0:component':
+            child_node_name = child.name()
+            if child_node_name != 'ns0:component':
                 continue
+            
+            child_name = child.getAttribute('name')
             if child_name in comp_names:
                 raise ValueError, 'duplicate component name %s' % (child_name)
 
@@ -288,6 +290,7 @@ class component_manager(component_manager_ui_update):
             comp.parse_timelines()
             
             self._components.append(comp)
+            
             comp_names.add(child_name)
             pass
         pass
