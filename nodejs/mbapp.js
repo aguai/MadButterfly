@@ -237,8 +237,8 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     for(i in nodes) {
         coord= nodes[i];
 	if (coord.target) {
-	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
 	    this._componentmanager.add(coord,coord.dup);
+	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
 	} else {
 	    sys.puts(coord.id);
 	    sys.puts(coord[0]);
