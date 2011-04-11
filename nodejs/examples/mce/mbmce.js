@@ -7,5 +7,6 @@ var animate=require("animate");
 var fs = require("fs");
 var main=require("./mainmenu");
 app = new mbapp.app(":0.0",1920,1080);
+app.setFrameRate(50);
 scene=new main.MainMenu(app);
 app.loop();
