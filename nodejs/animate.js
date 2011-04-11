@@ -11,11 +11,9 @@ var frame_interval = 1000 / ffs;
 
 function shift_draw(percent) {
     var x, y;
-    
     x = (this.targetx - this.startposx) * percent + this.startposx;
     y = (this.targety - this.startposy) * percent + this.startposy;
     this.obj.center.move(x, y);
-    this._app.refresh();
 }
 
 function shift(app,obj,shiftx,shifty) {
@@ -120,6 +118,7 @@ function scale(app, obj, fact_x, fact_y, duration) {
 	    
     }
 
+
     bbox = obj.bbox;
     bbox.update();
     obj.animated_scale = this;
@@ -211,6 +210,9 @@ function linear_update()
 {
     var now = Date.now();
     var i;
+
+    //now = this.lasttime + 300;
+    //this.lasttime += 300;
     
     if (now >= this.end) {
         this.timer.stop();
@@ -223,7 +225,13 @@ function linear_update()
     if (now < this.startmove) return;
     var per = (now-this.startmove)/this.duration/1000;
     if (per > 1) per = 1;
-    this.action.draw(per);
+    try {
+	for(a in this.action) {
+	    this.action[a].draw(per);
+	}
+    } catch(e) {
+	sys.puts(e);
+    }
 }
 
 function linear_start()
@@ -231,9 +239,20 @@ function linear_start()
     var self = this;
     if (this.timer)
         this.timer.stop();
-    this.timer = setInterval(function() { self.update();}, frame_interval);
+    this.timer = setInterval(function() {
+	var n = Date.now();
+	try {
+            self.update();
+	    self._app.refresh();
+	} catch(e) {
+	    sys.puts("libnear: "+e);
+	}
+
+	//while( Date.now() - n < 1000);
+    }, frame_interval);
     this.startmove = Date.now()+this.starttime*1000;
     this.end = this.startmove+this.duration*1000;
+    this.lasttime = this.startmove;
 }
 function linear_stop() 
 {
@@ -245,19 +264,21 @@ function linear_stop()
 
 function linear_finish()
 {
-    this.action.draw(1);
+    for(a in this.action)
+	this.action[a].draw(1);
     if (this.callback_end) {
         this.callback_end();
 	this.callback_end=null;
     }
 }
-function linear(action,start, duration) 
+function linear(app,action,start, duration) 
 {
     this.action = action;
     this.duration = duration;
     this.starttime = start;
     this.callback_end = null;
     this.timer=null;
+    this._app =app;
 }
 
 function linear_callback(cb)
@@ -344,12 +365,10 @@ program.prototype.finish=function() {
     }
 }
 
-exports.run = function(actions,start,duration,cb) {
+exports.run = function(app,actions,start,duration,cb) {
     var li;
-    for(a in actions) {
-        li = new linear(actions[a],start,duration);
-	li.start();
-    }
+    li = new linear(app,actions,start,duration);
+    li.start();
     li.callbackAtEnd(cb);
 }
 exports.runexp=function(actions,start,exp) {
