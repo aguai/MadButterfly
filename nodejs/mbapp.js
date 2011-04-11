@@ -207,11 +207,23 @@ app.prototype.generateScaleTween=function(src,dest,p) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
 	    var c = nodes[i];
-	    var ng = this.mb_rt.coord_new(dup);
 	    var k = dup.clone_from_subtree(c);
 	    c.dup = k;
 	    c.dup.id = c.id;
 	    c.dup.refid = c.refid;
+	    // The following code should be relocated to the javascript wrapper 
+	    // the clone_from_subtree in the future.
+	    try {
+		k.bbox = c.bbox;
+		k.bbox.owner = k;
+	    } catch(e) {
+	    }
+
+	    try {
+		k.center = c.center;
+		k.center.owner = c.owner;
+	    } catch(e) {
+	    }
 	}
 	src.dup = dup;
     } else {
