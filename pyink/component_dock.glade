@@ -1,0 +1,252 @@
+<?xml version="1.0"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkListStore" id="components_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name editable -->
+      <column type="gboolean"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="timelines_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name editable -->
+      <column type="gboolean"/>
+    </columns>
+  </object>
+  <object class="GtkWindow" id="window1">
+    <child>
+      <object class="GtkVBox" id="component_dock_top">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkVBox" id="vbox2">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkTreeView" id="treeview_components">
+                <property name="height_request">100</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">components_model</property>
+                <signal name="button_press_event" handler="on_treeview_components_button_press_event"/>
+                <signal name="row_activated" handler="on_treeview_components_row_activated"/>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn1">
+                    <property name="sizing">autosize</property>
+                    <property name="title">Component Name</property>
+                    <property name="expand">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderer_comp">
+                        <signal name="edited" handler="on_cellrenderer_comp_edited"/>
+                      </object>
+                      <attributes>
+                        <attribute name="editable">1</attribute>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHButtonBox" id="hbuttonbox1">
+                <property name="visible">True</property>
+                <property name="spacing">5</property>
+                <property name="layout_style">start</property>
+                <child>
+                  <object class="GtkButton" id="add_comp">
+                    <property name="label">gtk-add</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_add_comp_clicked"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="remove_comp">
+                    <property name="label">gtk-remove</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_remove_comp_clicked"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">1</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHSeparator" id="hseparator1">
+            <property name="visible">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="padding">5</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkVBox" id="vbox3">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkTreeView" id="treeview_timelines">
+                <property name="height_request">100</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">timelines_model</property>
+                <property name="search_column">1</property>
+                <property name="level_indentation">9</property>
+                <property name="enable_grid_lines">horizontal</property>
+                <signal name="button_press_event" handler="on_treeview_timelines_button_press_event"/>
+                <signal name="row_activated" handler="on_treeview_timelines_row_activated"/>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn2">
+                    <property name="title">Action/Timeline Name</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderer_timelines">
+                        <signal name="edited" handler="on_cellrenderer_timelines_edited"/>
+                      </object>
+                      <attributes>
+                        <attribute name="editable">1</attribute>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHButtonBox" id="hbuttonbox2">
+                <property name="visible">True</property>
+                <property name="spacing">5</property>
+                <property name="layout_style">start</property>
+                <child>
+                  <object class="GtkButton" id="add_timeline">
+                    <property name="label">gtk-add</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_add_timeline_clicked"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="remove_timeline">
+                    <property name="label">gtk-remove</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_remove_timeline_clicked"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">2</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkActionGroup" id="actiongroup1"/>
+  <object class="GtkActionGroup" id="actiongroup2"/>
+  <object class="GtkActionGroup" id="actiongroup3"/>
+  <object class="GtkMenu" id="components_menu">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkMenuItem" id="rename_component">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Rename</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_rename_component_activate"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="link_component">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Link</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_link_component_activate"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="switch_component">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Switch to</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_switch_component_activate"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="timelines_menu">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkMenuItem" id="rename_timeline">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Rename</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_rename_timeline_activate"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="switch_timeline">
+        <property name="visible">True</property>
+        <property name="label" translatable="yes">Switch to</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_switch_timeline_activate"/>
+      </object>
+    </child>
+  </object>
+</interface>
