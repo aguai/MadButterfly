@@ -120,7 +120,7 @@ class comp_dock_base(object):
                 model.remove(itr)
                 return
             
-            itr = itr.iter_next()
+            itr = model.iter_next(itr)
             pass
         
         raise ValueError, 'unknown component name - %s' % (name)
