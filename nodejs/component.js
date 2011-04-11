@@ -73,9 +73,13 @@ Component.prototype.realize=function() {
 }
 
 Component.prototype.toCoord=function() {
-   return this.coord; 
+    return this.realize();
 }
 
+Component.prototype.set_text=function(text) {
+	this.realize();
+	this.coord.set_text("asdsad");
+}
 
 function ComponentManager(app)
 {
