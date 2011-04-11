@@ -78,9 +78,33 @@ loadSVG.prototype.load=function(mb_rt, root, filename) {
             this.parseGroup(accu,coord,'root_coord',nodes[k]);
         } 
     }
+
+    this.sortScene();
 }
 
 
+
+loadSVG.prototype.sortScene=function()
+{
+    for(i=0;i<this.scenes.length;i++) {
+	sys.puts(this._groupMap[this.scenes[i].ref]);
+	sys.puts(this._groupMap[this.scenes[i].ref].layer);
+	this.scenes[i].layer = this._groupMap[this.scenes[i].ref].layer;
+    }
+    this.scenes.sort(function(a,b) {
+	if (a.layer > b.layer) return 1;
+	if (a.layer < b.layer) return -1;
+	if (a.start > b.start) return 1;
+	if (a.start < b.start) return -1;
+	return 0;
+    });
+    sys.puts("scenes");
+    for(i=0;i<this.scenes.length;i++) {
+	var s = this.scenes[i];
+        sys.puts(s.layer+": start="+s.start+" end="+s.end+" ref="+s.ref);
+    }
+
+}
 
 loadSVG.prototype.leaveSVG=function()
 {
@@ -105,6 +129,7 @@ function make_mbnames(mb_rt, n, obj) {
     mbname = n.attr("label");
     if(mbname&&(mbname.value()!="")) {
 	name = mbname.value();
+        sys.puts("defone object "+ name);
 	mb_rt.mbnames[name] = obj;
     }
     try {
@@ -213,6 +238,7 @@ function parseTextStyle(style,n)
 }
 function tspan_set_text(text)
 {
+    sys.puts("kkkkk "+text);
     this.text.set_text(text); 
 }
 
@@ -240,8 +266,14 @@ loadSVG.prototype.parseTSpan = function(coord, n, pstyle) {
     var sz = 10;
     var face;
     var k;
-    var obj = this.mb_rt.stext_new(n.text(),x,y);
+    if (x == 0) x = coord.text_x;
+    if (y == 0) y = coord.text_y;
+    var obj = this.mb_rt.stext_new(n.text().trim(),x,y);
+    sys.puts("get text "+n.text().trim() +"at "+x+","+y);
     
+    tcoord.node = n;
+    n.coord = tcoord;
+    this._check_duplicate_src(n,tcoord);
     style = parse_style(n);
     for(k in pstyle) {
 	if(k in style)
@@ -637,9 +669,16 @@ loadSVG.prototype._set_bbox = function(node, tgt) {
 
     a = node.attr("bbox-x");
     if(!a) {
+	sys.puts("No bbox: "+node);
 	tgt.center = new Object();
 	tgt.center.x=0;
 	tgt.center.y=0;
+	tgt.center.rel = new Object();
+	tgt.center.rel.x=0;
+	tgt.center.rel.y=0;
+	tgt.bbox = new Object();
+        tgt.center.__proto__ = _center_proto;
+        tgt.center.owner = tgt;
 	return 0;
     }
     
@@ -813,6 +852,66 @@ loadSVG.prototype.parsePath=function(accu, coord,id, n)
     make_mbnames(this.mb_rt, n, pcoord);
 };
 
+loadSVG.prototype.parseFlowRegion=function(coord, n,style)
+{
+    var nodes = n.childNodes();
+
+    var k;
+
+    for(k in nodes) {
+	var c= nodes[k].name();
+	if (c == "rect") {
+	    // We support rectangle only for now. The x,y,w,h are extrcated and use by the flowPara latter.
+	    coord.text_x = getInteger(nodes[k],'x');
+	    coord.text_y = getInteger(nodes[k],'y');
+	    coord.text_w = getInteger(nodes[k],'width');
+	    coord.text_h = getInteger(nodes[k],'height');
+	}
+    }
+}
+loadSVG.prototype.parseFlowRoot=function(accu,coord, id, n) {
+    var nodes = n.childNodes();
+    var tcoord = this.mb_rt.coord_new(coord);
+    var trans = n.attr('transform');
+
+
+
+    tcoord.node = n;
+    n.coord = tcoord;
+    this._check_duplicate_src(n,tcoord);
+
+    if (trans)
+        parseTransform(tcoord,trans.value());
+    else {
+        tcoord.sx = 1;
+	tcoord.sy = 1;
+	tcoord.r = 0;
+	tcoord.tx = 0;
+	tcoord.ty = 0;
+    }
+    style = parse_style(n);
+    var nodes = n.childNodes();
+    var k;
+    for(k in nodes) {
+	var c= nodes[k].name();
+	if (c == "flowRegion") {
+	    this.parseFlowRegion(tcoord,nodes[k],style);
+	} else if (c == "flowPara") {
+	    this.parseTSpan(tcoord,nodes[k],style);
+	} else if (c == "flowDiv") {
+	}
+    }
+    var nx = coord[0]*tcoord.text_x+coord[1]*tcoord.text_y+coord[2];
+    if (coord.center.x > nx)
+        coord.center.x = nx;
+    var ny = coord[3]*tcoord.text_x+coord[4]*tcoord.text_y+coord[5];
+    if (coord.center.y > ny)
+        coord.center.y = ny;
+    this._set_bbox(n, tcoord);
+	
+    make_mbnames(this.mb_rt, n, tcoord);
+}
+
 loadSVG.prototype.parseText=function(accu,coord,id, n)
 {
     var nodes = n.childNodes();
@@ -826,6 +925,11 @@ loadSVG.prototype.parseText=function(accu,coord,id, n)
     n.coord = tcoord;
     this._check_duplicate_src(n,tcoord);
 
+    tcoord.sx = 1;
+    tcoord.sy = 1;
+    tcoord.r = 0;
+    tcoord.tx = 0;
+    tcoord.ty = 0;
     if (n.attr('x')) {
 	var nx = coord[0]*x+coord[1]*y+coord[2];
 	if (coord.center.x > nx)
@@ -836,6 +940,7 @@ loadSVG.prototype.parseText=function(accu,coord,id, n)
 	if (coord.center.y > ny)
 	    coord.center.y = ny;
     }
+
     style = parse_style(n);
     var nodes = n.childNodes();
     var k;
@@ -1076,7 +1181,12 @@ loadSVG.prototype._check_duplicate_src=function(n,coord) {
     } else {
         n.coord.isuse = false;
     }
-    var attr = n.attr('duplicate-src');
+
+    // A workaround, should be removed.
+    var attr = n.attr('saved_id');
+    if (attr) return;
+
+    attr = n.attr('duplicate-src');
     if (attr == null) {
         sys.puts("no duplicated" + n);
         return;
@@ -1088,6 +1198,7 @@ loadSVG.prototype._check_duplicate_src=function(n,coord) {
 	}
         this.mb_rt.mbnames[id].target = coord;
 	coord.refid = this.mb_rt.mbnames[id].id;
+	sys.puts("set the refid of "+id+" to be "+coord.refid);
     } catch(e) {
         sys.puts("id "+id+" is not defined");
     }
@@ -1106,6 +1217,7 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
     
     n.coord = coord;
     coord.node = n;
+    n.layer = root.id;
     this._check_duplicate_src(n,coord);
 
     coord.center= new Object();
@@ -1142,6 +1254,8 @@ loadSVG.prototype.parseGroup=function(accu_matrix,root, group_id, n) {
 	    this.parsePath(accu,coord, id, nodes[k]);
 	} else if (c == "text") {
 	    this.parseText(accu,coord, id, nodes[k]);
+	} else if (c == "flowRoot") {
+	    this.parseFlowRoot(accu, coord, id, nodes[k]);
 	} else if (c == "rect") {
 	    this.parseRect(accu_matrix,coord, id, nodes[k]);
 	} else if (c == "image") {
