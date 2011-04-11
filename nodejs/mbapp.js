@@ -130,6 +130,10 @@ app=function(display, w, h) {
     this._componentmanager = new component.ComponentManager(this);
 }
 
+app.prototype.setFrameRate=function(fps) {
+    this.frame_interval = 1000/fps;
+}
+
 app.prototype.ts=function(m) {
     var now = Date.now();
     var t = now-this._time;
@@ -138,14 +142,14 @@ app.prototype.ts=function(m) {
 app.prototype.loadSVG=function(fname) {
     this.svg.load(this.mb_rt,this.mb_rt.root,fname);
     this.changeScene(0);
-    sys.puts("xxxx");
 }
 
 app.prototype.KeyPress = function(evt) {
     if (this.onKeyPress) this.onKeyPress(evt.sym);
-	if (evt.sym in this.keymap) {
-	    this.keymap[evt.sym]();
-	}
+    sys.puts(this.keymap);
+    if (evt.sym in this.keymap) {
+	this.keymap[evt.sym]();
+    }
 }
 
 app.prototype.loop=function() {
@@ -168,7 +172,6 @@ app.prototype.getComponent=function(name) {
     comp.realize();
     sys.puts("Search for "+name);
     var obj = comp.toCoord();
-    sys.puts("obj="+obj+" id="+obj.id+" refid="+obj.refid);
     return comp;
 }
 
