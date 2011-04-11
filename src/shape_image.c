@@ -59,6 +59,7 @@ typedef struct _sh_image {
     co_aix x, y;
     co_aix w, h;
     co_aix poses[4][2];
+    co_aix sample_matrix[6];
 
     redraw_man_t *rdman;
 } sh_image_t;
@@ -120,7 +121,6 @@ void sh_image_transform(shape_t *shape) {
     paint_t *paint;
     co_aix (*poses)[2];
     co_aix img_matrix[6];
-    co_aix rev_matrix[6];
     co_aix x_factor, y_factor;
     int img_w, img_h;
     int i;
@@ -164,8 +164,7 @@ void sh_image_transform(shape_t *shape) {
 	img_matrix[3] *= y_factor;
 	img_matrix[4] *= y_factor;
     }
-    compute_reverse(img_matrix, rev_matrix);
-    paint_image_set_matrix(sh_get_fill(shape), rev_matrix);
+    compute_reverse(img_matrix, img->sample_matrix);
 }
 
 /*! \brief Draw image for an image shape.
@@ -175,6 +174,8 @@ void sh_image_transform(shape_t *shape) {
 void sh_image_draw(shape_t *shape, mbe_t *cr) {
     sh_image_t *img = (sh_image_t *)shape;
 
+    paint_image_set_matrix(sh_get_fill(shape), img->sample_matrix);
+    
     mbe_move_to(cr, img->poses[0][0], img->poses[0][1]);
     mbe_line_to(cr, img->poses[1][0], img->poses[1][1]);
     mbe_line_to(cr, img->poses[2][0], img->poses[2][1]);

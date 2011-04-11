@@ -282,9 +282,7 @@ int _paint_image_size = sizeof(paint_image_t);
 static
 void paint_image_prepare(paint_t *paint, mbe_t *cr, shape_t *sh) {
     paint_image_t *paint_img = (paint_image_t *)paint;
-    mb_img_data_t *img_data;
-
-    img_data = paint_img->img;
+    
     mbe_set_source(cr, paint_img->ptn);
 }
 
@@ -296,6 +294,7 @@ void paint_image_free(redraw_man_t *rdman, paint_t *paint) {
     img_data = paint_img->img;
     MB_IMG_DATA_FREE(img_data);
     paint_destroy(&paint_img->paint);
+    mbe_pattern_destroy(paint_img->ptn);
     elmpool_elm_free(rdman->paint_image_pool, paint_img);
 }
 
