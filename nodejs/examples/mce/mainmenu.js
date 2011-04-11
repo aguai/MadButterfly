@@ -86,7 +86,7 @@ MainMenu.prototype.key_enter=function()
 {
     var self = this;
     var target = this.items[this.item].toCoord();
-    var an = new animate.scale(this.app, target, 1, 1/1.5);
+    //var an = new animate.scale(this.app, target, 1, 1/1.5);
 
     this.changePage(self.item);
     /*
