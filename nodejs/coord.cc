@@ -8,6 +8,7 @@ extern "C" {
 #include "mb_X_supp.h"
 #include "mb_tools.h"
 #include "njs_mb_supp.h"
+#include <string.h>
 }
 
 #include "mbfly_njs.h"
@@ -15,7 +16,6 @@ extern "C" {
 #ifndef ASSERT
 #define ASSERT(x)
 #endif
-
 #define OK 0
 
 /*! \page jsgc How to Manage Life-cycle of Objects for Javascript.
@@ -81,7 +81,14 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
     FOR_COORDS_PREORDER(coord, child) {
 	child_hdl = (Persistent<Object> *)mb_prop_get(&child->obj.props,
 						      PROP_JSOBJ);
-	if (child_hdl == NULL) continue;
+	/* There is no associated JS object.  Perhaps, it is created
+	 * by xnjsmb_coord_clone_from_subtree().
+	 */
+	if(child_hdl == NULL) {
+	    preorder_coord_skip_subtree(child);
+	    continue;
+	}
+	
 	SET(*child_hdl, "valid", _false);
 	WRAP(*child_hdl, NULL);
 	child_hdl->Dispose();
@@ -91,7 +98,12 @@ xnjsmb_coord_invalidate_subtree(coord_t *coord) {
 	FOR_COORD_SHAPES(child, mem) {
 	    mem_hdl = (Persistent<Object> *)mb_prop_get(&mem->obj.props,
 							PROP_JSOBJ);
-	    if (mem_hdl == NULL) continue;							
+	    /* There is no associated JS object.  Perhaps, it is
+	     * created by xnjsmb_coord_clone_from_subtree().
+	     */
+	    if(mem_hdl == NULL)
+		continue;
+	    
 	    SET(*mem_hdl, "valid", _false);
 	    WRAP(*mem_hdl, NULL);
 	    mem_hdl->Dispose();
@@ -189,6 +201,8 @@ coord_set_index(coord_t *coord, Handle<Object> self,
         return 0;
     }
 
+    if (coord_get_matrix(coord)[idx] == v) return v;
+
     coord_get_matrix(coord)[idx] = v;
 
     js_rt = GET(self, "mbrt")->ToObject();
@@ -238,9 +252,20 @@ static void
 _xnjsmb_coord_clone_from_subtree_mod(Handle<Object> src, Handle<Value> ret) {
     Handle<Object> js_rt;
     Handle<Object> ret_obj = ret->ToObject();
+    coord_t *ret_coord, *child;
+    Handle<Object> child_obj;
 
     js_rt = GET(src, "mbrt")->ToObject();
     SET(ret_obj, "mbrt", js_rt);
+
+    /* Only root of the subtree is warpped.  Descendants of subtree
+     * are not wrapped by JS object.  We have no any method to access
+     * children and members of a coord, now.  So, it is fine.  But,
+     * sometime later, we will provide APIs for traveling a tree.  At
+     * that time, we need to create wrappers for all descendants.
+     */
+    ret_coord = (coord_t *)UNWRAP(ret_obj);
+    xnjsmb_coord_mod(ret_obj, ret_coord);
 }
 
 static coord_t *
@@ -259,6 +284,7 @@ xnjsmb_coord_clone_from_subtree(coord_t *coord, Handle<Object> self,
 	*err = "can not clone a subtree (allocate memory)";
 	return NULL;
     }
+    rdman_coord_changed(rdman, cloning);
 
     return cloning;
 }
@@ -271,7 +297,7 @@ xnjsmb_coord_show(coord_t *coord, Handle<Object> self) {
     js_rt = GET(self, "mbrt")->ToObject();
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
-
+    if ((coord->flags & COF_HIDDEN) == 0) return;
     coord_show(coord);
     rdman_coord_changed(rdman, coord);
 }
@@ -285,6 +311,7 @@ xnjsmb_coord_hide(coord_t *coord, Handle<Object> self) {
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
 
+    if ((coord->flags & COF_HIDDEN) != 0) return;
     coord_hide(coord);
     rdman_coord_changed(rdman, coord);
 }
@@ -299,6 +326,7 @@ xnjsmb_coord_set_opacity(Handle<Object> self, coord_t *coord, Handle<Value> valu
     ASSERT(js_rt != NULL);
     rdman = xnjsmb_rt_rdman(js_rt);
 
+    if (coord_get_opacity(coord) == value->NumberValue()) return;
     
     coord_set_opacity(coord, value->NumberValue());
     rdman_coord_changed(rdman, coord);
@@ -379,6 +407,50 @@ xnjsmb_coord_get_x(Handle<Object> self, coord_t *coord,
     x = cc(0)*xx+cc(1)*yy+cc(2);
     return Number::New(x);
 }
+
+static int
+xnjsmb_coord_set_text_recursive(coord_t *coord, Handle<Object> self,
+				const char *txt) {
+    shape_t *sh;
+    coord_t *child;
+    Handle<Object> rt;
+    redraw_man_t *rdman;
+
+    FOR_COORD_SHAPES(coord, sh) {
+	printf("shape type %d\n",sh->obj.obj_type);
+	if (sh->obj.obj_type == MBO_STEXT) {
+	    sh_stext_set_text(sh, txt);
+	    /*
+	     * Mark changed.
+	     */
+	    rt = GET(self, "mbrt")->ToObject();
+	    ASSERT(rt != NULL);
+	    rdman = xnjsmb_rt_rdman(rt);
+
+	    if(sh_get_coord(sh))
+		rdman_shape_changed(rdman, sh);
+	    return 1;
+	}
+    }
+    for((child) = STAILQ_HEAD((coord)->children);
+        (child) != NULL;
+        (child) = STAILQ_NEXT(coord_t, sibling, (child))) {
+	/* Invalidate members of a coord */
+	if ( xnjsmb_coord_set_text_recursive(child, self, txt))
+	    return 1;
+    }
+    return 0;
+    
+}
+
+static void
+xnjsmb_coord_set_text(coord_t *coord, Handle<Object> self,
+			 const char *txt) {
+    printf("text=%s\n",txt);
+    xnjsmb_coord_set_text_recursive(coord,self,txt);
+}
+
+
 #undef m
 
 #include "coord-inc.h"

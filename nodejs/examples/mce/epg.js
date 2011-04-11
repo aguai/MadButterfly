@@ -170,28 +170,32 @@ EPG.prototype.onLoad = function(res) {
 
 EPG.prototype.getList=function(item,func) {
     var epgsrv = http.createClient(8080, '211.23.50.144');
-    var cmd = '{"Protocol":"EPG-CSP","Command":"SearchRequest","ProgramSub":"'+item.Category+'"}';
+    for (k in this.maincat[item]) {
+	sys.puts(k+"--->"+this.maincat[item][k]);
+    }
+    var catID = this.maincat[item]['Category'];
+    sys.puts(catID);
+    var cmd = '{"Protocol":"EPG-CSP","Command":"SearchRequest","ProgramSub":"'+catID+'"}';
     var headers={
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Host':'211.23.50.144:8080',
         'User-Agent':'MadButterfly',
-        'Content-Type':'application/x-www-form-urlencoded'
+        'Content-Type':'application/x-www-form-urlencoded;charset=utf-8'
     };
-    headers['Content-Length'] = cmd.length;
+    //headers['Content-Length'] = cmd.length;
     var request = epgsrv.request('POST', '/IPTV_EPG/EPGService.do?timestamp='+new Date().getTime(),headers);
     var self = this;
-    sys.puts("aaaa");
     var js = '';
-    request.write(cmd);
+    request.write(cmd,encoding='utf-8');
     request.end();
     request.on('response', function(res) {
-        sys.puts("connected");
  	res.on('data',function (data) {
 		js = js + data;
 	});
 	res.on('end', function () {
-		res = JSON.parse(js);
+		res = JSON.parse(unescape(js));
 		sys.puts("parsed");
+		sys.puts(js);
 		func();
 
 	});

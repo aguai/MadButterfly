@@ -124,7 +124,7 @@ app=function(display, w, h) {
     this.keymap={};
     this.onKeyPress = null;
     this.svg = new svg.loadSVG(this.mb_rt,this.mb_rt.root,null);
-    this.frame_interval = 1000/30; // 12 frame per second
+    this.frame_interval = 1000/12; // 12 frame per second
     this.timer = null;
     this._time = Date.now();
     this._componentmanager = new component.ComponentManager(this);
@@ -207,11 +207,23 @@ app.prototype.generateScaleTween=function(src,dest,p) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
 	    var c = nodes[i];
-	    var ng = this.mb_rt.coord_new(dup);
 	    var k = dup.clone_from_subtree(c);
 	    c.dup = k;
 	    c.dup.id = c.id;
 	    c.dup.refid = c.refid;
+	    // The following code should be relocated to the javascript wrapper 
+	    // the clone_from_subtree in the future.
+	    try {
+		k.bbox = c.bbox;
+		k.bbox.owner = k;
+	    } catch(e) {
+	    }
+
+	    try {
+		k.center = c.center;
+		k.center.owner = c.owner;
+	    } catch(e) {
+	    }
 	}
 	src.dup = dup;
     } else {
@@ -225,8 +237,8 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     for(i in nodes) {
         coord= nodes[i];
 	if (coord.target) {
-	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
 	    this._componentmanager.add(coord,coord.dup);
+	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
 	} else {
 	    sys.puts(coord.id);
 	    sys.puts(coord[0]);
@@ -315,7 +327,7 @@ app.prototype.changeScene=function(s) {
         try {
             this.get(scenes[i].ref).hide();
             if (nth >=scenes[i].start && nth <=scenes[i].end) {
-	        this.get(scenes[i].ref).show();
+	        //this.get(scenes[i].ref).show();
 	        if (this.get(scenes[i].ref).dup)
                     this.get(scenes[i].ref).dup.show();
 		if (scenes[i].type == 'normal' || i == scenes.length-1) {
@@ -328,7 +340,7 @@ app.prototype.changeScene=function(s) {
 		        // If there is no second key frame defined, fall back to the normal
 	                this.get(scenes[i].ref).show();
 		    }
-		    this.get(scenes[i+1].ref).hide();
+		    //this.get(scenes[i+1].ref).hide();
 		}
 
 	    } else {
@@ -386,20 +398,17 @@ app.prototype.skipFrame=function() {
 	    if (nextframe < this.targetScene)
 	        nextframe = this.targetScene;
 	}
+        this.changeScene(nextframe);
 	if (nextframe != this.targetScene) {
-	    var timegap = (nextframe-this.startScene)*this.skipdir*this.frame_interval+this.starttime - Date.now();
-	    sys.puts("goto "+timegap);
-	    if (timegap <200) {
-	        timegap = 0;
-	    } else {
-	    }
+	    var timegap = this.frame_interval - (Date.now()-now);
+	    if (timegap < 0) timegap = 0;
+	    
             this.timer = setTimeout(function() {
    	        self.skipFrame()
-	    }, timegap);
+	    }, timegap );
 	} else {
 	    this.timer = null;
 	}
-        this.changeScene(nextframe);
 	now = Date.now();
 	this.ts("goto end");
     }

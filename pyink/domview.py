@@ -94,7 +94,6 @@ class Component(object):
         return names
 
     def parse_timelines(self):
-        print 'parse timelines fro component ' + self.name()
         self.timelines[:] = []
         
         if self.node:
@@ -279,9 +278,11 @@ class component_manager(component_manager_ui_update):
         comp_names = self._comp_names
         components_node = self._components_node
         for child in components_node.childList():
-            child_name = child.name()
-            if child_name != 'ns0:component':
+            child_node_name = child.name()
+            if child_node_name != 'ns0:component':
                 continue
+            
+            child_name = child.getAttribute('name')
             if child_name in comp_names:
                 raise ValueError, 'duplicate component name %s' % (child_name)
 
@@ -289,6 +290,7 @@ class component_manager(component_manager_ui_update):
             comp.parse_timelines()
             
             self._components.append(comp)
+            
             comp_names.add(child_name)
             pass
         pass
@@ -322,7 +324,7 @@ class component_manager(component_manager_ui_update):
             except:
                 continue
             if nlabel == 'components':
-                self._components_group
+                self._components_group = n
                 break
             pass
         else:                   # no components group
@@ -472,10 +474,19 @@ class component_manager(component_manager_ui_update):
         self._layers_parent = \
             self._get_layers_group_of_component(comp_name)
         
-        first_name = comp.all_timeline_names()[0]
-        self.switch_timeline(first_name)
+        self.make_sure_timeline()
 
-        self.hide_component(old_comp.name())
+        try:
+            comp_grp = self.get_component_group(old_comp.name())
+            old_comp_existed = True
+        except ValueError:
+            old_comp_existed = False
+            pass
+        
+        if old_comp_existed:
+            self.hide_component(old_comp.name())
+            pass
+        
         self.show_component(comp.name())
         pass
 
@@ -573,6 +584,22 @@ class component_manager(component_manager_ui_update):
 
         # Make domview to rescan layers and scenes.
         self.reset()            # from domview
+
+        cur_comp_name = self.get_current_component()
+        cur_comp_node = self.get_component_group(cur_comp_name)
+        cur_comp_node.setAttribute("cur_timeline", timeline_name)
+        pass
+
+    def make_sure_timeline(self):
+        cur_comp_name = self.get_current_component()
+        cur_comp_node = self.get_component_group(cur_comp_name)
+        try:
+            timeline_name = cur_comp_node.getAttribute("cur_timeline")
+        except KeyError:
+            timeline_name = self.all_timeline_names()[0]
+            pass
+        self._cur_timeline = None
+        self.switch_timeline(timeline_name)
         pass
 
     def add_timeline(self, timeline_name):
@@ -637,6 +664,44 @@ class component_manager(component_manager_ui_update):
         parent_group.appendChild(use_node)
         
         return use_node
+
+    ## \brief Remember current frame and layer on the scenes node.
+    #
+    def remember_current_frame(self, layer_idx, frame_idx):
+        if not isinstance(layer_idx, int):
+            raise TypeError, 'layer index should be a integer'
+        if not isinstance(frame_idx, int):
+            raise TypeError, 'frame index should be a integer'
+        
+        timeline_name = self.get_current_timeline()
+        timeline = self._cur_comp.get_timeline(timeline_name)
+        timeline_scenes = timeline.scenes_node
+        timeline_scenes.setAttribute('cur_layer', str(layer_idx))
+        timeline_scenes.setAttribute('cur_frame', str(frame_idx))
+        pass
+
+    ## \brief Get current frame and layer from the scenes node.
+    #
+    def get_current_frame(self):
+        timeline_name = self.get_current_timeline()
+        timeline = self._cur_comp.get_timeline(timeline_name)
+        timeline_scenes = timeline.scenes_node
+        try:
+            cur_layer = timeline_scenes.getAttribute('cur_layer')
+        except KeyError:
+            cur_layer_idx = 0
+        else:
+            cur_layer_idx = int(cur_layer)
+            pass
+        try:
+            cur_frame = timeline_scenes.getAttribute('cur_frame')
+        except KeyError:
+            cur_frame_idx = 0
+        else:
+            cur_frame_idx = int(cur_frame)
+            pass
+
+        return cur_layer_idx, cur_frame_idx
     pass
 
 
