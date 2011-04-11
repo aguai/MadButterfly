@@ -207,11 +207,23 @@ app.prototype.generateScaleTween=function(src,dest,p) {
         var dup = this.mb_rt.coord_new(src.parent);
 	for (i in nodes) {
 	    var c = nodes[i];
-	    var ng = this.mb_rt.coord_new(dup);
 	    var k = dup.clone_from_subtree(c);
 	    c.dup = k;
 	    c.dup.id = c.id;
 	    c.dup.refid = c.refid;
+	    // The following code should be relocated to the javascript wrapper 
+	    // the clone_from_subtree in the future.
+	    try {
+		k.bbox = c.bbox;
+		k.bbox.owner = k;
+	    } catch(e) {
+	    }
+
+	    try {
+		k.center = c.center;
+		k.center.owner = c.owner;
+	    } catch(e) {
+	    }
 	}
 	src.dup = dup;
     } else {
@@ -225,8 +237,8 @@ app.prototype.generateScaleTween=function(src,dest,p) {
     for(i in nodes) {
         coord= nodes[i];
 	if (coord.target) {
-	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
 	    this._componentmanager.add(coord,coord.dup);
+	    this.generateScaleTweenObject(coord.dup,coord,coord.target,p,'');
 	} else {
 	    sys.puts(coord.id);
 	    sys.puts(coord[0]);
@@ -252,8 +264,8 @@ function mul(a,b)
 app.prototype.generateScaleTweenObject=function(coord,src,dest,p,id) {
     //sys.puts("xxxxxxx");
     //sys.puts("dest="+dest);
-   // sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
-    //sys.puts("id="+id+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
+    sys.puts("src=["+src.sx+","+src.sy+","+src.r+","+src.tx+","+src.ty);
+    sys.puts("id="+id+" dest=["+dest.sx+","+dest.sy+","+dest.r+","+dest.tx+","+dest.ty);
     //sys.puts("src.center="+src.center);
     //sys.puts("src.center.x="+src.center.x+" src.center.y="+src.center.y);
     if (src == null) return;

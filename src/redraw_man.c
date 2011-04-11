@@ -2554,6 +2554,9 @@ int rdman_redraw_changed(redraw_man_t *rdman) {
     if(r != OK)
 	return ERR;
 
+    //mbe_clear(rdman->cr);
+    //mbe_copy_source(rdman->cr, rdman->backend);
+    //printf("clear\n");
     if(rdman->n_dirty_areas > 0) {
 	/*! \brief Draw shapes in preorder of coord tree and support opacity
 	 * rules.
