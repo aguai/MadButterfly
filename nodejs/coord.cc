@@ -8,7 +8,6 @@ extern "C" {
 #include "mb_X_supp.h"
 #include "mb_tools.h"
 #include "njs_mb_supp.h"
-#include <string.h>
 }
 
 #include "mbfly_njs.h"
@@ -16,6 +15,7 @@ extern "C" {
 #ifndef ASSERT
 #define ASSERT(x)
 #endif
+
 #define OK 0
 
 /*! \page jsgc How to Manage Life-cycle of Objects for Javascript.
@@ -407,50 +407,6 @@ xnjsmb_coord_get_x(Handle<Object> self, coord_t *coord,
     x = cc(0)*xx+cc(1)*yy+cc(2);
     return Number::New(x);
 }
-
-static int
-xnjsmb_coord_set_text_recursive(coord_t *coord, Handle<Object> self,
-				const char *txt) {
-    shape_t *sh;
-    coord_t *child;
-    Handle<Object> rt;
-    redraw_man_t *rdman;
-
-    FOR_COORD_SHAPES(coord, sh) {
-	printf("shape type %d\n",sh->obj.obj_type);
-	if (sh->obj.obj_type == MBO_STEXT) {
-	    sh_stext_set_text(sh, txt);
-	    /*
-	     * Mark changed.
-	     */
-	    rt = GET(self, "mbrt")->ToObject();
-	    ASSERT(rt != NULL);
-	    rdman = xnjsmb_rt_rdman(rt);
-
-	    if(sh_get_coord(sh))
-		rdman_shape_changed(rdman, sh);
-	    return 1;
-	}
-    }
-    for((child) = STAILQ_HEAD((coord)->children);
-        (child) != NULL;
-        (child) = STAILQ_NEXT(coord_t, sibling, (child))) {
-	/* Invalidate members of a coord */
-	if ( xnjsmb_coord_set_text_recursive(child, self, txt))
-	    return 1;
-    }
-    return 0;
-    
-}
-
-static void
-xnjsmb_coord_set_text(coord_t *coord, Handle<Object> self,
-			 const char *txt) {
-    printf("text=%s\n",txt);
-    xnjsmb_coord_set_text_recursive(coord,self,txt);
-}
-
-
 #undef m
 
 #include "coord-inc.h"
