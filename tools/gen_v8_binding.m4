@@ -418,10 +418,10 @@ fdefine([STR], [
     _ret_val = String::New(_ret);
 ])dnl
 fdefine([FUNC], [
-    _rt_val = _ret;
+    _ret_val = _ret;
 ])dnl
 fdefine([VAL], [
-    _rt_val = _ret;
+    _ret_val = _ret;
 ])dnl
 ])
 
