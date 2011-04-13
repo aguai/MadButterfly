@@ -18,6 +18,16 @@ extern "C" {
 
 #define OK 0
 
+#define xnjsmb_auto_path_new export_xnjsmb_auto_path_new
+#define xnjsmb_auto_stext_new export_xnjsmb_auto_stext_new
+#define xnjsmb_auto_image_new export_xnjsmb_auto_image_new
+#define xnjsmb_auto_rect_new export_xnjsmb_auto_rect_new
+#define xnjsmb_auto_paint_color_new export_xnjsmb_auto_paint_color_new
+#define xnjsmb_auto_paint_image_new export_xnjsmb_auto_paint_image_new
+#define xnjsmb_auto_paint_linear_new export_xnjsmb_auto_paint_linear_new
+#define xnjsmb_auto_paint_radial_new export_xnjsmb_auto_paint_radial_new
+
+
 /*! \page jsgc How to Manage Life-cycle of Objects for Javascript.
  *
  * The life-cycle of MadButterfly ojects are simple.  A object is live
@@ -339,6 +349,94 @@ xnjsmb_coord_get_opacity(Handle<Object> self, coord_t *coord,
 
     opacity = coord_get_opacity(coord);
     return Number::New(opacity);
+}
+
+#define COORD_NEXT_SIBLING(child) STAILQ_NEXT(coord_t, sibling, (child))
+
+static mb_obj_t *
+_coord_get_nth_child_member(coord_t *coord, int idx) {
+    geo_t *geo;
+    coord_t *child;
+    int member_idx = 0;
+    int cnt = 0;
+    
+    child = STAILQ_HEAD(coord->children);
+    FOR_COORD_MEMBERS(coord, geo) {
+	while(child != NULL && child->before_pmem == member_idx) {
+	    if(cnt == member_idx)
+		return (mb_obj_t *)child;
+	    cnt++;
+	    child = COORD_NEXT_SIBLING(child);
+	}
+	
+	if(cnt == member_idx)
+	    return (mb_obj_t *)geo->shape;
+	cnt++;
+    }
+
+    return NULL;
+}
+
+static Handle<Value> xnjsmb_auto_coord_new(coord_t *data);
+
+static Handle<Value>
+_mb_obj_to_value(Handle<Object> parent, mb_obj_t *mbobj) {
+    Handle<Value> val;
+    Handle<Object> obj;
+    Handle<Value> mbrt;
+    Handle<Object> mbrt_o;
+    Persistent<Object> *hdl;
+    
+    hdl = (Persistent<Object> *)mb_prop_get(&mbobj->props,
+					    PROP_JSOBJ);
+    if(hdl)
+	return *hdl;
+    
+    switch(mbobj->obj_type) {
+    case MBO_COORD:
+	val = xnjsmb_auto_coord_new((coord_t *)mbobj);
+	break;
+
+    case MBO_PATH:
+	val = xnjsmb_auto_path_new((shape_t *)mbobj);
+	break;
+
+    case MBO_RECT:
+	val = xnjsmb_auto_rect_new((shape_t *)mbobj);
+	break;
+
+    case MBO_IMAGE:
+	val = xnjsmb_auto_image_new((shape_t *)mbobj);
+	break;
+
+    case MBO_STEXT:
+	val = xnjsmb_auto_stext_new((shape_t *)mbobj);
+	break;
+    }
+    ASSERT(val != NULL);
+
+    mbrt = GET(parent, "mbrt");
+    obj = val->ToObject();
+    mbrt_o = mbrt->ToObject();
+    SET(obj, "mbrt", mbrt_o);
+
+    return val;
+}
+
+static Handle<Value>
+xnjsmb_coord_get_child(coord_t *coord, Handle<Object> self,
+		       int idx, const char **err) {
+    Handle<Value> child;
+    mb_obj_t *child_mbobj;
+
+    child_mbobj = _coord_get_nth_child_member(coord, idx);
+    if(child_mbobj == NULL) {
+	*err = "invalid index value for children";
+	return Handle<Value>(NULL);
+    }
+    child = _mb_obj_to_value(self, child_mbobj);
+    
+    return child;
 }
 
 #include "coord-inc.h"

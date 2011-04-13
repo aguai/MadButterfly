@@ -40,8 +40,6 @@ xnjsmb_mb_rt_objs_mod(Handle<Object> mbrt, Handle<Value> ret) {
     SET(ret_obj, "mbrt", mbrt);
 }
 
-#define xnjsmb_auto_coord_new export_xnjsmb_auto_coord_new
-
 static void
 xnjsmb_redraw_changed(njs_runtime_t *rt) {
     redraw_man_t *rdman;
@@ -121,6 +119,7 @@ _njs_mb_new_with_win(Handle<Object> self, void *display,
  * we need a exported version to call them indrectly from other
  * modules.
  */
+#define xnjsmb_auto_coord_new export_xnjsmb_auto_coord_new
 #define xnjsmb_auto_path_new export_xnjsmb_auto_path_new
 #define xnjsmb_auto_stext_new export_xnjsmb_auto_stext_new
 #define xnjsmb_auto_image_new export_xnjsmb_auto_image_new
