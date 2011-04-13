@@ -331,6 +331,10 @@ extern coord_t *postorder_coord_subtree(coord_t *root, coord_t *last);
 #define coord_scaley(co) ((co)->matrix[4])
 #define coord_x(co) ((co)->matrix[2])
 #define coord_y(co) ((co)->matrix[5])
+#define FOR_COORD_CHILDREN(parent, child)			\
+    for((child) = STAILQ_HEAD((parent)->children);		\
+	(child) != NULL;					\
+	(child) = STAILQ_NEXT(coord_t, sibling, (child)))
 #define FOR_COORD_MEMBERS(coord, geo)			\
     for(geo = STAILQ_HEAD((coord)->members);		\
 	geo != NULL;					\

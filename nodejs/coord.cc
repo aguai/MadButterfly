@@ -363,18 +363,41 @@ _coord_get_nth_child_member(coord_t *coord, int idx) {
     child = STAILQ_HEAD(coord->children);
     FOR_COORD_MEMBERS(coord, geo) {
 	while(child != NULL && child->before_pmem == member_idx) {
-	    if(cnt == member_idx)
+	    if(cnt == idx)
 		return (mb_obj_t *)child;
 	    cnt++;
 	    child = COORD_NEXT_SIBLING(child);
 	}
 	
-	if(cnt == member_idx)
+	if(cnt == idx)
 	    return (mb_obj_t *)geo->shape;
 	cnt++;
+	member_idx++;
+    }
+    
+    while(child != NULL) {
+	if(cnt == idx)
+	    return (mb_obj_t *)child;
+	cnt++;
+	child = COORD_NEXT_SIBLING(child);
     }
 
     return NULL;
+}
+
+static int
+xnjsmb_coord_num_children(coord_t *coord, Handle<Object> self) {
+    int children_n_member_total;
+    int children_cnt;
+    coord_t *child;
+    
+    children_cnt = 0;
+    FOR_COORD_CHILDREN(coord, child) {
+	children_cnt++;
+    }
+    children_n_member_total = coord->num_members + children_cnt;
+
+    return children_n_member_total;
 }
 
 static Handle<Value> xnjsmb_auto_coord_new(coord_t *data);
