@@ -147,6 +147,8 @@ class MBScene(object):
 	    start, stop, tween_type = \
 		self._domviewui.get_key(layer_idx, frame_idx)
 	except:
+	    dup_group = self._domviewui.get_layer_dup_group(layer_idx)
+	    self._enterGroup(dup_group)
 	    return
 
 	scene_group = self._domviewui.get_key_group(layer_idx, start)
@@ -402,6 +404,8 @@ class MBScene(object):
 	self.last_update = None
 	
 	self._drop_undo()
+
+	self.desktop.connectCurrentLayerChanged(self.handle_change_layer)
 	
 	return False
 
@@ -419,6 +423,41 @@ class MBScene(object):
 	self._domviewui.add_component_from_group(comp_name, node)
 	
 	self._domviewui.link_to_component(comp_name, node_parent_group)
+	pass
+
+    ## \brief Handle event that user change layers.
+    #
+    # This method is always being called for chaning layer event.
+    # So, we should do some check at beginning for re-entry condition.
+    #
+    def handle_change_layer(self, node):
+	layer = self.desktop.currentLayer()
+	node = layer.repr
+
+	#
+	# Only scene group and dup group are allowed.
+	#
+	try:
+	    scene_group_attr = node.getAttribute('scene_group')
+	except KeyError:
+	    pass
+	else:
+	    if scene_group_attr == 'true':
+		return
+	    pass
+
+	try:
+	    label = node.getAttribute('inkscape:label')
+	except KeyError:
+	    pass
+	else:
+	    if label == 'dup':
+		return
+	    pass
+	# It is not a scene or dup group.
+
+	layer_idx, frame_idx = self._domviewui.get_current_frame()
+	self.selectSceneObject(layer_idx, frame_idx)
 	pass
 
     ## \brief Add menu item to context menu.
