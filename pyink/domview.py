@@ -540,6 +540,8 @@ class component_manager(component_manager_ui_update):
     def rename_component(self, comp_name, new_name):
         comp = self._get_component(comp_name)
         comp.rename(new_name)
+        self._comp_names.remove(comp_name)
+        self._comp_names.add(new_name)
         pass
     
     def get_component_group(self, comp_name):
