@@ -286,7 +286,8 @@ class comp_dock_ui(object):
             self._fsm_editor_win = None
             pass
         
-        fsm_win = FSM_window.FSM_window(FSM_editor_close,
+        fsm_win = FSM_window.FSM_window(self._domview_ui,
+                                        FSM_editor_close,
                                         FSM_editor_destroy)
         self._fsm_editor_win = fsm_win
 

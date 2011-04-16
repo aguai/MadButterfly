@@ -1,5 +1,6 @@
 import gtk
 import os
+import data_monitor
 
 class FSM_window_base(object):
     def __init__(self):
@@ -58,9 +59,14 @@ class FSM_window_base(object):
     pass
 
 class FSM_window(FSM_window_base):
-    def __init__(self, close_cb, destroy_cb):
+    __metaclass__ = data_monitor.data_monitor
+    __data_monitor_prefix__ = 'on_'
+    
+    def __init__(self, domview_ui, close_cb, destroy_cb):
         super(FSM_window, self).__init__()
 
+        self._locker = domview_ui
+        
         self._close_cb = close_cb # callback to close editor window (hide)
         self._destroy_cb = destroy_cb # callback to destroy editor window
         pass
