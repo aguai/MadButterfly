@@ -239,7 +239,7 @@ class comp_dock_ui(object):
     #
     # Show an icon before the component name.
     #
-    def _sel_component(self, comp_name):
+    def _hint_sel_component(self, comp_name):
         all_comp_names = self._domview_ui.all_comp_names()
         sel_idx = all_comp_names.index(comp_name)
         assert sel_idx >= 0
@@ -265,9 +265,9 @@ class comp_dock_ui(object):
         desktop = self._desktop # from comp_dock_base
         desktop.setCurrentLayer(group.spitem)
 
-        self._sel_component(comp_name)
+        self._hint_sel_component(comp_name)
         tl_name = self._current_timeline()
-        self._sel_timeline(tl_name)
+        self._hint_sel_timeline(tl_name)
         pass
     
     def _add_timeline(self):
@@ -307,7 +307,7 @@ class comp_dock_ui(object):
     #
     # Show an icon before the timeline name.
     #
-    def _sel_timeline(self, tl_name):
+    def _hint_sel_timeline(self, tl_name):
         all_tl_names = self._domview_ui.all_timeline_names()
         sel_idx = all_tl_names.index(tl_name)
         assert sel_idx >= 0
@@ -329,7 +329,7 @@ class comp_dock_ui(object):
         timeline_name = self._current_timeline()
         domview_ui.switch_timeline(timeline_name)
 
-        self._sel_timeline(timeline_name)
+        self._hint_sel_timeline(timeline_name)
         pass
 
     def _prepare_FSM_editor(self):
