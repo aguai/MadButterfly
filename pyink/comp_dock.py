@@ -277,17 +277,33 @@ class comp_dock_ui(object):
         domview_ui.switch_timeline(timeline_name)
         pass
 
+    def _prepare_FSM_editor(self):
+        def FSM_editor_close():
+            self._fsm_editor_win.hide()
+            pass
+        
+        def FSM_editor_destroy():
+            self._fsm_editor_win = None
+            pass
+        
+        fsm_win = FSM_window.FSM_window(FSM_editor_close,
+                                        FSM_editor_destroy)
+        self._fsm_editor_win = fsm_win
+
+        doc = pybInkscape.createSPDocument()
+        view_widget = pybInkscape.create_svg_view_widget(doc)
+        view_widget.show()
+
+        self._FSM_doc = doc
+        self._FSM_view_widget = view_widget
+
+        fsm_win.set_svg_view(view_widget)
+        pass
+
     def _show_FSM_editor(self):
         if not self._fsm_editor_win:
-            def FSM_editor_close():
-                self._fsm_editor_win.hide()
-                pass
-            def FSM_editor_destroy():
-                self._fsm_editor_win = None
-                pass
-            fsm_win = FSM_window.FSM_window(FSM_editor_close,
-                                            FSM_editor_destroy)
-            self._fsm_editor_win = fsm_win
+            self._prepare_FSM_editor()
+            fsm_win = self._fsm_editor_win
         else:
             fsm_win = self._fsm_editor_win
             pass

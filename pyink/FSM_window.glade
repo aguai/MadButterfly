@@ -203,7 +203,7 @@
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="GtkViewport" id="svg_box">
+              <object class="GtkViewport" id="view_box">
                 <property name="visible">True</property>
                 <property name="resize_mode">queue</property>
                 <child>

@@ -61,8 +61,8 @@ class FSM_window(FSM_window_base):
     def __init__(self, close_cb, destroy_cb):
         super(FSM_window, self).__init__()
 
-        self._close_cb = close_cb
-        self._destroy_cb = destroy_cb
+        self._close_cb = close_cb # callback to close editor window (hide)
+        self._destroy_cb = destroy_cb # callback to destroy editor window
         pass
 
     def set_svg_view(self, view):
