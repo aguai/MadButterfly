@@ -2,6 +2,7 @@ import gtk
 import os
 import data_monitor
 import pybInkscape
+import FSM_window
 
 
 ## \brief User interface for management components and their timelines.
@@ -159,6 +160,7 @@ class comp_dock_ui(object):
         super(comp_dock_ui, self).__init__()
         
         self._locker = domview_ui
+        self._fsm_editor_win = None
         pass
 
     def _drop_undo(self):
@@ -274,6 +276,26 @@ class comp_dock_ui(object):
         timeline_name = self._current_timeline()
         domview_ui.switch_timeline(timeline_name)
         pass
+
+    def _show_FSM_editor(self):
+        if not self._fsm_editor_win:
+            def FSM_editor_close():
+                self._fsm_editor_win.hide()
+                pass
+            def FSM_editor_destroy():
+                self._fsm_editor_win = None
+                pass
+            fsm_win = FSM_window.FSM_window(FSM_editor_close,
+                                            FSM_editor_destroy)
+            self._fsm_editor_win = fsm_win
+        else:
+            fsm_win = self._fsm_editor_win
+            pass
+        fsm_win.show()
+        pass
+
+    def _show_FSM_for_comp(self, comp_name):
+        pass
     
     def on_add_comp_clicked(self, *args):
         self._add_component()
@@ -299,7 +321,7 @@ class comp_dock_ui(object):
         self._switch_component()
         self._drop_undo()
         pass
-    
+
     ## \brief Handle of changing component name.
     #
     def on_cellrenderer_comp_edited(self, renderer, path,
@@ -343,6 +365,14 @@ class comp_dock_ui(object):
     def on_switch_component_activate(self, *args):
         self._switch_component()
         self._drop_undo()
+        pass
+
+    ## \brief User clicks "State Machine" on context menu for a component.
+    #
+    def on_edit_FSM_activate(self, *args):
+        self._show_FSM_editor()
+        comp_name = self._current_component()
+        self._show_FSM_for_comp(comp_name)
         pass
     
     def on_add_timeline_clicked(self, *args):

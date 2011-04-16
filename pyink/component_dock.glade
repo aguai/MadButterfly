@@ -229,6 +229,15 @@
         <signal name="activate" handler="on_switch_component_activate"/>
       </object>
     </child>
+    <child>
+      <object class="GtkMenuItem" id="edit_FSM">
+        <property name="visible">True</property>
+        <property name="tooltip_text" translatable="yes">Edit FSM of the component.</property>
+        <property name="label" translatable="yes">State Machine</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_edit_FSM_activate"/>
+      </object>
+    </child>
   </object>
   <object class="GtkMenu" id="timelines_menu">
     <property name="visible">True</property>
