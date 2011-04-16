@@ -70,13 +70,16 @@ class comp_dock_base(object):
         components_model = self._components_model
         components_model.clear()
         
+        cur_comp_name = self._domview_ui.get_current_component()
+        
         all_comp_names = self._domview_ui.all_comp_names()
         for comp_name in all_comp_names:
             editable = False
-            components_model.append((comp_name, editable))
+            selected = comp_name == cur_comp_name
+            icon = 'gtk-apply'
+            components_model.append((comp_name, editable, selected, icon))
             pass
         
-        cur_comp_name = self._domview_ui.get_current_component()
         cur_comp_idx = all_comp_names.index(cur_comp_name)
         self._components_treeview.set_cursor((cur_comp_idx,))
         pass
@@ -89,12 +92,19 @@ class comp_dock_base(object):
         timelines_model = self._timelines_model
         timelines_model.clear()
 
+        cur_tl_name = self._domview_ui.get_current_timeline()
+        
         all_timeline_names = self._domview_ui.all_timeline_names()
         for timeline_name in all_timeline_names:
-            timelines_model.append((timeline_name, False))
+            if timeline_name == cur_tl_name:
+                timelines_model.append((timeline_name, False,
+                                        True, 'gtk-apply'))
+            else:
+                timelines_model.append((timeline_name, False,
+                                        False, 'gtk-apply'))
+                pass
             pass
 
-        cur_tl_name = self._domview_ui.get_current_timeline()
         cur_tl_idx = all_timeline_names.index(cur_tl_name)
         self._timelines_treeview.set_cursor((cur_tl_idx,))
         pass
@@ -108,7 +118,7 @@ class comp_dock_base(object):
 
     def dom_add_component(self, name):
         model = self._components_model
-        model.append((name, False))
+        model.append((name, False, False, 'gtk-apply'))
         pass
 
     def dom_rm_component(self, name):
@@ -128,7 +138,7 @@ class comp_dock_base(object):
 
     def dom_add_timeline(self, name):
         model = self._timelines_model
-        model.append((name, False))
+        model.append((name, False, False, 'gtk-apply'))
         pass
 
     def dom_rm_timeline(self, name):
@@ -221,9 +231,24 @@ class comp_dock_ui(object):
         model = self._components_model
         itr = model.get_iter(path)
         comp_name = model.get_value(itr, 0)
-        print comp_name
 
         self._domview_ui.rm_component(comp_name)
+        pass
+
+    def _sel_component(self, comp_name):
+        all_comp_names = self._domview_ui.all_comp_names()
+        sel_idx = all_comp_names.index(comp_name)
+        assert sel_idx >= 0
+        
+        for idx in range(len(all_comp_names)):
+            model = self._components_model
+            itr = model.get_iter((idx,))
+            if idx == sel_idx:
+                model.set_value(itr, 2, True)
+            else:
+                model.set_value(itr, 2, False)
+                pass
+            pass
         pass
 
     def _switch_component(self):
@@ -235,6 +260,10 @@ class comp_dock_ui(object):
         group = domview_ui.get_layer_group(0)
         desktop = self._desktop # from comp_dock_base
         desktop.setCurrentLayer(group.spitem)
+
+        self._sel_component(comp_name)
+        tl_name = self._current_timeline()
+        self._sel_timeline(tl_name)
         pass
     
     def _add_timeline(self):
@@ -270,11 +299,29 @@ class comp_dock_ui(object):
         self._domview_ui.rm_timeline(tl_name)
         pass
 
+    def _sel_timeline(self, tl_name):
+        all_tl_names = self._domview_ui.all_timeline_names()
+        sel_idx = all_tl_names.index(tl_name)
+        assert sel_idx >= 0
+        
+        for idx in range(len(all_tl_names)):
+            model = self._timelines_model
+            itr = model.get_iter((idx,))
+            if idx == sel_idx:
+                model.set_value(itr, 2, True)
+            else:
+                model.set_value(itr, 2, False)
+                pass
+            pass
+        pass
+
     def _switch_timeline(self):
         domview_ui = self._domview_ui
         
         timeline_name = self._current_timeline()
         domview_ui.switch_timeline(timeline_name)
+
+        self._sel_timeline(timeline_name)
         pass
 
     def _prepare_FSM_editor(self):
