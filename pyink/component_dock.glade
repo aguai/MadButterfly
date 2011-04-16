@@ -2,20 +2,28 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="components_model">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name editable -->
-      <column type="gboolean"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="timelines_model">
     <columns>
       <!-- column-name name -->
       <column type="gchararray"/>
       <!-- column-name editable -->
       <column type="gboolean"/>
+      <!-- column-name selected -->
+      <column type="gboolean"/>
+      <!-- column-name selicon -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="components_model">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name editable -->
+      <column type="gboolean"/>
+      <!-- column-name selected -->
+      <column type="gboolean"/>
+      <!-- column-name selicon -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window1">
@@ -35,6 +43,17 @@
                 <property name="model">components_model</property>
                 <signal name="button_press_event" handler="on_treeview_components_button_press_event"/>
                 <signal name="row_activated" handler="on_treeview_components_row_activated"/>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn3">
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf2"/>
+                      <attributes>
+                        <attribute name="visible">2</attribute>
+                        <attribute name="stock-id">3</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
                 <child>
                   <object class="GtkTreeViewColumn" id="treeviewcolumn1">
                     <property name="sizing">autosize</property>
@@ -128,8 +147,20 @@
                 <property name="search_column">1</property>
                 <property name="level_indentation">9</property>
                 <property name="enable_grid_lines">horizontal</property>
+                <property name="tooltip_column">0</property>
                 <signal name="button_press_event" handler="on_treeview_timelines_button_press_event"/>
                 <signal name="row_activated" handler="on_treeview_timelines_row_activated"/>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeviewcolumn4">
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf1"/>
+                      <attributes>
+                        <attribute name="visible">2</attribute>
+                        <attribute name="stock-id">3</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
                 <child>
                   <object class="GtkTreeViewColumn" id="treeviewcolumn2">
                     <property name="title">Action/Timeline Name</property>
