@@ -235,6 +235,10 @@ class comp_dock_ui(object):
         self._domview_ui.rm_component(comp_name)
         pass
 
+    ## \brief Hint user that given component is selected.
+    #
+    # Show an icon before the component name.
+    #
     def _sel_component(self, comp_name):
         all_comp_names = self._domview_ui.all_comp_names()
         sel_idx = all_comp_names.index(comp_name)
@@ -299,6 +303,10 @@ class comp_dock_ui(object):
         self._domview_ui.rm_timeline(tl_name)
         pass
 
+    ## \brief Hint user that given timeline is selected.
+    #
+    # Show an icon before the timeline name.
+    #
     def _sel_timeline(self, tl_name):
         all_tl_names = self._domview_ui.all_timeline_names()
         sel_idx = all_tl_names.index(tl_name)
