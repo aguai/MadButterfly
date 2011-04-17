@@ -329,7 +329,10 @@ class Component(object):
             return
         states_node = states_nodes[0]
         
-        self.fsm_start_state = states_node.getAttribute('start_state')
+        try:
+            self.fsm_start_state = states_node.getAttribute('start_state')
+        except:
+            pass
         
         state_nodes = [child
                        for child in states_node.childList
@@ -408,6 +411,15 @@ class Component(object):
         self.node.setAttribute('name', new_name)
         pass
 
+    def _create_states_node(self):
+        node = self.node
+        doc = self._comp_mgr._doc
+
+        states_node = doc.createElement('ns0:states')
+        node.addChild(states_node)
+        self.fsm_states_node = states_node
+        pass
+
     def get_start_state_name(self):
         return self.fsm_start_state
 
@@ -423,6 +435,10 @@ class Component(object):
         return self.fsm_states[name]
 
     def add_state(self, name):
+        if not self.fsm_states_node:
+            self._create_states_node()
+            pass
+        
         doc = self._comp_mgr._doc
         
         state = State(name)
@@ -430,8 +446,8 @@ class Component(object):
         self.fsm_states[name] = state
 
         state_node = state.create_node(doc)
-        node = self.node
-        node.addChild(state_node)
+        states_node = self.fsm_states_node
+        states_node.addChild(state_node)
         pass
 
     def rename_state(self, state_name, new_name):
@@ -448,8 +464,8 @@ class Component(object):
         del self.fsm_states[name]
 
         state_node = state.node
-        node = self.node
-        node.removeChild(state_node)
+        states_node = self.fsm_states_node
+        states_node.removeChild(state_node)
         pass
     pass
 
@@ -562,6 +578,7 @@ class component_manager(component_manager_ui_update):
 
             comp = Component(self, child)
             comp.parse_timelines()
+            comp.parse_states()
             
             self._components.append(comp)
             
