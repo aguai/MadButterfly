@@ -48,6 +48,208 @@ class Timeline(object):
     pass
 
 
+class Transition(object):
+    node = None
+    condition = None
+    target = None
+    action = None
+    
+    def __init__(self, node=None):
+        self.node = node
+        pass
+
+    def set_condition(self, cond):
+        node = self.node
+
+        node.setAttribute('condition', cond)
+        self.condition = cond
+        pass
+
+    def set_action(self, action):
+        self.action = action
+        node = self.node
+        node.setAttribute('action', action)
+        pass
+
+    def reparse(self):
+        condition = node.getAttribute('condition')
+        target = node.getAttribute('target')
+        try:
+            action = node.getAttribute('action')
+        except:
+            action = None
+            pass
+        
+        self.condition = condition
+        self.target = target
+        self.action = action
+        pass
+
+    def update_node(self):
+        node = self.node
+        node.setAttribute('condition', self.condition)
+        node.setAttribute('target', self.target)
+        if self.action:
+            node.setAttribute('action', self.action)
+            pass
+        pass
+
+    ## \brief Create a node according status of the object.
+    #
+    # A new node is created for the object, and attributes of the node
+    # is initialized with information from the object.
+    #
+    def create_node(self, doc):
+        node = doc.createElement('ns0:transition')
+        self.node = node
+        self.update_node()
+        
+        return node
+    
+    @staticmethod
+    def parse_transition(node):
+        trn = Transition(node)
+        trn.reparse()
+        return trn
+    pass
+
+
+## \brief A state in a FSM
+#
+# Every component can have a FSM to describe its behavior.  Every
+# state has an entry action and transitions to other states.  Every
+# transition can have a transition action.
+#
+# The FSM of a component is defined as a child of ns0:component node.
+# \verbatim
+# <ns0:component>
+#     <ns0:states start_state="UP">
+#         <ns0:state name="UP" entry_action="entry action">
+#             <ns0:transition target="DOWN"
+#                             condition="button_down" action="..."/>
+#         </ns0:state>
+#     </ns0:states>
+# </ns0:/component>
+# \endverbatim
+#
+class State(object):
+    name = None
+    entry_action = None
+    transitions = None
+    
+    def __init__(self, node):
+        self.node = node
+        pass
+
+    def rename(self, name):
+        self.name = name
+        self.node.setAttribute('name', name)
+        pass
+
+    def set_entry_action(self, action):
+        self.entry_action = action
+        self.node.setAttribute('entry_action', action)
+        pass
+
+    def reparse(self):
+        node = self.node
+        
+        name = node.getAttribute('name')
+        try:
+            entry_action = node.getAttribute('entry_action')
+        except:
+            entry_action = None
+            pass
+        
+        all_transitions = [Transition.parse_transition(child)
+                           for child in node.childList()
+                           if child.name() == 'ns0:transition']
+        transitions = dict([(trn.condition, trn)
+                            for trn in all_transitions])
+        
+        self.name = name
+        self.transitions = transitions
+        self.entry_action = entry_action
+        pass
+
+    def update_node(self):
+        node = self.node
+        
+        node.setAttribute('name', self.name)
+        if self.entry_action:
+            node.setAttribute('entry_action', self.entry_action)
+            pass
+
+        transitions = self.transitions or []
+        for trn in transitions:
+            trn.update_node()
+            pass
+        pass
+
+    def create_node(self, doc):
+        node = doc.createElement('ns0:state')
+        self.node = node
+
+        self.update_node()
+        
+        return node
+
+    @staticmethod
+    def parse_state(node):
+        state = State(node)
+        state.parse()
+        
+        return state
+
+    def change_transition_cond(self, old_cond, new_cond):
+        transitions = self.transitions
+        trn = transitions[old_cond]
+        del transitions[old_cond]
+        transitions[new_cond] = trn
+
+        trn.set_condition(new_cond)
+        pass
+
+    def add_transition(self, cond, target):
+        transitions = self.transitions
+        assert cond not in transitions
+        
+        node = self.node
+        
+        trn = Transition()
+        trn.condition = cond
+        trn.target = target
+        trn_node = trn.create_node(node.document())
+
+        node.addChild(trn_node)
+        transitions[cond] = trn
+        pass
+
+    def rm_transition(self, cond):
+        transitions = self.transitions
+        if cond not in transitions:
+            raise ValueError, \
+                'There is no transition defined for this condition (%s)' % \
+                (cond)
+        
+        trn = transitions[cond]
+        trn_node = trn.node
+        node = self.node
+        
+        node.removeChild(trn_node)
+        del transitions[cond]
+        pass
+
+    def all_transitions(self):
+        return self.transitions.keys()
+
+    def get_transition(self, cond):
+        transitions = self.transitions
+        transition = transitions[cond]
+        return transition
+    pass
+
+
 class Component(object):
     #
     # \param comp_node is None for main component.
@@ -57,6 +259,9 @@ class Component(object):
         self.node = comp_node
         self.layers = []
         self.timelines = []
+        self.fsm_states = {}
+        self.fsm_states_node = None
+        self.fsm_start_state = None
 
         if comp_node:
             self._initialize_comp()
@@ -108,6 +313,31 @@ class Component(object):
                 print '    ' + tl.name()
                 pass
             pass
+        pass
+
+    ## \brief Parse FSM from a ns0:states node.
+    #
+    def parse_states(self):
+        comp_node = self.node
+        assert (not comp_node) or comp_node.name() == 'ns0:component'
+        
+        states_nodes = [node
+                        for node in comp_node.childList()
+                        if node.name() == 'ns0:states']
+        if not states_nodes:
+            self.fsm_states = {}
+            return
+        states_node = states_nodes[0]
+        
+        self.fsm_start_state = states_node.getAttribute('start_state')
+        
+        state_nodes = [child
+                       for child in states_node.childList
+                       if child.name() == 'ns0:state']
+        states = [State.parse_state(node) for state_node in state_nodes]
+        self.fsm_states = dict([(state.name, state) for state in states])
+
+        self.fsm_states_node = states_node
         pass
 
     def get_timeline(self, name):
@@ -176,6 +406,50 @@ class Component(object):
 
     def rename(self, new_name):
         self.node.setAttribute('name', new_name)
+        pass
+
+    def get_start_state_name(self):
+        return self.fsm_start_state
+
+    def set_start_state(self, state_name):
+        assert state_name in self.fsm_states
+        self.fsm_start_state = state_name
+        pass
+
+    def all_state_names(self):
+        return self.fsm_states.keys()
+
+    def get_state(self, name):
+        return self.fsm_states[name]
+
+    def add_state(self, name):
+        doc = self._comp_mgr._doc
+        
+        state = State(name)
+        state.transitions = []
+        self.fsm_states[name] = state
+
+        state_node = state.create_node(doc)
+        node = self.node
+        node.addChild(state_node)
+        pass
+
+    def rename_state(self, state_name, new_name):
+        state = self.fsm_states[state_name]
+        del self.fsm_states[state_name]
+        self.fsm_states[new_name] = state
+        
+        state.rename(new_name)
+        pass
+
+    def rm_state(self, name):
+        fsm_states = self.fsm_states
+        state = fsm_states[name]
+        del self.fsm_states[name]
+
+        state_node = state.node
+        node = self.node
+        node.removeChild(state_node)
         pass
     pass
 
@@ -246,6 +520,7 @@ class component_manager(component_manager_ui_update):
     _root = require
     _layers = require
     _layers_parent = require
+    _cur_comp = require
     new_id = require
     get_node = require
     reset = require
@@ -256,7 +531,6 @@ class component_manager(component_manager_ui_update):
         self._components = []
         self._comp_names = set()
         self._main_comp = None
-        self._cur_comp = None
         self._cur_timeline = None
         self._components_group = None
         pass
@@ -704,6 +978,87 @@ class component_manager(component_manager_ui_update):
             pass
 
         return cur_layer_idx, cur_frame_idx
+    pass
+
+
+## \brief A trait for management FSM associated with current component.
+#
+@trait
+class FSM_manager(object):
+    _cur_comp = require
+
+    def __init__(self):
+        super(FSM_manager, self).__init__()
+        pass
+    
+    def all_state_names(self):
+        return self._cur_comp.all_state_names()
+
+    def get_start_state_name(self):
+        return self._cur_comp.get_start_state_name()
+
+    ## \brief To return state object for the given name.
+    #
+    # This method should only be used by component_manager internally.
+    #
+    def _get_state(self, state_name):
+        return self._cur_comp.get_state(state_name)
+
+    def rm_state(self, state_name):
+        self._cur_comp.rm_state(state_name)
+        pass
+
+    def add_state(self, state_name):
+        self._cur_comp.add_state(state_name)
+        pass
+
+    def rename_state(self, state_name, new_name):
+        self._cur_comp.rename_state(state_name, new_name)
+        pass
+
+    def set_start_state(self, state_name):
+        self._cur_comp.set_start_state(state_name)
+        pass
+
+    def set_state_entry_action(self, state_name, entry_action):
+        state = self._get_state(state_name)
+        state.set_entry_action(entry_action)
+        pass
+
+    def all_transitions(self, state_name):
+        state = self._get_state(state_name)
+        trn_names = state.all_transitions()
+        return trn_names
+
+    def add_transition(self, state_name, cond, target):
+        state = self._get_state(state_name)
+        state.add_transition(cond, target)
+        pass
+
+    def rm_transition(self, state_name, cond):
+        state = self._get_state(state_name)
+        state.rm_transition(cond)
+        pass
+
+    def change_transition_cond(self, state_name, old_cond, new_cond):
+        state = self._get_state(state_name)
+        state.change_transition_cond(old_cond, new_cond)
+        pass
+
+    def get_transition(self, state_name, cond):
+        state = self._get_state(state_name)
+        trn = state.get_transition(cond)
+        
+        cond = trn.condition
+        target = trn.target
+        action = trn.action
+        
+        return cond, target, action
+
+    def set_transition_action(self, state_name, cond, action):
+        trn = state.get_transition(state_name, cond)
+        trn.set_action(action)
+        pass
     pass
 
 
@@ -1274,7 +1629,7 @@ class layers_parser(object):
 #
 @composite
 class domview(domview_monitor):
-    use_traits = (component_manager, layers_parser)
+    use_traits = (component_manager, layers_parser, FSM_manager)
     
     method_map_traits = {component_manager._start_component_manager:
                              '_start_component_manager'}
@@ -1282,6 +1637,8 @@ class domview(domview_monitor):
     # Declare variables, here, for keeping tracking
     _doc = None
     _root = None
+    # Required by component_manager and FSM_manager
+    _cur_comp = None
     
     def __init__(self, *args, **kws):
 	super(domview, self).__init__()
