@@ -19,7 +19,11 @@ class require(object):
 
     def __set__(self, instance, value):
         attrname = instance._trait_attrname_map[self]
-        composite_obj = instance._trait_composite_obj
+        try:
+            composite_obj = instance._trait_composite_obj
+        except AttributeError:
+            raise RuntimeError, \
+                '%s does not finish its initialization' % (repr(instance))
         setattr(composite_obj, attrname, value)
         pass
     pass
