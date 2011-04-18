@@ -445,6 +445,10 @@ class Component(object):
         
         doc = self._comp_mgr._doc
         
+        if name in self.fsm_states:
+            raise KeyError, \
+                'Add a state with a name (%s) been used' % (name)
+        
         state = State()
         state.name = name
         self.fsm_states[name] = state
