@@ -510,6 +510,63 @@ class domview_ui_comp(object):
     pass
 
 
+## \brief FSM management interface for domview_ui.
+#
+class domview_ui_FSM(object):
+    def __init__(self):
+        super(domview_ui_FSM, self).__init__()
+        pass
+    
+    def all_state_names(self):
+        return self._dom.all_state_names()
+
+    def get_start_state_name(self):
+        return self._dom.get_start_state_name()
+
+    def rm_state(self, state_name):
+        self._dom.rm_state(state_name)
+        pass
+
+    def add_state(self, state_name):
+        self._dom.add_state(state_name)
+        pass
+
+    def rename_state(self, state_name, new_name):
+        self._dom.rename_state(state_name, new_name)
+        pass
+
+    def set_start_state(self, state_name):
+        self._dom.set_start_state(state_name)
+        pass
+
+    def set_state_entry_action(self, state_name, entry_action):
+        self._dom.set_entry_action(state_name, entry_action)
+        pass
+
+    def all_transitions(self, state_name):
+        return self._dom.all_transitions(state_name)
+
+    def add_transition(self, state_name, cond, target):
+        self._dom.add_transition(state_name, cond, target)
+        pass
+
+    def rm_transition(self, state_name, cond):
+        self._dom.rm_transition(state_name, cond)
+        pass
+
+    def change_transition_cond(self, state_name, old_cond, new_cond):
+        self._dom.change_transition_cond(state_name, old_cond, new_cond)
+        pass
+
+    def get_transition(self, state_name, cond):
+        return self._dom.get_transition(state_name, cond)
+
+    def set_transition_action(self, state_name, cond, action):
+        self._dom.set_transition_action(state_name, cond, action)
+        pass
+    pass
+
+
 ## \brief Bridge of DOM-tree to syncrhonize data-model and UI.
 #
 # This class is a wrapper
@@ -988,7 +1045,7 @@ class domview_internal(object):
 
 ## \brief Oven domview_ui and all mix-ins
 #
-class domview_ui_oven(domview_ui, domview_ui_comp):
+class domview_ui_oven(domview_ui, domview_ui_comp, domview_ui_FSM):
     def __init__(self):
         super(domview_ui_oven, self).__init__()
         pass
