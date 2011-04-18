@@ -137,8 +137,9 @@ class State(object):
     entry_action = None
     transitions = None
     
-    def __init__(self, node):
+    def __init__(self, node=None):
         self.node = node
+        self.transitions = {}
         pass
 
     def rename(self, name):
@@ -180,7 +181,7 @@ class State(object):
             node.setAttribute('entry_action', self.entry_action)
             pass
 
-        transitions = self.transitions or []
+        transitions = self.transitions
         for trn in transitions:
             trn.update_node()
             pass
@@ -221,7 +222,7 @@ class State(object):
         trn.target = target
         trn_node = trn.create_node(node.document())
 
-        node.addChild(trn_node)
+        node.appendChild(trn_node)
         transitions[cond] = trn
         pass
 
@@ -286,6 +287,9 @@ class Component(object):
             pass
         pass
 
+    def _get_comp_node(self):
+        return self.node or self._comp_mgr._metadata_node
+
     def name(self):
         if self.node:
             name = self.node.getAttribute('name')
@@ -301,11 +305,11 @@ class Component(object):
     def parse_timelines(self):
         self.timelines[:] = []
         
-        if self.node:
+        if self.node:           # main component has None value for self.node
             assert self.node.name() == 'ns0:component'
             pass
         
-        comp_node = self.node
+        comp_node = self._get_comp_node()
         for child in comp_node.childList():
             if child.name() == 'ns0:scenes':
                 tl = Timeline(child)
@@ -318,7 +322,7 @@ class Component(object):
     ## \brief Parse FSM from a ns0:states node.
     #
     def parse_states(self):
-        comp_node = self.node
+        comp_node = self._get_comp_node()
         assert (not comp_node) or comp_node.name() == 'ns0:component'
         
         states_nodes = [node
@@ -363,7 +367,7 @@ class Component(object):
                 'try add a timeline with duplicated name - %s' % (name)
         
         doc = self._comp_mgr._doc
-        comp_node = self.node
+        comp_node = self._get_comp_node()
         
         scenes_node = doc.createElement('ns0:scenes')
         scenes_node.setAttribute('name', name)
@@ -391,7 +395,7 @@ class Component(object):
     def rm_timeline(self, name):
         for i, tl in enumerate(self.timelines):
             if tl.name() == name:
-                comp_node = self.node
+                comp_node = self._get_comp_node()
                 comp_node.removeChild(tl.scenes_node)
                 
                 del self.timelines[i]
@@ -412,11 +416,11 @@ class Component(object):
         pass
 
     def _create_states_node(self):
-        node = self.node
+        node = self._get_comp_node()
         doc = self._comp_mgr._doc
 
         states_node = doc.createElement('ns0:states')
-        node.addChild(states_node)
+        node.appendChild(states_node)
         self.fsm_states_node = states_node
         pass
 
@@ -441,13 +445,13 @@ class Component(object):
         
         doc = self._comp_mgr._doc
         
-        state = State(name)
-        state.transitions = []
+        state = State()
+        state.name = name
         self.fsm_states[name] = state
 
         state_node = state.create_node(doc)
         states_node = self.fsm_states_node
-        states_node.addChild(state_node)
+        states_node.appendChild(state_node)
         pass
 
     def rename_state(self, state_name, new_name):

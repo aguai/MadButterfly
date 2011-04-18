@@ -66,6 +66,8 @@ class FSM_window(FSM_window_base):
         super(FSM_window, self).__init__()
 
         self._locker = domview_ui
+
+        self._domview = domview_ui
         
         self._close_cb = close_cb # callback to close editor window (hide)
         self._destroy_cb = destroy_cb # callback to destroy editor window
@@ -85,6 +87,13 @@ class FSM_window(FSM_window_base):
     
     def on_FSM_main_win_delete_event(self, *args):
         self._destroy_cb()
+        pass
+
+    def on_add_state_toggled(self, *args):
+        domview = self._domview
+        domview.add_state('test0')
+        domview.add_state('test1')
+        domview.add_transition('test0', 'event1', 'test1')
         pass
     pass
 
