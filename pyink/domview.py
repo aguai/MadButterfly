@@ -73,9 +73,9 @@ class Transition(object):
         pass
 
     def set_path(self, path):
-        self.paht = path
+        self.path = path
         node = self.node
-        path_txt = ' '.join([str(c) for c in path.strip().split()])
+        path_txt = ' '.join([str(c) for c in path])
         node.setAttribute('path', path_txt)
         pass
 
@@ -1167,12 +1167,14 @@ class FSM_manager(object):
         return cond, target, action, path
 
     def set_transition_action(self, state_name, cond, action):
-        trn = state.get_transition(state_name, cond)
+        state = self._get_state(state_name)
+        trn = state.get_transition(cond)
         trn.set_action(action)
         pass
 
     def set_transition_path(self, state_name, cond, path):
-        trn = state.get_transition(state_name, cond)
+        state = self._get_state(state_name)
+        trn = state.get_transition(cond)
         trn.set_path(path)
         pass
     pass
