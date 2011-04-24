@@ -293,6 +293,7 @@ class FSM_window(FSM_window_base):
 
     def _clear_view(self):
         root = self._root()
+        root.setAttribute('inkscape:groupmode', 'layer')
         
         children = [child for child in root.childList()
                     if child.name() == 'svg:g']
@@ -338,6 +339,9 @@ class FSM_window(FSM_window_base):
         pass
 
     def on_add_state_toggled(self, *args):
+        pass
+
+    def _install_test_data(self):
         domview = self._domview
         
         view = self._view_widget.view
@@ -354,7 +358,6 @@ class FSM_window(FSM_window_base):
         
         print root_node.name()
         print root_node.childList()[-1].name()
-        root_node.setAttribute('inkscape:groupmode', 'layer')
         root_node.appendChild(line_node)
 
         def show_msg(*args, **kws):
@@ -378,8 +381,6 @@ class FSM_window(FSM_window_base):
                                                        240, 180,
                                                        260, 180,
                                                        300, 130))
-        self._update_view()
-        
         state = FSM_state('test1')
         state.init(rdoc, domview)
         state._draw_state_real(root_node, 'test1', 40, 100, 50)
@@ -390,6 +391,13 @@ class FSM_window(FSM_window_base):
                                               140, 120,
                                               160, 120,
                                               200, 100))
+        pass
+
+    def show(self):
+        self._install_test_data()
+        self._install_test_data = lambda: None
+        self._update_view()
+        super(FSM_window, self).show()
         pass
     pass
 
