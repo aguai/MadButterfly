@@ -124,13 +124,12 @@
                 <property name="icon_size">1</property>
                 <property name="icon_size_set">True</property>
                 <child>
-                  <object class="GtkToggleToolButton" id="add_state">
+                  <object class="GtkRadioToolButton" id="add_state">
                     <property name="visible">True</property>
                     <property name="tooltip_text" translatable="yes">Add state</property>
                     <property name="label" translatable="yes">Add State</property>
                     <property name="use_underline">True</property>
                     <property name="stock_id">gtk-add</property>
-                    <signal name="toggled" handler="on_add_state_toggled"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -138,13 +137,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkToggleToolButton" id="move_state">
+                  <object class="GtkRadioToolButton" id="move_state">
                     <property name="visible">True</property>
                     <property name="tooltip_text" translatable="yes">Move or select a state</property>
                     <property name="label" translatable="yes">select &amp; move</property>
                     <property name="use_underline">True</property>
                     <property name="icon_name">widget-gtk-alignment</property>
-                    <signal name="toggled" handler="on_move_state_toggled"/>
+                    <property name="group">add_state</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
