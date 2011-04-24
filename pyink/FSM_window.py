@@ -139,6 +139,13 @@ class FSM_transition(object):
         parent = trn_g.parent()
         parent.removeChild(trn_g)
         pass
+
+    def update(self):
+        path = self.path
+        arrow_node = self._arrow_node
+        path_node = self._path_node
+        self._update_graph(path, arrow_node, path_node)
+        pass
     pass
 
 class FSM_state(object):
@@ -243,6 +250,17 @@ class FSM_state(object):
         state_g = self.state_g
         parent = state_g.parent()
         parent.removeChild(state_g)
+        pass
+
+    def update(self):
+        text_node = self._text_node
+        text_content = self._text_content
+        circle_node = self._circle_node
+        state_name = self.state_name
+        r = self.r
+        x, y = self.xy
+        self._update_graph(text_node, text_content, circle_node,
+                           r, x, y)
         pass
     pass
 
