@@ -543,6 +543,26 @@ class domview_ui_FSM(object):
         self._dom.set_entry_action(state_name, entry_action)
         pass
 
+    def set_state_r(self, state_name, r):
+        self._dom.set_state_r(state_name, r)
+        pass
+
+    def set_state_xy(self, state_name, x, y):
+        self._dom.set_state_xy(state_name, x, y)
+        pass
+
+    def get_state_entry_action(self, state_name):
+        action = self._dom.get_state_entry_action(state_name)
+        return action
+
+    def get_state_r(self, state_name):
+        r = self._dom.get_state_r(state_name)
+        return r
+
+    def get_state_xy(self, state_name):
+        xy = self._dom.get_state_xy(state_name)
+        return xy
+
     def all_transitions(self, state_name):
         return self._dom.all_transitions(state_name)
 
@@ -563,6 +583,10 @@ class domview_ui_FSM(object):
 
     def set_transition_action(self, state_name, cond, action):
         self._dom.set_transition_action(state_name, cond, action)
+        pass
+    
+    def set_transition_path(self, state_name, cond, path):
+        self._dom.set_transition_path(state_name, cond, path)
         pass
     pass
 
