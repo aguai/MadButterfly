@@ -53,6 +53,7 @@ class Transition(object):
     condition = None
     target = None
     action = None
+    path = None
     
     def __init__(self, node=None):
         self.node = node
@@ -71,6 +72,13 @@ class Transition(object):
         node.setAttribute('action', action)
         pass
 
+    def set_path(self, path):
+        self.paht = path
+        node = self.node
+        path_txt = ' '.join([str(c) for c in path.strip().split()])
+        node.setAttribute('path', path_txt)
+        pass
+
     def reparse(self):
         condition = node.getAttribute('condition')
         target = node.getAttribute('target')
@@ -79,10 +87,17 @@ class Transition(object):
         except:
             action = None
             pass
+        try:
+            path = node.getAttribute('path').strip().split()
+            path = [float(c) for c in path]
+        except:
+            path = None
+            pass
         
         self.condition = condition
         self.target = target
         self.action = action
+        self.path = path
         pass
 
     def update_node(self):
@@ -91,6 +106,9 @@ class Transition(object):
         node.setAttribute('target', self.target)
         if self.action:
             node.setAttribute('action', self.action)
+            pass
+        if self.path:
+            node.setAttribute('path', self.path)
             pass
         pass
 
@@ -136,6 +154,9 @@ class State(object):
     name = None
     entry_action = None
     transitions = None
+    r = None
+    x = 0
+    y = 0
     
     def __init__(self, node=None):
         self.node = node
@@ -152,6 +173,18 @@ class State(object):
         self.node.setAttribute('entry_action', action)
         pass
 
+    def set_r(self, r):
+        self.r = r
+        self.node.setAttribute('r', str(r))
+        pass
+
+    def set_xy(self, x, y):
+        self.x = x
+        self.y = y
+        self.node.setAttribute('x', str(x))
+        self.node.setAttribute('y', str(y))
+        pass
+
     def reparse(self):
         node = self.node
         
@@ -160,6 +193,21 @@ class State(object):
             entry_action = node.getAttribute('entry_action')
         except:
             entry_action = None
+            pass
+        try:
+            r = float(node.getAttribute('r'))
+        except:
+            r = None
+            pass
+        try:
+            x = float(node.getAttribute('x'))
+        except:
+            x = 0
+            pass
+        try:
+            y = float(node.getAttribute('y'))
+        except:
+            y = 0
             pass
         
         all_transitions = [Transition.parse_transition(child)
@@ -171,6 +219,9 @@ class State(object):
         self.name = name
         self.transitions = transitions
         self.entry_action = entry_action
+        self.r = r
+        self.x = x
+        self.y = y
         pass
 
     def update_node(self):
@@ -179,6 +230,15 @@ class State(object):
         node.setAttribute('name', self.name)
         if self.entry_action:
             node.setAttribute('entry_action', self.entry_action)
+            pass
+        if self.r:
+            node.setAttribute('r', self.r)
+            pass
+        if self.x:
+            node.setAttribute('x', self.x)
+            pass
+        if self.y:
+            node.setAttribute('y', self.y)
             pass
 
         transitions = self.transitions
@@ -1050,6 +1110,31 @@ class FSM_manager(object):
         state.set_entry_action(entry_action)
         pass
 
+    def set_state_r(self, state_name, r):
+        state = self._get_state(state_name)
+        state.set_r(r)
+        pass
+
+    def set_state_xy(self, state_name, x, y):
+        state = self._get_state(state_name)
+        state.set_xy(x, y)
+        pass
+
+    def get_state_entry_action(self, state_name):
+        state = self._get_state(state_name)
+        action = state.get_entry_action()
+        return action
+
+    def get_state_r(self, state_name):
+        state = self._get_state(state_name)
+        r = state.r
+        return r
+
+    def get_state_xy(self, state_name):
+        state = self._get_state(state_name)
+        xy = state.x, state.y
+        return xy
+
     def all_transitions(self, state_name):
         state = self._get_state(state_name)
         trn_names = state.all_transitions()
@@ -1077,12 +1162,18 @@ class FSM_manager(object):
         cond = trn.condition
         target = trn.target
         action = trn.action
+        path = trn.path
         
-        return cond, target, action
+        return cond, target, action, path
 
     def set_transition_action(self, state_name, cond, action):
         trn = state.get_transition(state_name, cond)
         trn.set_action(action)
+        pass
+
+    def set_transition_path(self, state_name, cond, path):
+        trn = state.get_transition(state_name, cond)
+        trn.set_path(path)
         pass
     pass
 
