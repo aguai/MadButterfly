@@ -165,7 +165,7 @@ class FSM_window(FSM_window_base):
         self._state_nodes[state_name] = state_g
 
         transitions = [domview.get_transition(state_name, trn_name)[3]
-                       for trn_name in domview.all_transitions()]
+                       for trn_name in domview.all_transitions(state_name)]
         for trn in transitions:
             self._draw_transition_real(state_g, trn)
             pass
@@ -200,9 +200,6 @@ class FSM_window(FSM_window_base):
 
     def on_add_state_toggled(self, *args):
         domview = self._domview
-        domview.add_state('test0')
-        domview.add_state('test1')
-        domview.add_transition('test0', 'event1', 'test1')
         
         view = self._view_widget.view
         doc = view.doc()
@@ -229,6 +226,21 @@ class FSM_window(FSM_window_base):
         hdl_id = line_node.spitem.connect('mouse-event', show_msg)
         print hdl_id
 
+        state1 = 'state 1'
+        domview.add_state(state1)
+        domview.set_state_r(state1, 50)
+        domview.set_state_xy(state1, 200, 100)
+        state2 = 'state 2'
+        domview.add_state(state2)
+        domview.set_state_r(state2, 30)
+        domview.set_state_xy(state2, 300, 100)
+        domview.add_transition(state1, 'event1', state2)
+        domview.set_transition_path(state1, 'event1', (200, 150,
+                                                       240, 180,
+                                                       260, 180,
+                                                       300, 130))
+        self._update_view()
+        
         state_g = self._draw_state_real('test1', 40, 100, 50)
         self._draw_transition_real(state_g, (100, 100, 140, 120, 160, 120, 200, 100))
         pass
