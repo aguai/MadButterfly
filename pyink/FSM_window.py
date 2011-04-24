@@ -64,6 +64,8 @@ class FSM_transition(object):
     _state = None
     trn_cond = None
     trn_g = None
+    _arrow_node = None
+    _path_node = None
 
     def __init__(self, trn_cond):
        self.trn_cond = trn_cond
@@ -74,19 +76,15 @@ class FSM_transition(object):
         self._domview = domview
         self._state = state
         pass
-    
-    def _draw_transition_real(self, parent, path):
+
+    @staticmethod
+    def _update_graph(path, arrow_node, path_node):
         import math
-        doc = self._doc
-
-        trn_g = doc.createElement('svg:g')
-
-        path_node = doc.createElement('svg:path')
+        
         path_txt = 'M %f,%f C %f,%f %f,%f %f,%f' % tuple(path)
         path_node.setAttribute('d', path_txt)
         path_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
                                'fill: none')
-        trn_g.appendChild(path_node)
 
         # c0 c1 c2 c3 of cubic curve
         c3 = (path[6], path[7])
@@ -99,16 +97,26 @@ class FSM_transition(object):
                      -adir[0] * 10 + odir[0] * 4, -adir[1] * 10 + odir[1] * 4,
                      -odir[0] * 8, -odir[1] * 8)
         arrow_txt = 'M %f,%f l %f,%f l %f,%f z' % arrow_pts
-        arrow_node = doc.createElement('svg:path')
         arrow_node.setAttribute('d', arrow_txt)
         arrow_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
                                 'fill: #000000')
+        pass
+    
+    def _draw_transition_real(self, parent, path):
+        doc = self._doc
+
+        trn_g = doc.createElement('svg:g')
+
+        path_node = doc.createElement('svg:path')
+        arrow_node = doc.createElement('svg:path')
+        self._update_graph(path, arrow_node, path_node)
+
+        trn_g.appendChild(path_node)
         trn_g.appendChild(arrow_node)
 
         parent.appendChild(trn_g)
 
-        self.trn_g = trn_g
-        pass
+        return trn_g, path_node, arrow_node
 
     @property
     def path(self):
@@ -120,7 +128,16 @@ class FSM_transition(object):
 
     def draw(self, parent):
         path = self.path
-        self._draw_transition_real(parent, path)
+        trn_g, arrow_node, path_node = self._draw_transition_real(parent, path)
+        self.trn_g = trn_g
+        self._arrow_node = arrow_node
+        self._path_node = path_node
+        pass
+
+    def clear(self):
+        trn_g = self.trn_g
+        parent = trn_g.parent()
+        parent.removeChild(trn_g)
         pass
     pass
 
@@ -129,6 +146,8 @@ class FSM_state(object):
     _domview = None
     state_name = None
     state_g = None
+    _text_node = None
+    _circle_node = None
     transitions = None
     
     def __init__(self, state_name):
@@ -140,35 +159,43 @@ class FSM_state(object):
         self._doc = doc
         self._domview = domview
         pass
+
+    @staticmethod
+    def _update_graph(text_node, text_content, circle_node,
+                      state_name, r, x, y):
+        circle_node.setAttribute('r', str(r))
+        circle_node.setAttribute('cx', str(x))
+        circle_node.setAttribute('cy', str(y))
+        circle_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
+                                 'fill: #ffffff')
+
+        text_node.setAttribute('font-size', '16')
+        text_node.setAttribute('style', 'stroke: #000000; fill: #000000')
+
+        text_content.setContent(state_name)
+
+        tx, ty, tw, th = text_node.getBBox()
+        text_node.setAttribute('x', str(x - tw / 2))
+        text_node.setAttribute('y', str(y + th / 2))
+        pass
     
     def _draw_state_real(self, parent, state_name, r, x, y):
         doc = self._doc
         
         state_g = doc.createElement('svg:g')
-        state_g.setAttribute('inkscape:groupmode', 'layer')
         
-        circle = doc.createElement('svg:circle')
-        circle.setAttribute('r', str(r))
-        circle.setAttribute('cx', str(x))
-        circle.setAttribute('cy', str(y))
-        circle.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
-                            'fill: #ffffff')
-        state_g.appendChild(circle)
-
         text = doc.createElement('svg:text')
+        circle = doc.createElement('svg:circle')
         text_content = doc.createTextNode(state_name)
+
         text.appendChild(text_content)
-        text.setAttribute('font-size', '16')
-        text.setAttribute('style', 'stroke: #000000; fill: #000000')
+        state_g.appendChild(circle)
         state_g.appendChild(text)
-
         parent.appendChild(state_g)
-        
-        tx, ty, tw, th = text.getBBox()
-        text.setAttribute('x', str(x - tw / 2))
-        text.setAttribute('y', str(y + th / 2))
 
-        return state_g
+        self._update_graph(text, text_content, circle, state_name, r, x, y)
+
+        return state_g, text, text_content, circle
 
     @property
     def r(self):
@@ -197,8 +224,12 @@ class FSM_state(object):
 
         r = self.r
         x, y = self.xy
-        state_g = self._draw_state_real(parent, state_name, r, x, y)
+        state_g, text_node, text_content, circle_node = \
+            self._draw_state_real(parent, state_name, r, x, y)
         self.state_g = state_g
+        self._text_node = text_node
+        self._text_content = text_content
+        self._circle_node = circle_node
 
         for trn_cond in self.all_transitions:
             trn = FSM_transition(trn_cond)
@@ -206,6 +237,12 @@ class FSM_state(object):
             trn.draw(parent)
             self.transitions[trn_cond] = trn
             pass
+        pass
+
+    def clear(self):
+        state_g = self.state_g
+        parent = state_g.parent()
+        parent.removeChild(state_g)
         pass
     pass
 
