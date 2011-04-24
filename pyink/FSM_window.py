@@ -61,6 +61,8 @@ class FSM_window_base(object):
 class FSM_transition(object):
     _doc = None
     _domview = None
+    _fsm_layer = None
+    _control_layer = None
     _state = None
     trn_cond = None
     trn_g = None
@@ -71,10 +73,12 @@ class FSM_transition(object):
        self.trn_cond = trn_cond
        pass
 
-    def init(self, doc, domview, state):
+    def init(self, doc, domview, state, fsm_layer, control_layer):
         self._doc = doc
         self._domview = domview
         self._state = state
+        self._fsm_layer = fsm_layer
+        self._control_layer = control_layer
         pass
 
     @staticmethod
@@ -151,6 +155,8 @@ class FSM_transition(object):
 class FSM_state(object):
     _doc = None
     _domview = None
+    _fsm_layer = None
+    _control_layer = None
     state_name = None
     state_g = None
     _text_node = None
@@ -162,9 +168,11 @@ class FSM_state(object):
         self.transitions = {}
         pass
 
-    def init(self, doc, domview):
+    def init(self, doc, domview, fsm_layer, control_layer):
         self._doc = doc
         self._domview = domview
+        self._fsm_layer = fsm_layer
+        self._control_layer = control_layer
         pass
 
     @staticmethod
@@ -240,7 +248,8 @@ class FSM_state(object):
 
         for trn_cond in self.all_transitions:
             trn = FSM_transition(trn_cond)
-            trn.init(self._doc, domview, self)
+            trn.init(self._doc, domview, self,
+                     self._fsm_layer, self._control_layer)
             trn.draw(parent)
             self.transitions[trn_cond] = trn
             pass
@@ -267,6 +276,12 @@ class FSM_state(object):
 class FSM_window(FSM_window_base):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
+
+    _background = None
+    _fsm_layer = None
+    _control_layer = None
+    width = 1024
+    height = 768
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
         super(FSM_window, self).__init__()
@@ -278,6 +293,32 @@ class FSM_window(FSM_window_base):
         
         self._close_cb = close_cb # callback to close editor window (hide)
         self._destroy_cb = destroy_cb # callback to destroy editor window
+        pass
+
+    def _init_layers(self):
+        doc = self._doc()
+        root = self._root()
+        
+        root.setAttribute('inkscape:groupmode', 'layer')
+        
+        background = doc.createElement('svg:rect')
+        background.setAttribute('x', '0')
+        background.setAttribute('y', '0')
+        background.setAttribute('width', str(self.width))
+        background.setAttribute('height', str(self.height))
+        background.setAttribute('style', 'fill: #ffffff')
+        root.appendChild(background)
+        self._background = background
+        
+        fsm_layer = doc.createElement('svg:g')
+        fsm_layer.setAttribute('inkscape:groupmode', 'layer')
+        root.appendChild(fsm_layer)
+        self._fsm_layer = fsm_layer
+
+        control_layer = doc.createElement('svg:g')
+        control_layer.setAttribute('inkscape:groupmode', 'layer')
+        root.appendChild(control_layer)
+        self._control_layer = control_layer
         pass
 
     def _doc(self):
@@ -292,13 +333,15 @@ class FSM_window(FSM_window_base):
         return root
 
     def _clear_view(self):
-        root = self._root()
-        root.setAttribute('inkscape:groupmode', 'layer')
+        if not self._background:
+            self._init_layers()
+            return
         
-        children = [child for child in root.childList()
-                    if child.name() == 'svg:g']
+        children = [child for child in self._fsm_layer.childList()] + \
+            [child for child in self._control_layer.childList()]
         for child in children:
-            root.removeChild(child)
+            parent = child.parent()
+            parent.removeChild(child)
             pass
 
         self._states = {}
@@ -309,15 +352,15 @@ class FSM_window(FSM_window_base):
         
         domview = self._domview
         doc = self._doc()
-        root = self._root()
+        fsm_layer = self._fsm_layer
         
         state_names = domview.all_state_names()
         for state_name in state_names:
             state = FSM_state(state_name)
-            state.init(doc, domview)
+            state.init(doc, domview, self._fsm_layer, self._control_layer)
             self._states[state_name] = state
             
-            state.draw(root)
+            state.draw(fsm_layer)
             pass
         pass
 
@@ -342,6 +385,8 @@ class FSM_window(FSM_window_base):
         pass
 
     def _install_test_data(self):
+        self._init_layers()
+        
         domview = self._domview
         
         view = self._view_widget.view
@@ -356,8 +401,6 @@ class FSM_window(FSM_window_base):
         line_node.setAttribute('y2', '100')
         line_node.setAttribute('style', 'stroke: #000000; stroke-width:2')
         
-        print root_node.name()
-        print root_node.childList()[-1].name()
         root_node.appendChild(line_node)
 
         def show_msg(*args, **kws):
@@ -381,16 +424,6 @@ class FSM_window(FSM_window_base):
                                                        240, 180,
                                                        260, 180,
                                                        300, 130))
-        state = FSM_state('test1')
-        state.init(rdoc, domview)
-        state._draw_state_real(root_node, 'test1', 40, 100, 50)
-
-        trn = FSM_transition('event1')
-        trn.init(rdoc, domview, state)
-        trn._draw_transition_real(root_node, (100, 100,
-                                              140, 120,
-                                              160, 120,
-                                              200, 100))
         pass
 
     def show(self):
