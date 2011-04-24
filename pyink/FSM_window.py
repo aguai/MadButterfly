@@ -58,6 +58,157 @@ class FSM_window_base(object):
         pass
     pass
 
+class FSM_transition(object):
+    _doc = None
+    _domview = None
+    _state = None
+    trn_cond = None
+    trn_g = None
+
+    def __init__(self, trn_cond):
+       self.trn_cond = trn_cond
+       pass
+
+    def init(self, doc, domview, state):
+        self._doc = doc
+        self._domview = domview
+        self._state = state
+        pass
+    
+    def _draw_transition_real(self, parent, path):
+        import math
+        doc = self._doc
+
+        trn_g = doc.createElement('svg:g')
+
+        path_node = doc.createElement('svg:path')
+        path_txt = 'M %f,%f C %f,%f %f,%f %f,%f' % tuple(path)
+        path_node.setAttribute('d', path_txt)
+        path_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
+                               'fill: none')
+        trn_g.appendChild(path_node)
+
+        # c0 c1 c2 c3 of cubic curve
+        c3 = (path[6], path[7])
+        c2 = (path[4], path[5])
+        c23_v = (c3[0] - c2[0], c3[1] - c2[1])
+        c23_len = math.sqrt(c23_v[0] * c23_v[0] + c23_v[1] * c23_v[1])
+        adir = (c23_v[0] / c23_len, c23_v[1] / c23_len) # arrow direction
+        odir = (-adir[1], adir[0]) # othogonal direction
+        arrow_pts = (c3[0], c3[1],
+                     -adir[0] * 10 + odir[0] * 4, -adir[1] * 10 + odir[1] * 4,
+                     -odir[0] * 8, -odir[1] * 8)
+        arrow_txt = 'M %f,%f l %f,%f l %f,%f z' % arrow_pts
+        arrow_node = doc.createElement('svg:path')
+        arrow_node.setAttribute('d', arrow_txt)
+        arrow_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
+                                'fill: #000000')
+        trn_g.appendChild(arrow_node)
+
+        parent.appendChild(trn_g)
+
+        self.trn_g = trn_g
+        pass
+
+    @property
+    def path(self):
+        domview = self._domview
+        state_name = self._state.state_name
+        trn_cond = self.trn_cond
+        trn = domview.get_transition(state_name, trn_cond)
+        return trn[3]
+
+    def draw(self, parent):
+        path = self.path
+        self._draw_transition_real(parent, path)
+        pass
+    pass
+
+class FSM_state(object):
+    _doc = None
+    _domview = None
+    state_name = None
+    state_g = None
+    transitions = None
+    
+    def __init__(self, state_name):
+        self.state_name = state_name
+        self.transitions = {}
+        pass
+
+    def init(self, doc, domview):
+        self._doc = doc
+        self._domview = domview
+        pass
+    
+    def _draw_state_real(self, parent, state_name, r, x, y):
+        doc = self._doc
+        
+        state_g = doc.createElement('svg:g')
+        state_g.setAttribute('inkscape:groupmode', 'layer')
+        
+        circle = doc.createElement('svg:circle')
+        circle.setAttribute('r', str(r))
+        circle.setAttribute('cx', str(x))
+        circle.setAttribute('cy', str(y))
+        circle.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
+                            'fill: #ffffff')
+        state_g.appendChild(circle)
+
+        text = doc.createElement('svg:text')
+        text_content = doc.createTextNode(state_name)
+        text.appendChild(text_content)
+        text.setAttribute('font-size', '16')
+        text.setAttribute('style', 'stroke: #000000; fill: #000000')
+        state_g.appendChild(text)
+
+        parent.appendChild(state_g)
+        
+        tx, ty, tw, th = text.getBBox()
+        text.setAttribute('x', str(x - tw / 2))
+        text.setAttribute('y', str(y + th / 2))
+
+        return state_g
+
+    @property
+    def r(self):
+        domview = self._domview
+        state_name = self.state_name
+        r = domview.get_state_r(state_name)
+        return r
+
+    @property
+    def xy(self):
+        domview = self._domview
+        state_name = self.state_name
+        xy = domview.get_state_xy(state_name)
+        return xy
+
+    @property
+    def all_transitions(self):
+        domview = self._domview
+        state_name = self.state_name
+        conds = domview.all_transitions(state_name)
+        return conds
+
+    def draw(self, parent):
+        domview = self._domview
+        state_name = self.state_name
+
+        r = self.r
+        x, y = self.xy
+        state_g = self._draw_state_real(parent, state_name, r, x, y)
+        self.state_g = state_g
+
+        for trn_cond in self.all_transitions:
+            trn = FSM_transition(trn_cond)
+            trn.init(self._doc, domview, self)
+            trn.draw(parent)
+            self.transitions[trn_cond] = trn
+            pass
+        pass
+    pass
+
 class FSM_window(FSM_window_base):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
@@ -68,7 +219,7 @@ class FSM_window(FSM_window_base):
         self._locker = domview_ui
 
         self._domview = domview_ui
-        self._state_nodes = {}
+        self._states = {}
         
         self._close_cb = close_cb # callback to close editor window (hide)
         self._destroy_cb = destroy_cb # callback to destroy editor window
@@ -94,90 +245,23 @@ class FSM_window(FSM_window_base):
             root.removeChild(child)
             pass
 
-        self._state_nodes = {}
-        pass
-
-    def _draw_transition_real(self, state_g, path):
-        import math
-        doc = self._doc()
-
-        path_node = doc.createElement('svg:path')
-        path_txt = 'M %f,%f C %f,%f %f,%f %f,%f' % tuple(path)
-        path_node.setAttribute('d', path_txt)
-        path_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
-                               'fill: none')
-        state_g.appendChild(path_node)
-
-        # c0 c1 c2 c3 of cubic curve
-        c3 = (path[6], path[7])
-        c2 = (path[4], path[5])
-        c23_v = (c3[0] - c2[0], c3[1] - c2[1])
-        c23_len = math.sqrt(c23_v[0] * c23_v[0] + c23_v[1] * c23_v[1])
-        adir = (c23_v[0] / c23_len, c23_v[1] / c23_len) # arrow direction
-        odir = (-adir[1], adir[0]) # othogonal direction
-        arrow_pts = (c3[0], c3[1],
-                     -adir[0] * 10 + odir[0] * 4, -adir[1] * 10 + odir[1] * 4,
-                     -odir[0] * 8, -odir[1] * 8)
-        arrow_txt = 'M %f,%f l %f,%f l %f,%f z' % arrow_pts
-        arrow_node = doc.createElement('svg:path')
-        arrow_node.setAttribute('d', arrow_txt)
-        arrow_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
-                                'fill: #000000')
-        state_g.appendChild(arrow_node)
-        pass
-
-    def _draw_state_real(self, state_name, r, x, y):
-        doc = self._doc()
-        root = self._root()
-        
-        state_g = doc.createElement('svg:g')
-        state_g.setAttribute('inkscape:groupmode', 'layer')
-        
-        circle = doc.createElement('svg:circle')
-        circle.setAttribute('r', str(r))
-        circle.setAttribute('cx', str(x))
-        circle.setAttribute('cy', str(y))
-        circle.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
-                            'fill: #ffffff')
-        state_g.appendChild(circle)
-
-        text = doc.createElement('svg:text')
-        text_content = doc.createTextNode(state_name)
-        text.appendChild(text_content)
-        text.setAttribute('font-size', '16')
-        text.setAttribute('style', 'stroke: #000000; fill: #000000')
-        state_g.appendChild(text)
-
-        root.appendChild(state_g)
-        
-        tx, ty, tw, th = text.getBBox()
-        text.setAttribute('x', str(x - tw / 2))
-        text.setAttribute('y', str(y + th / 2))
-
-        return state_g
-
-    def _draw_state(self, state_name):
-        domview = self._domview
-
-        r = domview.get_state_r(state_name)
-        x, y = domview.get_state_xy(state_name)
-        state_g = self._draw_state_real(state_name, r, x, y)
-        self._state_nodes[state_name] = state_g
-
-        transitions = [domview.get_transition(state_name, trn_name)[3]
-                       for trn_name in domview.all_transitions(state_name)]
-        for trn in transitions:
-            self._draw_transition_real(state_g, trn)
-            pass
+        self._states = {}
         pass
 
     def _update_view(self):
         self._clear_view()
         
         domview = self._domview
+        doc = self._doc()
+        root = self._root()
+        
         state_names = domview.all_state_names()
         for state_name in state_names:
-            self._draw_state(state_name)
+            state = FSM_state(state_name)
+            state.init(doc, domview)
+            self._states[state_name] = state
+            
+            state.draw(root)
             pass
         pass
 
@@ -241,8 +325,16 @@ class FSM_window(FSM_window_base):
                                                        300, 130))
         self._update_view()
         
-        state_g = self._draw_state_real('test1', 40, 100, 50)
-        self._draw_transition_real(state_g, (100, 100, 140, 120, 160, 120, 200, 100))
+        state = FSM_state('test1')
+        state.init(rdoc, domview)
+        state._draw_state_real(root_node, 'test1', 40, 100, 50)
+
+        trn = FSM_transition('event1')
+        trn.init(rdoc, domview, state)
+        trn._draw_transition_real(root_node, (100, 100,
+                                              140, 120,
+                                              160, 120,
+                                              200, 100))
         pass
     pass
 
