@@ -3,6 +3,13 @@ import os
 import data_monitor
 
 class FSM_window_base(object):
+    _state_editor = None
+    _state_name = None
+    _state_radius = None
+
+    _error_dialog = None
+    _error_dialog_label = None
+    
     def __init__(self):
         super(FSM_window_base, self).__init__()
         
@@ -14,12 +21,54 @@ class FSM_window_base(object):
 
         main_win = builder.get_object("FSM_main_win")
         view_box = builder.get_object("view_box")
+        
+        state_editor = builder.get_object("state_editor")
+        state_name = builder.get_object('state_name')
+        state_radius = builder.get_object('state_radius')
+
+        error_dialog = builder.get_object('error_dialog')
+        error_dialog_label = builder.get_object('error_dialog_label')
 
         builder.connect_signals(self)
         
         self._builder = builder
         self._main_win = main_win
         self._view_box = view_box
+
+        self._state_editor = state_editor
+        self._state_name = state_name
+        self._state_radius = state_radius
+
+        self._error_dialog = error_dialog
+        self._error_dialog_label = error_dialog_label
+        pass
+
+    def show_error(self, msg):
+        error_dialog = self._error_dialog
+        error_dialog_label = self._error_dialog_label
+        
+        error_dialog_label.set_text(msg)
+        error_dialog.show()
+        pass
+
+    def hide_error(self):
+        error_dialog = self._error_dialog
+        error_dialog.hide()
+        pass
+
+    def show_state_editor(self, state_name=''):
+        state_name_inp = self._state_name
+        state_radius_inp = self._state_radius
+        state_editor = self._state_editor
+        
+        state_name_inp.set_text(state_name)
+        state_radius_inp.set_text('30')
+        state_editor.show()
+        pass
+
+    def hide_state_editor(self):
+        state_editor = self._state_editor
+        state_editor.hide()
         pass
 
     def show(self):
@@ -29,6 +78,10 @@ class FSM_window_base(object):
     def hide(self):
         self._main_win.hide()
         pass
+
+    def gtk_widget_hide(self, widget, event, *data):
+        widget.hide()
+        return True
     
     def on_start_state_activate(self, *args):
         pass
@@ -55,6 +108,19 @@ class FSM_window_base(object):
         pass
 
     def on_FSM_main_win_destroy_event(self, *args):
+        pass
+
+    def on_state_apply_clicked(self, *args):
+        pass
+    
+    def on_state_cancel_clicked(self, *args):
+        state_editor = self._state_editor
+        state_editor.hide()
+        pass
+
+    def on_error_dialog_ok_clicked(self, *args):
+        error_dialog = self._error_dialog
+        error_dialog.hide()
         pass
     pass
 
@@ -282,6 +348,12 @@ class FSM_window(FSM_window_base):
     _control_layer = None
     width = 1024
     height = 768
+
+    _grab_hdl = None
+    _bg_hdl = None
+
+    _saved_x = 0
+    _saved_y = 0
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
         super(FSM_window, self).__init__()
@@ -319,6 +391,8 @@ class FSM_window(FSM_window_base):
         control_layer.setAttribute('inkscape:groupmode', 'layer')
         root.appendChild(control_layer)
         self._control_layer = control_layer
+        
+        self.grab_bg(self.on_add_state_background)
         pass
 
     def _doc(self):
@@ -331,6 +405,9 @@ class FSM_window(FSM_window_base):
         doc = self._doc()
         root = doc.root()
         return root
+
+    def _translate_xy(self, x, y):
+        return x, y
 
     def _clear_view(self):
         if not self._background:
@@ -347,20 +424,26 @@ class FSM_window(FSM_window_base):
         self._states = {}
         pass
 
-    def _update_view(self):
-        self._clear_view()
-        
+    def _draw_state_domview(self, state_name):
         domview = self._domview
         doc = self._doc()
         fsm_layer = self._fsm_layer
         
+        state = FSM_state(state_name)
+        state.init(doc, domview, self._fsm_layer, self._control_layer)
+        self._states[state_name] = state
+        
+        state.draw(fsm_layer)
+        pass
+
+    def _update_view(self):
+        self._clear_view()
+        
+        domview = self._domview
+        
         state_names = domview.all_state_names()
         for state_name in state_names:
-            state = FSM_state(state_name)
-            state.init(doc, domview, self._fsm_layer, self._control_layer)
-            self._states[state_name] = state
-            
-            state.draw(fsm_layer)
+            self._draw_state_domview(state_name)
             pass
         pass
 
@@ -382,6 +465,58 @@ class FSM_window(FSM_window_base):
         pass
 
     def on_add_state_toggled(self, *args):
+        self.ungrab_bg()
+        self.grab_bg(self.on_add_state_background)
+        pass
+
+    def on_move_state_toggled(self, *args):
+        self.ungrab_bg()
+        self.grab_bg(self.on_move_state_background)
+        pass
+
+    def on_add_state_background(self, item, evtype, buttons, x, y):
+        import pybInkscape
+        
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
+                buttons == 1:
+            self._saved_x = x
+            self._saved_y = y
+            self.show_state_editor()
+            pass
+        pass
+
+    def on_move_state_background(self, item, evtype, buttons, x, y):
+        pass
+
+    def on_state_apply_clicked(self, *args):
+        import traceback
+        
+        domview = self._domview
+        x, y = self._translate_xy(self._saved_x, self._saved_y)
+
+        state_name = self._state_name.get_text()
+        r_txt = self._state_radius.get_text()
+        try:
+            r = float(r_txt)
+        except ValueError:
+            traceback.print_exc()
+            self.show_error('Invalid value: "%s" is not a valid value '
+                            'for radius.' % (r_txt))
+            return
+        
+        try:
+            domview.add_state(state_name)
+        except:
+            traceback.print_exc()
+            self.show_error('Invalid state name: "%s" is existing' %
+                            (state_name))
+            return
+        domview.set_state_xy(state_name, x, y)
+        domview.set_state_r(state_name, r)
+
+        self._draw_state_domview(state_name)
+
+        self.hide_state_editor()
         pass
 
     def _install_test_data(self):
@@ -431,6 +566,43 @@ class FSM_window(FSM_window_base):
         self._install_test_data = lambda: None
         self._update_view()
         super(FSM_window, self).show()
+        pass
+
+    def grab_mouse(self, callback):
+        assert self._grab_hdl is None
+        
+        root = self._root()
+        root.setAttribute('inkscape:groupmode', '')
+        self._grab_hdl = root.spitem.connect('mouse-event', callback)
+        pass
+
+    def ungrab_mouse(self):
+        if not self._grab_hdl:
+            return
+        
+        root = self._root()
+        root.spitem.disconnect(self._grab_hdl)
+        self._grab_hdl = None
+        root.setAttribute('inkscape:groupmode', 'layer')
+        pass
+
+    def grab_bg(self, callback):
+        assert self._bg_hdl is None
+        assert self._background
+
+        background = self._background
+        bg_hdl = background.spitem.connect('mouse-event', callback)
+        self._bg_hdl = bg_hdl
+        pass
+
+    def ungrab_bg(self):
+        if not self._bg_hdl:
+            return
+
+        background = self._background
+        bg_hdl = self._bg_hdl
+        background.spitem.disconnect(bg_hdl)
+        self._bg_hdl = None
         pass
     pass
 
