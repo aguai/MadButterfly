@@ -450,6 +450,11 @@ class FSM_window(FSM_window_base):
     def set_svg_view(self, view):
         self._view_box.add(view)
         self._view_widget = view
+        
+        root = self._root()
+        root.setAttribute('width', '1024')
+        root.setAttribute('height', '768')
+        view.setResize(True, 800, 600)
         pass
 
     def on_close_window_activate(self, *args):
@@ -528,7 +533,7 @@ class FSM_window(FSM_window_base):
         doc = view.doc()
         rdoc = doc.rdoc
         root_node = doc.root().repr
-        
+
         line_node = rdoc.createElement('svg:line')
         line_node.setAttribute('x1', '10')
         line_node.setAttribute('y1', '10')
