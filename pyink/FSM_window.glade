@@ -198,19 +198,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="svg_scroll">
+          <object class="GtkVBox" id="view_box">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
+            <property name="orientation">vertical</property>
             <child>
-              <object class="GtkViewport" id="view_box">
-                <property name="visible">True</property>
-                <property name="resize_mode">queue</property>
-                <child>
-                  <placeholder/>
-                </child>
-              </object>
+              <placeholder/>
             </child>
           </object>
           <packing>
