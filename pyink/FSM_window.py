@@ -228,6 +228,9 @@ class FSM_state(object):
     _text_node = None
     _circle_node = None
     transitions = None
+
+    _state_g_hdl_id = None
+    _selected_rect = None
     
     def __init__(self, state_name):
         self.state_name = state_name
@@ -241,8 +244,7 @@ class FSM_state(object):
         self._control_layer = control_layer
         pass
 
-    @staticmethod
-    def _update_graph(text_node, text_content, circle_node,
+    def _update_graph(self, text_node, text_content, circle_node,
                       state_name, r, x, y):
         circle_node.setAttribute('r', str(r))
         circle_node.setAttribute('cx', str(x))
@@ -250,14 +252,63 @@ class FSM_state(object):
         circle_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
                                  'fill: #ffffff')
 
-        text_node.setAttribute('font-size', '16')
-        text_node.setAttribute('style', 'stroke: #000000; fill: #000000')
+        text_node.setAttribute('style', 'stroke: #000000; fill: #000000; font-size: 16px; font-style: normal; font-family: helvetica;')
 
         text_content.setContent(state_name)
 
+        doc = self._doc
+        spdoc = doc.spdoc
+        spdoc.ensureUpToDate()
         tx, ty, tw, th = text_node.getBBox()
         text_node.setAttribute('x', str(x - tw / 2))
         text_node.setAttribute('y', str(y + th / 2))
+        pass
+
+    def grab(self, callback):
+        assert not self._state_g_hdl_id
+        
+        state_g = self.state_g
+        state_g_hdl_id = state_g.connect('mouse-event', callback)
+        self._state_g_hdl_id = state_g_hdl_id
+        pass
+
+    def ungrab(self):
+        if not self._state_g_hdl:
+            return
+        state_g = self.state_g
+        state_g_hdl_id = self._state_g_hdl_id
+        state_g.disconnect(state_g_hdl_id)
+        pass
+
+    def show_selected(self):
+        if not self._selected_rect:
+            doc = self._doc
+            rect = doc.createElement('svg:rect')
+            control_layer = self._control_layer
+            rect.setAttribute('style',
+                              'stroke: #404040; stroke-width: 1; '
+                              'stroke-dasharray: 5 3; fill: none')
+            control_layer.appendChild(rect)
+            self._selected_rect = rect
+            pass
+
+        state_g = self.state_g
+        rect = self._selected_rect
+        
+        x, y, w, h = state_g.getBBox()
+        rect.setAttribute('x', str(x - 2))
+        rect.setAttribute('y', str(y - 2))
+        rect.setAttribute('width', str(w + 4))
+        rect.setAttribute('height', str(h + 4))
+        pass
+
+    def hide_selected(self):
+        if not self._selected_rect:
+            return
+
+        state_g = self.state_g
+        rect = self._selected_rect
+        state_g.removeChild(rect)
         pass
     
     def _draw_state_real(self, parent, state_name, r, x, y):
