@@ -252,7 +252,7 @@ class FSM_state(object):
         circle_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
                                  'fill: #ffffff')
 
-        text_node.setAttribute('style', 'stroke: #000000; fill: #000000; font-size: 16px; font-style: normal; font-family: helvetica;')
+        text_node.setAttribute('style', 'stroke: #000000; fill: #000000; font-size: 16px')
 
         text_content.setContent(state_name)
 
@@ -268,7 +268,8 @@ class FSM_state(object):
         assert not self._state_g_hdl_id
         
         state_g = self.state_g
-        state_g_hdl_id = state_g.connect('mouse-event', callback)
+        state_g_spitem = state_g.spitem
+        state_g_hdl_id = state_g_spitem.connect('mouse-event', callback)
         self._state_g_hdl_id = state_g_hdl_id
         pass
 
@@ -385,7 +386,7 @@ class FSM_state(object):
         state_name = self.state_name
         r = self.r
         x, y = self.xy
-        self._update_graph(text_node, text_content, circle_node,
+        self._update_graph(text_node, text_content, circle_node, state_name,
                            r, x, y)
         pass
     pass
@@ -405,6 +406,8 @@ class FSM_window(FSM_window_base):
 
     _saved_x = 0
     _saved_y = 0
+
+    _state_mouse_event_handler = None
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
         super(FSM_window, self).__init__()
@@ -487,14 +490,39 @@ class FSM_window(FSM_window_base):
         state.draw(fsm_layer)
         pass
 
+    def on_state_mouse_event(self, state, evtype, buttons, x, y):
+        if self._state_mouse_event_handler:
+            self._state_mouse_event_handler(state, evtype, buttons, x, y)
+            pass
+        pass
+
+    def _install_state_event_handler(self, state):
+        def mouse_event_handler(item, evtype, buttons, x, y):
+            self.on_state_mouse_event(state, evtype, buttons, x, y)
+            pass
+        state.grab(mouse_event_handler)
+        pass
+
+    def grab_state(self, callback):
+        assert self._state_mouse_event_handler is None
+        self._state_mouse_event_handler = callback
+        pass
+
+    def ungrab_state(self):
+        self._state_mouse_event_handler = None
+        pass
+
     def _update_view(self):
         self._clear_view()
+        states = self._states
         
         domview = self._domview
         
         state_names = domview.all_state_names()
         for state_name in state_names:
             self._draw_state_domview(state_name)
+            state = states[state_name]
+            self._install_state_event_handler(state)
             pass
         pass
 
@@ -528,6 +556,8 @@ class FSM_window(FSM_window_base):
     def on_move_state_toggled(self, *args):
         self.ungrab_bg()
         self.grab_bg(self.on_move_state_background)
+        self.ungrab_state()
+        self.grab_state(self.handle_move_state_state)
         pass
 
     def on_add_state_background(self, item, evtype, buttons, x, y):
@@ -542,6 +572,33 @@ class FSM_window(FSM_window_base):
         pass
 
     def on_move_state_background(self, item, evtype, buttons, x, y):
+        pass
+
+    def handle_move_state_state(self, state, evtype, buttons, x, y):
+        import pybInkscape
+        
+        def moving_state(item, evtype, buttons, x, y):
+            if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
+                self.ungrab_mouse()
+                pass
+            new_state_x = orign_state_x + start_x - x
+            new_state_y = orign_state_y + start_y - y
+
+            domview = self._domview
+            domview.set_state_xy(state.state_name, x, y)
+            state.update()
+            state.show_selected()
+            pass
+        
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
+            start_x = x
+            start_y = y
+            orign_state_x, orign_state_y = state.xy
+            
+            state.show_selected()
+            
+            self.grab_mouse(moving_state)
+            pass
         pass
 
     def on_state_apply_clicked(self, *args):
