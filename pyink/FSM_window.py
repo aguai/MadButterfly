@@ -196,6 +196,14 @@ class FSM_transition(object):
         trn = domview.get_transition(state_name, trn_cond)
         return trn[3]
 
+    @property
+    def target(self):
+        domview = self._domview
+        state_name = self._state.state_name
+        trn_cond = self.trn_cond
+        trn = domview.get_transition(state_name, trn_cond)
+        return trn[1]
+
     def draw(self, parent):
         path = self.path
         trn_g, arrow_node, path_node = self._draw_transition_real(parent, path)
@@ -216,6 +224,48 @@ class FSM_transition(object):
         path_node = self._path_node
         self._update_graph(path, arrow_node, path_node)
         pass
+
+    def adjust_by_ends(self, states):
+        import math
+        
+        state = self._state
+        state_name = state.state_name
+        trn_cond = self.trn_cond
+        
+        path = self.path
+        
+        start_state = self._state
+        start_x, start_y = start_state.xy
+        start_r = start_state.r
+
+        target_name = self.target
+        stop_state = states[target_name]
+        stop_x, stop_y = stop_state.xy
+        stop_r = stop_state.r
+
+        c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y = tuple(path)
+
+        c0c1 = (c1x - c0x, c1y - c0y)
+        c0c1_len = math.sqrt(c0c1[0] ** 2 + c0c1[1] ** 2)
+        start_v = (c0c1[0] / c0c1_len, c0c1[1] / c0c1_len)
+
+        c3c2 = (c2x - c3x, c2y - c3y)
+        c3c2_len = math.sqrt(c3c2[0] ** 2 + c3c2[1] ** 2)
+        stop_v = (c3c2[0] / c3c2_len, c3c2[1] / c3c2_len)
+
+        c0x = start_v[0] * start_r + start_x
+        c0y = start_v[1] * start_r + start_y
+        c1x = start_v[0] * c0c1_len + c0x
+        c1y = start_v[1] * c0c1_len + c0y
+        c3x = stop_v[0] * stop_r + stop_x
+        c3y = stop_v[1] * stop_r + stop_y
+        c2x = stop_v[0] * c3c2_len + c3x
+        c2y = stop_v[1] * c3c2_len + c3y
+        new_path = [c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y]
+        
+        domview = self._domview
+        domview.set_transition_path(state_name, trn_cond, new_path)
+        pass
     pass
 
 class FSM_state(object):
@@ -228,6 +278,7 @@ class FSM_state(object):
     _text_node = None
     _circle_node = None
     transitions = None
+    from_srcs = None
 
     _state_g_hdl_id = None
     _selected_rect = None
@@ -235,6 +286,7 @@ class FSM_state(object):
     def __init__(self, state_name):
         self.state_name = state_name
         self.transitions = {}
+        self.from_srcs = set()
         pass
 
     def init(self, doc, domview, fsm_layer, control_layer):
@@ -402,6 +454,40 @@ class FSM_state(object):
         self._update_graph(text_node, text_content, circle_node, state_name,
                            r, x, y)
         pass
+
+    def tell_target_states(self, states):
+        transitions = self.transitions
+        target_state_names = [trn.target for trn in transitions.values()]
+        target_states = [states[target_name]
+                         for target_name in target_state_names]
+        state_name = self.state_name
+        for target_state in target_states:
+            target_state.from_srcs.add(state_name)
+            pass
+        pass
+
+    def adjust_transitions(self, states):
+        import itertools
+        
+        for trn in self.transitions.values():
+            trn.adjust_by_ends(states)
+            trn.update()
+            pass
+
+        state_name = self.state_name
+        src_states = [states[src_state_name]
+                      for src_state_name in self.from_srcs]
+        states_transitions = [state.transitions.values()
+                              for state in src_states]
+        in_state_transitions = [[trn for trn in state_transitions
+                                 if trn.target == state_name]
+                                for state_transitions in states_transitions]
+        in_transitions = itertools.chain(*in_state_transitions)
+        for trn in in_transitions:
+            trn.adjust_by_ends(states)
+            trn.update()
+            pass
+        pass
     pass
 
 
@@ -441,6 +527,9 @@ class FSM_move_state_mode(object):
     def handle_move_state_state(self, state, evtype, buttons, x, y):
         import pybInkscape
 
+        window = self._window
+        states = window._states
+
         def moving_state(item, evtype, buttons, x, y):
             if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
                 window.ungrab_mouse()
@@ -451,6 +540,7 @@ class FSM_move_state_mode(object):
             domview = self._domview
             domview.set_state_xy(state.state_name, x, y)
             state.update()
+            state.adjust_transitions(states)
             state.show_selected()
             pass
         
@@ -530,7 +620,7 @@ class FSM_add_state_mode(object):
         domview.set_state_xy(state_name, x, y)
         domview.set_state_r(state_name, r)
 
-        window._load_new_state(state_name)
+        window._load_new_state_incr(state_name)
 
         window.hide_state_editor()
         pass
@@ -712,6 +802,25 @@ class FSM_window(FSM_window_base):
         state = states[state_name]
         self._install_state_event_handler(state)
         pass
+
+    ## \brief Load new state incrementally.
+    #
+    def _load_new_state_incr(self, state_name):
+        self._load_new_state(state_name)
+        states = self._states
+        state = states[state_name]
+        state.tell_target_states(states)
+        pass
+    
+    def _rebuild_from_srcs(self):
+        states = self._states
+        domview = self._domview
+        state_names = domview.all_state_names()
+        for state_name in state_names:
+            state = states[state_name]
+            state.tell_target_states(states)
+            pass
+        pass
     
     def _update_view(self):
         self._clear_view()
@@ -723,6 +832,7 @@ class FSM_window(FSM_window_base):
         for state_name in state_names:
             self._load_new_state(state_name)
             pass
+        self._rebuild_from_srcs()
         pass
 
     def set_svg_view(self, view):
