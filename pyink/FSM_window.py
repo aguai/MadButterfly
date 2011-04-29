@@ -413,6 +413,8 @@ class FSM_move_state_mode(object):
     _selected_state = None
     
     def __init__(self, window, domview_ui):
+        super(FSM_move_state_mode, self).__init__()
+        
         self._window = window
         self._domview = domview_ui
         self._locker = domview_ui
@@ -486,6 +488,79 @@ class FSM_move_state_mode(object):
     pass
 
 
+class FSM_add_state_mode(object):
+    __metaclass__ = data_monitor.data_monitor
+    __data_monitor_prefix__ = 'on_'
+
+    _saved_x = 0
+    _saved_y = 0
+
+    def __init__(self, window, domview_ui):
+        super(FSM_add_state_mode, self).__init__()
+        
+        self._window = window
+        self._domview = domview_ui
+        self._locker = domview_ui
+        pass
+
+    def handle_new_state(self):
+        import traceback
+        
+        domview = self._domview
+        window = self._window
+        x, y = window._translate_xy(self._saved_x, self._saved_y)
+
+        state_name = window._state_name.get_text()
+        r_txt = window._state_radius.get_text()
+        try:
+            r = float(r_txt)
+        except ValueError:
+            traceback.print_exc()
+            window.show_error('Invalid value: "%s" is not a valid value '
+                              'for radius.' % (r_txt))
+            return
+        
+        try:
+            domview.add_state(state_name)
+        except:
+            traceback.print_exc()
+            window.show_error('Invalid state name: "%s" is existing' %
+                              (state_name))
+            return
+        domview.set_state_xy(state_name, x, y)
+        domview.set_state_r(state_name, r)
+
+        window._load_new_state(state_name)
+
+        window.hide_state_editor()
+        pass
+    
+    def on_add_state_background(self, item, evtype, buttons, x, y):
+        import pybInkscape
+
+        window = self._window
+        
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
+                buttons == 1:
+            self._saved_x = x
+            self._saved_y = y
+            window.show_state_editor()
+            pass
+        pass
+
+    def activate(self):
+        window = self._window
+        
+        window._emit_leave_mode()
+        window.ungrab_all()
+        
+        window.grab_bg(self.on_add_state_background)
+        pass
+
+    def deactivate(self):
+        pass
+    pass
+
 class FSM_window(FSM_window_base):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
@@ -499,11 +574,9 @@ class FSM_window(FSM_window_base):
     _grab_hdl = None
     _bg_hdl = None
 
-    _saved_x = 0
-    _saved_y = 0
-
     _leave_mode_cb = None
     _move_state_mode = None
+    _add_state_mode = None
     _state_mouse_event_handler = None
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
@@ -518,6 +591,7 @@ class FSM_window(FSM_window_base):
         self._destroy_cb = destroy_cb # callback to destroy editor window
 
         self._move_state_mode = FSM_move_state_mode(self, domview_ui)
+        self._add_state_mode = FSM_add_state_mode(self, domview_ui)
         pass
 
     def _init_layers(self):
@@ -545,7 +619,7 @@ class FSM_window(FSM_window_base):
         root.appendChild(control_layer)
         self._control_layer = control_layer
         
-        self.grab_bg(self.on_add_state_background)
+        self._add_state_mode.activate()
         pass
 
     def _doc(self):
@@ -631,6 +705,14 @@ class FSM_window(FSM_window_base):
         self._state_mouse_event_handler = None
         pass
 
+    def _load_new_state(self, state_name):
+        states = self._states
+        
+        self._draw_state_domview(state_name)
+        state = states[state_name]
+        self._install_state_event_handler(state)
+        pass
+    
     def _update_view(self):
         self._clear_view()
         states = self._states
@@ -639,9 +721,7 @@ class FSM_window(FSM_window_base):
         
         state_names = domview.all_state_names()
         for state_name in state_names:
-            self._draw_state_domview(state_name)
-            state = states[state_name]
-            self._install_state_event_handler(state)
+            self._load_new_state(state_name)
             pass
         pass
 
@@ -668,10 +748,9 @@ class FSM_window(FSM_window_base):
         pass
 
     def on_add_state_toggled(self, *args):
-        self._emit_leave_mode()
-        self.ungrab_all()
-        
-        self.grab_bg(self.on_add_state_background)
+        mode = self._add_state_mode
+        mode.activate()
+        self._set_leave_mode_cb(lambda: mode.deactivate())
         pass
 
     def on_move_state_toggled(self, *args):
@@ -680,46 +759,8 @@ class FSM_window(FSM_window_base):
         self._set_leave_mode_cb(lambda: mode.deactivate())
         pass
 
-    def on_add_state_background(self, item, evtype, buttons, x, y):
-        import pybInkscape
-        
-        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
-                buttons == 1:
-            self._saved_x = x
-            self._saved_y = y
-            self.show_state_editor()
-            pass
-        pass
-
     def on_state_apply_clicked(self, *args):
-        import traceback
-        
-        domview = self._domview
-        x, y = self._translate_xy(self._saved_x, self._saved_y)
-
-        state_name = self._state_name.get_text()
-        r_txt = self._state_radius.get_text()
-        try:
-            r = float(r_txt)
-        except ValueError:
-            traceback.print_exc()
-            self.show_error('Invalid value: "%s" is not a valid value '
-                            'for radius.' % (r_txt))
-            return
-        
-        try:
-            domview.add_state(state_name)
-        except:
-            traceback.print_exc()
-            self.show_error('Invalid state name: "%s" is existing' %
-                            (state_name))
-            return
-        domview.set_state_xy(state_name, x, y)
-        domview.set_state_r(state_name, r)
-
-        self._draw_state_domview(state_name)
-
-        self.hide_state_editor()
+        self._add_state_mode.handle_new_state()
         pass
 
     def _install_test_data(self):
