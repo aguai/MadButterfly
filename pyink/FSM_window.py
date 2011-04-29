@@ -278,7 +278,7 @@ class FSM_state(object):
     _text_node = None
     _circle_node = None
     transitions = None
-    from_srcs = None
+    from_states = None
 
     _state_g_hdl_id = None
     _selected_rect = None
@@ -286,7 +286,7 @@ class FSM_state(object):
     def __init__(self, state_name):
         self.state_name = state_name
         self.transitions = {}
-        self.from_srcs = set()
+        self.from_states = set()
         pass
 
     def init(self, doc, domview, fsm_layer, control_layer):
@@ -462,7 +462,7 @@ class FSM_state(object):
                          for target_name in target_state_names]
         state_name = self.state_name
         for target_state in target_states:
-            target_state.from_srcs.add(state_name)
+            target_state.from_states.add(state_name)
             pass
         pass
 
@@ -475,10 +475,10 @@ class FSM_state(object):
             pass
 
         state_name = self.state_name
-        src_states = [states[src_state_name]
-                      for src_state_name in self.from_srcs]
+        from_states = [states[from_state_name]
+                      for from_state_name in self.from_states]
         states_transitions = [state.transitions.values()
-                              for state in src_states]
+                              for state in from_states]
         in_state_transitions = [[trn for trn in state_transitions
                                  if trn.target == state_name]
                                 for state_transitions in states_transitions]
@@ -812,7 +812,7 @@ class FSM_window(FSM_window_base):
         state.tell_target_states(states)
         pass
     
-    def _rebuild_from_srcs(self):
+    def _rebuild_from_states(self):
         states = self._states
         domview = self._domview
         state_names = domview.all_state_names()
@@ -832,7 +832,7 @@ class FSM_window(FSM_window_base):
         for state_name in state_names:
             self._load_new_state(state_name)
             pass
-        self._rebuild_from_srcs()
+        self._rebuild_from_states()
         pass
 
     def set_svg_view(self, view):
