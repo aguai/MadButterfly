@@ -281,6 +281,15 @@ class FSM_state(object):
         state_g.disconnect(state_g_hdl_id)
         pass
 
+    def _translate_page_xy(self, x, y):
+        doc = self._doc
+        root = doc.root()
+        page_h_txt = root.getAttribute('height')
+        page_h = float(page_h_txt)
+        svgx = x
+        svgy = page_h - y
+        return svgx, svgy
+
     def show_selected(self):
         if not self._selected_rect:
             doc = self._doc
@@ -288,7 +297,7 @@ class FSM_state(object):
             control_layer = self._control_layer
             rect.setAttribute('style',
                               'stroke: #404040; stroke-width: 1; '
-                              'stroke-dasharray: 5 3; fill: none')
+                              'stroke-dasharray: 6 4; fill: none')
             control_layer.appendChild(rect)
             self._selected_rect = rect
             pass
@@ -296,20 +305,24 @@ class FSM_state(object):
         state_g = self.state_g
         rect = self._selected_rect
         
-        x, y, w, h = state_g.getBBox()
+        px, py, pw, ph = state_g.getBBox()
+        x, y = self._translate_page_xy(px, py)
+        y = y - ph              # px, py is left-bottom corner
+        
         rect.setAttribute('x', str(x - 2))
         rect.setAttribute('y', str(y - 2))
-        rect.setAttribute('width', str(w + 4))
-        rect.setAttribute('height', str(h + 4))
+        rect.setAttribute('width', str(pw + 4))
+        rect.setAttribute('height', str(ph + 4))
         pass
 
     def hide_selected(self):
         if not self._selected_rect:
             return
 
-        state_g = self.state_g
+        control_layer = self._control_layer
         rect = self._selected_rect
-        state_g.removeChild(rect)
+        control_layer.removeChild(rect)
+        self._selected_rect = None
         pass
     
     def _draw_state_real(self, parent, state_name, r, x, y):
@@ -391,6 +404,88 @@ class FSM_state(object):
         pass
     pass
 
+
+class FSM_move_state_mode(object):
+    __metaclass__ = data_monitor.data_monitor
+    __data_monitor_prefix__ = 'on_'
+    
+    _window = None
+    _selected_state = None
+    
+    def __init__(self, window, domview_ui):
+        self._window = window
+        self._domview = domview_ui
+        self._locker = domview_ui
+        pass
+
+    def on_move_state_background(self, item, evtype, buttons, x, y):
+        pass
+
+    def _select_state(self, state):
+        if self._selected_state:
+            self._selected_state.hide_selected()
+            pass
+        self._selected_state = state
+        state.show_selected()
+        pass
+
+    def _clear_select(self):
+        if self._selected_state:
+            self._selected_state.hide_selected()
+            pass
+        self._selected_state = None
+        pass
+
+    def handle_move_state_state(self, state, evtype, buttons, x, y):
+        import pybInkscape
+
+        def moving_state(item, evtype, buttons, x, y):
+            if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
+                window.ungrab_mouse()
+                pass
+            new_state_x = orign_state_x + start_x - x
+            new_state_y = orign_state_y + start_y - y
+
+            domview = self._domview
+            domview.set_state_xy(state.state_name, x, y)
+            state.update()
+            state.show_selected()
+            pass
+        
+        window = self._window
+        
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
+            start_x = x
+            start_y = y
+            orign_state_x, orign_state_y = state.xy
+            
+            self._select_state(state)
+            window.grab_mouse(moving_state)
+            pass
+        
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
+            window.ungrab_mouse()
+            pass
+        pass
+
+    def activate(self):
+        window = self._window
+        window._emit_leave_mode()
+        window._clear_leave_mode_cb()
+        window.ungrab_all()
+        
+        window.grab_bg(self.on_move_state_background)
+        window.grab_state(self.handle_move_state_state)
+        pass
+
+    def deactivate(self):
+        if self._selected_state:
+            self._clear_select()
+            pass
+        pass
+    pass
+
+
 class FSM_window(FSM_window_base):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
@@ -407,6 +502,8 @@ class FSM_window(FSM_window_base):
     _saved_x = 0
     _saved_y = 0
 
+    _leave_mode_cb = None
+    _move_state_mode = None
     _state_mouse_event_handler = None
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
@@ -419,6 +516,8 @@ class FSM_window(FSM_window_base):
         
         self._close_cb = close_cb # callback to close editor window (hide)
         self._destroy_cb = destroy_cb # callback to destroy editor window
+
+        self._move_state_mode = FSM_move_state_mode(self, domview_ui)
         pass
 
     def _init_layers(self):
@@ -490,6 +589,26 @@ class FSM_window(FSM_window_base):
         state.draw(fsm_layer)
         pass
 
+    def _set_leave_mode_cb(self, callback):
+        self._leave_mode_cb = callback
+        pass
+
+    def _clear_leave_mode_cb(self):
+        self._leave_mode_cb = None
+        pass
+
+    def _emit_leave_mode(self):
+        if self._leave_mode_cb:
+            self._leave_mode_cb()
+            pass
+        pass
+
+    def ungrab_all(self):
+        self.ungrab_bg()
+        self.ungrab_mouse()
+        self.ungrab_state()
+        pass
+
     def on_state_mouse_event(self, state, evtype, buttons, x, y):
         if self._state_mouse_event_handler:
             self._state_mouse_event_handler(state, evtype, buttons, x, y)
@@ -549,15 +668,16 @@ class FSM_window(FSM_window_base):
         pass
 
     def on_add_state_toggled(self, *args):
-        self.ungrab_bg()
+        self._emit_leave_mode()
+        self.ungrab_all()
+        
         self.grab_bg(self.on_add_state_background)
         pass
 
     def on_move_state_toggled(self, *args):
-        self.ungrab_bg()
-        self.grab_bg(self.on_move_state_background)
-        self.ungrab_state()
-        self.grab_state(self.handle_move_state_state)
+        mode = self._move_state_mode
+        mode.activate()
+        self._set_leave_mode_cb(lambda: mode.deactivate())
         pass
 
     def on_add_state_background(self, item, evtype, buttons, x, y):
@@ -568,36 +688,6 @@ class FSM_window(FSM_window_base):
             self._saved_x = x
             self._saved_y = y
             self.show_state_editor()
-            pass
-        pass
-
-    def on_move_state_background(self, item, evtype, buttons, x, y):
-        pass
-
-    def handle_move_state_state(self, state, evtype, buttons, x, y):
-        import pybInkscape
-        
-        def moving_state(item, evtype, buttons, x, y):
-            if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
-                self.ungrab_mouse()
-                pass
-            new_state_x = orign_state_x + start_x - x
-            new_state_y = orign_state_y + start_y - y
-
-            domview = self._domview
-            domview.set_state_xy(state.state_name, x, y)
-            state.update()
-            state.show_selected()
-            pass
-        
-        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
-            start_x = x
-            start_y = y
-            orign_state_x, orign_state_y = state.xy
-            
-            state.show_selected()
-            
-            self.grab_mouse(moving_state)
             pass
         pass
 
