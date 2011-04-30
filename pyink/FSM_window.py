@@ -689,6 +689,7 @@ class _FSM_add_state_mode(object):
     _saved_y = 0
 
     _select_state = None
+    _candidate_state = None
 
     def __init__(self, window, domview_ui):
         super(_FSM_add_state_mode, self).__init__()
@@ -741,15 +742,27 @@ class _FSM_add_state_mode(object):
             pass
         pass
 
+    def _stop_select_target(self):
+        self.deactivate()
+        self.activate()
+        pass
+
     def _handle_select_transition_target(self, state, evtype, button, x, y):
+        if self._candidate_state != state and self._select_state != state:
+            if self._candidate_state:
+                self._candidate_state.hide_selected()
+                pass
+            self._candidate_state = state
+            state.show_selected()
+            pass
+
         if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
             return
         if button != 1:
             return
         
         if state == self._select_state:
-            self.deactivate()
-            self.activate()
+            self._stop_select_target()
             return
         
         window = self._window
@@ -759,14 +772,19 @@ class _FSM_add_state_mode(object):
         src_state = self._select_state
         cond = ''
         src_state.add_transition(fsm_layer, cond, target_state)
+        
+        self._stop_select_target()
         pass
 
     def _handle_add_transition(self, *args):
         def restore_bg(item, evtype, *args):
             if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
+                if self._candidate_state:
+                    self._candidate_state.hide_selected()
+                    self._candidate_state = None
+                    pass
                 return
-            self.deactivate()
-            self.activate()
+            self._stop_select_target()
             pass
         
         window = self._window
@@ -775,6 +793,7 @@ class _FSM_add_state_mode(object):
 
         window.ungrab_state()
         window.grab_state(self._handle_select_transition_target)
+        self._select_state.show_selected()
         pass
 
     def _handle_state_mouse_events(self, state, evtype, button, x, y):
@@ -799,6 +818,13 @@ class _FSM_add_state_mode(object):
         pass
 
     def deactivate(self):
+        if self._select_state:
+            self._select_state.hide_selected()
+            pass
+        if self._candidate_state:
+            self._candidate_state.hide_selected()
+            self._candidate_state = None
+            pass
         pass
     pass
 
