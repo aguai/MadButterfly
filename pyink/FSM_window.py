@@ -496,7 +496,7 @@ class FSM_state(object):
     pass
 
 
-class FSM_move_state_mode(object):
+class _FSM_move_state_mode(object):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
     
@@ -504,7 +504,7 @@ class FSM_move_state_mode(object):
     _selected_state = None
     
     def __init__(self, window, domview_ui):
-        super(FSM_move_state_mode, self).__init__()
+        super(_FSM_move_state_mode, self).__init__()
         
         self._window = window
         self._domview = domview_ui
@@ -583,7 +583,7 @@ class FSM_move_state_mode(object):
     pass
 
 
-class FSM_add_state_mode(object):
+class _FSM_add_state_mode(object):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
 
@@ -591,7 +591,7 @@ class FSM_add_state_mode(object):
     _saved_y = 0
 
     def __init__(self, window, domview_ui):
-        super(FSM_add_state_mode, self).__init__()
+        super(_FSM_add_state_mode, self).__init__()
         
         self._window = window
         self._domview = domview_ui
@@ -685,8 +685,8 @@ class FSM_window(FSM_window_base):
         self._close_cb = close_cb # callback to close editor window (hide)
         self._destroy_cb = destroy_cb # callback to destroy editor window
 
-        self._move_state_mode = FSM_move_state_mode(self, domview_ui)
-        self._add_state_mode = FSM_add_state_mode(self, domview_ui)
+        self._move_state_mode = _FSM_move_state_mode(self, domview_ui)
+        self._add_state_mode = _FSM_add_state_mode(self, domview_ui)
         pass
 
     def _init_layers(self):
