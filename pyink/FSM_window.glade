@@ -471,4 +471,34 @@
       <action-widget response="0">error_dialog_ok</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkMenu" id="state_menu">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkMenuItem" id="add_transition">
+        <property name="visible">True</property>
+        <property name="tooltip_text" translatable="yes">Add a transition to the state</property>
+        <property name="label" translatable="yes">Add Transition</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_add_transition_activate"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="del_state">
+        <property name="visible">True</property>
+        <property name="tooltip_text" translatable="yes">Delete selecting state</property>
+        <property name="label" translatable="yes">Del State</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_del_state_activate"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="edit_state">
+        <property name="visible">True</property>
+        <property name="tooltip_text" translatable="yes">Edit properties of the state.</property>
+        <property name="label" translatable="yes">Edit State</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_edit_state_activate"/>
+      </object>
+    </child>
+  </object>
 </interface>

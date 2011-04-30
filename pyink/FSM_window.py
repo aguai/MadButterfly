@@ -3,12 +3,17 @@ import os
 import data_monitor
 
 class FSM_window_base(object):
+    _add_state_button = None
+    _move_state_button = None
+    
     _state_editor = None
     _state_name = None
     _state_radius = None
 
     _error_dialog = None
     _error_dialog_label = None
+
+    _state_menu = None
     
     def __init__(self):
         super(FSM_window_base, self).__init__()
@@ -31,6 +36,8 @@ class FSM_window_base(object):
         error_dialog = builder.get_object('error_dialog')
         error_dialog_label = builder.get_object('error_dialog_label')
 
+        state_menu = builder.get_object('state_menu')
+
         builder.connect_signals(self)
         
         self._builder = builder
@@ -45,6 +52,8 @@ class FSM_window_base(object):
 
         self._error_dialog = error_dialog
         self._error_dialog_label = error_dialog_label
+
+        self._state_menu = state_menu
         pass
 
     def show_error(self, msg):
@@ -75,6 +84,11 @@ class FSM_window_base(object):
         state_editor.hide()
         pass
 
+    def popup_state_menu(self):
+        menu = self._state_menu
+        menu.popup(None, None, None, 0, 0)
+        pass
+    
     def show(self):
         self._main_win.show()
         self._add_state_button.set_active(True)
@@ -126,6 +140,15 @@ class FSM_window_base(object):
     def on_error_dialog_ok_clicked(self, *args):
         error_dialog = self._error_dialog
         error_dialog.hide()
+        pass
+
+    def on_add_transition_activate(self, *args):
+        pass
+
+    def on_del_state_activate(self, *args):
+        pass
+
+    def on_edit_state_activate(self, *args):
         pass
     pass
 
@@ -511,7 +534,7 @@ class _FSM_move_state_mode(object):
         self._locker = domview_ui
         pass
 
-    def on_move_state_background(self, item, evtype, buttons, x, y):
+    def on_move_state_background(self, item, evtype, button, x, y):
         pass
 
     def _select_state(self, state):
@@ -529,13 +552,13 @@ class _FSM_move_state_mode(object):
         self._selected_state = None
         pass
 
-    def handle_move_state_state(self, state, evtype, buttons, x, y):
+    def handle_move_state_state(self, state, evtype, button, x, y):
         import pybInkscape
 
         window = self._window
         states = window._states
 
-        def moving_state(item, evtype, buttons, x, y):
+        def moving_state(item, evtype, button, x, y):
             if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
                 window.ungrab_mouse()
                 pass
@@ -551,7 +574,8 @@ class _FSM_move_state_mode(object):
         
         window = self._window
         
-        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
+                button == 1:
             start_x = x
             start_y = y
             orign_state_x, orign_state_y = state.xy
@@ -560,7 +584,8 @@ class _FSM_move_state_mode(object):
             window.grab_mouse(moving_state)
             pass
         
-        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
+                button == 1:
             window.ungrab_mouse()
             pass
         pass
@@ -630,16 +655,26 @@ class _FSM_add_state_mode(object):
         window.hide_state_editor()
         pass
     
-    def on_add_state_background(self, item, evtype, buttons, x, y):
+    def on_add_state_background(self, item, evtype, button, x, y):
         import pybInkscape
 
         window = self._window
         
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
-                buttons == 1:
+                button == 1:
             self._saved_x = x
             self._saved_y = y
             window.show_state_editor()
+            pass
+        pass
+
+    def _handle_state_mouse_events(self, state, evtype, button, x, y):
+        import pybInkscape
+        
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
+                button == 3:
+            window = self._window
+            window.popup_state_menu()
             pass
         pass
 
@@ -650,6 +685,7 @@ class _FSM_add_state_mode(object):
         window.ungrab_all()
         
         window.grab_bg(self.on_add_state_background)
+        window.grab_state(self._handle_state_mouse_events)
         pass
 
     def deactivate(self):
@@ -777,15 +813,15 @@ class FSM_window(FSM_window_base):
         self.ungrab_state()
         pass
 
-    def on_state_mouse_event(self, state, evtype, buttons, x, y):
+    def on_state_mouse_event(self, state, evtype, button, x, y):
         if self._state_mouse_event_handler:
-            self._state_mouse_event_handler(state, evtype, buttons, x, y)
+            self._state_mouse_event_handler(state, evtype, button, x, y)
             pass
         pass
 
     def _install_state_event_handler(self, state):
-        def mouse_event_handler(item, evtype, buttons, x, y):
-            self.on_state_mouse_event(state, evtype, buttons, x, y)
+        def mouse_event_handler(item, evtype, button, x, y):
+            self.on_state_mouse_event(state, evtype, button, x, y)
             pass
         state.grab(mouse_event_handler)
         pass
