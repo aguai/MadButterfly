@@ -21,6 +21,8 @@ class FSM_window_base(object):
 
         main_win = builder.get_object("FSM_main_win")
         view_box = builder.get_object("view_box")
+        add_state_button = builder.get_object('add_state')
+        move_state_button = builder.get_object('move_state')
         
         state_editor = builder.get_object("state_editor")
         state_name = builder.get_object('state_name')
@@ -34,6 +36,8 @@ class FSM_window_base(object):
         self._builder = builder
         self._main_win = main_win
         self._view_box = view_box
+        self._add_state_button = add_state_button
+        self._move_state_button = move_state_button
 
         self._state_editor = state_editor
         self._state_name = state_name
@@ -73,6 +77,7 @@ class FSM_window_base(object):
 
     def show(self):
         self._main_win.show()
+        self._add_state_button.set_active(True)
         pass
 
     def hide(self):
@@ -708,8 +713,6 @@ class FSM_window(FSM_window_base):
         control_layer.setAttribute('inkscape:groupmode', 'layer')
         root.appendChild(control_layer)
         self._control_layer = control_layer
-        
-        self._add_state_mode.activate()
         pass
 
     def _doc(self):
@@ -764,6 +767,7 @@ class FSM_window(FSM_window_base):
     def _emit_leave_mode(self):
         if self._leave_mode_cb:
             self._leave_mode_cb()
+            self._leave_mode_cb = None
             pass
         pass
 
@@ -846,14 +850,17 @@ class FSM_window(FSM_window_base):
         pass
 
     def on_close_window_activate(self, *args):
+        self._emit_leave_mode()
         self._close_cb()
         pass
     
     def on_FSM_main_win_destroy_event(self, *args):
+        self._emit_leave_mode()
         self._destroy_cb()
         pass
     
     def on_FSM_main_win_delete_event(self, *args):
+        self._emit_leave_mode()
         self._destroy_cb()
         pass
 
@@ -919,6 +926,7 @@ class FSM_window(FSM_window_base):
         self._install_test_data()
         self._install_test_data = lambda: None
         self._update_view()
+        self._add_state_mode.activate()
         super(FSM_window, self).show()
         pass
 
