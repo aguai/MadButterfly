@@ -702,7 +702,7 @@ class FSM_window(FSM_window_base):
     width = 1024
     height = 768
 
-    _grab_hdl = None
+    _grab_mouse_hdl = None
     _bg_hdl = None
 
     _leave_mode_cb = None
@@ -967,20 +967,20 @@ class FSM_window(FSM_window_base):
         pass
 
     def grab_mouse(self, callback):
-        assert self._grab_hdl is None
+        assert self._grab_mouse_hdl is None
         
         root = self._root()
         root.setAttribute('inkscape:groupmode', '')
-        self._grab_hdl = root.spitem.connect('mouse-event', callback)
+        self._grab_mouse_hdl = root.spitem.connect('mouse-event', callback)
         pass
 
     def ungrab_mouse(self):
-        if not self._grab_hdl:
+        if not self._grab_mouse_hdl:
             return
         
         root = self._root()
-        root.spitem.disconnect(self._grab_hdl)
-        self._grab_hdl = None
+        root.spitem.disconnect(self._grab_mouse_hdl)
+        self._grab_mouse_hdl = None
         root.setAttribute('inkscape:groupmode', 'layer')
         pass
 
