@@ -782,17 +782,17 @@ class _FSM_move_state_mode(object):
             return
 
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
-            self._clean_select()
+            self._deselect_state()
             pass
         pass
 
     def _select_state(self, state):
-        self._clean_select()
+        self._deselect_state()
         self._selected_cleaner = state.hide_selected
         state.show_selected()
         pass
 
-    def _clean_select(self):
+    def _deselect_state(self):
         if self._selected_cleaner:
             self._selected_cleaner()
             pass
@@ -834,7 +834,9 @@ class _FSM_move_state_mode(object):
             pass
         pass
 
-    def _install_transition_mouse_event_handler(self, trn):
+    ## \brief Install event handler for control points of a transitions.
+    #
+    def _install_trn_cps_mouse(self, trn):
         c1, l01, c2, l32 = trn._control_points
         path = trn.path
         c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y = tuple(path)
@@ -931,25 +933,29 @@ class _FSM_move_state_mode(object):
         c2_dragger.connect(c2)
         pass
 
+    ## \brief A transition was selected.
+    #
     def _select_transition(self, trn):
-        def cleaner():
+        def deselect():
             trn.hide_control_points()
             del self._hint_transition # enable _hint_transition
             pass
         
         self._hint_transition = lambda *args: None # disable _hint_transition
         
-        self._clean_select()
-        self._selected_cleaner = cleaner
+        self._deselect_state()
+        self._selected_cleaner = deselect
         trn.show_control_points()
         
         trn.stop_hint()
         window = self._window
         window.ungrab_bg()
         
-        self._install_transition_mouse_event_handler(trn)
+        self._install_trn_cps_mouse(trn)
         pass
 
+    ## \brief Hint for mouse over a transition.
+    #
     def _hint_transition(self, trn):
         def stop_hint(*args):
             trn.stop_hint()
@@ -985,7 +991,7 @@ class _FSM_move_state_mode(object):
         pass
 
     def deactivate(self):
-        self._clean_select()
+        self._deselect_state()
         pass
     pass
 
