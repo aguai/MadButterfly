@@ -934,14 +934,16 @@ class _FSM_move_state_mode(object):
     def _select_transition(self, trn):
         def cleaner():
             trn.hide_control_points()
-            del self._hint_transition
+            del self._hint_transition # enable _hint_transition
             pass
+        
+        self._hint_transition = lambda *args: None # disable _hint_transition
+        
         self._clean_select()
         self._selected_cleaner = cleaner
         trn.show_control_points()
         
         trn.stop_hint()
-        self._hint_transition = lambda *args: None
         window = self._window
         window.ungrab_bg()
         
