@@ -14,25 +14,31 @@ class _dragger(object):
     def __init__(self):
         pass
     
+    ## \brief Mouse event handler
+    #
+    # This is a placeholder for mouse vent handlers.  This attribute
+    # of instances is switched between _mouse_event_waiting and
+    # _mouse_event_pressed.
+    #
     def mouse_event(self, evtype, button, x, y):
         raise RuntimeError, 'should not be here'
     
-    def mouse_event_waiting(self, evtype, button, x, y):
+    def _mouse_event_waiting(self, evtype, button, x, y):
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
                 button == 1:
             self._start_x = x
             self._start_y = y
-            self.mouse_event = self.mouse_event_pressed
+            self.mouse_event = self._mouse_event_pressed
             self.start_drag()
             pass
         pass
     
-    def mouse_event_pressed(self, evtype, button, x, y):
+    def _mouse_event_pressed(self, evtype, button, x, y):
         rx = x - self._start_x
         ry = y - self._start_y
         
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
-            self.mouse_event = self.mouse_event_waiting
+            self.mouse_event = self._mouse_event_waiting
             self.stop_drag(rx, ry)
             pass
 
@@ -40,7 +46,7 @@ class _dragger(object):
         pass
 
     def start(self):
-        self.mouse_event = self.mouse_event_waiting
+        self.mouse_event = self._mouse_event_waiting
         pass
 
     def stop(self):
