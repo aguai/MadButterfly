@@ -4,6 +4,78 @@ import math
 import data_monitor
 import pybInkscape
 
+
+class _dragger(object):
+    _node = None
+    _start_x = None
+    _start_y = None
+    _state = 0
+    
+    def __init__(self):
+        pass
+    
+    def mouse_event(self, evtype, button, x, y):
+        raise RuntimeError, 'should not be here'
+    
+    def mouse_event_waiting(self, evtype, button, x, y):
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
+                button == 1:
+            self._start_x = x
+            self._start_y = y
+            self.mouse_event = self.mouse_event_pressed
+            self.start_drag()
+            pass
+        pass
+    
+    def mouse_event_pressed(self, evtype, button, x, y):
+        rx = x - self._start_x
+        ry = y - self._start_y
+        
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
+            self.mouse_event = self.mouse_event_waiting
+            self.stop_drag(rx, ry)
+            pass
+
+        self.update(rx, ry)
+        pass
+
+    def start(self):
+        self.mouse_event = self.mouse_event_waiting
+        pass
+
+    def stop(self):
+        pass
+
+    def connect(self, node):
+        self.start()
+        
+        def handler(item, evtype, button, x, y):
+            self.mouse_event(evtype, button, x, y)
+            pass
+        
+        self._node = node
+        hdl_id = node.spitem.connect('mouse-event', handler)
+        self._hdl_id = hdl_id
+        pass
+
+    def disconnect(self):
+        self.stop()
+        node = self._node
+        hdl_id = self._hdl_id
+        node.disconnect(hdl_id)
+        pass
+
+    def start_drag(self):
+        pass
+
+    def stop_drag(self, rx, ry):
+        pass
+
+    def update(self, rx, ry):
+        pass
+    pass
+
+
 class FSM_window_base(object):
     _add_state_button = None
     _move_state_button = None
@@ -152,7 +224,14 @@ class FSM_window_base(object):
 
     def on_edit_state_activate(self, *args):
         pass
+
+    def on_transition_apply_clicked(self, *args):
+        pass
+
+    def on_transition_cancel_clicked(self, *args):
+        pass
     pass
+
 
 class FSM_transition(object):
     _doc = None
@@ -165,6 +244,7 @@ class FSM_transition(object):
     trn_g = None
     _arrow_node = None
     _path_node = None
+    _control_points = None
 
     def __init__(self, trn_cond):
        self.trn_cond = trn_cond
@@ -271,9 +351,13 @@ class FSM_transition(object):
         trn = domview.get_transition(state_name, trn_cond)
         return trn[1]
 
+    @property
+    def state(self):
+        return self._state
+
     def draw(self, parent):
         path = self.path
-        trn_g, arrow_node, path_node = self._draw_transition_real(parent, path)
+        trn_g, path_node, arrow_node = self._draw_transition_real(parent, path)
         self.trn_g = trn_g
         self._arrow_node = arrow_node
         self._path_node = path_node
@@ -332,6 +416,91 @@ class FSM_transition(object):
         
         domview = self._domview
         domview.set_transition_path(state_name, trn_cond, new_path)
+        pass
+
+    def show_control_points(self):
+        if not self._control_points:
+            doc = self._doc
+            
+            c1 = doc.createElement('svg:circle')
+            c1.setAttribute('r', '3')
+            c1.setAttribute('style', 'stroke: black; stroke-width: 1; '
+                            'fill: white')
+            l01 = doc.createElement('svg:line')
+            l01.setAttribute('style', 'stroke: black; stroke-width: 1; '
+                             'stroke-dasharray: 3 2')
+
+            c2 = doc.createElement('svg:circle')
+            c2.setAttribute('r', '3')
+            c2.setAttribute('style', 'stroke: black; stroke-width: 1; '
+                            'fill: white')
+            l32 = doc.createElement('svg:line')
+            l32.setAttribute('style', 'stroke: black; stroke-width: 1; '
+                             'stroke-dasharray: 3 2')
+
+            control_layer = self._control_layer
+            
+            control_layer.appendChild(c1)
+            control_layer.appendChild(l01)
+            control_layer.appendChild(c2)
+            control_layer.appendChild(l32)
+            self._control_points = (c1, l01, c2, l32)
+            pass
+
+        c1, l01, c2, l32 = self._control_points
+        path = self.path
+        c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y = tuple(path)
+        
+        c1.setAttribute('cx', str(c1x))
+        c1.setAttribute('cy', str(c1y))
+        l01.setAttribute('x1', str(c0x))
+        l01.setAttribute('y1', str(c0y))
+        l01.setAttribute('x2', str(c1x))
+        l01.setAttribute('y2', str(c1y))
+        
+        c2.setAttribute('cx', str(c2x))
+        c2.setAttribute('cy', str(c2y))
+        l32.setAttribute('x1', str(c3x))
+        l32.setAttribute('y1', str(c3y))
+        l32.setAttribute('x2', str(c2x))
+        l32.setAttribute('y2', str(c2y))
+        pass
+
+    def hide_control_points(self):
+        if not self._control_points:
+            return
+
+        control_layer = self._control_layer
+        for node in self._control_points:
+            control_layer.removeChild(node)
+            pass
+        self._control_points = None
+        pass
+
+    def start_hint(self):
+        path_node = self._path_node
+        arrow_node = self._arrow_node
+        if path_node:
+            path_node.setAttribute('style',
+                                   'stroke: #404040; stroke-width: 3; '
+                                   'fill: none')
+            arrow_node.setAttribute('style',
+                                    'stroke: #404040; stroke-width: 2; '
+                                    'fill: #404040')
+            pass
+        pass
+
+    def stop_hint(self):
+        path_node = self._path_node
+        arrow_node = self._arrow_node
+        if path_node:
+            path_node.setAttribute('style',
+                                   'stroke: #000000; stroke-width: 1; ' \
+                                       'fill: none')
+            arrow_node.setAttribute('style',
+                                    'stroke: #000000; stroke-width: 1; ' \
+                                        'fill: #000000')
+            pass
         pass
     pass
 
@@ -597,7 +766,8 @@ class _FSM_move_state_mode(object):
     __data_monitor_prefix__ = 'on_'
     
     _window = None
-    _selected_state = None
+    _domview = None
+    _selected_cleaner = None
     
     def __init__(self, window, domview_ui):
         super(_FSM_move_state_mode, self).__init__()
@@ -608,24 +778,28 @@ class _FSM_move_state_mode(object):
         pass
 
     def on_move_state_background(self, item, evtype, button, x, y):
+        if self._selected_cleaner is None:
+            return
+
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
+            self._clean_select()
+            pass
         pass
 
     def _select_state(self, state):
-        if self._selected_state:
-            self._selected_state.hide_selected()
-            pass
-        self._selected_state = state
+        self._clean_select()
+        self._selected_cleaner = state.hide_selected
         state.show_selected()
         pass
 
-    def _clear_select(self):
-        if self._selected_state:
-            self._selected_state.hide_selected()
+    def _clean_select(self):
+        if self._selected_cleaner:
+            self._selected_cleaner()
             pass
-        self._selected_state = None
+        self._selected_cleaner = None
         pass
 
-    def handle_move_state_state(self, state, evtype, button, x, y):
+    def _handle_move_state_state(self, state, evtype, button, x, y):
         window = self._window
 
         def moving_state(item, evtype, button, x, y):
@@ -660,6 +834,143 @@ class _FSM_move_state_mode(object):
             pass
         pass
 
+    def _install_transition_mouse_event_handler(self, trn):
+        c1, l01, c2, l32 = trn._control_points
+        path = trn.path
+        c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y = tuple(path)
+
+        state_src = trn.state
+        target_name = trn.target
+        states = trn._states
+        state_target = states[target_name]
+        domview = self._domview
+        window = self._window
+
+        def c1_update(rx, ry):
+            nc1x = c1x + rx
+            nc1y = c1y + ry
+            cx, cy = state_src.xy
+            r = state_src.r
+            
+            cv = nc1x - cx, nc1y - cy
+            cv_len = math.sqrt(cv[0] ** 2 + cv[1] ** 2)
+            nc0x = cx + cv[0] * r / cv_len
+            nc0y = cy + cv[1] * r / cv_len
+            
+            path = list(trn.path)
+            path[:4] = [nc0x, nc0y, nc1x, nc1y]
+
+            state_name = state_src.state_name
+            cond = trn.trn_cond
+            domview.set_transition_path(state_name, cond, path)
+
+            trn.show_control_points()
+            trn.update()
+            pass
+
+        def c1_start():
+            def relay_event(item, evtype, button, x, y):
+                c1_dragger.mouse_event(evtype, button, x, y)
+                pass
+            
+            window.ungrab_bg()
+            window.grab_bg(relay_event)
+            pass
+        
+        def c1_stop(rx, ry):
+            window.ungrab_bg()
+            window.grab_bg(self.on_move_state_background)
+            pass
+        
+        def c2_update(rx, ry):
+            nc2x = c2x + rx
+            nc2y = c2y + ry
+            cx, cy = state_target.xy
+            r = state_target.r
+            
+            cv = nc2x - cx, nc2y - cy
+            cv_len = math.sqrt(cv[0] ** 2 + cv[1] ** 2)
+            nc3x = cx + cv[0] * r / cv_len
+            nc3y = cy + cv[1] * r / cv_len
+            
+            path = list(trn.path)
+            path[4:] = [nc2x, nc2y, nc3x, nc3y]
+
+            state_name = state_src.state_name
+            cond = trn.trn_cond
+            domview.set_transition_path(state_name, cond, path)
+
+            trn.show_control_points()
+            trn.update()
+            pass
+
+        def c2_start():
+            def relay_event(item, evtype, button, x, y):
+                c2_dragger.mouse_event(evtype, button, x, y)
+                pass
+            
+            window.ungrab_bg()
+            window.grab_bg(relay_event)
+            pass
+
+        def c2_stop(rx, ry):
+            window.ungrab_bg()
+            window.grab_bg(self.on_move_state_background)
+            pass
+        
+        c1_dragger = _dragger()
+        c1_dragger.update = c1_update
+        c1_dragger.start_drag = c1_start
+        c1_dragger.stop_drag = c1_stop
+        c1_dragger.connect(c1)
+
+        c2_dragger = _dragger()
+        c2_dragger.update = c2_update
+        c2_dragger.start_drag = c2_start
+        c2_dragger.stop_drag = c2_stop
+        c2_dragger.connect(c2)
+        pass
+
+    def _select_transition(self, trn):
+        def cleaner():
+            trn.hide_control_points()
+            del self._hint_transition
+            pass
+        self._clean_select()
+        self._selected_cleaner = cleaner
+        trn.show_control_points()
+        
+        trn.stop_hint()
+        self._hint_transition = lambda *args: None
+        window = self._window
+        window.ungrab_bg()
+        
+        self._install_transition_mouse_event_handler(trn)
+        pass
+
+    def _hint_transition(self, trn):
+        def stop_hint(*args):
+            trn.stop_hint()
+            window.ungrab_bg()
+            window.grab_bg(self.on_move_state_background)
+            pass
+
+        trn.start_hint()
+        
+        window = self._window
+        window.ungrab_bg()
+        window.grab_bg(stop_hint)
+        pass
+
+    def _handle_transitoin_mouse_events(self, trn, evtype, button, x, y):
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
+                button == 1:
+            self._select_transition(trn)
+        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
+            self._hint_transition(trn)
+            pass
+        pass
+
     def activate(self):
         window = self._window
         window._emit_leave_mode()
@@ -667,13 +978,12 @@ class _FSM_move_state_mode(object):
         window.ungrab_all()
         
         window.grab_bg(self.on_move_state_background)
-        window.grab_state(self.handle_move_state_state)
+        window.grab_state(self._handle_move_state_state)
+        window.grab_transition(self._handle_transitoin_mouse_events)
         pass
 
     def deactivate(self):
-        if self._selected_state:
-            self._clear_select()
-            pass
+        self._clean_select()
         pass
     pass
 
@@ -846,6 +1156,7 @@ class FSM_window(FSM_window_base):
     _add_state_mode = None
     _state_mouse_event_handler = None
     _add_transition_cb = None
+    _transition_mouse_event_handler = None
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
         super(FSM_window, self).__init__()
@@ -950,6 +1261,7 @@ class FSM_window(FSM_window_base):
         self.ungrab_mouse()
         self.ungrab_state()
         self.ungrab_add_transition()
+        self.ungrab_transition()
         pass
 
     def on_state_mouse_event(self, state, evtype, button, x, y):
@@ -963,6 +1275,29 @@ class FSM_window(FSM_window_base):
             self.on_state_mouse_event(state, evtype, button, x, y)
             pass
         state.grab(mouse_event_handler)
+        pass
+
+    def on_transition_mouse_event(self, trn, evtype, button, x, y):
+        if self._transition_mouse_event_handler:
+            self._transition_mouse_event_handler(trn, evtype, button, x, y)
+            pass
+        pass
+
+    def _install_transition_event_handler(self, trn):
+        def mouse_event_handler(item, evtype, button, x, y):
+            self.on_transition_mouse_event(trn, evtype, button, x, y)
+            pass
+        trn_g = trn.trn_g
+        trn_g.spitem.connect('mouse-event', mouse_event_handler)
+        pass
+
+    def grab_transition(self, callback):
+        assert self._transition_mouse_event_handler is None
+        self._transition_mouse_event_handler = callback
+        pass
+
+    def ungrab_transition(self):
+        self._transition_mouse_event_handler = None
         pass
 
     def grab_state(self, callback):
@@ -989,6 +1324,10 @@ class FSM_window(FSM_window_base):
         self._draw_state_domview(state_name)
         state = states[state_name]
         self._install_state_event_handler(state)
+
+        for trn in state.transitions.values():
+            self._install_transition_event_handler(trn)
+            pass
         pass
 
     ## \brief Load new state incrementally.
