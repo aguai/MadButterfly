@@ -161,19 +161,36 @@ class FSM_window_base(object):
         error_dialog.hide()
         pass
 
-    def show_state_editor(self, state_name=''):
+    def show_state_editor(self, state_name='', radius='30', entry_action=''):
         state_name_inp = self._state_name
         state_radius_inp = self._state_radius
+        state_entry_action = self._state_entry_action
         state_editor = self._state_editor
         
         state_name_inp.set_text(state_name)
-        state_radius_inp.set_text('30')
+        state_radius_inp.set_text(radius)
+        state_entry_action.set_text(entry_action)
         state_editor.show()
         pass
 
     def hide_state_editor(self):
         state_editor = self._state_editor
         state_editor.hide()
+        pass
+
+    def show_transition_editor(self, cond='', action=''):
+        transition_cond = self._transition_cond
+        transition_action = self._transition_action
+        transition_editor = self._transition_editor
+
+        transition_cond.set_text(cond)
+        transition_action.set_text(action)
+        transition_editor.show()
+        pass
+
+    def hide_transition_editor(self):
+        transition_editor = self._transition_editor
+        transition_editor.hide()
         pass
 
     def popup_state_menu(self):
@@ -252,6 +269,8 @@ class FSM_window_base(object):
         pass
 
     def on_transition_cancel_clicked(self, *args):
+        transition_editor = self._transition_editor
+        transition_editor.hide()
         pass
 
     def on_del_transition_activate(self, *args):
@@ -383,6 +402,14 @@ class FSM_transition(object):
     @property
     def state(self):
         return self._state
+
+    @property
+    def action(self):
+        domview = self._domview
+        state_name = self._state.state_name
+        trn_cond = self.trn_cond
+        trn = domview.get_transition(state_name, trn_cond)
+        return trn[2]
 
     def draw(self, parent):
         path = self.path
@@ -1002,10 +1029,17 @@ class _FSM_move_state_mode(object):
         window.grab_bg(stop_hint)
         pass
 
-    def on_del_transition_activate(self, *args):
+    def _handle_del_transition(self, *args):
         pass
 
-    def on_edit_transition_activate(self, *args):
+    def _handle_edit_transition(self, *args):
+        trn = self._select_transition
+
+        cond = trn.trn_cond
+        action = trn.action or ''
+
+        window = self._window
+        window.show_transition_editor(cond, action)
         pass
 
     def _show_transition_menu(self, trn):
@@ -1039,6 +1073,7 @@ class _FSM_move_state_mode(object):
         window.grab_bg(self.on_move_state_background)
         window.grab_state(self._handle_move_state_state)
         window.grab_transition(self._handle_transitoin_mouse_events)
+        window.grab_edit_transition(self._handle_edit_transition)
         pass
 
     def deactivate(self):
@@ -1215,6 +1250,7 @@ class FSM_window(FSM_window_base):
     _add_state_mode = None
     _state_mouse_event_handler = None
     _add_transition_cb = None
+    _edit_transition_cb = None
     _transition_mouse_event_handler = None
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
@@ -1321,6 +1357,7 @@ class FSM_window(FSM_window_base):
         self.ungrab_state()
         self.ungrab_add_transition()
         self.ungrab_transition()
+        self.ungrab_edit_transition()
         pass
 
     def on_state_mouse_event(self, state, evtype, button, x, y):
@@ -1375,6 +1412,15 @@ class FSM_window(FSM_window_base):
 
     def ungrab_add_transition(self):
         self._add_transition_cb = None
+        pass
+
+    def grab_edit_transition(self, callback):
+        assert self._edit_transition_cb is None
+        self._edit_transition_cb = callback
+        pass
+
+    def ungrab_edit_transition(self):
+        self._edit_transition_cb = None
         pass
 
     def _load_new_state(self, state_name):
@@ -1465,6 +1511,12 @@ class FSM_window(FSM_window_base):
     def on_add_transition_activate(self, *args):
         if self._add_transition_cb:
             self._add_transition_cb(*args)
+            pass
+        pass
+
+    def on_edit_transition_activate(self, *args):
+        if self._edit_transition_cb:
+            self._edit_transition_cb(*args)
             pass
         pass
 
