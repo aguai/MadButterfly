@@ -112,9 +112,14 @@ class FSM_window_base(object):
         state_editor = builder.get_object("state_editor")
         state_name = builder.get_object('state_name')
         state_radius = builder.get_object('state_radius')
+        state_entry_action = builder.get_object('state_entry_action')
 
         error_dialog = builder.get_object('error_dialog')
         error_dialog_label = builder.get_object('error_dialog_label')
+
+        transition_editor = builder.get_object('transition_editor')
+        transition_cond = builder.get_object('transition_cond')
+        transition_action = builder.get_object('transition_action')
 
         state_menu = builder.get_object('state_menu')
         transition_menu = builder.get_object('transition_menu')
@@ -130,6 +135,11 @@ class FSM_window_base(object):
         self._state_editor = state_editor
         self._state_name = state_name
         self._state_radius = state_radius
+        self._state_entry_action = state_entry_action
+
+        self._transition_editor = transition_editor
+        self._transition_cond = transition_cond
+        self._transition_action = transition_action
 
         self._error_dialog = error_dialog
         self._error_dialog_label = error_dialog_label
