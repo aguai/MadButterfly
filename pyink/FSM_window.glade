@@ -634,4 +634,25 @@
       <action-widget response="0">transition_cancel</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkMenu" id="transition_menu">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkMenuItem" id="del_transition">
+        <property name="visible">True</property>
+        <property name="tooltip_text" translatable="yes">Delete the transition</property>
+        <property name="label" translatable="yes">Delete</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_del_transition_activate"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="edit_transition">
+        <property name="visible">True</property>
+        <property name="tooltip_text" translatable="yes">Edit properties of the transition</property>
+        <property name="label" translatable="yes">Edit</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_edit_transition_activate"/>
+      </object>
+    </child>
+  </object>
 </interface>

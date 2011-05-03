@@ -236,6 +236,12 @@ class FSM_window_base(object):
 
     def on_transition_cancel_clicked(self, *args):
         pass
+
+    def on_del_transition_activate(self, *args):
+        pass
+
+    def on_edit_transition_activate(self, *args):
+        pass
     pass
 
 
