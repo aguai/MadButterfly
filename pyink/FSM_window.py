@@ -555,7 +555,8 @@ class FSM_state(object):
         circle_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
                                  'fill: #ffffff')
 
-        text_node.setAttribute('style', 'stroke: #000000; fill: #000000; font-size: 16px')
+        text_node.setAttribute('style', 'stroke: #000000; fill: #000000; '
+                               'font-size: 16px')
 
         text_content.setContent(state_name)
 
