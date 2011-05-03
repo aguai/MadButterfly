@@ -117,6 +117,7 @@ class FSM_window_base(object):
         error_dialog_label = builder.get_object('error_dialog_label')
 
         state_menu = builder.get_object('state_menu')
+        transition_menu = builder.get_object('transition_menu')
 
         builder.connect_signals(self)
         
@@ -134,6 +135,7 @@ class FSM_window_base(object):
         self._error_dialog_label = error_dialog_label
 
         self._state_menu = state_menu
+        self._transition_menu = transition_menu
         pass
 
     def show_error(self, msg):
@@ -166,6 +168,11 @@ class FSM_window_base(object):
 
     def popup_state_menu(self):
         menu = self._state_menu
+        menu.popup(None, None, None, 0, 0)
+        pass
+
+    def popup_transition_menu(self):
+        menu = self._transition_menu
         menu.popup(None, None, None, 0, 0)
         pass
     
@@ -782,6 +789,8 @@ class _FSM_move_state_mode(object):
     _domview = None
     _selected_cleaner = None
     
+    _select_transition = None
+    
     def __init__(self, window, domview_ui):
         super(_FSM_move_state_mode, self).__init__()
         
@@ -983,12 +992,31 @@ class _FSM_move_state_mode(object):
         window.grab_bg(stop_hint)
         pass
 
+    def on_del_transition_activate(self, *args):
+        pass
+
+    def on_edit_transition_activate(self, *args):
+        pass
+
+    def _show_transition_menu(self, trn):
+        self._select_transition = trn
+        
+        window = self._window
+        window.popup_transition_menu()
+        pass
+
+    ## \brief Handle mouse events when selecting no transition.
+    #
     def _handle_transitoin_mouse_events(self, trn, evtype, button, x, y):
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
                 button == 1:
             self._select_transition(trn)
         elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
             self._hint_transition(trn)
+            pass
+        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
+                button == 3:
+            self._show_transition_menu(trn)
             pass
         pass
 
@@ -1021,7 +1049,7 @@ class _FSM_add_state_mode(object):
 
     _select_state = None
     _candidate_state = None
-
+    
     def __init__(self, window, domview_ui):
         super(_FSM_add_state_mode, self).__init__()
         
