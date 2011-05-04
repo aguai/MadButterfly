@@ -588,6 +588,9 @@ class domview_ui_FSM(object):
     def set_transition_path(self, state_name, cond, path):
         self._dom.set_transition_path(state_name, cond, path)
         pass
+    def chg_transition_cond(self, state_name, cond, new_cond):
+        self._dom.chg_transition_cond(state_name, cond, new_cond)
+        pass
     pass
 
 
