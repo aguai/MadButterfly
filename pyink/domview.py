@@ -308,6 +308,16 @@ class State(object):
         transitions = self.transitions
         transition = transitions[cond]
         return transition
+
+    def chg_transition_cond(self, cond, new_cond):
+        transitions = self.transitions
+        
+        trn = transitions[cond]
+        trn.set_condition(new_cond)
+        
+        del transitions[cond]
+        transitions[new_cond] = trn
+        pass
     pass
 
 
@@ -1176,6 +1186,11 @@ class FSM_manager(object):
         state = self._get_state(state_name)
         trn = state.get_transition(cond)
         trn.set_path(path)
+        pass
+
+    def chg_transition_cond(self, state_name, cond, new_cond):
+        state = self._get_state(state_name)
+        state.chg_transition_cond(cond, new_cond)
         pass
     pass
 

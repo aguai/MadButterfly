@@ -802,18 +802,45 @@ class FSM_state(object):
             pass
         pass
 
-    def add_transition(self, parent, condition, target_state):
-        domview = self._domview
-        
-        state_name = self.state_name
-        target_name = target_state.state_name
-        domview.add_transition(state_name, condition, target_name)
-        
+    def add_transition(self, parent, condition):
         self._load_transition_domview(parent, condition)
 
+        transitions = self.transitions
+        trn = transitions[condition]
+        target_name = trn.target
+
+        state_name = self.state_name
         states = self._states
         target_state = states[target_name]
         target_state.from_states.add(state_name)
+        pass
+
+    ## \brief Remove state from from_states of a given target.
+    #
+    # The state was removed only when there is no transition targeted
+    # on given target state.
+    #
+    def _rm_from_states_for_target(self, target_name):
+        transitions = self.transitions
+        same_targets = [trn.target for trn in transitions.values()
+                        if trn.target == target_name]
+        same_target_cnt = len(same_targets)
+        if same_target_cnt == 0:
+            states = self._states
+            target_state = states[target_name]
+            state_name = self.state_name
+            target_state.from_states.remove(state_name)
+            pass
+        pass
+
+    def rm_transition(self, condition):
+        transitions = self.transitions
+        trn = transitions[condition]
+        target_name = trn.target
+        del transitions[condition]
+        trn.clear()
+
+        self._rm_from_states_for_target(target_name)
         pass
     pass
 
@@ -826,7 +853,7 @@ class _FSM_move_state_mode(object):
     _domview = None
     _selected_cleaner = None
     
-    _select_transition = None
+    _selected_transition = None
     
     def __init__(self, window, domview_ui):
         super(_FSM_move_state_mode, self).__init__()
@@ -1033,7 +1060,7 @@ class _FSM_move_state_mode(object):
         pass
 
     def _handle_edit_transition(self, *args):
-        trn = self._select_transition
+        trn = self._selected_transition
 
         cond = trn.trn_cond
         action = trn.action or ''
@@ -1042,8 +1069,43 @@ class _FSM_move_state_mode(object):
         window.show_transition_editor(cond, action)
         pass
 
+    def _handle_transition_apply(self, *args):
+        trn = self._selected_transition
+        window = self._window
+        domview = self._domview
+        transition_cond = window._transition_cond
+        transition_action = window._transition_action
+        
+        trn_cond = trn.trn_cond
+        trn_action = trn.action
+        trn_state = trn.state
+        trn_state_name = trn_state.state_name
+        
+        new_cond = transition_cond.get_text()
+        new_action = transition_action.get_text()
+
+        if new_action != trn_action:
+            domview.set_transition_action(trn_state_name, trn_cond, new_action)
+            pass
+
+        if new_cond != trn_cond:
+            trn_state.rm_transition(trn_cond)
+            
+            domview.chg_transition_cond(trn_state_name, trn_cond, new_cond)
+            
+            fsm_layer = window._fsm_layer
+            trn_state.add_transition(fsm_layer, new_cond)
+            
+            transitions = trn_state.transitions
+            new_trn = transitions[new_cond]
+            window._install_transition_event_handler(new_trn)
+            pass
+
+        window.hide_transition_editor()
+        pass
+
     def _show_transition_menu(self, trn):
-        self._select_transition = trn
+        self._selected_transition = trn
         
         window = self._window
         window.popup_transition_menu()
@@ -1074,6 +1136,7 @@ class _FSM_move_state_mode(object):
         window.grab_state(self._handle_move_state_state)
         window.grab_transition(self._handle_transitoin_mouse_events)
         window.grab_edit_transition(self._handle_edit_transition)
+        window.grab_transition_apply(self._handle_transition_apply)
         pass
 
     def deactivate(self):
@@ -1173,9 +1236,17 @@ class _FSM_add_state_mode(object):
         fsm_layer = window._fsm_layer
         
         target_state = state
+        target_name = target_state.state_name
         src_state = self._select_state
+        src_name = src_state.state_name
         cond = ''
-        src_state.add_transition(fsm_layer, cond, target_state)
+
+        domview = self._domview
+        domview.add_transition(src_name, cond, target_name)
+        src_state.add_transition(fsm_layer, cond)
+        
+        trn = src_state.transitions[cond]
+        window._install_transition_event_handler(trn)
         
         self._stop_select_target()
         pass
@@ -1251,6 +1322,7 @@ class FSM_window(FSM_window_base):
     _state_mouse_event_handler = None
     _add_transition_cb = None
     _edit_transition_cb = None
+    _transition_apply_cb = None
     _transition_mouse_event_handler = None
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
@@ -1358,6 +1430,7 @@ class FSM_window(FSM_window_base):
         self.ungrab_add_transition()
         self.ungrab_transition()
         self.ungrab_edit_transition()
+        self.ungrab_transition_apply()
         pass
 
     def on_state_mouse_event(self, state, evtype, button, x, y):
@@ -1421,6 +1494,15 @@ class FSM_window(FSM_window_base):
 
     def ungrab_edit_transition(self):
         self._edit_transition_cb = None
+        pass
+
+    def grab_transition_apply(self, callback):
+        assert self._transition_apply_cb is None
+        self._transition_apply_cb = callback
+        pass
+
+    def ungrab_transition_apply(self):
+        self._transition_apply_cb = None
         pass
 
     def _load_new_state(self, state_name):
@@ -1517,6 +1599,12 @@ class FSM_window(FSM_window_base):
     def on_edit_transition_activate(self, *args):
         if self._edit_transition_cb:
             self._edit_transition_cb(*args)
+            pass
+        pass
+
+    def on_transition_apply_clicked(self, *args):
+        if self._transition_apply_cb:
+            self._transition_apply_cb(*args)
             pass
         pass
 
