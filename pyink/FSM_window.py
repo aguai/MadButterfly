@@ -842,47 +842,253 @@ class FSM_state(object):
 
         self._rm_from_states_for_target(target_name)
         pass
+
+    def start_hint(self):
+        pass
+
+    def stop_hint(self):
+        pass
+    pass
+
+
+class _select_manager(object):
+    selected_state = None
+    selected_transition = None
+
+    def deselect(self):
+        pass
+
+    def select_state(self, state):
+        self.deselect()
+        self.selected_state = state
+        state.show_selected()
+        def hide():
+            state.hide_selected()
+            self.selected_state = None
+            pass
+        self.deselect = hide
+        pass
+
+    def select_transition(self, transition):
+        self.deselect()
+        self.selected_transition = transition
+        transition.show_control_points()
+        def hide():
+            transition.hide_control_points()
+            self.selected_transition = None
+            pass
+        self.deselect = hide
+        pass
+    pass
+
+
+class _FSM_popup(object):
+    _window = None
+    _domview = None
+    
+    _menu_state = None
+    _menu_transition = None
+    
+    _candidate_target = None
+
+    _select = None
+    
+    def __init__(self, window, domview_ui, select_man):
+        super(_FSM_popup, self).__init__()
+        self._window = window
+        self._domview = domview_ui
+        self._select = select_man
+        pass
+
+    def _show_state_menu(self, state):
+        self._menu_state = state
+        window = self._window
+        window.popup_state_menu()
+        pass
+
+    def _show_transition_menu(self, trn):
+        self._menu_transition = trn
+        window = self._window
+        window.popup_transition_menu()
+        pass
+
+    ## \brief Handle mouse events for state objects.
+    #
+    # This method must be called by mode object to handle mouse events
+    # that is not handled by them.
+    #
+    def _handle_state_mouse_events(self, state, evtype, button, x, y):
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
+                button == 3:
+            self._show_state_menu(state)
+        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
+            state.start_hint()
+        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_LEAVE:
+            state.stop_hint()
+            pass
+        pass
+
+    ## \brief Handle mouse events for transition objects.
+    #
+    # This method must be called by mode object to handle mouse events
+    # that is not handled by them.
+    #
+    def _handle_transition_mouse_events(self, trn, evtype, button, x, y):
+        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
+                button == 3:
+            self._show_transition_menu(trn)
+        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
+            trn.start_hint()
+        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_LEAVE:
+            trn.stop_hint()
+            pass
+        pass
+
+    def _handle_select_transition_target(self, state, evtype, button, x, y):
+        if self._candidate_target != state and self._menu_state != state:
+            if self._candidate_target:
+                self._candidate_target.hide_selected()
+                pass
+            self._candidate_target = state
+            state.show_selected()
+            pass
+
+        if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
+            return
+        if button != 1:
+            return
+        
+        window = self._window
+        
+        if state == self._menu_state:
+            window.pop_grabs()
+            return
+        
+        fsm_layer = window._fsm_layer
+        
+        target_state = state
+        target_name = target_state.state_name
+        src_state = self._menu_state
+        src_name = src_state.state_name
+        cond = ''
+
+        domview = self._domview
+        domview.add_transition(src_name, cond, target_name)
+        src_state.add_transition(fsm_layer, cond)
+        
+        trn = src_state.transitions[cond]
+        window._install_transition_event_handler(trn)
+        
+        window.pop_grabs()
+        pass
+
+    def _handle_add_transition(self, *args):
+        def restore_bg(item, evtype, *args):
+            if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
+                if self._candidate_target:
+                    self._candidate_target.hide_selected()
+                    self._candidate_target = None
+                    pass
+                return
+            self._select.deselect()
+            window.pop_grabs()
+            pass
+        
+        window = self._window
+        window.push_grabs()
+        window.ungrab_bg()
+        window.grab_bg(restore_bg)
+
+        window.ungrab_state()
+        window.grab_state(self._handle_select_transition_target)
+        self._select.select_state(self._menu_state)
+        pass
+
+    def _handle_edit_transition(self, *args):
+        trn = self._select.selected_transition
+
+        cond = trn.trn_cond
+        action = trn.action or ''
+
+        window = self._window
+        window.show_transition_editor(cond, action)
+        pass
+
+    def _handle_transition_apply(self, *args):
+        trn = self._select.selected_transition
+        window = self._window
+        domview = self._domview
+        transition_cond = window._transition_cond
+        transition_action = window._transition_action
+        
+        trn_cond = trn.trn_cond
+        trn_action = trn.action
+        trn_state = trn.state
+        trn_state_name = trn_state.state_name
+        
+        new_cond = transition_cond.get_text()
+        new_action = transition_action.get_text()
+
+        if new_action != trn_action:
+            domview.set_transition_action(trn_state_name, trn_cond, new_action)
+            pass
+
+        if new_cond != trn_cond:
+            trn_state.rm_transition(trn_cond)
+            
+            domview.chg_transition_cond(trn_state_name, trn_cond, new_cond)
+            
+            fsm_layer = window._fsm_layer
+            trn_state.add_transition(fsm_layer, new_cond)
+            
+            transitions = trn_state.transitions
+            new_trn = transitions[new_cond]
+            window._install_transition_event_handler(new_trn)
+            pass
+
+        window.hide_transition_editor()
+        pass
+
+    def _handle_edit_state(self, *args):
+        pass
+
+    def popup_install_handler(self):
+        window = self._window
+
+        window.grab_add_transition(self._handle_add_transition)
+        window.grab_edit_transition(self._handle_edit_transition)
+        window.grab_edit_state(self._handle_edit_state)
+        window.grab_transition_apply(self._handle_transition_apply)
+        pass
     pass
 
 
 class _FSM_move_state_mode(object):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
+
+    _popup = None
     
     _window = None
     _domview = None
-    _selected_cleaner = None
     
-    _selected_transition = None
+    _select = None
     
-    def __init__(self, window, domview_ui):
+    def __init__(self, window, domview_ui, select_man):
         super(_FSM_move_state_mode, self).__init__()
         
         self._window = window
         self._domview = domview_ui
         self._locker = domview_ui
+
+        self._popup = _FSM_popup(window, domview_ui, select_man)
+        self._select = select_man
         pass
 
     def on_move_state_background(self, item, evtype, button, x, y):
-        if self._selected_cleaner is None:
-            return
-
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
-            self._deselect_state()
+            self._select.deselect()
             pass
-        pass
-
-    def _select_state(self, state):
-        self._deselect_state()
-        self._selected_cleaner = state.hide_selected
-        state.show_selected()
-        pass
-
-    def _deselect_state(self):
-        if self._selected_cleaner:
-            self._selected_cleaner()
-            pass
-        self._selected_cleaner = None
         pass
 
     def _handle_move_state_state(self, state, evtype, button, x, y):
@@ -910,13 +1116,15 @@ class _FSM_move_state_mode(object):
             start_y = y
             orign_state_x, orign_state_y = state.xy
             
-            self._select_state(state)
+            self._select.select_state(state)
             window.grab_mouse(moving_state)
             pass
-        
-        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
+        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
                 button == 1:
             window.ungrab_mouse()
+            pass
+        else:
+            self._popup._handle_state_mouse_events(state, evtype, button, x, y)
             pass
         pass
 
@@ -1022,16 +1230,7 @@ class _FSM_move_state_mode(object):
     ## \brief A transition was selected.
     #
     def _select_transition(self, trn):
-        def deselect():
-            trn.hide_control_points()
-            del self._hint_transition # enable _hint_transition
-            pass
-        
-        self._hint_transition = lambda *args: None # disable _hint_transition
-        
-        self._deselect_state()
-        self._selected_cleaner = deselect
-        trn.show_control_points()
+        self._select.select_transition(trn)
         
         trn.stop_hint()
         window = self._window
@@ -1059,58 +1258,6 @@ class _FSM_move_state_mode(object):
     def _handle_del_transition(self, *args):
         pass
 
-    def _handle_edit_transition(self, *args):
-        trn = self._selected_transition
-
-        cond = trn.trn_cond
-        action = trn.action or ''
-
-        window = self._window
-        window.show_transition_editor(cond, action)
-        pass
-
-    def _handle_transition_apply(self, *args):
-        trn = self._selected_transition
-        window = self._window
-        domview = self._domview
-        transition_cond = window._transition_cond
-        transition_action = window._transition_action
-        
-        trn_cond = trn.trn_cond
-        trn_action = trn.action
-        trn_state = trn.state
-        trn_state_name = trn_state.state_name
-        
-        new_cond = transition_cond.get_text()
-        new_action = transition_action.get_text()
-
-        if new_action != trn_action:
-            domview.set_transition_action(trn_state_name, trn_cond, new_action)
-            pass
-
-        if new_cond != trn_cond:
-            trn_state.rm_transition(trn_cond)
-            
-            domview.chg_transition_cond(trn_state_name, trn_cond, new_cond)
-            
-            fsm_layer = window._fsm_layer
-            trn_state.add_transition(fsm_layer, new_cond)
-            
-            transitions = trn_state.transitions
-            new_trn = transitions[new_cond]
-            window._install_transition_event_handler(new_trn)
-            pass
-
-        window.hide_transition_editor()
-        pass
-
-    def _show_transition_menu(self, trn):
-        self._selected_transition = trn
-        
-        window = self._window
-        window.popup_transition_menu()
-        pass
-
     ## \brief Handle mouse events when selecting no transition.
     #
     def _handle_transitoin_mouse_events(self, trn, evtype, button, x, y):
@@ -1120,9 +1267,9 @@ class _FSM_move_state_mode(object):
         elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
             self._hint_transition(trn)
             pass
-        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
-                button == 3:
-            self._show_transition_menu(trn)
+        else:
+            self._popup._handle_transition_mouse_events(trn, evtype, button,
+                                                        x, y)
             pass
         pass
 
@@ -1135,12 +1282,14 @@ class _FSM_move_state_mode(object):
         window.grab_bg(self.on_move_state_background)
         window.grab_state(self._handle_move_state_state)
         window.grab_transition(self._handle_transitoin_mouse_events)
-        window.grab_edit_transition(self._handle_edit_transition)
-        window.grab_transition_apply(self._handle_transition_apply)
+        #window.grab_edit_transition(self._handle_edit_transition)
+        #window.grab_transition_apply(self._handle_transition_apply)
+
+        self._popup.popup_install_handler()
         pass
 
     def deactivate(self):
-        self._deselect_state()
+        self._select.deselect()
         pass
     pass
 
@@ -1157,13 +1306,17 @@ class _FSM_add_state_mode(object):
 
     _select_state = None
     _candidate_state = None
+
+    _select = None
     
-    def __init__(self, window, domview_ui):
+    def __init__(self, window, domview_ui, select_man):
         super(_FSM_add_state_mode, self).__init__()
         
         self._window = window
         self._domview = domview_ui
         self._locker = domview_ui
+
+        self._select = select_man
         pass
 
     def handle_new_state(self):
@@ -1289,7 +1442,6 @@ class _FSM_add_state_mode(object):
         
         window.grab_bg(self.on_add_state_background)
         window.grab_state(self._handle_state_mouse_events)
-        window.grab_add_transition(self._handle_add_transition)
         pass
 
     def deactivate(self):
@@ -1324,6 +1476,11 @@ class FSM_window(FSM_window_base):
     _edit_transition_cb = None
     _transition_apply_cb = None
     _transition_mouse_event_handler = None
+    _edit_state_cb = None
+
+    _grab_stack = None
+
+    _select = None
     
     def __init__(self, domview_ui, close_cb, destroy_cb):
         super(FSM_window, self).__init__()
@@ -1336,8 +1493,13 @@ class FSM_window(FSM_window_base):
         self._close_cb = close_cb # callback to close editor window (hide)
         self._destroy_cb = destroy_cb # callback to destroy editor window
 
-        self._move_state_mode = _FSM_move_state_mode(self, domview_ui)
-        self._add_state_mode = _FSM_add_state_mode(self, domview_ui)
+        _select = _select_manager()
+        self._select = _select
+        
+        self._move_state_mode = _FSM_move_state_mode(self, domview_ui, _select)
+        self._add_state_mode = _FSM_add_state_mode(self, domview_ui, _select)
+
+        self._grab_stack = []
         pass
 
     def _init_layers(self):
@@ -1430,7 +1592,39 @@ class FSM_window(FSM_window_base):
         self.ungrab_add_transition()
         self.ungrab_transition()
         self.ungrab_edit_transition()
+        self.ungrab_edit_state()
         self.ungrab_transition_apply()
+        pass
+
+    def save_grabs(self):
+        save = (self._bg_hdl,
+                self._grab_mouse_hdl,
+                self._state_mouse_event_handler,
+                self._add_transition_cb,
+                self._edit_transition_cb,
+                self._transition_apply_cb,
+                self._edit_state_cb)
+        return save
+
+    def restore_grabs(self, save):
+        self._bg_hdl, \
+            self._grab_mouse_hdl, \
+            self._state_mouse_event_handler, \
+            self._add_transition_cb, \
+            self._edit_transition_cb, \
+            self._transition_apply_cb, \
+            self._edit_state_cb \
+            = save
+        pass
+
+    def push_grabs(self):
+        save = self.save_grabs()
+        self._grab_stack.append(save)
+        pass
+
+    def pop_grabs(self):
+        save = self._grab_stack.pop()
+        self.restore_grabs(save)
         pass
 
     def on_state_mouse_event(self, state, evtype, button, x, y):
@@ -1503,6 +1697,15 @@ class FSM_window(FSM_window_base):
 
     def ungrab_transition_apply(self):
         self._transition_apply_cb = None
+        pass
+
+    def grab_edit_state(self, callback):
+        assert self._edit_state_cb is None
+        self._edit_state_cb = callback
+        pass
+
+    def ungrab_edit_state(self):
+        self._edit_state_cb = None
         pass
 
     def _load_new_state(self, state_name):
@@ -1605,6 +1808,12 @@ class FSM_window(FSM_window_base):
     def on_transition_apply_clicked(self, *args):
         if self._transition_apply_cb:
             self._transition_apply_cb(*args)
+            pass
+        pass
+
+    def on_edit_state_activate(self, *args):
+        if self._edit_state_cb:
+            self._edit_state_cb(*args)
             pass
         pass
 
