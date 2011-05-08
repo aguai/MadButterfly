@@ -293,6 +293,7 @@ class FSM_transition(object):
     _arrow_node = None
     _path_node = None
     _control_points = None
+    _selected_rect = None
 
     def __init__(self, trn_cond):
        self.trn_cond = trn_cond
@@ -306,6 +307,9 @@ class FSM_transition(object):
         self._fsm_layer = fsm_layer
         self._control_layer = control_layer
         pass
+
+    def _translate_page_xy(self, x, y):
+        return x, y
 
     @staticmethod
     def _update_graph(path, arrow_node, path_node):
@@ -557,6 +561,41 @@ class FSM_transition(object):
                                     'stroke: #000000; stroke-width: 1; ' \
                                         'fill: #000000')
             pass
+        pass
+    
+    def show_selected(self):
+        if not self._selected_rect:
+            doc = self._doc
+            rect = doc.createElement('svg:rect')
+            control_layer = self._control_layer
+            rect.setAttribute('style',
+                              'stroke: #404040; stroke-width: 1; '
+                              'stroke-dasharray: 6 4; fill: none')
+            control_layer.appendChild(rect)
+            self._selected_rect = rect
+            pass
+
+        trn_g = self.trn_g
+        rect = self._selected_rect
+        
+        px, py, pw, ph = trn_g.getBBox()
+        x, y = self._translate_page_xy(px, py)
+        y = y - ph              # px, py is left-bottom corner
+        
+        rect.setAttribute('x', str(x - 2))
+        rect.setAttribute('y', str(y - 2))
+        rect.setAttribute('width', str(pw + 4))
+        rect.setAttribute('height', str(ph + 4))
+        pass
+
+    def hide_selected(self):
+        if not self._selected_rect:
+            return
+
+        control_layer = self._control_layer
+        rect = self._selected_rect
+        control_layer.removeChild(rect)
+        self._selected_rect = None
         pass
     pass
 
@@ -854,14 +893,17 @@ class FSM_state(object):
 class _select_manager(object):
     selected_state = None
     selected_transition = None
+    controlled_transition = None
 
     def deselect(self):
         pass
 
     def select_state(self, state):
         self.deselect()
+        
         self.selected_state = state
         state.show_selected()
+        
         def hide():
             state.hide_selected()
             self.selected_state = None
@@ -871,11 +913,26 @@ class _select_manager(object):
 
     def select_transition(self, transition):
         self.deselect()
+        
         self.selected_transition = transition
+        transition.show_selected()
+        
+        def hide():
+            transition.hide_selected()
+            self.selected_transition = None
+            pass
+        self.deselect = hide
+        pass
+
+    def control_transition(self, transition):
+        self.deselect()
+        
+        self.controlled_transition = transition
         transition.show_control_points()
+        
         def hide():
             transition.hide_control_points()
-            self.selected_transition = None
+            self.controlled_transition = None
             pass
         self.deselect = hide
         pass
@@ -936,6 +993,7 @@ class _FSM_popup(object):
     def _handle_transition_mouse_events(self, trn, evtype, button, x, y):
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
                 button == 3:
+            self._select.select_transition(trn)
             self._show_transition_menu(trn)
         elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
             trn.start_hint()
@@ -992,6 +1050,7 @@ class _FSM_popup(object):
                 return
             self._select.deselect()
             window.pop_grabs()
+            window.ungrab_bg()
             pass
         
         window = self._window
@@ -1073,6 +1132,8 @@ class _FSM_move_state_mode(object):
     _domview = None
     
     _select = None
+
+    _on_deactivate = None
     
     def __init__(self, window, domview_ui, select_man):
         super(_FSM_move_state_mode, self).__init__()
@@ -1083,6 +1144,8 @@ class _FSM_move_state_mode(object):
 
         self._popup = _FSM_popup(window, domview_ui, select_man)
         self._select = select_man
+
+        self._on_deactivate = []
         pass
 
     def on_move_state_background(self, item, evtype, button, x, y):
@@ -1141,6 +1204,7 @@ class _FSM_move_state_mode(object):
         state_target = states[target_name]
         domview = self._domview
         window = self._window
+        select = self._select
 
         def c1_update(rx, ry):
             nc1x = c1x + rx
@@ -1160,8 +1224,7 @@ class _FSM_move_state_mode(object):
             cond = trn.trn_cond
             domview.set_transition_path(state_name, cond, path)
 
-            trn.show_control_points()
-            trn.update()
+            select.control_transition(trn)
             pass
 
         def c1_start():
@@ -1196,8 +1259,7 @@ class _FSM_move_state_mode(object):
             cond = trn.trn_cond
             domview.set_transition_path(state_name, cond, path)
 
-            trn.show_control_points()
-            trn.update()
+            select.control_transition(trn)
             pass
 
         def c2_start():
@@ -1230,13 +1292,35 @@ class _FSM_move_state_mode(object):
     ## \brief A transition was selected.
     #
     def _select_transition(self, trn):
-        self._select.select_transition(trn)
+        def handle_bg(item, evtype, button, x, y):
+            if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
+                window.pop_grabs()
+                window.ungrab_bg()
+                
+                self._on_deactivate.pop()
+                self._on_deactivate.pop()
+                
+                select.deselect()
+                del self._hint_transition
+                pass
+            pass
         
+        select = self._select
+        select.control_transition(trn)
+        
+        self._hint_transition = lambda trn: None
         trn.stop_hint()
         window = self._window
+        window.push_grabs()
         window.ungrab_bg()
+        window.grab_bg(handle_bg)
         
         self._install_trn_cps_mouse(trn)
+        self._on_deactivate.append(window.pop_grabs)
+        def del_hint_transition():
+            del self._hint_transition
+            pass
+        self._on_deactivate.append(del_hint_transition)
         pass
 
     ## \brief Hint for mouse over a transition.
@@ -1279,6 +1363,7 @@ class _FSM_move_state_mode(object):
         window._clear_leave_mode_cb()
         window.ungrab_all()
         
+        window.ungrab_bg()
         window.grab_bg(self.on_move_state_background)
         window.grab_state(self._handle_move_state_state)
         window.grab_transition(self._handle_transitoin_mouse_events)
@@ -1290,6 +1375,10 @@ class _FSM_move_state_mode(object):
 
     def deactivate(self):
         self._select.deselect()
+        while self._on_deactivate:
+            deactivate = self._on_deactivate.pop()
+            deactivate()
+            pass
         pass
     pass
 
@@ -1440,6 +1529,7 @@ class _FSM_add_state_mode(object):
         window._emit_leave_mode()
         window.ungrab_all()
         
+        window.ungrab_bg()
         window.grab_bg(self.on_add_state_background)
         window.grab_state(self._handle_state_mouse_events)
         pass
@@ -1586,8 +1676,6 @@ class FSM_window(FSM_window_base):
         pass
 
     def ungrab_all(self):
-        self.ungrab_bg()
-        self.ungrab_mouse()
         self.ungrab_state()
         self.ungrab_add_transition()
         self.ungrab_transition()
@@ -1597,9 +1685,8 @@ class FSM_window(FSM_window_base):
         pass
 
     def save_grabs(self):
-        save = (self._bg_hdl,
-                self._grab_mouse_hdl,
-                self._state_mouse_event_handler,
+        save = (self._state_mouse_event_handler,
+                self._transition_mouse_event_handler,
                 self._add_transition_cb,
                 self._edit_transition_cb,
                 self._transition_apply_cb,
@@ -1607,9 +1694,8 @@ class FSM_window(FSM_window_base):
         return save
 
     def restore_grabs(self, save):
-        self._bg_hdl, \
-            self._grab_mouse_hdl, \
-            self._state_mouse_event_handler, \
+        self._state_mouse_event_handler, \
+            self._transition_mouse_event_handler, \
             self._add_transition_cb, \
             self._edit_transition_cb, \
             self._transition_apply_cb, \
