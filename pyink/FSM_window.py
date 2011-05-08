@@ -1148,7 +1148,7 @@ class _FSM_move_state_mode(object):
         self._on_deactivate = []
         pass
 
-    def on_move_state_background(self, item, evtype, button, x, y):
+    def _handle_move_state_background(self, item, evtype, button, x, y):
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
             self._select.deselect()
             pass
@@ -1224,7 +1224,8 @@ class _FSM_move_state_mode(object):
             cond = trn.trn_cond
             domview.set_transition_path(state_name, cond, path)
 
-            select.control_transition(trn)
+            trn.update()
+            trn.show_control_points()
             pass
 
         def c1_start():
@@ -1232,13 +1233,13 @@ class _FSM_move_state_mode(object):
                 c1_dragger.mouse_event(evtype, button, x, y)
                 pass
             
+            window.push_grabs()
             window.ungrab_bg()
             window.grab_bg(relay_event)
             pass
         
         def c1_stop(rx, ry):
-            window.ungrab_bg()
-            window.grab_bg(self.on_move_state_background)
+            window.pop_grabs()
             pass
         
         def c2_update(rx, ry):
@@ -1259,7 +1260,8 @@ class _FSM_move_state_mode(object):
             cond = trn.trn_cond
             domview.set_transition_path(state_name, cond, path)
 
-            select.control_transition(trn)
+            trn.update()
+            trn.show_control_points()
             pass
 
         def c2_start():
@@ -1267,13 +1269,13 @@ class _FSM_move_state_mode(object):
                 c2_dragger.mouse_event(evtype, button, x, y)
                 pass
             
+            window.push_grabs()
             window.ungrab_bg()
             window.grab_bg(relay_event)
             pass
 
         def c2_stop(rx, ry):
-            window.ungrab_bg()
-            window.grab_bg(self.on_move_state_background)
+            window.pop_grabs()
             pass
         
         c1_dragger = _dragger()
@@ -1329,7 +1331,7 @@ class _FSM_move_state_mode(object):
         def stop_hint(*args):
             trn.stop_hint()
             window.ungrab_bg()
-            window.grab_bg(self.on_move_state_background)
+            window.grab_bg(self._handle_move_state_background)
             pass
 
         trn.start_hint()
@@ -1364,7 +1366,7 @@ class _FSM_move_state_mode(object):
         window.ungrab_all()
         
         window.ungrab_bg()
-        window.grab_bg(self.on_move_state_background)
+        window.grab_bg(self._handle_move_state_background)
         window.grab_state(self._handle_move_state_state)
         window.grab_transition(self._handle_transitoin_mouse_events)
         #window.grab_edit_transition(self._handle_edit_transition)
@@ -1440,7 +1442,7 @@ class _FSM_add_state_mode(object):
         window.hide_state_editor()
         pass
     
-    def on_add_state_background(self, item, evtype, button, x, y):
+    def _handle_add_state_background(self, item, evtype, button, x, y):
         window = self._window
         
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
@@ -1530,7 +1532,7 @@ class _FSM_add_state_mode(object):
         window.ungrab_all()
         
         window.ungrab_bg()
-        window.grab_bg(self.on_add_state_background)
+        window.grab_bg(self._handle_add_state_background)
         window.grab_state(self._handle_state_mouse_events)
         pass
 
@@ -1558,6 +1560,7 @@ class FSM_window(FSM_window_base):
     _grab_mouse_hdl = None
     _bg_hdl = None
 
+    _bg_mouse_event_cb = None
     _leave_mode_cb = None
     _move_state_mode = None
     _add_state_mode = None
@@ -1616,6 +1619,10 @@ class FSM_window(FSM_window_base):
         control_layer.setAttribute('inkscape:groupmode', 'layer')
         root.appendChild(control_layer)
         self._control_layer = control_layer
+
+        bg_hdl = background.spitem.connect('mouse-event',
+                                           self.on_bg_mouse_events)
+        self._bg_hdl = bg_hdl
         pass
 
     def _doc(self):
@@ -1676,6 +1683,7 @@ class FSM_window(FSM_window_base):
         pass
 
     def ungrab_all(self):
+        self.ungrab_bg()
         self.ungrab_state()
         self.ungrab_add_transition()
         self.ungrab_transition()
@@ -1685,7 +1693,8 @@ class FSM_window(FSM_window_base):
         pass
 
     def save_grabs(self):
-        save = (self._state_mouse_event_handler,
+        save = (self._bg_mouse_event_cb,
+                self._state_mouse_event_handler,
                 self._transition_mouse_event_handler,
                 self._add_transition_cb,
                 self._edit_transition_cb,
@@ -1694,7 +1703,8 @@ class FSM_window(FSM_window_base):
         return save
 
     def restore_grabs(self, save):
-        self._state_mouse_event_handler, \
+        self._bg_mouse_event_cb, \
+            self._state_mouse_event_handler, \
             self._transition_mouse_event_handler, \
             self._add_transition_cb, \
             self._edit_transition_cb, \
@@ -1703,11 +1713,15 @@ class FSM_window(FSM_window_base):
             = save
         pass
 
+    ## \brief Push current setting of grab handles into the stack.
+    #
     def push_grabs(self):
         save = self.save_grabs()
         self._grab_stack.append(save)
         pass
 
+    ## \brief Restore setting of grab handles from the stack.
+    #
     def pop_grabs(self):
         save = self._grab_stack.pop()
         self.restore_grabs(save)
@@ -1971,23 +1985,24 @@ class FSM_window(FSM_window_base):
         root.setAttribute('inkscape:groupmode', 'layer')
         pass
 
-    def grab_bg(self, callback):
-        assert self._bg_hdl is None
-        assert self._background
+    def on_bg_mouse_events(self, item, evtype, button, x, y):
+        if not self._bg_mouse_event_cb:
+            return
 
-        background = self._background
-        bg_hdl = background.spitem.connect('mouse-event', callback)
-        self._bg_hdl = bg_hdl
+        self._bg_mouse_event_cb(item, evtype, button, x, y)
+        pass
+
+    def grab_bg(self, callback):
+        assert self._bg_mouse_event_cb is None
+
+        self._bg_mouse_event_cb = callback
         pass
 
     def ungrab_bg(self):
-        if not self._bg_hdl:
+        if not self._bg_mouse_event_cb:
             return
 
-        background = self._background
-        bg_hdl = self._bg_hdl
-        background.spitem.disconnect(bg_hdl)
-        self._bg_hdl = None
+        self._bg_mouse_event_cb = None
         pass
     pass
 
