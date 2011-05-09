@@ -415,9 +415,11 @@ class FSM_transition(object):
         trn = domview.get_transition(state_name, trn_cond)
         return trn[2]
 
-    def draw(self, parent):
+    def draw(self):
         path = self.path
-        trn_g, path_node, arrow_node = self._draw_transition_real(parent, path)
+        fsm_layer = self._fsm_layer
+        trn_g, path_node, arrow_node = \
+            self._draw_transition_real(fsm_layer, path)
         self.trn_g = trn_g
         self._arrow_node = arrow_node
         self._path_node = path_node
@@ -765,24 +767,25 @@ class FSM_state(object):
         trn = FSM_transition(condition)
         trn.init(self._doc, domview, self, states,
                  self._fsm_layer, self._control_layer)
-        trn.draw(parent)
+        trn.draw()
         self.transitions[condition] = trn
         pass
 
-    def draw(self, parent):
+    def draw(self):
         state_name = self.state_name
+        fsm_layer = self._fsm_layer
 
         r = self.r
         x, y = self.xy
         state_g, text_node, text_content, circle_node = \
-            self._draw_state_real(parent, state_name, r, x, y)
+            self._draw_state_real(fsm_layer, state_name, r, x, y)
         self.state_g = state_g
         self._text_node = text_node
         self._text_content = text_content
         self._circle_node = circle_node
 
         for trn_cond in self.all_transitions:
-            self._load_transition_domview(parent, trn_cond)
+            self._load_transition_domview(fsm_layer, trn_cond)
             pass
         pass
 
@@ -820,6 +823,19 @@ class FSM_state(object):
         state_name = self.state_name
         for target_state in target_states:
             target_state.from_states.add(state_name)
+            pass
+        pass
+
+    def rm_target_from_states(self):
+        state_name = self.state_name
+        
+        transitions = self.transitions.values()
+        target_names = [trn.target for trn in transitions]
+
+        states = self._states
+        for target_name in target_names:
+            target_state = states[target_name]
+            target_state.from_states.remove(state_name)
             pass
         pass
 
@@ -919,7 +935,7 @@ class _select_manager(object):
         
         def hide():
             state.hide_selected()
-            self.selected_state = None
+            self.reset()
             pass
         self.deselect = hide
         pass
@@ -932,7 +948,7 @@ class _select_manager(object):
         
         def hide():
             transition.hide_selected()
-            self.selected_transition = None
+            self.reset()
             pass
         self.deselect = hide
         pass
@@ -945,9 +961,19 @@ class _select_manager(object):
         
         def hide():
             transition.hide_control_points()
-            self.controlled_transition = None
+            self.reset()
             pass
         self.deselect = hide
+        pass
+
+    def reset(self):
+        try:
+            del self.deselect
+        except AttributeError:
+            pass
+        self.selected_state = None
+        self.selected_transition = None
+        self.controlled_transition = None
         pass
     pass
 
@@ -1045,11 +1071,18 @@ class _FSM_popup(object):
         cond = ''
 
         domview = self._domview
-        domview.add_transition(src_name, cond, target_name)
-        src_state.add_transition(fsm_layer, cond)
-        
-        trn = src_state.transitions[cond]
-        window._install_transition_event_handler(trn)
+        try:
+            domview.add_transition(src_name, cond, target_name)
+        except:
+            import traceback
+            traceback.print_exc()
+            window.show_error('invalid condition: %s' % (cond))
+        else:
+            src_state.add_transition(fsm_layer, cond)
+            
+            trn = src_state.transitions[cond]
+            window._install_transition_event_handler(trn)
+            pass
         
         window.pop_grabs()
 
@@ -1168,6 +1201,72 @@ class _FSM_popup(object):
         select.deselect()
         pass
 
+    def _handle_del_state(self, *args):
+        window = self._window
+        select = self._select
+        domview = self._domview
+        
+        state = select.selected_state
+        state_name = state.state_name
+
+        select.deselect()
+        
+        states = window._states
+        del states[state_name]
+
+        state.clear()
+
+        # Remove out transitions
+        transitions = state.transitions
+        for trn in transitions.values():
+            trn.clear()
+            pass
+
+        state.rm_target_from_states()
+        
+        # Remove in-transition
+        src_state_names = state.from_states
+        for src_state_name in src_state_names:
+            src_state = states[src_state_name]
+            in_cond_trns = [(in_cond, in_trn)
+                            for in_cond, in_trn in \
+                                src_state.transitions.items()
+                            if in_trn.target == state_name]
+            for in_cond, in_trn in in_cond_trns:
+                in_trn.clear()
+                del src_state.transitions[in_cond]
+                domview.rm_transition(src_state_name, in_cond)
+                pass
+            pass
+
+        domview.rm_state(state_name)
+        pass
+
+    def _handle_del_transition(self, *args):
+        window = self._window
+        select = self._select
+        domview = self._domview
+
+        trn = select.selected_transition
+        trn.clear()
+        trn_cond = trn.trn_cond
+        
+        trn_state = trn.state
+        trn_state_name = trn_state.state_name
+        trn_target_name = trn.target
+        target_names = [trn.target for trn in trn_state.transitions.values()]
+        
+        # the transition must live until getting all info.
+        domview.rm_transition(trn_state_name, trn_cond)
+
+        if trn_target_name not in target_names:
+            trn_target_state = window._states[trn_target_name]
+            trn_target_state.from_states.remove(trn_state_name)
+            pass
+
+        del trn_state.transitions[trn_cond]
+        pass
+
     def popup_install_handler(self):
         window = self._window
 
@@ -1176,6 +1275,8 @@ class _FSM_popup(object):
         window.grab_edit_state(self._handle_edit_state)
         window.grab_transition_apply(self._handle_transition_apply)
         window.grab_state_apply(self._handle_state_change)
+        window.grab_del_state(self._handle_del_state)
+        window.grab_del_transition(self._handle_del_transition)
         pass
     pass
 
@@ -1587,6 +1688,8 @@ class FSM_window(FSM_window_base):
     _transition_mouse_event_handler = None
     _edit_state_cb = None
     _state_apply_cb = None
+    _del_state_cb = None
+    _del_transition_cb = None
 
     _grab_stack = None
 
@@ -1671,7 +1774,7 @@ class FSM_window(FSM_window_base):
         self._states = {}
         pass
 
-    def _draw_state_domview(self, state_name):
+    def _make_state_domview(self, state_name):
         domview = self._domview
         doc = self._doc()
         fsm_layer = self._fsm_layer
@@ -1680,9 +1783,8 @@ class FSM_window(FSM_window_base):
         state = FSM_state(state_name)
         state.init(doc, domview, states, self._fsm_layer, self._control_layer)
         self._states[state_name] = state
-        
-        state.draw(fsm_layer)
-        pass
+
+        return state
 
     def _set_leave_mode_cb(self, callback):
         self._leave_mode_cb = callback
@@ -1708,6 +1810,8 @@ class FSM_window(FSM_window_base):
         self.ungrab_edit_state()
         self.ungrab_transition_apply()
         self.ungrab_state_apply()
+        self.ungrab_del_state()
+        self.ungrab_del_transition()
         pass
 
     def save_grabs(self):
@@ -1718,7 +1822,9 @@ class FSM_window(FSM_window_base):
                 self._edit_transition_cb,
                 self._transition_apply_cb,
                 self._edit_state_cb,
-                self._state_apply_cb)
+                self._state_apply_cb,
+                self._del_state_cb,
+                self._del_transition_cb)
         return save
 
     def restore_grabs(self, save):
@@ -1729,7 +1835,9 @@ class FSM_window(FSM_window_base):
             self._edit_transition_cb, \
             self._transition_apply_cb, \
             self._edit_state_cb, \
-            self._state_apply_cb \
+            self._state_apply_cb, \
+            self._del_state_cb, \
+            self._del_transition_cb \
             = save
         pass
 
@@ -1837,16 +1945,39 @@ class FSM_window(FSM_window_base):
         self._state_apply_cb = None
         pass
 
-    def _load_new_state(self, state_name):
+    def grab_del_state(self, callback):
+        assert self._del_state_cb is None
+        self._del_state_cb = callback
+        pass
+    
+    def ungrab_del_state(self):
+        self._del_state_cb = None
+        pass
+
+    def grab_del_transition(self, callback):
+        assert self._del_transition_cb is None
+        self._del_transition_cb = callback
+        pass
+
+    def ungrab_del_transition(self):
+        self._del_transition_cb = None
+        pass
+
+    def _draw_new_state(self, state_name):
         states = self._states
         
-        self._draw_state_domview(state_name)
         state = states[state_name]
+        state.draw()
         self._install_state_event_handler(state)
 
         for trn in state.transitions.values():
             self._install_transition_event_handler(trn)
             pass
+        pass
+
+    def _load_new_state(self, state_name):
+        state = self._make_state_domview(state_name)
+        self._draw_new_state(state_name)
         pass
 
     ## \brief Load new state incrementally.
@@ -1864,6 +1995,7 @@ class FSM_window(FSM_window_base):
         state_names = domview.all_state_names()
         for state_name in state_names:
             state = states[state_name]
+            self._draw_new_state(state_name)
             state.tell_target_states()
             pass
         pass
@@ -1876,7 +2008,7 @@ class FSM_window(FSM_window_base):
         
         state_names = domview.all_state_names()
         for state_name in state_names:
-            self._load_new_state(state_name)
+            self._make_state_domview(state_name)
             pass
         self._rebuild_from_states()
         pass
@@ -1948,6 +2080,18 @@ class FSM_window(FSM_window_base):
             pass
         pass
 
+    def on_del_state_activate(self, *args):
+        if self._del_state_cb:
+            self._del_state_cb(*args)
+            pass
+        pass
+
+    def on_del_transition_activate(self, *args):
+        if self._del_transition_cb:
+            self._del_transition_cb(*args)
+            pass
+        pass
+
     def _install_test_data(self):
         self._init_layers()
         
@@ -1995,6 +2139,16 @@ class FSM_window(FSM_window_base):
             self._install_test_data()
             self._install_test_data = lambda: None
             pass
+        
+        #
+        # Crash if without line.
+        # This line remove selection infor to prevent select manager to
+        # deselect an object selected in previous session.  It would crash
+        # if we don't reset it and domview of previous session were
+        # removed.
+        #
+        self._select.reset()
+        
         self._update_view()
         self._add_state_mode.activate()
         super(FSM_window, self).show()
