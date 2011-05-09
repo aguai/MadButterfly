@@ -1062,13 +1062,12 @@ class _FSM_popup(object):
         def restore_bg(item, evtype, *args):
             if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
                 if self._candidate_target:
-                    self._candidate_target.hide_selected()
+                    self._candidate_target.stop_hint()
                     self._candidate_target = None
                     pass
                 return
             self._select.deselect()
             window.pop_grabs()
-            window.ungrab_bg()
             pass
         
         window = self._window
@@ -1079,6 +1078,7 @@ class _FSM_popup(object):
         window.ungrab_state()
         window.grab_state(self._handle_select_transition_target)
         self._select.select_state(self._menu_state)
+        self._menu_state.stop_hint()
         pass
 
     def _handle_edit_transition(self, *args):
