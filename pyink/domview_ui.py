@@ -540,7 +540,7 @@ class domview_ui_FSM(object):
         pass
 
     def set_state_entry_action(self, state_name, entry_action):
-        self._dom.set_entry_action(state_name, entry_action)
+        self._dom.set_state_entry_action(state_name, entry_action)
         pass
 
     def set_state_r(self, state_name, r):

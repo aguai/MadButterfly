@@ -168,8 +168,8 @@ class FSM_window_base(object):
         state_editor = self._state_editor
         
         state_name_inp.set_text(state_name)
-        state_radius_inp.set_text(radius)
-        state_entry_action.set_text(entry_action)
+        state_radius_inp.set_text(str(radius))
+        state_entry_action.set_text(entry_action or '')
         state_editor.show()
         pass
 
@@ -745,6 +745,13 @@ class FSM_state(object):
         return xy
 
     @property
+    def entry_action(self):
+        domview = self._domview
+        state_name = self.state_name
+        entry_action = domview.get_state_entry_action(state_name)
+        return entry_action
+
+    @property
     def all_transitions(self):
         domview = self._domview
         state_name = self.state_name
@@ -984,6 +991,7 @@ class _FSM_popup(object):
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
                 button == 3:
             self._show_state_menu(state)
+            self._select.select_state(state)
         elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
             state.start_hint()
         elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_LEAVE:
@@ -1119,6 +1127,45 @@ class _FSM_popup(object):
         pass
 
     def _handle_edit_state(self, *args):
+        select = self._select
+        state = select.selected_state
+        name = state.state_name
+        r = state.r
+        entry_action = state.entry_action
+        
+        window = self._window
+        window.show_state_editor(name, r, entry_action)
+        pass
+
+    def _handle_state_change(self):
+        window = self._window
+        domview = self._domview
+        select = self._select
+
+        state_name_txt = window._state_name
+        state_radius_txt = window._state_radius
+        state_entry_action_txt = window._state_entry_action
+
+        state_name = state_name_txt.get_text()
+        state_radius = state_radius_txt.get_text()
+        state_entry_action = state_entry_action_txt.get_text()
+
+        state_radius_i = int(state_radius)
+
+        state = select.selected_state
+        old_state_name = state.state_name
+        if old_state_name != state_name:
+            domview.rename_state(old_state_name, state_name)
+            state.state_name = state_name
+            pass
+        
+        domview.set_state_r(state_name, state_radius_i)
+        domview.set_state_entry_action(state_name, state_entry_action)
+        
+        state.update()
+
+        window.hide_state_editor()
+        select.deselect()
         pass
 
     def popup_install_handler(self):
@@ -1128,6 +1175,7 @@ class _FSM_popup(object):
         window.grab_edit_transition(self._handle_edit_transition)
         window.grab_edit_state(self._handle_edit_state)
         window.grab_transition_apply(self._handle_transition_apply)
+        window.grab_state_apply(self._handle_state_change)
         pass
     pass
 
@@ -1417,7 +1465,7 @@ class _FSM_add_state_mode(object):
         self._select = select_man
         pass
 
-    def handle_new_state(self):
+    def _handle_add_new_state(self):
         import traceback
         
         domview = self._domview
@@ -1538,9 +1586,9 @@ class _FSM_add_state_mode(object):
         window._emit_leave_mode()
         window.ungrab_all()
         
-        window.ungrab_bg()
         window.grab_bg(self._handle_add_state_background)
         window.grab_state(self._handle_state_mouse_events)
+        window.grab_state_apply(self._handle_add_new_state)
         pass
 
     def deactivate(self):
@@ -1577,6 +1625,7 @@ class FSM_window(FSM_window_base):
     _transition_apply_cb = None
     _transition_mouse_event_handler = None
     _edit_state_cb = None
+    _state_apply_cb = None
 
     _grab_stack = None
 
@@ -1697,6 +1746,7 @@ class FSM_window(FSM_window_base):
         self.ungrab_edit_transition()
         self.ungrab_edit_state()
         self.ungrab_transition_apply()
+        self.ungrab_state_apply()
         pass
 
     def save_grabs(self):
@@ -1706,7 +1756,8 @@ class FSM_window(FSM_window_base):
                 self._add_transition_cb,
                 self._edit_transition_cb,
                 self._transition_apply_cb,
-                self._edit_state_cb)
+                self._edit_state_cb,
+                self._state_apply_cb)
         return save
 
     def restore_grabs(self, save):
@@ -1716,7 +1767,8 @@ class FSM_window(FSM_window_base):
             self._add_transition_cb, \
             self._edit_transition_cb, \
             self._transition_apply_cb, \
-            self._edit_state_cb \
+            self._edit_state_cb, \
+            self._state_apply_cb \
             = save
         pass
 
@@ -1815,6 +1867,15 @@ class FSM_window(FSM_window_base):
         self._edit_state_cb = None
         pass
 
+    def grab_state_apply(self, callback):
+        assert self._state_apply_cb is None
+        self._state_apply_cb = callback
+        pass
+
+    def ungrab_state_apply(self):
+        self._state_apply_cb = None
+        pass
+
     def _load_new_state(self, state_name):
         states = self._states
         
@@ -1897,7 +1958,9 @@ class FSM_window(FSM_window_base):
         pass
 
     def on_state_apply_clicked(self, *args):
-        self._add_state_mode.handle_new_state()
+        if self._state_apply_cb:
+            self._state_apply_cb()
+            pass
         pass
 
     def on_add_transition_activate(self, *args):

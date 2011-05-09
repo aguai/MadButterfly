@@ -529,6 +529,9 @@ class Component(object):
         pass
 
     def rename_state(self, state_name, new_name):
+        if new_name in self.fsm_states:
+            raise ValueError, 'New state name %s is duplicated' % (new_name)
+        
         state = self.fsm_states[state_name]
         del self.fsm_states[state_name]
         self.fsm_states[new_name] = state
@@ -1132,7 +1135,7 @@ class FSM_manager(object):
 
     def get_state_entry_action(self, state_name):
         state = self._get_state(state_name)
-        action = state.get_entry_action()
+        action = state.entry_action
         return action
 
     def get_state_r(self, state_name):
