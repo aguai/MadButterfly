@@ -1991,8 +1991,10 @@ class FSM_window(FSM_window_base):
         pass
 
     def show(self):
-        self._install_test_data()
-        self._install_test_data = lambda: None
+        if _install_test_data_flag:
+            self._install_test_data()
+            self._install_test_data = lambda: None
+            pass
         self._update_view()
         self._add_state_mode.activate()
         super(FSM_window, self).show()
@@ -2037,7 +2039,10 @@ class FSM_window(FSM_window_base):
         pass
     pass
 
+_install_test_data_flag = False
+
 if __name__ == '__main__':
+    _install_test_data_flag = True
     win = FSM_window()
     win._main_win.connect('destroy', gtk.main_quit)
     win.show()
