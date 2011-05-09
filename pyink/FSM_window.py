@@ -883,9 +883,15 @@ class FSM_state(object):
         pass
 
     def start_hint(self):
+        circle_node = self._circle_node
+        circle_node.setAttribute('style', 'stroke: #000000; stroke-width: 3; '
+                                 'fill: #ffffff')
         pass
 
     def stop_hint(self):
+        circle_node = self._circle_node
+        circle_node.setAttribute('style', 'stroke: #000000; stroke-width: 1; '
+                                 'fill: #ffffff')
         pass
     pass
 
@@ -1005,10 +1011,10 @@ class _FSM_popup(object):
     def _handle_select_transition_target(self, state, evtype, button, x, y):
         if self._candidate_target != state and self._menu_state != state:
             if self._candidate_target:
-                self._candidate_target.hide_selected()
+                self._candidate_target.stop_hint()
                 pass
             self._candidate_target = state
-            state.show_selected()
+            state.start_hint()
             pass
 
         if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
@@ -1038,6 +1044,10 @@ class _FSM_popup(object):
         window._install_transition_event_handler(trn)
         
         window.pop_grabs()
+
+        target_state.stop_hint()
+        select = self._select
+        select.deselect()
         pass
 
     def _handle_add_transition(self, *args):
@@ -1161,11 +1171,11 @@ class _FSM_move_state_mode(object):
             if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
                 window.ungrab_mouse()
                 pass
-            new_state_x = orign_state_x + start_x - x
-            new_state_y = orign_state_y + start_y - y
+            new_state_x = orign_state_x + x - start_x
+            new_state_y = orign_state_y + y - start_y
 
             domview = self._domview
-            domview.set_state_xy(state.state_name, x, y)
+            domview.set_state_xy(state.state_name, new_state_x, new_state_y)
             state.update()
             state.adjust_transitions()
             state.show_selected()
@@ -1350,9 +1360,6 @@ class _FSM_move_state_mode(object):
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
                 button == 1:
             self._select_transition(trn)
-        elif evtype == pybInkscape.PYSPItem.PYB_EVENT_MOUSE_ENTER:
-            self._hint_transition(trn)
-            pass
         else:
             self._popup._handle_transition_mouse_events(trn, evtype, button,
                                                         x, y)
