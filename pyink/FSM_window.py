@@ -161,7 +161,7 @@ class FSM_window_base(object):
         error_dialog.hide()
         pass
 
-    def show_state_editor(self, state_name='', radius='30', entry_action=''):
+    def show_state_editor(self, state_name='', radius=30, entry_action=''):
         state_name_inp = self._state_name
         state_radius_inp = self._state_radius
         state_entry_action = self._state_entry_action
@@ -1150,7 +1150,7 @@ class _FSM_popup(object):
         state_radius = state_radius_txt.get_text()
         state_entry_action = state_entry_action_txt.get_text()
 
-        state_radius_i = int(state_radius)
+        state_radius_f = float(state_radius)
 
         state = select.selected_state
         old_state_name = state.state_name
@@ -1159,7 +1159,7 @@ class _FSM_popup(object):
             state.state_name = state_name
             pass
         
-        domview.set_state_r(state_name, state_radius_i)
+        domview.set_state_r(state_name, state_radius_f)
         domview.set_state_entry_action(state_name, state_entry_action)
         
         state.update()
@@ -1424,8 +1424,6 @@ class _FSM_move_state_mode(object):
         window.grab_bg(self._handle_move_state_background)
         window.grab_state(self._handle_move_state_state)
         window.grab_transition(self._handle_transitoin_mouse_events)
-        #window.grab_edit_transition(self._handle_edit_transition)
-        #window.grab_transition_apply(self._handle_transition_apply)
 
         self._popup.popup_install_handler()
         pass
@@ -1453,6 +1451,7 @@ class _FSM_add_state_mode(object):
     _select_state = None
     _candidate_state = None
 
+    _popup = None
     _select = None
     
     def __init__(self, window, domview_ui, select_man):
@@ -1463,6 +1462,7 @@ class _FSM_add_state_mode(object):
         self._locker = domview_ui
 
         self._select = select_man
+        self._popup = _FSM_popup(window, domview_ui, select_man)
         pass
 
     def _handle_add_new_state(self):
@@ -1499,84 +1499,31 @@ class _FSM_add_state_mode(object):
     
     def _handle_add_state_background(self, item, evtype, button, x, y):
         window = self._window
+        select = self._select
         
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
                 button == 1:
             self._saved_x = x
             self._saved_y = y
+            select.deselect()
             window.show_state_editor()
             pass
         pass
 
-    def _stop_select_target(self):
-        self.deactivate()
-        self.activate()
-        pass
-
-    def _handle_select_transition_target(self, state, evtype, button, x, y):
-        if self._candidate_state != state and self._select_state != state:
-            if self._candidate_state:
-                self._candidate_state.hide_selected()
-                pass
-            self._candidate_state = state
-            state.show_selected()
-            pass
-
-        if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE:
-            return
-        if button != 1:
-            return
-        
-        if state == self._select_state:
-            self._stop_select_target()
-            return
-        
-        window = self._window
-        fsm_layer = window._fsm_layer
-        
-        target_state = state
-        target_name = target_state.state_name
-        src_state = self._select_state
-        src_name = src_state.state_name
-        cond = ''
-
-        domview = self._domview
-        domview.add_transition(src_name, cond, target_name)
-        src_state.add_transition(fsm_layer, cond)
-        
-        trn = src_state.transitions[cond]
-        window._install_transition_event_handler(trn)
-        
-        self._stop_select_target()
-        pass
-
-    def _handle_add_transition(self, *args):
-        def restore_bg(item, evtype, *args):
-            if evtype != pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
-                if self._candidate_state:
-                    self._candidate_state.hide_selected()
-                    self._candidate_state = None
-                    pass
-                return
-            self._stop_select_target()
-            pass
-        
-        window = self._window
-        window.ungrab_bg()
-        window.grab_bg(restore_bg)
-
-        window.ungrab_state()
-        window.grab_state(self._handle_select_transition_target)
-        self._select_state.show_selected()
-        pass
-
-    def _handle_state_mouse_events(self, state, evtype, button, x, y):
-        if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
-                button == 3:
-            self._select_state = state
-            
-            window = self._window
-            window.popup_state_menu()
+    ## \brief Dispatching state apply event to _FSM_popup or this class.
+    #
+    # When user change properties of a state, this event is deliveried to
+    # _FSM_popup.  Otherwise, dispatch the event to this class.
+    #
+    def _handle_state_apply(self):
+        select = self._select
+        if select.selected_state:
+            # selected the state while user request to edit a state.
+            popup = self._popup
+            popup._handle_state_change()
+        else:
+            # deselected while user click on bg to add a new state.
+            self._handle_add_new_state()
             pass
         pass
 
@@ -1587,8 +1534,22 @@ class _FSM_add_state_mode(object):
         window.ungrab_all()
         
         window.grab_bg(self._handle_add_state_background)
-        window.grab_state(self._handle_state_mouse_events)
-        window.grab_state_apply(self._handle_add_new_state)
+        
+        #
+        # Install event handlers for _FSM_popup
+        #
+        window.grab_state(self._popup._handle_state_mouse_events)
+        window.grab_transition(self._popup._handle_transition_mouse_events)
+        self._popup.popup_install_handler()
+
+        #
+        # Workaround to make state apply events dispatched to right
+        # place according history of user actions.
+        #
+        # see _handle_state_apply()
+        #
+        window.ungrab_state_apply()
+        window.grab_state_apply(self._handle_state_apply)
         pass
 
     def deactivate(self):
