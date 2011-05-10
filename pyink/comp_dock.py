@@ -356,19 +356,17 @@ class comp_dock_ui(object):
         fsm_win.set_svg_view(view_widget)
         pass
 
-    def _show_FSM_editor(self):
+    def _show_FSM_for_comp(self, comp_name):
         if not self._fsm_editor_win:
             self._prepare_FSM_editor()
             fsm_win = self._fsm_editor_win
         else:
             fsm_win = self._fsm_editor_win
             pass
+        fsm_win.switch_component(comp_name)
         fsm_win.show()
         pass
 
-    def _show_FSM_for_comp(self, comp_name):
-        pass
-    
     def on_add_comp_clicked(self, *args):
         self._add_component()
         self._drop_undo()
@@ -442,7 +440,6 @@ class comp_dock_ui(object):
     ## \brief User clicks "State Machine" on context menu for a component.
     #
     def on_edit_FSM_activate(self, *args):
-        self._show_FSM_editor()
         comp_name = self._current_component()
         self._show_FSM_for_comp(comp_name)
         pass
