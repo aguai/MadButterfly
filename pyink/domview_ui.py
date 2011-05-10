@@ -517,79 +517,81 @@ class domview_ui_FSM(object):
         super(domview_ui_FSM, self).__init__()
         pass
     
-    def all_state_names(self):
-        return self._dom.all_state_names()
+    def all_state_names(self, comp_name):
+        return self._dom.all_state_names(comp_name)
 
-    def get_start_state_name(self):
-        return self._dom.get_start_state_name()
+    def get_start_state_name(self, comp_name):
+        return self._dom.get_start_state_name(comp_name)
 
-    def rm_state(self, state_name):
-        self._dom.rm_state(state_name)
+    def rm_state(self, comp_name, state_name):
+        self._dom.rm_state(comp_name, state_name)
         pass
 
-    def add_state(self, state_name):
-        self._dom.add_state(state_name)
+    def add_state(self, comp_name, state_name):
+        self._dom.add_state(comp_name, state_name)
         pass
 
-    def rename_state(self, state_name, new_name):
-        self._dom.rename_state(state_name, new_name)
+    def rename_state(self, comp_name, state_name, new_name):
+        self._dom.rename_state(comp_name, state_name, new_name)
         pass
 
-    def set_start_state(self, state_name):
-        self._dom.set_start_state(state_name)
+    def set_start_state(self, comp_name, state_name):
+        self._dom.set_start_state(comp_name, state_name)
         pass
 
-    def set_state_entry_action(self, state_name, entry_action):
-        self._dom.set_state_entry_action(state_name, entry_action)
+    def set_state_entry_action(self, comp_name, state_name, entry_action):
+        self._dom.set_state_entry_action(comp_name, state_name, entry_action)
         pass
 
-    def set_state_r(self, state_name, r):
-        self._dom.set_state_r(state_name, r)
+    def set_state_r(self, comp_name, state_name, r):
+        self._dom.set_state_r(comp_name, state_name, r)
         pass
 
-    def set_state_xy(self, state_name, x, y):
-        self._dom.set_state_xy(state_name, x, y)
+    def set_state_xy(self, comp_name, state_name, x, y):
+        self._dom.set_state_xy(comp_name, state_name, x, y)
         pass
 
-    def get_state_entry_action(self, state_name):
-        action = self._dom.get_state_entry_action(state_name)
+    def get_state_entry_action(self, comp_name, state_name):
+        action = self._dom.get_state_entry_action(comp_name, state_name)
         return action
 
-    def get_state_r(self, state_name):
-        r = self._dom.get_state_r(state_name)
+    def get_state_r(self, comp_name, state_name):
+        r = self._dom.get_state_r(comp_name, state_name)
         return r
 
-    def get_state_xy(self, state_name):
-        xy = self._dom.get_state_xy(state_name)
+    def get_state_xy(self, comp_name, state_name):
+        xy = self._dom.get_state_xy(comp_name, state_name)
         return xy
 
-    def all_transitions(self, state_name):
-        return self._dom.all_transitions(state_name)
+    def all_transitions(self, comp_name, state_name):
+        return self._dom.all_transitions(comp_name, state_name)
 
-    def add_transition(self, state_name, cond, target):
-        self._dom.add_transition(state_name, cond, target)
+    def add_transition(self, comp_name, state_name, cond, target):
+        self._dom.add_transition(comp_name, state_name, cond, target)
         pass
 
-    def rm_transition(self, state_name, cond):
-        self._dom.rm_transition(state_name, cond)
+    def rm_transition(self, comp_name, state_name, cond):
+        self._dom.rm_transition(comp_name, state_name, cond)
         pass
 
-    def change_transition_cond(self, state_name, old_cond, new_cond):
-        self._dom.change_transition_cond(state_name, old_cond, new_cond)
+    def change_transition_cond(self, comp_name, state_name,
+                               old_cond, new_cond):
+        self._dom.change_transition_cond(comp_name, state_name,
+                                         old_cond, new_cond)
         pass
 
-    def get_transition(self, state_name, cond):
-        return self._dom.get_transition(state_name, cond)
+    def get_transition(self, comp_name, state_name, cond):
+        return self._dom.get_transition(comp_name, state_name, cond)
 
-    def set_transition_action(self, state_name, cond, action):
-        self._dom.set_transition_action(state_name, cond, action)
+    def set_transition_action(self, comp_name, state_name, cond, action):
+        self._dom.set_transition_action(comp_name, state_name, cond, action)
         pass
     
-    def set_transition_path(self, state_name, cond, path):
-        self._dom.set_transition_path(state_name, cond, path)
+    def set_transition_path(self, comp_name, state_name, cond, path):
+        self._dom.set_transition_path(comp_name, state_name, cond, path)
         pass
-    def chg_transition_cond(self, state_name, cond, new_cond):
-        self._dom.chg_transition_cond(state_name, cond, new_cond)
+    def chg_transition_cond(self, comp_name, state_name, cond, new_cond):
+        self._dom.chg_transition_cond(comp_name, state_name, cond, new_cond)
         pass
     pass
 
