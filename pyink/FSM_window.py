@@ -207,12 +207,13 @@ class FSM_window_base(object):
         builder = gtk.Builder()
         builder.add_from_file(fname)
 
-        main_win = builder.get_object("FSM_main_win")
+        main_win = builder.get_object('FSM_main_win')
+        comp_name_label = builder.get_object('comp_name')
         view_box = builder.get_object("view_box")
         add_state_button = builder.get_object('add_state')
         move_state_button = builder.get_object('move_state')
         
-        state_editor = builder.get_object("state_editor")
+        state_editor = builder.get_object('state_editor')
         state_name = builder.get_object('state_name')
         state_radius = builder.get_object('state_radius')
         state_entry_action = builder.get_object('state_entry_action')
@@ -249,6 +250,7 @@ class FSM_window_base(object):
 
         self._state_menu = state_menu
         self._transition_menu = transition_menu
+        self._comp_name_label = comp_name_label
         pass
 
     def show_error(self, msg):
@@ -2304,6 +2306,7 @@ class FSM_window(FSM_window_base):
     def switch_component(self, comp_name):
         self._compview.switch_component(comp_name)
         self._comp_name = comp_name
+        self._comp_name_label.set_text(comp_name)
         pass
 
     def current_component(self):
