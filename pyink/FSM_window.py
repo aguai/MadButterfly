@@ -1411,7 +1411,7 @@ class _FSM_move_state_mode(object):
     
     _select = None
 
-    _on_deactivate = None
+    _controlling_transition = None
     
     def __init__(self, window, compview, select_man):
         super(_FSM_move_state_mode, self).__init__()
@@ -1422,8 +1422,6 @@ class _FSM_move_state_mode(object):
 
         self._popup = _FSM_popup(window, compview, select_man)
         self._select = select_man
-
-        self._on_deactivate = []
         pass
 
     def _handle_move_state_background(self, item, evtype, button, x, y):
@@ -1569,17 +1567,16 @@ class _FSM_move_state_mode(object):
 
     ## \brief A transition was selected.
     #
-    def _select_transition(self, trn):
+    def _control_transition(self, trn):
         def handle_bg(item, evtype, button, x, y):
             if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS:
                 window.pop_grabs()
                 window.ungrab_bg()
                 
-                self._on_deactivate.pop()
-                self._on_deactivate.pop()
-                
                 select.deselect()
                 del self._hint_transition
+
+                self._controlling_transition = None
                 pass
             pass
         
@@ -1594,11 +1591,6 @@ class _FSM_move_state_mode(object):
         window.grab_bg(handle_bg)
         
         self._install_trn_cps_mouse(trn)
-        self._on_deactivate.append(window.pop_grabs)
-        def del_hint_transition():
-            del self._hint_transition
-            pass
-        self._on_deactivate.append(del_hint_transition)
         pass
 
     ## \brief Hint for mouse over a transition.
@@ -1625,7 +1617,7 @@ class _FSM_move_state_mode(object):
     def _handle_transitoin_mouse_events(self, trn, evtype, button, x, y):
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_RELEASE and \
                 button == 1:
-            self._select_transition(trn)
+            self._control_transition(trn)
         else:
             self._popup._handle_transition_mouse_events(trn, evtype, button,
                                                         x, y)
@@ -1648,9 +1640,12 @@ class _FSM_move_state_mode(object):
 
     def deactivate(self):
         self._select.deselect()
-        while self._on_deactivate:
-            deactivate = self._on_deactivate.pop()
-            deactivate()
+        if self._controlling_transition:
+            window = self._window
+            window.pop_grabs()
+            del self._hint_transition
+            
+            self._controlling_transition = None
             pass
         pass
     pass
