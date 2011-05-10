@@ -5,6 +5,109 @@ import data_monitor
 import pybInkscape
 
 
+## \brief Wrap domview to provide a view for FSM of a component.
+#
+# This class is a decorator of domview to provide a view for FSM of a
+# component.  All accesses to FSM states and transitions will be
+# dispatched to domview with name of a specified component as one of
+# argument list.  Caller don't need to know the component that it is
+# working on.
+#
+class _compview(object):
+    _domview = None
+    _comp_name = None
+    
+    def __init__(self, domview, comp_name):
+        self._domview = domview
+        self._comp_name = comp_name
+        pass
+
+    def switch_component(self, comp_name):
+        self._comp_name = comp_name
+        pass
+
+    def all_state_names(self):
+        return self._domview.all_state_names(self._comp_name)
+
+    def get_start_state_name(self):
+        return self._domview.get_start_state_name(self._comp_name)
+
+    def rm_state(self, state_name):
+        self._domview.rm_state(self._comp_name, state_name)
+        pass
+
+    def add_state(self, state_name):
+        self._domview.add_state(self._comp_name, state_name)
+        pass
+
+    def rename_state(self, state_name, new_name):
+        self._domview.rename_state(self._comp_name, state_name, new_name)
+        pass
+
+    def set_start_state(self, state_name):
+        self._domview.set_start_state(self._comp_name, state_name)
+        pass
+
+    def set_state_entry_action(self, state_name, entry_action):
+        self._domview.set_state_entry_action(self._comp_name,
+                                             state_name, entry_action)
+        pass
+
+    def set_state_r(self, state_name, r):
+        self._domview.set_state_r(self._comp_name, state_name, r)
+        pass
+
+    def set_state_xy(self, state_name, x, y):
+        self._domview.set_state_xy(self._comp_name, state_name, x, y)
+        pass
+
+    def get_state_entry_action(self, state_name):
+        return self._domview.get_state_entry_action(self._comp_name,
+                                                    state_name)
+
+    def get_state_r(self, state_name):
+        return self._domview.get_state_r(self._comp_name, state_name)
+
+    def get_state_xy(self, state_name):
+        return self._domview.get_state_xy(self._comp_name, state_name)
+
+    def all_transitions(self, state_name):
+        return self._domview.all_transitions(self._comp_name, state_name)
+
+    def add_transition(self, state_name, cond, target):
+        self._domview.add_transition(self._comp_name, state_name,
+                                     cond, target)
+        pass
+
+    def rm_transition(self, state_name, cond):
+        self._domview.rm_transition(self._comp_name, state_name, cond)
+        pass
+
+    def change_transition_cond(self, state_name, old_cond, new_cond):
+        self._domview.change_transition_cond(self._comp_name,
+                                             state_name,
+                                             old_cond, new_cond)
+        pass
+
+    def get_transition(self, state_name, cond):
+        return self._domview.get_transition(self._comp_name, state_name, cond)
+
+    def set_transition_action(self, state_name, cond, action):
+        self._domview.set_transition_action(self._comp_name,
+                                            state_name, cond, action)
+        pass
+
+    def set_transition_path(self, state_name, cond, path):
+        self._domview.set_transition_path(self._comp_name,
+                                          state_name, cond, path)
+        pass
+
+    def chg_transition_cond(self, state_name, cond, new_cond):
+        self._domview.chg_transition_cond(self._comp_name,
+                                          state_name, cond, new_cond)
+        pass
+    pass
+
 class _dragger(object):
     _node = None
     _start_x = None
@@ -283,7 +386,7 @@ class FSM_window_base(object):
 
 class FSM_transition(object):
     _doc = None
-    _domview = None
+    _compview = None
     _fsm_layer = None
     _control_layer = None
     _state = None
@@ -299,9 +402,9 @@ class FSM_transition(object):
        self.trn_cond = trn_cond
        pass
 
-    def init(self, doc, domview, state, states, fsm_layer, control_layer):
+    def init(self, doc, compview, state, states, fsm_layer, control_layer):
         self._doc = doc
-        self._domview = domview
+        self._compview = compview
         self._state = state
         self._states = states
         self._fsm_layer = fsm_layer
@@ -383,10 +486,10 @@ class FSM_transition(object):
 
     @property
     def path(self):
-        domview = self._domview
+        compview = self._compview
         state_name = self._state.state_name
         trn_cond = self.trn_cond
-        trn = domview.get_transition(state_name, trn_cond)
+        trn = compview.get_transition(state_name, trn_cond)
         path = trn[3]
 
         if not path:
@@ -397,10 +500,10 @@ class FSM_transition(object):
 
     @property
     def target(self):
-        domview = self._domview
+        compview = self._compview
         state_name = self._state.state_name
         trn_cond = self.trn_cond
-        trn = domview.get_transition(state_name, trn_cond)
+        trn = compview.get_transition(state_name, trn_cond)
         return trn[1]
 
     @property
@@ -409,10 +512,10 @@ class FSM_transition(object):
 
     @property
     def action(self):
-        domview = self._domview
+        compview = self._compview
         state_name = self._state.state_name
         trn_cond = self.trn_cond
-        trn = domview.get_transition(state_name, trn_cond)
+        trn = compview.get_transition(state_name, trn_cond)
         return trn[2]
 
     def draw(self):
@@ -476,8 +579,8 @@ class FSM_transition(object):
         c2y = stop_v[1] * c3c2_len + c3y
         new_path = [c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y]
         
-        domview = self._domview
-        domview.set_transition_path(state_name, trn_cond, new_path)
+        compview = self._compview
+        compview.set_transition_path(state_name, trn_cond, new_path)
         pass
 
     def show_control_points(self):
@@ -603,7 +706,7 @@ class FSM_transition(object):
 
 class FSM_state(object):
     _doc = None
-    _domview = None
+    _compview = None
     _states = None
     _fsm_layer = None
     _control_layer = None
@@ -624,9 +727,9 @@ class FSM_state(object):
         self.from_states = set()
         pass
 
-    def init(self, doc, domview, states, fsm_layer, control_layer):
+    def init(self, doc, compview, states, fsm_layer, control_layer):
         self._doc = doc
-        self._domview = domview
+        self._compview = compview
         self._states = states
         self._fsm_layer = fsm_layer
         self._control_layer = control_layer
@@ -734,38 +837,38 @@ class FSM_state(object):
 
     @property
     def r(self):
-        domview = self._domview
+        compview = self._compview
         state_name = self.state_name
-        r = domview.get_state_r(state_name)
+        r = compview.get_state_r(state_name)
         return r
 
     @property
     def xy(self):
-        domview = self._domview
+        compview = self._compview
         state_name = self.state_name
-        xy = domview.get_state_xy(state_name)
+        xy = compview.get_state_xy(state_name)
         return xy
 
     @property
     def entry_action(self):
-        domview = self._domview
+        compview = self._compview
         state_name = self.state_name
-        entry_action = domview.get_state_entry_action(state_name)
+        entry_action = compview.get_state_entry_action(state_name)
         return entry_action
 
     @property
     def all_transitions(self):
-        domview = self._domview
+        compview = self._compview
         state_name = self.state_name
-        conds = domview.all_transitions(state_name)
+        conds = compview.all_transitions(state_name)
         return conds
 
-    def _load_transition_domview(self, parent, condition):
-        domview = self._domview
+    def _load_transition_compview(self, parent, condition):
+        compview = self._compview
         states = self._states
         
         trn = FSM_transition(condition)
-        trn.init(self._doc, domview, self, states,
+        trn.init(self._doc, compview, self, states,
                  self._fsm_layer, self._control_layer)
         trn.draw()
         self.transitions[condition] = trn
@@ -785,7 +888,7 @@ class FSM_state(object):
         self._circle_node = circle_node
 
         for trn_cond in self.all_transitions:
-            self._load_transition_domview(fsm_layer, trn_cond)
+            self._load_transition_compview(fsm_layer, trn_cond)
             pass
         pass
 
@@ -809,7 +912,7 @@ class FSM_state(object):
     ## \brief Tell states there are transitions to them.
     #
     # This function is only called when loading states of a FSM from
-    # domview.  When loading, not all states was loaded that target
+    # compview.  When loading, not all states was loaded that target
     # state may not in the memory.  So, we call this function after
     # all states being loaded.  Transitions added later does need to
     # call this function to notify end state.
@@ -865,7 +968,7 @@ class FSM_state(object):
         pass
 
     def add_transition(self, parent, condition):
-        self._load_transition_domview(parent, condition)
+        self._load_transition_compview(parent, condition)
 
         transitions = self.transitions
         trn = transitions[condition]
@@ -980,7 +1083,7 @@ class _select_manager(object):
 
 class _FSM_popup(object):
     _window = None
-    _domview = None
+    _compview = None
     
     _menu_state = None
     _menu_transition = None
@@ -989,10 +1092,10 @@ class _FSM_popup(object):
 
     _select = None
     
-    def __init__(self, window, domview_ui, select_man):
+    def __init__(self, window, compview, select_man):
         super(_FSM_popup, self).__init__()
         self._window = window
-        self._domview = domview_ui
+        self._compview = compview
         self._select = select_man
         pass
 
@@ -1070,9 +1173,9 @@ class _FSM_popup(object):
         src_name = src_state.state_name
         cond = ''
 
-        domview = self._domview
+        compview = self._compview
         try:
-            domview.add_transition(src_name, cond, target_name)
+            compview.add_transition(src_name, cond, target_name)
         except:
             import traceback
             traceback.print_exc()
@@ -1127,7 +1230,7 @@ class _FSM_popup(object):
     def _handle_transition_apply(self, *args):
         trn = self._select.selected_transition
         window = self._window
-        domview = self._domview
+        compview = self._compview
         transition_cond = window._transition_cond
         transition_action = window._transition_action
         
@@ -1140,13 +1243,14 @@ class _FSM_popup(object):
         new_action = transition_action.get_text()
 
         if new_action != trn_action:
-            domview.set_transition_action(trn_state_name, trn_cond, new_action)
+            compview.set_transition_action(trn_state_name,
+                                           trn_cond, new_action)
             pass
 
         if new_cond != trn_cond:
             trn_state.rm_transition(trn_cond)
             
-            domview.chg_transition_cond(trn_state_name, trn_cond, new_cond)
+            compview.chg_transition_cond(trn_state_name, trn_cond, new_cond)
             
             fsm_layer = window._fsm_layer
             trn_state.add_transition(fsm_layer, new_cond)
@@ -1172,7 +1276,7 @@ class _FSM_popup(object):
 
     def _handle_state_change(self):
         window = self._window
-        domview = self._domview
+        compview = self._compview
         select = self._select
 
         state_name_txt = window._state_name
@@ -1188,12 +1292,12 @@ class _FSM_popup(object):
         state = select.selected_state
         old_state_name = state.state_name
         if old_state_name != state_name:
-            domview.rename_state(old_state_name, state_name)
+            compview.rename_state(old_state_name, state_name)
             state.state_name = state_name
             pass
         
-        domview.set_state_r(state_name, state_radius_f)
-        domview.set_state_entry_action(state_name, state_entry_action)
+        compview.set_state_r(state_name, state_radius_f)
+        compview.set_state_entry_action(state_name, state_entry_action)
         
         state.update()
 
@@ -1204,7 +1308,7 @@ class _FSM_popup(object):
     def _handle_del_state(self, *args):
         window = self._window
         select = self._select
-        domview = self._domview
+        compview = self._compview
         
         state = select.selected_state
         state_name = state.state_name
@@ -1235,17 +1339,17 @@ class _FSM_popup(object):
             for in_cond, in_trn in in_cond_trns:
                 in_trn.clear()
                 del src_state.transitions[in_cond]
-                domview.rm_transition(src_state_name, in_cond)
+                compview.rm_transition(src_state_name, in_cond)
                 pass
             pass
 
-        domview.rm_state(state_name)
+        compview.rm_state(state_name)
         pass
 
     def _handle_del_transition(self, *args):
         window = self._window
         select = self._select
-        domview = self._domview
+        compview = self._compview
 
         trn = select.selected_transition
         trn.clear()
@@ -1257,7 +1361,7 @@ class _FSM_popup(object):
         target_names = [trn.target for trn in trn_state.transitions.values()]
         
         # the transition must live until getting all info.
-        domview.rm_transition(trn_state_name, trn_cond)
+        compview.rm_transition(trn_state_name, trn_cond)
 
         if trn_target_name not in target_names:
             trn_target_state = window._states[trn_target_name]
@@ -1288,20 +1392,20 @@ class _FSM_move_state_mode(object):
     _popup = None
     
     _window = None
-    _domview = None
+    _compview = None
     
     _select = None
 
     _on_deactivate = None
     
-    def __init__(self, window, domview_ui, select_man):
+    def __init__(self, window, compview, select_man):
         super(_FSM_move_state_mode, self).__init__()
         
         self._window = window
-        self._domview = domview_ui
-        self._locker = domview_ui
+        self._compview = compview
+        self._locker = compview
 
-        self._popup = _FSM_popup(window, domview_ui, select_man)
+        self._popup = _FSM_popup(window, compview, select_man)
         self._select = select_man
 
         self._on_deactivate = []
@@ -1323,8 +1427,8 @@ class _FSM_move_state_mode(object):
             new_state_x = orign_state_x + x - start_x
             new_state_y = orign_state_y + y - start_y
 
-            domview = self._domview
-            domview.set_state_xy(state.state_name, new_state_x, new_state_y)
+            compview = self._compview
+            compview.set_state_xy(state.state_name, new_state_x, new_state_y)
             state.update()
             state.adjust_transitions()
             state.show_selected()
@@ -1361,7 +1465,7 @@ class _FSM_move_state_mode(object):
         target_name = trn.target
         states = trn._states
         state_target = states[target_name]
-        domview = self._domview
+        compview = self._compview
         window = self._window
         select = self._select
 
@@ -1381,7 +1485,7 @@ class _FSM_move_state_mode(object):
 
             state_name = state_src.state_name
             cond = trn.trn_cond
-            domview.set_transition_path(state_name, cond, path)
+            compview.set_transition_path(state_name, cond, path)
 
             trn.update()
             trn.show_control_points()
@@ -1417,7 +1521,7 @@ class _FSM_move_state_mode(object):
 
             state_name = state_src.state_name
             cond = trn.trn_cond
-            domview.set_transition_path(state_name, cond, path)
+            compview.set_transition_path(state_name, cond, path)
 
             trn.update()
             trn.show_control_points()
@@ -1544,7 +1648,7 @@ class _FSM_add_state_mode(object):
     __data_monitor_prefix__ = 'on_'
 
     _window = None
-    _domview = None
+    _compview = None
 
     _saved_x = 0
     _saved_y = 0
@@ -1555,21 +1659,21 @@ class _FSM_add_state_mode(object):
     _popup = None
     _select = None
     
-    def __init__(self, window, domview_ui, select_man):
+    def __init__(self, window, compview, select_man):
         super(_FSM_add_state_mode, self).__init__()
         
         self._window = window
-        self._domview = domview_ui
-        self._locker = domview_ui
+        self._compview = compview
+        self._locker = compview
 
         self._select = select_man
-        self._popup = _FSM_popup(window, domview_ui, select_man)
+        self._popup = _FSM_popup(window, compview, select_man)
         pass
 
     def _handle_add_new_state(self):
         import traceback
         
-        domview = self._domview
+        compview = self._compview
         window = self._window
         x, y = window._translate_xy(self._saved_x, self._saved_y)
 
@@ -1584,14 +1688,14 @@ class _FSM_add_state_mode(object):
             return
         
         try:
-            domview.add_state(state_name)
+            compview.add_state(state_name)
         except:
             traceback.print_exc()
             window.show_error('Invalid state name: "%s" is existing' %
                               (state_name))
             return
-        domview.set_state_xy(state_name, x, y)
-        domview.set_state_r(state_name, r)
+        compview.set_state_xy(state_name, x, y)
+        compview.set_state_r(state_name, r)
 
         window._load_new_state_incr(state_name)
 
@@ -1668,6 +1772,10 @@ class FSM_window(FSM_window_base):
     __metaclass__ = data_monitor.data_monitor
     __data_monitor_prefix__ = 'on_'
 
+    _domview = None
+    _comp_name = 'main'
+    _comview = None
+
     _background = None
     _fsm_layer = None
     _control_layer = None
@@ -1701,6 +1809,7 @@ class FSM_window(FSM_window_base):
         self._locker = domview_ui
 
         self._domview = domview_ui
+        self._compview = _compview(domview_ui, self._comp_name)
         self._states = {}
         
         self._close_cb = close_cb # callback to close editor window (hide)
@@ -1709,8 +1818,10 @@ class FSM_window(FSM_window_base):
         _select = _select_manager()
         self._select = _select
         
-        self._move_state_mode = _FSM_move_state_mode(self, domview_ui, _select)
-        self._add_state_mode = _FSM_add_state_mode(self, domview_ui, _select)
+        self._move_state_mode = \
+            _FSM_move_state_mode(self, self._compview, _select)
+        self._add_state_mode = \
+            _FSM_add_state_mode(self, self._compview, _select)
 
         self._grab_stack = []
         pass
@@ -1774,14 +1885,14 @@ class FSM_window(FSM_window_base):
         self._states = {}
         pass
 
-    def _make_state_domview(self, state_name):
-        domview = self._domview
+    def _make_state_compview(self, state_name):
+        compview = self._compview
         doc = self._doc()
         fsm_layer = self._fsm_layer
         states = self._states
         
         state = FSM_state(state_name)
-        state.init(doc, domview, states, self._fsm_layer, self._control_layer)
+        state.init(doc, compview, states, self._fsm_layer, self._control_layer)
         self._states[state_name] = state
 
         return state
@@ -1976,7 +2087,7 @@ class FSM_window(FSM_window_base):
         pass
 
     def _load_new_state(self, state_name):
-        state = self._make_state_domview(state_name)
+        state = self._make_state_compview(state_name)
         self._draw_new_state(state_name)
         pass
 
@@ -1991,8 +2102,8 @@ class FSM_window(FSM_window_base):
     
     def _rebuild_from_states(self):
         states = self._states
-        domview = self._domview
-        state_names = domview.all_state_names()
+        compview = self._compview
+        state_names = compview.all_state_names()
         for state_name in state_names:
             state = states[state_name]
             self._draw_new_state(state_name)
@@ -2004,11 +2115,11 @@ class FSM_window(FSM_window_base):
         self._clear_view()
         states = self._states
         
-        domview = self._domview
+        compview = self._compview
         
-        state_names = domview.all_state_names()
+        state_names = compview.all_state_names()
         for state_name in state_names:
-            self._make_state_domview(state_name)
+            self._make_state_compview(state_name)
             pass
         self._rebuild_from_states()
         pass
@@ -2095,7 +2206,7 @@ class FSM_window(FSM_window_base):
     def _install_test_data(self):
         self._init_layers()
         
-        domview = self._domview
+        compview = self._compview
         
         view = self._view_widget.view
         doc = view.doc()
@@ -2120,15 +2231,15 @@ class FSM_window(FSM_window_base):
         print hdl_id
 
         state1 = 'state 1'
-        domview.add_state(state1)
-        domview.set_state_r(state1, 50)
-        domview.set_state_xy(state1, 200, 100)
+        compview.add_state(state1)
+        compview.set_state_r(state1, 50)
+        compview.set_state_xy(state1, 200, 100)
         state2 = 'state 2'
-        domview.add_state(state2)
-        domview.set_state_r(state2, 30)
-        domview.set_state_xy(state2, 300, 100)
-        domview.add_transition(state1, 'event1', state2)
-        domview.set_transition_path(state1, 'event1', (200, 150,
+        compview.add_state(state2)
+        compview.set_state_r(state2, 30)
+        compview.set_state_xy(state2, 300, 100)
+        compview.add_transition(state1, 'event1', state2)
+        compview.set_transition_path(state1, 'event1', (200, 150,
                                                        240, 180,
                                                        260, 180,
                                                        300, 130))
@@ -2144,7 +2255,7 @@ class FSM_window(FSM_window_base):
         # Crash if without line.
         # This line remove selection infor to prevent select manager to
         # deselect an object selected in previous session.  It would crash
-        # if we don't reset it and domview of previous session were
+        # if we don't reset it and compview of previous session were
         # removed.
         #
         self._select.reset()
@@ -2191,6 +2302,14 @@ class FSM_window(FSM_window_base):
 
         self._bg_mouse_event_cb = None
         pass
+
+    def switch_component(self, comp_name):
+        self._compview.switch_component(comp_name)
+        self._comp_name = comp_name
+        pass
+
+    def current_component(self):
+        return self._comp_name
     pass
 
 _install_test_data_flag = False

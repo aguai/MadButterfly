@@ -768,7 +768,7 @@ class component_manager(component_manager_ui_update):
                 pass
             pass
         raise ValueError, 'can not find component node - %s' % (comp_name)
-
+    
     ## \brief Create a layer group for give layer of a component.
     #
     def _create_comp_layer_group(self, layers_group, layer_name):
@@ -1083,93 +1083,101 @@ class component_manager(component_manager_ui_update):
 #
 @trait
 class FSM_manager(object):
-    _cur_comp = require
+    _get_component = require
 
     def __init__(self):
         super(FSM_manager, self).__init__()
         pass
     
-    def all_state_names(self):
-        return self._cur_comp.all_state_names()
+    def all_state_names(self, comp_name):
+        comp = self._get_component(comp_name)
+        return comp.all_state_names()
 
-    def get_start_state_name(self):
-        return self._cur_comp.get_start_state_name()
+    def get_start_state_name(self, comp_name):
+        comp = self._get_component(comp_name)
+        return comp.get_start_state_name()
 
     ## \brief To return state object for the given name.
     #
     # This method should only be used by component_manager internally.
     #
-    def _get_state(self, state_name):
-        return self._cur_comp.get_state(state_name)
+    def _get_state(self, comp_name, state_name):
+        comp = self._get_component(comp_name)
+        return comp.get_state(state_name)
 
-    def rm_state(self, state_name):
-        self._cur_comp.rm_state(state_name)
+    def rm_state(self, comp_name, state_name):
+        comp = self._get_component(comp_name)
+        comp.rm_state(state_name)
         pass
 
-    def add_state(self, state_name):
-        self._cur_comp.add_state(state_name)
+    def add_state(self, comp_name, state_name):
+        comp = self._get_component(comp_name)
+        comp.add_state(state_name)
         pass
 
-    def rename_state(self, state_name, new_name):
-        self._cur_comp.rename_state(state_name, new_name)
+    def rename_state(self, comp_name, state_name, new_name):
+        comp = self._get_component(comp_name)
+        comp.rename_state(state_name, new_name)
         pass
 
-    def set_start_state(self, state_name):
-        self._cur_comp.set_start_state(state_name)
+    def set_start_state(self, comp_name, state_name):
+        comp = self._get_component(comp_name)
+        comp.set_start_state(state_name)
         pass
 
-    def set_state_entry_action(self, state_name, entry_action):
-        state = self._get_state(state_name)
+    def set_state_entry_action(self, comp_name, state_name, entry_action):
+        state = self._get_state(comp_name, state_name)
         state.set_entry_action(entry_action)
         pass
 
-    def set_state_r(self, state_name, r):
-        state = self._get_state(state_name)
+    def set_state_r(self, comp_name, state_name, r):
+        state = self._get_state(comp_name, state_name)
         state.set_r(r)
         pass
 
-    def set_state_xy(self, state_name, x, y):
-        state = self._get_state(state_name)
+    def set_state_xy(self, comp_name, state_name, x, y):
+        state = self._get_state(comp_name, state_name)
         state.set_xy(x, y)
         pass
 
-    def get_state_entry_action(self, state_name):
-        state = self._get_state(state_name)
+    def get_state_entry_action(self, comp_name, state_name):
+        state = self._get_state(comp_name, state_name)
         action = state.entry_action
         return action
 
-    def get_state_r(self, state_name):
-        state = self._get_state(state_name)
+    def get_state_r(self, comp_name, state_name):
+        state = self._get_state(comp_name, state_name)
         r = state.r
         return r
 
-    def get_state_xy(self, state_name):
-        state = self._get_state(state_name)
+    def get_state_xy(self, comp_name, state_name):
+        state = self._get_state(comp_name, state_name)
         xy = state.x, state.y
         return xy
 
-    def all_transitions(self, state_name):
-        state = self._get_state(state_name)
+    def all_transitions(self, comp_name, state_name):
+        state = self._get_state(comp_name, state_name)
         trn_names = state.all_transitions()
         return trn_names
 
-    def add_transition(self, state_name, cond, target):
-        state = self._get_state(state_name)
+    def add_transition(self, comp_name, state_name, cond, target):
+        state = self._get_state(comp_name, state_name)
         state.add_transition(cond, target)
         pass
 
-    def rm_transition(self, state_name, cond):
-        state = self._get_state(state_name)
+    def rm_transition(self, comp_name, state_name, cond):
+        state = self._get_state(comp_name, state_name)
         state.rm_transition(cond)
         pass
 
-    def change_transition_cond(self, state_name, old_cond, new_cond):
-        state = self._get_state(state_name)
+    def change_transition_cond(self, comp_name, state_name,
+                               old_cond, new_cond):
+        state = self._get_state(comp_name, state_name)
         state.change_transition_cond(old_cond, new_cond)
         pass
 
-    def get_transition(self, state_name, cond):
-        state = self._get_state(state_name)
+    def get_transition(self, comp_name, state_name, cond):
+        state = self._get_state(comp_name, state_name)
         trn = state.get_transition(cond)
         
         cond = trn.condition
@@ -1179,20 +1187,20 @@ class FSM_manager(object):
         
         return cond, target, action, path
 
-    def set_transition_action(self, state_name, cond, action):
-        state = self._get_state(state_name)
+    def set_transition_action(self, comp_name, state_name, cond, action):
+        state = self._get_state(comp_name, state_name)
         trn = state.get_transition(cond)
         trn.set_action(action)
         pass
 
-    def set_transition_path(self, state_name, cond, path):
-        state = self._get_state(state_name)
+    def set_transition_path(self, comp_name, state_name, cond, path):
+        state = self._get_state(comp_name, state_name)
         trn = state.get_transition(cond)
         trn.set_path(path)
         pass
 
-    def chg_transition_cond(self, state_name, cond, new_cond):
-        state = self._get_state(state_name)
+    def chg_transition_cond(self, comp_name, state_name, cond, new_cond):
+        state = self._get_state(comp_name, state_name)
         state.chg_transition_cond(cond, new_cond)
         pass
     pass
@@ -1768,7 +1776,9 @@ class domview(domview_monitor):
     use_traits = (component_manager, layers_parser, FSM_manager)
     
     method_map_traits = {component_manager._start_component_manager:
-                             '_start_component_manager'}
+                             '_start_component_manager',
+                         component_manager._get_component:
+                             '_get_component'}
 
     # Declare variables, here, for keeping tracking
     _doc = None
