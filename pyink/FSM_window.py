@@ -1022,6 +1022,14 @@ class FSM_state(object):
     pass
 
 
+## \brief Management selections
+#
+# There is only one state, control points of a transition, or
+# transition being selected at any instance.  This class manage
+# selection to keep the requirement consisted.  When caller select a
+# new state, control points of a transition, or transition, the class
+# will de-select previous one automatically.
+#
 class _select_manager(object):
     selected_state = None
     selected_transition = None
@@ -1069,6 +1077,8 @@ class _select_manager(object):
         self.deselect = hide
         pass
 
+    ## \brief Forget all state of the instance
+    #
     def reset(self):
         try:
             del self.deselect
@@ -1081,6 +1091,12 @@ class _select_manager(object):
     pass
 
 
+## \brief Handle popup menu for states and transitions.
+#
+# _FSM_popup.popup_install_handler() must be called to install event
+# handlers.  It should be called when FSM_window entering a new mode
+# since it will ungrab all events to activate a new mode.
+#
 class _FSM_popup(object):
     _window = None
     _compview = None
