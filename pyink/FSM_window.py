@@ -1386,9 +1386,6 @@ class _FSM_popup(object):
 
 
 class _FSM_move_state_mode(object):
-    __metaclass__ = data_monitor.data_monitor
-    __data_monitor_prefix__ = 'on_'
-
     _popup = None
     
     _window = None
@@ -1433,8 +1430,6 @@ class _FSM_move_state_mode(object):
             state.adjust_transitions()
             state.show_selected()
             pass
-        
-        window = self._window
         
         if evtype == pybInkscape.PYSPItem.PYB_EVENT_BUTTON_PRESS and \
                 button == 1:
@@ -1644,17 +1639,11 @@ class _FSM_move_state_mode(object):
 
 
 class _FSM_add_state_mode(object):
-    __metaclass__ = data_monitor.data_monitor
-    __data_monitor_prefix__ = 'on_'
-
     _window = None
     _compview = None
 
     _saved_x = 0
     _saved_y = 0
-
-    _select_state = None
-    _candidate_state = None
 
     _popup = None
     _select = None
@@ -1758,13 +1747,6 @@ class _FSM_add_state_mode(object):
         pass
 
     def deactivate(self):
-        if self._select_state:
-            self._select_state.hide_selected()
-            pass
-        if self._candidate_state:
-            self._candidate_state.hide_selected()
-            self._candidate_state = None
-            pass
         pass
     pass
 
