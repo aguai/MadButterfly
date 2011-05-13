@@ -10,6 +10,30 @@ from tween import scenes_director
 from domview_ui import create_domview_ui
 from data_monitor import data_monitor
 
+## \page design_scribboo Designs of Scribboo
+#
+# \image html scribboo_arch.png
+#
+# The idea of Scribboo is that domview_ui is responsible for synchronizing
+# domview and framelines.  domview is responsible for managing data model
+# provided by Inkscape for SVG documents.  All access to data model use APIs
+# provided by domview.  domview_ui is a decorator of domview.  It does not only
+# delegate calls to domview, but also make sure that framelines are always up
+# to date and keep consistent with data model provided by domview.
+#
+# MBScene implements most feature about editing scenes.  It uses domview_ui to
+# manage and control scenes.  With MBScene, you can create, delete, and change
+# scenes.  It also provide the capability of tweening animation.
+#
+# comp_dock is responsible for managing components and actions.  You can see a
+# list of components and a list of actions.  These two list boxes are
+# implemented by comp_dock.
+#
+# FSM_window is responsible for implementation of FSM editor.  All features
+# provided by FSM editor is a part of FSM_window.  It also use domview_ui to
+# access data model.
+#
+
 # Please refer to
 # http://www.assembla.com/wiki/show/MadButterfly/Inkscape_extention
 # for the designed document.
