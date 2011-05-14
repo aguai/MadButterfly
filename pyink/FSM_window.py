@@ -414,7 +414,13 @@ class FSM_transition(object):
         pass
 
     def _translate_page_xy(self, x, y):
-        return x, y
+        doc = self._doc
+        root = doc.root()
+        page_h_txt = root.getAttribute('height')
+        page_h = float(page_h_txt)
+        svgx = x
+        svgy = page_h - y
+        return svgx, svgy
 
     @staticmethod
     def _update_graph(path, arrow_node, path_node):
