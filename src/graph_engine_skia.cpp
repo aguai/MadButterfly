@@ -35,6 +35,7 @@
  * setted.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <SkCanvas.h>
 #include <SkBitmap.h>
 #include <SkRegion.h>
@@ -62,6 +63,7 @@ C_START
  */
 struct _mbe_pattern_t {
     SkShader *shader;
+    SkBitmap *bitmap;
     int w, h;
     int has_size;
     co_aix matrix[6];
@@ -245,6 +247,7 @@ mbe_pattern_t *mbe_pattern_create_for_surface(mbe_surface_t *surface) {
     }
 
     ptn->has_size = 1;
+    ptn->bitmap = NULL;
     ptn->w = bitmap->width();
     ptn->h = bitmap->height();
 
@@ -291,6 +294,8 @@ mbe_pattern_create_radial(co_aix cx0, co_aix cy0, co_aix radius0,
 	goto fail;
 
     memcpy(ptn->matrix, id_matrix, sizeof(co_aix) * 6);
+    
+    ptn->bitmap = NULL;
 
     delete colors;
     delete poses;
@@ -342,6 +347,8 @@ mbe_pattern_create_linear(co_aix x0, co_aix y0,
 
     memcpy(ptn->matrix, id_matrix, sizeof(co_aix) * 6);
 
+    ptn->bitmap = NULL;
+
     delete colors;
     delete poses;
     return ptn;
@@ -364,6 +371,8 @@ void mbe_pattern_set_matrix(mbe_pattern_t *ptn, const co_aix matrix[6]) {
 void mbe_pattern_destroy(mbe_pattern_t *ptn) {
     if(ptn->shader)
 	delete ptn->shader;
+    if(ptn->bitmap)
+	delete ptn->bitmap;
     free(ptn);
 }
 
@@ -385,11 +394,9 @@ unsigned char *mbe_image_surface_get_data(mbe_surface_t *surface) {
 
 mbe_surface_t *mbe_image_surface_create_from_png(const char *filename) {}
 
-mbe_surface_t *
-mbe_image_surface_create_for_data(unsigned char *data,
-				  mb_img_fmt_t fmt,
-				  int width, int height,
-				  int stride) {
+static SkBitmap *
+_mbe_bitmap_create_for_data(unsigned char *data, mb_img_fmt_t fmt,
+			    int width, int height, int stride) {
     SkBitmap *bitmap;
     SkBitmap::Config cfg;
 
@@ -418,6 +425,17 @@ mbe_image_surface_create_for_data(unsigned char *data,
     bitmap->setConfig(cfg, width, height, stride);
     bitmap->setPixels(data);
 
+    return bitmap;
+}
+
+mbe_surface_t *
+mbe_image_surface_create_for_data(unsigned char *data,
+				  mb_img_fmt_t fmt,
+				  int width, int height,
+				  int stride) {
+    SkBitmap *bitmap;
+
+    bitmap = _mbe_bitmap_create_for_data(data, fmt, width, height, stride);
     return (mbe_surface_t *)bitmap;
 }
 
@@ -502,8 +520,8 @@ void mbe_paint_with_alpha(mbe_t *canvas, co_aix alpha) {
 
     color = ((uint32_t)(alpha * 255)) << 24;
     filter =
-	SkColorFilter::CreatePorterDuffFilter(color,
-					      SkPorterDuff::kSrcOver_Mode);
+	SkColorFilter::CreateModeFilter(color,
+					SkXfermode::kSrcOver_Mode);
     mbe_paint(canvas);
 
 }
@@ -558,7 +576,7 @@ void mbe_set_source(mbe_t *canvas, mbe_pattern_t *source) {
     canvas->states->ptn = source;
 }
 
-void mbe_reset_clip(mbe_t *canvas) {
+void mbe_reset_scissoring(mbe_t *canvas) {
     SkRegion clip;
 
     _canvas_device_region(canvas->canvas, &clip);
@@ -782,6 +800,21 @@ void mbe_fill(mbe_t *canvas) {
     canvas->subpath->rewind();
 }
 
+void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas) {
+    SkRegion region;
+    area_t *area;
+    co_aix right, bottom;
+    int i;
+
+    for(i = 0; i < n_areas; i++) {
+	area = areas[i];
+	right = area->x + area->w;
+	bottom = area->y + area->h;
+	region.setRect(area->x, area->y, right, bottom);
+	canvas->canvas->clipRegion(region, SkRegion::kIntersect_Op);
+    }
+}
+
 void mbe_clip(mbe_t *canvas) {
     if(!canvas->subpath->isEmpty())
 	_update_path(canvas);
@@ -795,10 +828,37 @@ mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight) {}
 void mbe_free_font_face(mbe_font_face_t *face) {}
 
+mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img) {
+    mbe_pattern_t *ptn;
+    SkBitmap *bitmap;
+
+    bitmap = _mbe_bitmap_create_for_data((unsigned char *)img->content,
+					 img->fmt,
+					 img->w, img->h, img->stride);
+    ptn = (mbe_pattern_t *)malloc(sizeof(mbe_pattern_t));
+    ptn->shader = SkShader::CreateBitmapShader(*bitmap,
+					       SkShader::kClamp_TileMode,
+					       SkShader::kClamp_TileMode);
+    if(ptn->shader == NULL) {
+	free(ptn);
+	delete bitmap;
+	return NULL;
+    }
+
+    ptn->has_size = 1;
+    ptn->w = bitmap->width();
+    ptn->h = bitmap->height();
+    ptn->bitmap = NULL;
+
+    memcpy(ptn->matrix, id_matrix, sizeof(co_aix) * 6);
+
+    return ptn;
+}
+
 void mbe_clear(mbe_t *canvas) {
     SkColor color = 0;
 
-    canvas->canvas->drawColor(color, SkPorterDuff::kClear_Mode);
+    canvas->canvas->drawColor(color, SkXfermode::kClear_Mode);
 }
 
 void mbe_copy_source(mbe_t *src, mbe_t *dst) {
@@ -807,7 +867,7 @@ void mbe_copy_source(mbe_t *src, mbe_t *dst) {
     SkXfermode *mode;
 
     /* _prepare_paint(dst, SkPaint::kFill_Style); */
-    mode = SkPorterDuff::CreateXfermode(SkPorterDuff::kSrc_Mode);
+    mode = SkXfermode::Create(SkXfermode::kSrc_Mode);
     paint->setXfermode(mode);
     bmap = &src->canvas->getDevice()->accessBitmap(false);
 
@@ -867,5 +927,13 @@ void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
     }
 }
 
+mbe_surface_t *
+mbe_win_surface_create(void *display, void *drawable,
+		       int fmt, int width, int height) {
+    fprintf(stderr, "%s:%d:mbe_win_surface_create: not implemented!\n",
+	    __FILE__, __LINE__);
+    abort();
+    return NULL;
+}
 
 C_END

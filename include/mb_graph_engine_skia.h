@@ -87,7 +87,8 @@ extern void mbe_set_line_width(mbe_t *canvas, co_aix width);
 extern mbe_font_face_t *mbe_get_font_face(mbe_t *canvas);
 extern void mbe_fill_preserve(mbe_t *canvas);
 extern void mbe_set_source(mbe_t *canvas, mbe_pattern_t *source);
-extern void mbe_reset_clip(mbe_t *canvas);
+extern void mbe_reset_scissoring(mbe_t *canvas);
+extern void mbe_scissoring(mbe_t *canvas, int n_areas, area_t **areas);
 extern mbe_surface_t *mbe_get_target(mbe_t *canvas);
 extern void mbe_close_path(mbe_t *canvas);
 extern void mbe_text_path(mbe_t *canvas, const char *txt);
@@ -108,17 +109,25 @@ extern void mbe_destroy(mbe_t *canvas);
 extern void mbe_paint(mbe_t *canvas);
 extern void mbe_save(mbe_t *canvas);
 extern void mbe_fill(mbe_t *canvas);
-extern void mbe_clip(mbe_t *canvas);
 
 extern mbe_font_face_t * mbe_query_font_face(const char *family,
 					     int slant, int weight);
 extern void mbe_free_font_face(mbe_font_face_t *face);
 
+extern mbe_pattern_t *mbe_pattern_create_image(mb_img_data_t *img);
 extern void mbe_clear(mbe_t *canvas);
 extern void mbe_copy_source(mbe_t *src, mbe_t *dst);
 extern void mbe_transform(mbe_t *mbe, co_aix matrix[6]);
 extern void mbe_arc(mbe_t *mbe, co_aix x, co_aix y, co_aix radius,
 		    co_aix angle_start, co_aix angle_stop);
+extern mbe_surface_t *mbe_win_surface_create(void *display,
+					     void *drawable,
+					     int fmt,
+					     int width,
+					     int height);
+#define mbe_init()
+#define mbe_flush(canvas)
+
 /* @} */
 
 #endif /* __MB_GE_SKIA_H_ */
