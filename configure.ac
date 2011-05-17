@@ -134,6 +134,7 @@ AC_ARG_ENABLE([xshm],
     X-cairo-*|X-openvg-imlib2|X-openvg-dummy) ;;
     dfb-cairo-*) ;;
     console-openvg-imlib2|console-openvg-dummy) ;;
+    X-skia-imlib2) ;;
     none-*-*) ;;
     *)] AC_MSG_ERROR([The combination of --with-backend=${backend}, --with-graphic-engine=${graphic_engine} and --with-image-loader=${image_loader} is invalid]) [;;
 esac]
@@ -226,9 +227,9 @@ AM_CONDITIONAL([DUMMY_IMG_LOADER],
 [fi]
 
 AM_CONDITIONAL([XSHM],
-	[test x"${xshm}" = xtrue -a x"${graphic_engine}" = x"cairo" -a x$backend = x'X'])
+	[test x"${xshm}" = xtrue -a \( x"${graphic_engine}" = x"cairo" -o x"${graphic_engine}" = x"skia" \) -a x$backend = x'X'])
 
-[if [ x"${xshm}" = xtrue -a x"${graphic_engine}" = x"cairo" -a x$backend = x'X' ]; then]
+[if [ x"${xshm}" = xtrue -a \( x"${graphic_engine}" = x"cairo" -o x"${graphic_engine}" = x"skia" \) -a x$backend = x'X' ]; then]
     AC_DEFINE([XSHM])
 [fi]
 

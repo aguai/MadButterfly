@@ -745,8 +745,8 @@ xshm_init(X_supp_runtime_t *xmb_rt) {
     XShmAttach(display, shminfo);
 
     switch(depth) {
-    case 24: surf_fmt = CAIRO_FORMAT_RGB24; break;
-    case 32: surf_fmt = CAIRO_FORMAT_ARGB32; break;
+    case 24: surf_fmt = MB_IFMT_RGB24; break;
+    case 32: surf_fmt = MB_IFMT_ARGB32; break;
     }
 
     xmb_rt->backend_surface =
@@ -843,6 +843,7 @@ _x_supp_init_with_win_internal(X_supp_runtime_t *xmb_rt) {
 				   xmb_rt->win,
 				   fmt,
 				   w, h);
+	ASSERT(xmb_rt->backend_surface != NULL);
     }
 
     xmb_rt->cr = mbe_create(xmb_rt->surface);
