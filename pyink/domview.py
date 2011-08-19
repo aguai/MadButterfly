@@ -80,6 +80,7 @@ class Transition(object):
         pass
 
     def reparse(self):
+        node = self.node
         condition = node.getAttribute('condition')
         target = node.getAttribute('target')
         try:
@@ -258,7 +259,7 @@ class State(object):
     @staticmethod
     def parse_state(node):
         state = State(node)
-        state.parse()
+        state.reparse()
         
         return state
 
@@ -393,7 +394,8 @@ class Component(object):
     #
     def parse_states(self):
         comp_node = self._get_comp_node()
-        assert (not comp_node) or comp_node.name() == 'ns0:component'
+        assert (not comp_node) or comp_node.name() in ('ns0:component',
+                                                       'svg:metadata')
         
         states_nodes = [node
                         for node in comp_node.childList()
@@ -409,9 +411,9 @@ class Component(object):
             pass
         
         state_nodes = [child
-                       for child in states_node.childList
+                       for child in states_node.childList()
                        if child.name() == 'ns0:state']
-        states = [State.parse_state(node) for state_node in state_nodes]
+        states = [State.parse_state(state_node) for state_node in state_nodes]
         self.fsm_states = dict([(state.name, state) for state in states])
 
         self.fsm_states_node = states_node
@@ -638,6 +640,7 @@ class component_manager(component_manager_ui_update):
         scenes_node = self._scenes_node
         timeline = Timeline(scenes_node)
         comp.timelines = [timeline]
+        comp.parse_states()
 
         self._components.append(comp)
         self._comp_names.add('main')
