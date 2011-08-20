@@ -27,4 +27,8 @@
  *  - domview
  *  - domview_ui
  *  - frameline
+ * 
+ * \image html pyink-arch.png
+ *
+ * domview_ui will try to synchronize status of frameline and domview.
  */
