@@ -25,6 +25,10 @@ class _compview(object):
     def switch_component(self, comp_name):
         self._comp_name = comp_name
         pass
+    
+    def all_actions(self):
+        action_names = self._domview.all_timeline_names()
+        return action_names
 
     def all_state_names(self):
         return self._domview.all_state_names(self._comp_name)
@@ -201,6 +205,7 @@ class FSM_window_base(object):
     _action_picker = None
     _picked_action = None
     _picked_action_txt = None
+    _action_list = None
     _action_store = None
     
     def __init__(self):
@@ -2180,6 +2185,23 @@ class FSM_window(FSM_window_base):
         root.setAttribute('width', '1024')
         root.setAttribute('height', '768')
         view.setResize(True, 800, 600)
+        pass
+
+    def _update_action_store(self):
+        action_store = self._action_store
+        compview = self._compview
+        
+        action_store.clear()
+        
+        action_names = compview.all_actions()
+        for action_name in action_names:
+            action_store.append((action_name,))
+            pass
+        pass
+
+    def show_action_picker(self):
+        self._update_action_store()
+        super(FSM_window, self).show_action_picker()
         pass
 
     def on_close_window_activate(self, *args):
