@@ -528,6 +528,7 @@
     <property name="default_height">200</property>
     <property name="type_hint">normal</property>
     <property name="transient_for">FSM_main_win</property>
+    <signal name="delete_event" handler="gtk_widget_hide"/>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox3">
         <property name="visible">True</property>
@@ -568,10 +569,32 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="transition_action">
+              <object class="GtkHBox" id="hbox2">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">&#x25CF;</property>
+                <child>
+                  <object class="GtkEntry" id="transition_action">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                  </object>
+                  <packing>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="transition_pick_act">
+                    <property name="label">gtk-find</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_stock">True</property>
+                    <signal name="clicked" handler="on_transition_pick_act_clicked"/>
+                  </object>
+                  <packing>
+                    <property name="padding">5</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -636,6 +659,7 @@
   </object>
   <object class="GtkMenu" id="transition_menu">
     <property name="visible">True</property>
+    <signal name="delete_event" handler="gtk_widget_hide"/>
     <child>
       <object class="GtkMenuItem" id="del_transition">
         <property name="visible">True</property>
@@ -654,5 +678,157 @@
         <signal name="activate" handler="on_edit_transition_activate"/>
       </object>
     </child>
+  </object>
+  <object class="GtkListStore" id="action_store">
+    <columns>
+      <!-- column-name action_name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">action1</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">action2</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkDialog" id="action_picker">
+    <property name="border_width">5</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-always</property>
+    <property name="default_width">320</property>
+    <property name="default_height">260</property>
+    <property name="type_hint">normal</property>
+    <property name="transient_for">transition_editor</property>
+    <signal name="delete_event" handler="gtk_widget_hide"/>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox4">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox2">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkTreeView" id="action_list">
+                <property name="height_request">200</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">action_store</property>
+                <property name="headers_visible">False</property>
+                <property name="search_column">0</property>
+                <property name="enable_grid_lines">horizontal</property>
+                <signal name="row_activated" handler="on_action_list_row_activated"/>
+                <child>
+                  <object class="GtkTreeViewColumn" id="action_name_col">
+                    <property name="title">Actions</property>
+                    <property name="clickable">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="action_name_col_item"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHBox" id="hbox3">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkLabel" id="label7">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Action:</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="picked_action">
+                    <property name="visible">True</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">picked</property>
+                    <attributes>
+                      <attribute name="style" value="normal"/>
+                      <attribute name="foreground" value="#2022292aecfa"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area4">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="action_ok">
+                <property name="label">gtk-ok</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_action_ok_clicked"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="action_cancel">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_action_cancel_clicked"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">action_ok</action-widget>
+      <action-widget response="0">action_cancel</action-widget>
+    </action-widgets>
   </object>
 </interface>

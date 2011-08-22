@@ -197,6 +197,11 @@ class FSM_window_base(object):
     _error_dialog_label = None
 
     _state_menu = None
+
+    _action_picker = None
+    _picked_action = None
+    _picked_action_txt = None
+    _action_store = None
     
     def __init__(self):
         super(FSM_window_base, self).__init__()
@@ -228,6 +233,10 @@ class FSM_window_base(object):
         state_menu = builder.get_object('state_menu')
         transition_menu = builder.get_object('transition_menu')
 
+        action_picker = builder.get_object('action_picker')
+        picked_action = builder.get_object('picked_action')
+        action_store = builder.get_object('action_store')
+
         builder.connect_signals(self)
         
         self._builder = builder
@@ -251,6 +260,10 @@ class FSM_window_base(object):
         self._state_menu = state_menu
         self._transition_menu = transition_menu
         self._comp_name_label = comp_name_label
+
+        self._action_picker = action_picker
+        self._picked_action = picked_action
+        self._action_store = action_store
         pass
 
     def show_error(self, msg):
@@ -306,6 +319,16 @@ class FSM_window_base(object):
     def popup_transition_menu(self):
         menu = self._transition_menu
         menu.popup(None, None, None, 0, 0)
+        pass
+    
+    def show_action_picker(self):
+        self._picked_action.set_text('')
+        self._picked_action_txt = None
+        self._action_picker.show()
+        pass
+    
+    def hide_action_picker(self):
+        self._action_picker.hide()
         pass
     
     def show(self):
@@ -378,10 +401,34 @@ class FSM_window_base(object):
         transition_editor.hide()
         pass
 
+    def on_transition_pick_act_clicked(self, *args):
+        self.show_action_picker()
+        pass
+
     def on_del_transition_activate(self, *args):
         pass
 
     def on_edit_transition_activate(self, *args):
+        pass
+
+    def on_action_cancel_clicked(self, *args):
+        action_picker = self._action_picker
+        action_picker.hide()
+        pass
+
+    def on_action_ok_clicked(self, *args):
+        if self._picked_action_txt:
+            self._transition_action.set_text(self._picked_action_txt)
+            pass
+        self.hide_action_picker()
+        pass
+
+    def on_action_list_row_activated(self, view, path, col):
+        action_store = self._action_store
+        action_iter = action_store.get_iter(path)
+        action_text = action_store.get_value(action_iter, 0)
+        self._picked_action_txt = action_text
+        self._picked_action.set_text(action_text)
         pass
     pass
 
