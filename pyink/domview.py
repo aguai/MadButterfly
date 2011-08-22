@@ -424,7 +424,7 @@ class Component(object):
             if tl.name() == name:
                 return tl
             pass
-        raise Value, 'invalid timeline name - %s' % (name)
+        raise ValueError, 'invalid timeline name - %s' % (name)
 
     def has_timeline(self, name):
         for tl in self.timelines:
