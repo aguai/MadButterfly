@@ -990,6 +990,15 @@ class component_manager(component_manager_ui_update):
     def rename_timeline_of_component(self, timeline_name, new_name, comp_name):
         comp = self._get_component(comp_name)
         comp.rename_timeline(timeline_name, new_name)
+
+        comp_node = self.get_component_group(comp_name)
+        try:
+            cur_timeline_name = comp_node.getAttribute("cur_timeline")
+        except KeyError:
+            return
+        if timeline_name == cur_timeline_name:
+            comp_node.setAttribute('cur_timeline', new_name)
+            pass
         pass
 
     def rename_timeline(self, timeline_name, new_name):
