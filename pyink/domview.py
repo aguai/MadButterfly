@@ -26,6 +26,14 @@ class Layer:
 	self.scenes = []
 	self.group = node
 	pass
+
+    def get_name(self):
+        layer_name = self.group.getAttribute('inkscape:label')
+        return layer_name
+
+    def set_name(self, layer_name):
+        self.group.setAttribute('inkscape:label', layer_name)
+        pass
     pass
 
 
@@ -1577,6 +1585,9 @@ class layers_parser(object):
     get_scene = require
     get_node = require
     new_id = require
+    get_current_component = require
+    _get_layers_group_of_component = require
+    _create_comp_layer_group = require
     
     def parse_all_layers(self):
 	layers = self._layers
@@ -1623,13 +1634,40 @@ class layers_parser(object):
     def get_layer_num(self):
 	return len(self._layers)
 
+    def _make_unique_layer_name(self, idx):
+        names = [layer.get_name() for layer in self._layers]
+        
+        idx = idx + 1
+        name = 'Layer%d' % (idx)
+        while name in names:
+            idx = idx + 1
+            name = 'Layer%d' % (idx)
+            pass
+        return name
+
+    def get_layer_name(self, layer_idx):
+        layers = self._layers
+        layer = layers[layer_idx]
+        return layer.get_name()
+
+    def set_layer_name(self, layer_idx, name):
+        layers = self._layers
+        layer = layers[layer_idx]
+        layer.set_name(name)
+        pass
+
     ## \brief Add/insert a layer at given position.
     #
     # \param layer_idx is the position in the layer list.
     #
-    def insert_layer(self, layer_idx, layer_group):
+    def insert_layer(self, layer_idx):
 	layers = self._layers
 	
+        comp_name = self.get_current_component()
+        layers_group = self._get_layers_group_of_component(comp_name)
+        layer_name = self._make_unique_layer_name(layer_idx)
+        layer_group = self._create_comp_layer_group(layers_group, layer_name)
+        
 	layer = Layer(layer_group)
 	if layer_idx >= len(layers):
 	    layers.append(layer)
@@ -1790,7 +1828,11 @@ class domview(domview_monitor):
     method_map_traits = {component_manager._start_component_manager:
                              '_start_component_manager',
                          component_manager._get_component:
-                             '_get_component'}
+                             '_get_component',
+                         component_manager._get_layers_group_of_component:
+                             '_get_layers_group_of_component',
+                         component_manager._create_comp_layer_group:
+                             '_create_comp_layer_group'}
 
     # Declare variables, here, for keeping tracking
     _doc = None
