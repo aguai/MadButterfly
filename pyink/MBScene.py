@@ -268,6 +268,9 @@ class MBScene(object):
 	pass
 
     def doRemoveLayer(self, w):
+	domview = self._domviewui
+	layer_idx, frame_idx = domview.get_current_frame()
+	domview.rm_layer(layer_idx)
 	pass
 
     def doInsertKeyScene(self,w):
