@@ -261,6 +261,15 @@ class MBScene(object):
 	self._domviewui.remember_current_frame(layer_idx, frame_idx)
         pass
 
+    def doAddLayer(self, w):
+	domview = self._domviewui
+	layer_num = domview.get_layer_num()
+	domview.insert_layer(layer_num)
+	pass
+
+    def doRemoveLayer(self, w):
+	pass
+
     def doInsertKeyScene(self,w):
 	layer_idx, frame_idx = self._domviewui.get_active_layer_frame()
 	self.insertKeyScene(layer_idx, frame_idx)
@@ -361,6 +370,14 @@ class MBScene(object):
 	pass
 
     def _add_buttons(self, hbox):
+	btn = gtk.Button('Add a Layer')
+	btn.connect('clicked', self.doAddLayer)
+	hbox.pack_start(btn, expand=False, fill=False)
+
+	btn = gtk.Button('Remove the Layer')
+	btn.connect('clicked', self.doRemoveLayer)
+	hbox.pack_start(btn, expand=False, fill=False)
+
 	btn = gtk.Button('Insert Key')
 	btn.connect('clicked', self.doInsertKeyScene)
 	hbox.pack_start(btn, expand=False, fill=False)

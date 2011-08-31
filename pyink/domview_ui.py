@@ -809,7 +809,10 @@ class domview_ui(object):
     #
     def insert_layer(self, layer_idx):
 	self._dom.insert_layer(layer_idx)
+        layer_name = self._dom.get_layer_name(layer_idx)
+        
 	self._fl_stack.add_frameline(layer_idx)
+        self._fl_stack.set_layer_label(layer_idx, layer_name)
 	self._fl_stack.show_framelines()
 	pass
 
