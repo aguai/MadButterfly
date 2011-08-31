@@ -400,6 +400,8 @@ class comp_dock_ui(object):
         itr = model.get_iter(path)
 
         old_name = model.get_value(itr, 0)
+        if old_name == 'main':
+            raise ValueError, 'can not change name of main component'
 
         model.set_value(itr, 0, new_text)
         model.set_value(itr, 1, False)
@@ -471,6 +473,11 @@ class comp_dock_ui(object):
 
     def on_cellrenderer_timelines_edited(self, renderer, path,
                                          new_text, *args):
+        comp_name = self._domview_ui.get_current_component()
+        if comp_name == 'main':
+            raise ValueError, \
+                'can not change name of timeline of main component'
+        
         model = self._timelines_model
         itr = model.get_iter(path)
         
