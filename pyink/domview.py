@@ -1740,7 +1740,7 @@ class layers_parser(object):
     def rm_layer(self, layer_idx):
 	layers = self._layers
 
-        layer = self._layers[layer_idx]
+        layer = layers[layer_idx]
         for scene_node in layer.scenes:
             scene_group_id = scene_node.getAttribute('ref')
             try:
@@ -1756,6 +1756,10 @@ class layers_parser(object):
 		pass
 	    pass
 	
+        comp_name = self.get_current_component()
+        layers_group = self._get_layers_group_of_component(comp_name)
+        layers_group.removeChild(layer.group)
+
 	del layers[layer_idx]
 
 	for idx in range(layer_idx, len(layers)):
