@@ -270,6 +270,16 @@ class MBScene(object):
     def doRemoveLayer(self, w):
 	domview = self._domviewui
 	layer_idx, frame_idx = domview.get_current_frame()
+	if layer_idx == 0:	# never remove first layer (default)
+	    return
+	
+	# We must switch current layer to another one before removing a layer
+	# group node.  It avoids a crash since inkscape does not know the group
+	# node of the layer is removed, and it would emit a signal on this node
+	# later.
+	self.selectSceneObject(layer_idx - 1, frame_idx)
+	
+	self._domviewui.remember_current_frame(layer_idx - 1, frame_idx)
 	domview.rm_layer(layer_idx)
 	pass
 
