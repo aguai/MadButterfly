@@ -422,7 +422,22 @@ class comp_dock_ui(object):
         treeview.set_cursor(path, col, True)
         pass
 
+    ## \brief To check if it is on key frame, now.
+    def _on_key_frame(self):
+        domview = self._domview_ui
+        frame_idx, scene_idx = domview.get_current_frame()
+        try:
+            left_idx, right_idx, ktype = domview.get_key(frame_idx, scene_idx)
+        except ValueError:
+            return False
+        if scene_idx == left_idx or scene_idx == right_idx:
+            return True
+        return False
+
     def on_link_component_activate(self, *args):
+        if not self._on_key_frame():
+            return
+        
         desktop = self._desktop
         
         comp_name = self._current_component()
