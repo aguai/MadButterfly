@@ -157,6 +157,7 @@ class MBScene(object):
 	pass
     
     def _enterGroup(self, scene_group):
+	self.desktop.selection.clear()
 	self.desktop.setCurrentLayer(scene_group.spitem)
 	pass
     
