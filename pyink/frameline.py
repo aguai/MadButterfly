@@ -694,19 +694,22 @@ class frameline(frameline_draw_state):
 	    else:
 		pos = pos + 1
 		pass
-
-	    while pos < len(self._keys):
-		key = self._keys[pos]
-		key.idx = key.idx - 1
-		pos = pos + 1
-		pass
+	    pass
+	else:
+	    pos = 0
+	    pass
+	
+	while pos < len(self._keys):
+	    key = self._keys[pos]
+	    key.idx = key.idx - 1
+	    pos = pos + 1
 	    pass
 
 	self._draw_all_frames()
 	self._draw_active_frame()
 	pass
 
-    ## \brief Inser a frame before given frame.
+    ## \brief Insert a frame before given frame.
     #
     # All frame at and after given frame position move to tail in one position.
     # It means to add one to positions of all key frames at/after given frame.
@@ -718,12 +721,15 @@ class frameline(frameline_draw_state):
 	    if key.idx != idx:
 		pos = pos + 1
 		pass
-	    
-	    while pos < len(self._keys):
-		key = self._keys[pos]
-		key.idx = key.idx + 1
-		pos = pos + 1
-		pass
+	    pass
+	else:
+	    pos = 0
+	    pass
+	
+	while pos < len(self._keys):
+	    key = self._keys[pos]
+	    key.idx = key.idx + 1
+	    pos = pos + 1
 	    pass
 
 	self._draw_all_frames()
