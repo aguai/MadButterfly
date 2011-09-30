@@ -311,7 +311,9 @@ class MBScene(object):
         """
 	    Execute the current animation till the last frame.
 	"""
-	if self.btnRun.get_label() == "Run":
+	if self.btnRun.get_label() == "Run": # Go running
+	    self.desktop.selection.clear()
+	    
 	    #
 	    # Make dup groups empty.
 	    # It forces TweenObject to re-generate content from scratch.
@@ -327,7 +329,7 @@ class MBScene(object):
 	    self.btnRun.set_label("Stop")
 	    tmout = 1000 / self.framerate
             self.last_update = glib.timeout_add(tmout, self.doRunNext)
-	else:
+	else:			# Stop running
 	    self.btnRun.set_label("Run")
 	    glib.source_remove(self.last_update)
 	    pass
